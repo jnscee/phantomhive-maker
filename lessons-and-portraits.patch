@@ -210,7 +210,7 @@
 +<script src="js/term-events.js?v=88ff00703568"></script>
 +<script src="js/visitors.js?v=128e1fbff437"></script>
 +<script src="js/festivals.js?v=228cda8d104c"></script>
-+<script src="js/almanac.js?v=d88eda8c4c6b"></script>
++<script src="js/almanac.js?v=812c44fe099d"></script>
 +<script src="js/game.js?v=8843513aa38b"></script></body></html>
 --- a/js/audio.js
 +++ b/js/audio.js
@@ -3087,7 +3087,7 @@
 +    filedSection("인물 관계",'<p>각 인물이 시엘에게 보내는 신뢰입니다.</p>'+relations,allies.length+"명")+
 +    filedSection("사건 기록",history||"첫 사건을 마치면 선택이 기록됩니다.",state.events.length+"건")+
 +    filedSection("런던 행사",fairHistory.join("")||"참가한 행사의 결과가 기록됩니다.",fairHistory.length+"건")+
-+    filedSection("엔딩 도감",album,Object.keys(saves.gallery||{}).length+"개 기록")+extra+'</div>';
++    filedSection("엔딩 도감",album,Object.keys(endingScenes).filter(hasEndingRecord).length+"개 기록")+extra+'</div>';
 +}
 +function healthNotice(run){
 +  if(run.ill||run.illness)return "병중 · 무리한 일정은 요양으로 바뀝니다. 휴식·요양 또는 왕진으로 건강과 스트레스를 회복하세요.";

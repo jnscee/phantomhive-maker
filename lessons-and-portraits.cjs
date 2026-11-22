@@ -102,6 +102,9 @@ async function check(browserType){
         state=initial();state.phase='plan';tab='record';saves.gallery={ill:'건강 악화로 종료'};
         saves[1]={...initial(),phase:'ending',ending:'broke'};delete saves.auto;delete saves[2];delete saves[3];render();
       });
+      const gallery=page.locator('.file-section').filter({has:page.getByText('엔딩 도감',{exact:true})});
+      assert.match(await gallery.locator('summary').innerText(),/2개 기록/);
+      await gallery.locator('summary').click();
       assert.equal(await page.locator('.ending-thumb').count(),2);
       await page.locator('[data-action="ending-art:ill"]').click();
       await page.locator('.ending-cg').evaluate(im=>im.decode());await page.locator('#system-back').click();
