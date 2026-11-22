@@ -1,0 +1,161 @@
+#overture[hidden], #overture [hidden], #scene[data-prologue=true] :is(#date,#money,#ciel-greet) {display:none}
+#overture {position:absolute;inset:0;z-index:6;overflow:hidden;isolation:isolate;background:#110e19;color:#fff8eb;font-family:"Gowun Batang",Georgia,serif;--ink:#faf4e9;--gold:#e7c99e}
+.opening-still,.opening-mat,#opening-read,.opening-cg {position:absolute;inset:0;width:100%;height:100%}
+.opening-still {overflow:hidden;background:radial-gradient(ellipse at 57% 38%,#46374b,#15111b 66%)}
+.opening-cg {object-fit:cover;object-position:50% 43%;pointer-events:none}
+.opening-cg.ready {animation:opening-reveal .65s ease-out both}
+@keyframes opening-reveal {from{opacity:.25}to{opacity:1}}
+.opening-mat {z-index:2;display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;padding:clamp(14px,2.4cqw,34px) clamp(18px,4cqw,52px) clamp(15px,2.6cqw,35px);box-sizing:border-box;background:linear-gradient(180deg,#0d0e17ac,transparent 28%,transparent 48%,#0d0d17b0 83%,#0b0d16f0);pointer-events:none}
+.opening-top,.opening-controls {display:flex;align-items:center;gap:7px}
+.opening-top {justify-content:space-between;color:#faf0d7;font:700 clamp(12px,1.1cqw,15px)/1.2 "Gowun Batang",serif;letter-spacing:.05em;text-shadow:0 1px 5px #000}
+#overture .opening-top button {pointer-events:auto;border:1px solid #c5b89d7d;border-radius:2px;background:#13131dbd;color:var(--ink);font:inherit;font-weight:700;min-height:34px;padding:5px 15px;line-height:1.4;text-shadow:none;box-shadow:none;cursor:pointer}
+#overture .opening-top button:is(:hover,:focus-visible):enabled,#overture #opening-auto[aria-pressed="true"] {background:#453b38;border-color:#f1d5a2}
+#overture button:focus-visible {outline:2px solid #f4d8a4;outline-offset:2px}
+#overture button:disabled {opacity:.38;cursor:default}
+.opening-caption {align-self:flex-start;margin-top:auto;margin-bottom:clamp(9px,1.6cqw,24px);color:#fff8e8;text-shadow:0 2px 10px #080911,0 1px 3px #080911}
+.opening-caption span {font:italic clamp(17px,2.4cqw,38px)/1.1 Baskerville,"Times New Roman",serif;letter-spacing:.025em;color:#f6dbb0}
+.opening-caption h2 {color:inherit;font:700 clamp(21px,3.0cqw,46px)/1.2 "Gowun Batang",Georgia,serif;letter-spacing:-.045em;margin:4px 0}
+.opening-caption small {font-size:clamp(12px,1.1cqw,16px);letter-spacing:.06em}
+.opening-transcript {position:relative;box-sizing:border-box;padding:clamp(11px,1.5cqw,22px) clamp(14px,2.2cqw,32px) 8px;background:linear-gradient(115deg,#141322f7,#1c1c2aee);border:1px solid #c9b58a9e;border-top:2px solid #d1b587;box-shadow:0 3px 16px #07061080}
+.opening-voice {min-height:4.2em}
+.opening-voice b {display:flex;align-items:center;gap:11px;color:var(--gold);letter-spacing:.045em;font-size:clamp(14px,1.4cqw,20px)}
+.opening-voice b::after {content:"";height:1px;width:3.2em;background:#b89c7075}
+.opening-voice p {color:var(--ink);margin:6px 0;word-break:keep-all;overflow-wrap:anywhere;font-size:clamp(16px,1.75cqw,24px);line-height:1.52}
+.opening-controls {justify-content:flex-end;font-size:clamp(13px,1.1cqw,16px)}
+#opening-prev {margin-right:auto}
+#opening-read {z-index:1;padding:0;background:transparent;border:0;box-shadow:none;opacity:0;cursor:pointer}
+@media (orientation:portrait) {
+ .opening-cg {object-position:49% 32%;height:70%}
+ #overture[data-art="seal"] .opening-cg {object-position:48% 30%}
+ #overture[data-art="lesson"] .opening-cg {object-position:49% 30%}
+ .opening-mat {padding:16px 4% 15px;background:linear-gradient(180deg,#100f19aa,transparent 24%,transparent 38%,#110e1980 55%,#110e19 71%)}
+ .opening-transcript {padding:14px 14px 10px}
+ .opening-voice {min-height:6em}
+ #overture .opening-top button{min-height:40px}
+}
+@media (max-height:540px) and (orientation:landscape) {
+ .opening-mat {padding:6px 3% 8px}
+ .opening-caption {margin-bottom:4px}.opening-caption span,.opening-caption small {display:none}
+ .opening-caption h2 {font-size:18px}.opening-voice {min-height:0}
+ .opening-transcript {padding:6px 12px}.opening-voice p {font-size:15px;line-height:1.35;margin:3px 0}
+ #overture .opening-top button {min-height:27px;padding:2px 10px}
+}
+@media (prefers-reduced-motion:reduce){.opening-cg.ready{animation:none}}
+.expansion-quote {margin:12px 0 8px;padding:10px 12px;background:#dce6ed;color:#243a4b;border-inline-start:3px solid #6985a0}
+.expansion-quote h4 {margin:0}.expansion-quote p {margin:4px 0 8px}
+.quote-row {display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #acbdca;padding:4px 0;font-size:14px}
+.quote-row b {font-variant-numeric:tabular-nums;text-align:right}
+.expansion-quote p.quote-summary,.investment-result b {display:block;font-weight:bold;color:#24594b;margin:8px 0 2px}
+.expansion-quote small,.investment-result small {display:block;font-size:13px;line-height:1.5;color:#394954}
+.investment-result {margin-top:10px;padding:8px 12px;background:#e2ece6;border-inline-start:3px solid #52776b}
+.investment-result p {color:#263d34;margin:4px 0}
+/* The iris petals overlap the artwork at the corners of the stage. */
+@media(min-width:961px),(orientation:landscape){
+ .opening-mat {padding-inline:9%;padding-top:clamp(14px,2.6cqw,36px);padding-bottom:clamp(18px,3.2cqw,46px)}
+ .opening-top {padding-inline:2%}
+}
+@media(max-width:960px) and (orientation:portrait){
+ .opening-top {padding-inline:7%}
+ .opening-controls {padding-inline:3%}
+ #overture[data-art="cell"] .opening-cg {object-position:70% 35%}
+}
+@media (prefers-reduced-motion:no-preference) {
+ #overture[data-art="seal"] .opening-cg.ready {animation:opening-sigil 1.1s ease-out both}
+ #overture[data-art="manor"] .opening-cg.ready {animation:opening-dawn 1.25s ease-out both}
+ @keyframes opening-sigil {from{opacity:.15;filter:sepia(.25) brightness(1.45)}to{opacity:1;filter:none}}
+ @keyframes opening-dawn {from{opacity:.25;filter:sepia(.65)}to{opacity:1;filter:none}}
+}
+.opening-top{justify-content:flex-end}
+.opening-transcript{margin-top:auto}
+#overture[data-voice="thought"] .opening-transcript{background:linear-gradient(110deg,#080912ed,#12131ce6);border:0;border-left:2px solid #a3a4ba}
+#overture[data-voice="thought"] .opening-voice b{color:#c8c9d8;font-weight:400}
+#overture[data-voice="thought"] .opening-voice p{color:#e5e5ef}
+#overture[data-pause="true"]{background:black}
+#overture[data-pause="true"] :is(.opening-still,.opening-mat){visibility:hidden}
+
+#overture[data-voice-only=true],
+#overture[data-voice-only=true] .opening-mat {background:#000}
+#overture[data-voice-only=true] :is(.opening-still,.opening-top,.opening-controls,#opening-speaker) {display:none}
+#overture[data-voice-only=true] .opening-mat {justify-content:center;align-items:center}
+#overture[data-voice-only=true] .opening-transcript {margin:0;padding:0;max-width:34em;background:none;border:0;box-shadow:none}
+#overture[data-voice-only=true] .opening-voice {min-height:0;text-align:center}
+#overture[data-voice-only=true] .opening-voice p {margin:0;color:#eee;line-height:1.8}
+
+@media (prefers-reduced-motion:no-preference){
+ .opening-cg {scale:1;transition:scale 1.8s ease-in-out;transform-origin:52% 38%}
+ #overture[data-art="cell"] .opening-cg {transform-origin:70% 35%}
+ #overture[data-close="true"] .opening-cg {scale:1.13}
+ #overture[data-establish="true"] #opening-dialogue {animation:opening-caption-enter 1.15s ease both}
+ @keyframes opening-caption-enter {0%,78%{opacity:0}100%{opacity:1}}
+}
+
+
+#overture .opening-mat {color:inherit}
+#overture:not([data-voice-only=true]) .opening-mat {padding-inline:0}
+.opening-top {position:absolute;right:12%;top:10%;z-index:1}
+#overture[data-voice-only=true] #opening-dialogue {max-width:34em;text-align:center}
+#overture[data-voice-only=true] #opening-dialogue p {margin:0;color:#eee;font-size:clamp(16px,1.75cqw,24px);line-height:1.8;word-break:keep-all}
+#overture[data-voice-only=true] #opening-next {display:none}
+#overture[data-signing=true] #opening-prev {visibility:hidden}
+#overture[data-voice="thought"] #opening-speaker {font-style:italic}
+@media(max-width:960px) and (orientation:portrait),(max-width:540px){
+ #overture:not([data-voice-only=true]) .opening-mat {display:grid;grid-template-rows:minmax(0,1fr) auto;padding:26px 5% 16px}
+}
+
+/* Prologue playback controls */
+#overture .opening-top {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:3px;
+  padding:3px;
+  border:1px solid #9aaec478;
+  border-radius:7px;
+  background:linear-gradient(135deg,#24354a48,#111c2e72);
+  -webkit-backdrop-filter:blur(14px);
+  backdrop-filter:blur(14px);
+  box-shadow:0 2px 7px #08132655;
+}
+#overture[data-voice-only=true] .opening-top,
+#overture[data-signing=true] .opening-top {display:none}
+#overture .opening-top button {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:.45em;
+  margin:0;
+  min-height:36px;
+  padding:5px clamp(6px,1cqw,13px);
+  white-space:nowrap;
+  border:1px solid transparent;
+  border-radius:4px;
+  background:transparent;
+  color:#edf1f8;
+  text-shadow:0 1px 3px #0a1527;
+}
+#overture .opening-top button::before {
+  content:"";
+  width:10px;
+  height:10px;
+  background:currentColor;
+}
+#opening-prev::before {clip-path:polygon(75% 5%,22% 50%,75% 95%,89% 81%,52% 50%,89% 19%)}
+#opening-auto::before {clip-path:polygon(14% 4%,96% 50%,14% 96%)}
+#opening-auto[aria-pressed=true]::before {clip-path:polygon(12% 6%,38% 6%,38% 94%,12% 94%,12% 6%,62% 6%,88% 6%,88% 94%,62% 94%,62% 6%)}
+#opening-skip::before {clip-path:polygon(0 8%,43% 44%,43% 8%,97% 50%,43% 92%,43% 56%,0 92%)}
+#overture .opening-top button:is(:hover,:focus-visible):enabled {background:#506a8b80;border-color:#b8c8de94}
+#overture #opening-auto[aria-pressed=true] {background:#3c57758f;color:#fff1d2;border-color:#d4c295ba}
+@media(pointer:coarse) {
+  #overture .opening-top button {min-height:44px}
+}
+
+#overture[data-dialogue-hidden=true] .opening-mat {background:none}
+#overture[data-dialogue-hidden=true] :is(#opening-dialogue,#opening-prev,#opening-auto,#opening-skip) {display:none}
+#overture[data-dialogue-hidden=true] .opening-still .opening-cg {object-fit:contain;scale:1}
+#overture[data-dialogue-hidden=true] .opening-still {background:#111820}
+#overture[data-ending=true] .opening-cg {object-position:center}
+#overture[data-ending=true][data-art=command] .opening-cg {object-position:53% center}
+#overture #opening-toggle {white-space:nowrap}
+@media(max-width:540px) {
+  #overture .opening-top {gap:4px}
+  #overture .opening-top button {padding-inline:7px;font-size:clamp(11px,3vw,13px)}
+}
