@@ -25,10 +25,15 @@ jobs:
             patch --batch --forward --no-backup-if-mismatch --fuzz=0 -d site -p1 < monthly-plan.patch
           fi
           grep -Fq 'state.plan=emptyPlan()' site/js/game.js
-          for module in game chapters content reports tour; do
+          for change in arrival-and-schedule.patch court-opinion.patch; do
+            if ! patch --force --reverse --dry-run --fuzz=0 -d site -p1 < "$change" >/dev/null; then
+              patch --batch --forward --no-backup-if-mismatch --fuzz=0 -d site -p1 < "$change"
+            fi
+          done
+          for module in game chapters content reports tour recruit story; do
             node --check "site/js/$module.js"
             version=$(sha256sum "site/js/$module.js" | cut -c1-12)
-            sed -Ei "s|(js/$module[.]js)([?]v=[[:alnum:]-]+)?\"|\1?v=$version\"|g" site/index.html
+            sed -Ei "s|(js/$module[.]js)([?]v=[[:alnum:]-]+)?\"|\1?v=$version\"|g" site/index.html site/recruit-preview.html
           done
       - uses: actions/upload-pages-artifact@v3
         with:
