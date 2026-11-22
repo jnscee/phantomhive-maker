@@ -104,7 +104,7 @@ const visiting = {
   kitchen:["주방","bard","구리 냄비 뚜껑 아래에서 스튜가 끓고 있습니다."],
   quarters:["사용인 숙소","mey","복도 끝 방에서 새로 다린 리넨 냄새가 납니다."],
   company:["팬텀사 사무실",null,"시제품 하나가 사장 책상에 놓여 있습니다. 포장과 내용물을 따로 검사합니다."],
-  townhouse:["런던 타운하우스","soma","차가 식기 전에 소마가 옆자리를 권합니다. 아그니가 주전자를 들어 올립니다."]
+  townhouse:["런던 타운하우스","soma","런던 집의 응접실과 우편함을 살펴봅니다."]
 };
 function calendarDate(turn,day=1){return new Date(Date.UTC(1886,turn-1,day));}
 function monthText(turn){const d=calendarDate(turn);return d.getUTCFullYear()+"년 "+(d.getUTCMonth()+1)+"월";}

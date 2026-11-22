@@ -34,14 +34,21 @@ function scriptedEvents(){
       ["조리대를 맡긴다","바르도 합류 · 건강 +3",{recruit:"bard",hp:3}],["화구 수리부터 함께한다","바르도 합류 · 경영 +4",{recruit:"bard",경영:4}]],
     [24,"birthday2","열두 번째 생일","올해의 케이크 장식은 설탕으로 만든 체스 말입니다. 한 칸 움직이면 곧장 무너질 자리입니다.",
       ["먼저 한 수 둔다","통찰 +6",{통찰:6}],["도련님이 고를 때까지 둔다","의욕 +9",{motivation:9}]],
-    [26,"visitPrince","타운하우스의 손님","소마는 자신이 가져온 찻잎을 내놓습니다. 아그니는 두 사람 몫보다 찻잔을 하나 더 꺼냅니다.",
-      ["함께 차를 든다","소마·아그니와 교류 시작",{recruit:"soma",flag:"agni"}],["다음 방문을 약속한다","소마·아그니와 교류 시작 · 매력 +3",{recruit:"soma",flag:"agni",매력:3}]],
     [31,"match","상자에 남은 이름","런던의 성냥공장 파업 소식이 들어옵니다. 시엘은 팬텀사의 하청 명부도 가져오라고 합니다.",
       ["납품 조건을 조사한다","협력 공장 기록 확보",{flag:"audit",경영:7}],["직원 대표를 만난다","가문 명성 상승",{renown:2}]],
     [33,"chapel","화이트채플에서 온 전보","동부에서 들어온 전보에 수신인이 빠져 있습니다. 시엘은 봉투에 남은 우편 소인부터 살핍니다.",
       ["소인의 경로를 맞춘다","조사 기록 확보",{flag:"postmark",통찰:8},s=>s.stats.통찰>=33,"통찰 33"],["연락망을 정리한다","의지 +1",{의지:1}]]
   ];
-  const fixed=timed.map(([month,id,title,text,a,b])=>({id,title,text,chapter:true,speaker:"세바스찬",sees:s=>s.month>=month&&(id==="visitPrince"?s.flags.townhouse:s.month<=month+2),choices:[a,b].map(effectChoice)}));
+  const fixed=timed.map(([month,id,title,text,a,b])=>({id,title,text,chapter:true,speaker:"세바스찬",sees:s=>s.month>=month&&s.month<=month+2,choices:[a,b].map(effectChoice)}));
+  const rooms={street:"street",london:"street",parlour:"ballroom",bedroom:"bedroom"};
+  const cast={seb:"세바스찬",ciel:"시엘",soma:"소마",agni:"아그니",finny:"피니안",mey:"메이린"};
+  fixed.push({id:"visitPrince",title:princeChapter.title,speaker:"소마",chapter:true,scheduled:true,
+    text:princeChapter.result,sees:townhouseGuestsDue,
+    lines:princeChapter.scenes.flatMap(scene=>scene.lines.map(([speaker,line,withTanaka])=>[
+      speaker==="장면"?"연출":speaker,line,{room:rooms[scene.art],cast:scene.cast.map(id=>cast[id]),withTanaka}
+    ])),
+    prompt:["연출","런던 집의 열쇠가 소마의 손에 남았다.",{room:"ballroom",cast:["소마","아그니"]}],
+    choices:[choice("두 사람에게 런던 집을 맡긴다",princeChapter.result,()=>{recruit("soma");state.flags.agni=true;})]});
   const local=[
     ["study",3,"ink","번진 잉크","마지막 줄에서 잉크가 번졌습니다. 시엘은 답을 외운 채 새 종이를 달라고 합니다.","풀이를 말로 듣는다","지성",5,"잠시 펜을 놓는다","stress",-6],
     ["etiquette",3,"gloves","흰 장갑 한 켤레","세바스찬이 손님 역을 맡습니다. 장갑을 벗는 손의 순서가 지난번과 다릅니다.","그 까닭을 묻는다","통찰",5,"절을 다시 시킨다","기품",6],

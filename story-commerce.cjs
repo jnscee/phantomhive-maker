@@ -3,7 +3,7 @@ const mem=new Map(),elements=new Map();
 function element(){return {isConnected:true,dataset:{},style:{setProperty(){}},addEventListener(){},setAttribute(){},focus(){},querySelector(){return this},querySelectorAll(){return []},classList:{contains(){return false},toggle(){}}}}
 const doc={hidden:false,getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id)},querySelectorAll(){return []},addEventListener(){}};
 const ctx=vm.createContext({console,structuredClone,document:doc,ResizeObserver:class {observe(){}},localStorage:{getItem:k=>mem.get(k)||null,setItem:(k,v)=>mem.set(k,v)},setTimeout,clearTimeout,clearInterval,window:{getSelection(){return null},addEventListener(){}},URLSearchParams});
-for(const name of ['content','recruit','story','scenes','audio','reports','prologue','chapters','staffing','term-events','game']){
+for(const name of ['content','prince','recruit','story','scenes','audio','reports','prologue','chapters','staffing','term-events','game']){
  let s=fs.readFileSync(require('node:path').join(process.argv[2]||'site','js',name+'.js'),'utf8');if(name==='game')s=s.slice(0,s.indexOf('\nrender();\nif(state.phase'));
  vm.runInContext(s,ctx,{filename:name+'.js'});
 }
@@ -31,7 +31,25 @@ for(const omit of ["townhouse","soma","agni"]){
   setup('state.month=35;state.phase="event";state.pending="circus";state.recruitPage={id:"circus",at:7,version:2};state.eventQueue=["snakeReturn"];for(const p of ["finny","mey","bard","tanaka","soma","agni"])recruit(p);state.flags.townhouse=omit!=="townhouse";delete state.people[omit];state=normalizeSave(state)');
   assertOk('!state.people.snake && !state.recruitPage && !["circus","snakeReturn"].includes(state.pending) && !state.snakeArrivalMonth');
 }
-setup('state.month=5;state.phase="plan";state.fund=500;handleAction("townhouse",null,true)');
+for(const missing of ["townhouse","finny","mey","bard"]){
+  ctx.missing=missing;
+  setup('state.flags.townhouse=missing!=="townhouse";for(const id of ["finny","mey","bard"])if(id!==missing)recruit(id);state.pending="visitPrince";state.phase="event";state.recruitReturn="estate";state.eventQueue=["visitPrince"];state=normalizeSave(state)');
+  assertOk('state.phase==="plan"&&!state.pending&&!townhouseGuestsDue(state)&&!state.flags.visitPrince');
+}
+setup('state.month=19;state.flags.townhouse=true;recruit("finny");recruit("mey");state.phase="event";state.pending="cook";state.eventQueue=[]');
+pick();assert.equal(run('state.pending'),"visitPrince");
+assertOk('!state.people.soma && !state.people.agni');
+run('state.recruitPage={id:"visitPrince",at:6,version:3};state=normalizeSave(state)');assert.equal(run('recruitPage("visitPrince")'),6);
+pick();assertOk('state.people.soma && state.people.agni && !townhouseGuestsDue(state)');
+setup('state.flags.townhouse=true;recruit("soma");recruit("agni");state.flags.visitPrince=true;state=normalizeSave(state)');
+assertOk('state.people.soma && state.people.agni && !state.pending');
+const princePages=run('recruitScenes.visitPrince.lines');
+assert.match(princePages[0].text,/에워쌌다/u);
+assert.ok(princePages.every(p=>!["여왕","라우","백작","커피하우스"].some(word=>(p.speaker+p.text+(p.withTanaka||"")+p.scene.title).includes(word))));
+const welcome=princePages.findIndex(p=>p.withTanaka);
+assert.ok(welcome>=0);ctx.welcome=welcome;
+assertOk('!recruitMarkup("visitPrince",welcome).includes("타나카") && recruitMarkup("visitPrince",welcome,x=>x,true,false,"",true).includes("타나카")');
+setup('for(const p of ["bard","finny","mey"])recruit(p);state.month=5;state.phase="plan";state.fund=500;handleAction("townhouse",null,true)');
 assert.equal(run('state.pending'),'visitPrince');pick();
 assertOk('state.people.soma && state.people.agni && !state.people.tanaka && state.snakeArrivalMonth>=5 && state.snakeArrivalMonth<=7');
 run('state.month=state.snakeArrivalMonth;state.phase="result";advance();state=normalizeSave(state)');
@@ -52,7 +70,7 @@ for(const [person,place,month] of [["tanaka","library",1],["finny","garden",1],[
 setup('tab="estate"');
 assertOk('!managementPanel().includes("tab:townhouse")');
 run('handleAction("tab:townhouse")');assert.equal(run('tab'),"estate");
-run('handleAction("townhouse",null,true)');pick();
+run('for(const p of ["bard","finny","mey"])recruit(p);handleAction("townhouse",null,true)');pick();
 assertOk('managementPanel().includes("tab:townhouse")');
 run('handleAction("tab:townhouse")');
 assertOk('tab==="townhouse" && managementPanel().includes("이번 달 배치")');
@@ -80,7 +98,13 @@ const snakeDialogue=snakeLines.filter(row=>row[1]==="스네이크").map(row=>row
 const returnGreeting=run('events.find(e=>e.id==="snakeReturn").text');
 for(const text of [...snakeDialogue,...run('trustedGreetings.snake'),returnGreeting]){
   assert.match(text,/⋯라고 (?:에밀리|오스카|키츠|와일드)가 말했어\.$/u);
+  assert.doesNotMatch(text,/(?:요|니다|시오|지요)[.?!, ]|습니다만|께서|드시|주셔/u);
 }
+const asksForVisit=snakeLines.findIndex(([,speaker,text])=>speaker==="스네이크"&&text.includes("얼굴만이라도"));
+const recognizes=snakeLines.findIndex(([,speaker,text])=>speaker==="시엘"&&text.includes("노아의 방주"));
+const tellsTruth=snakeLines.findIndex(([,speaker,text])=>speaker==="시엘"&&text.includes("아이들을 납치"));
+assert.ok(asksForVisit>=0 && recognizes>asksForVisit && tellsTruth>recognizes);
+assert.ok(snakeLines.slice(tellsTruth).some(([,speaker,text])=>speaker==="시엘"&&text.includes("면회시켜 주진 않아")));
 const jokerQuestion=snakeLines.findIndex(([,speaker,text])=>speaker==="시엘" && text.includes("조커"));
 assert.ok(jokerQuestion>0);
 assert.match(snakeLines[jokerQuestion][2],/조커가 누구지\?/u);

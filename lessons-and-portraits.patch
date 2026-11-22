@@ -191,18 +191,18 @@
 -<script src="js/staffing.js?v=00ba2d2a1ea6"></script>
 -<script src="js/game.js?v=11b0f98b15d2"></script></body></html>
 +<script src="js/tour.js?v=e380777efa81"></script>
-+<script src="js/content.js?v=198f383520f4"></script>
++<script src="js/content.js?v=d769419af08b"></script>
 +<link rel="stylesheet" href="css/recruit.css?v=b0fcf649ce20">
-+<script src="js/recruit.js?v=31a74d36fd5b"></script>
-+<script src="js/story.js?v=b1233e361879"></script>
++<script src="js/prince.js?v=e8a735fc28a4"></script><script src="js/recruit.js?v=19d63d834b19"></script>
++<script src="js/story.js?v=34de2fcd8bbd"></script>
 +<script src="js/scenes.js?v=8fa047d42156"></script>
 +<script src="js/audio.js?v=a2c2b562bba2"></script>
 +<script src="js/reports.js?v=4d5b61c3b929"></script>
 +<script src="js/prologue.js?v=9bdb9de8c466"></script>
-+<script src="js/chapters.js?v=072674c3e401"></script>
-+<script src="js/staffing.js?v=0196e37f8664"></script>
++<script src="js/chapters.js?v=b0796d4d77ad"></script>
++<script src="js/staffing.js?v=580e246534c9"></script>
 +<script src="js/term-events.js?v=88ff00703568"></script>
-+<script src="js/game.js?v=4176f3093fa2"></script></body></html>
++<script src="js/game.js?v=d1567e6712cd"></script></body></html>
 --- a/js/audio.js
 +++ b/js/audio.js
 @@ -1,6 +1,9 @@
@@ -412,7 +412,7 @@
   choice("먼저 다과를 함께한다","타나카 복귀 · 신뢰 상승",()=>{recruit("tanaka");state.staff="library";talkTrust("tanaka",2);})]},
   {id:"unasked",speaker:"세바스찬",title:"명령보다 한 박자 먼저",text:"시엘이 손을 내밀자 장갑이 이미 그 위에 놓였다. “아직 부르지 않았는데.” 세바스찬은 반대쪽 장갑의 단추를 풀었다. “다시 벗겨 드릴까요?”",sees:s=>s.month>=4&&(s.flags.attention||0)>=3,choices:[choice("말없이 다음 장갑을 건넨다","둘만의 아침 습관 기록",()=>{state.flags.morningGloves=true;}),choice("도련님의 대답을 기다린다","의지 +15",()=>changeStat("의지",15))]}];}
 -function sourceNote(e){return e.source||({jubilee:"1887년 6월 빅토리아 여왕 즉위 50주년 · 가문 참여 IF",match:"1888년 런던 성냥공장 파업 · 회사 대응 IF",circus:"타나카 복귀 뒤 · 서커스단의 편지와 풋맨 합류",visitPrince:"런던 타운하우스 취득 후 · 소마와 아그니 동반 입주",gardener:"원작 연구소 탈출 · 첫 만남과 명명 / 게임 달력에 배치",maid:"원작 30권 · 올빼미에게 건넨 고용 제안 / 피니안 합류 뒤 월말 추첨",cook:"원작의 서재 면담 · 메이린 합류 뒤 게임 달력에 배치",homecoming:"원작 회중시계 계승 장면 · 저택 복귀일의 서재로 각색"}[e.id])||"";}
-+function sourceNote(e){return e.source||({jubilee:"1887년 6월 빅토리아 여왕 즉위 50주년 · 가문 참여 IF",match:"1888년 런던 성냥공장 파업 · 회사 대응 IF",circus:"런던 타운하우스 · 소마와 아그니가 맞이한 방문객",visitPrince:"런던 타운하우스 취득 후 · 소마와 아그니 동반 입주",gardener:"원작 연구소 탈출 · 첫 만남과 명명 / 게임 달력에 배치",maid:"원작 30권 · 올빼미에게 건넨 고용 제안 / 피니안 합류 뒤 월말 추첨",cook:"원작의 서재 면담 · 메이린 합류 뒤 게임 달력에 배치",homecoming:"원작 회중시계 계승 장면 · 저택 복귀일의 서재로 각색"}[e.id])||"";}
++function sourceNote(e){return e.source||({jubilee:"1887년 6월 빅토리아 여왕 즉위 50주년 · 가문 참여 IF",match:"1888년 런던 성냥공장 파업 · 회사 대응 IF",circus:"런던 타운하우스 · 소마와 아그니가 맞이한 방문객",visitPrince:"런던 타운하우스 보유 · 바르도, 피니안, 메이린 합류 후",gardener:"원작 연구소 탈출 · 첫 만남과 명명 / 게임 달력에 배치",maid:"원작 30권 · 올빼미에게 건넨 고용 제안 / 피니안 합류 뒤 월말 추첨",cook:"원작의 서재 면담 · 메이린 합류 뒤 게임 달력에 배치",homecoming:"원작 회중시계 계승 장면 · 저택 복귀일의 서재로 각색"}[e.id])||"";}
  function houseValues(){
   const staff=Object.values(state.jobs),matched=Object.entries(state.jobs).filter(([p,r])=>servants[p]?.job===r).length;
   const rooms=[...Object.values(state.level),...Object.values(state.annex)],improvements=rooms.reduce((s,v)=>s+v-1,0);
@@ -755,7 +755,12 @@
  };
  const extraActivities = {
    language:["라틴어",23,{지성:8,매력:6},10],music:["바이올린",25,{기품:8,의지:5},8],
-@@ -104,6 +113,14 @@
+@@ -100,10 +109,18 @@
+   kitchen:["주방","bard","구리 냄비 뚜껑 아래에서 스튜가 끓고 있습니다."],
+   quarters:["사용인 숙소","mey","복도 끝 방에서 새로 다린 리넨 냄새가 납니다."],
+   company:["팬텀사 사무실",null,"시제품 하나가 사장 책상에 놓여 있습니다. 포장과 내용물을 따로 검사합니다."],
+-  townhouse:["런던 타운하우스","soma","차가 식기 전에 소마가 옆자리를 권합니다. 아그니가 주전자를 들어 올립니다."]
++  townhouse:["런던 타운하우스","soma","런던 집의 응접실과 우편함을 살펴봅니다."]
  };
  function calendarDate(turn,day=1){return new Date(Date.UTC(1886,turn-1,day));}
  function monthText(turn){const d=calendarDate(turn);return d.getUTCFullYear()+"년 "+(d.getUTCMonth()+1)+"월";}
@@ -906,7 +911,7 @@
    if(isRecruit)delete state.recruitPage;
 -  state.events.push({id:event.id,index,month:state.month,...(isRecruit?{edition:"canonical"}:{})});
 -  state.log.push(choice.result);
-+  state.events.push({id:event.id,index,month:state.month,...(examNote?{examNote}:{}),...(isRecruit?{edition:"canonical",age:currentCielAge()}:{})});
++  state.events.push({id:event.id,index,month:state.month,...(examNote?{examNote}:{}),...(isRecruit?{edition:"canonical",age:currentCielAge()}:{}),...(event.id==="visitPrince"?{hadTanaka:Boolean(state.people.tanaka)}:{})});
 +  state.log.push(examNote||choice.result);
 +  if(pages){
 +    state.termOutcome={id:event.id,index,note:examNote};
@@ -1059,7 +1064,7 @@
  }
  function titlePanel(){
    return frame("팬텀하이브 메이커",'<div class="book-cover"><small>1886 — 1888</small><h2>EARL<br>PHANTOMHIVE<br>MAKER</h2><p>팬텀하이브 메이커</p>'+btn('<span class="return-label">회차로 돌아가기</span>',"back",false,"return-control")+btn("새 회차","reset")+'</div>');
-@@ -485,7 +546,7 @@
+@@ -485,12 +546,9 @@
    const allies=peopleInHouse().filter(k=>state.people[k].toward>=5).map(k=>servants[k].name);
    const top=Object.keys(state.stats).sort((a,b)=>state.stats[b]/statMax(b)-state.stats[a]/statMax(a))[0];
    const route=state.ending==="vowNoTitle"?((state.stats.경영>=140&&state.fund>=260)?"런던의 사업가로 자리 잡았습니다. ":state.stats.통찰>=140?"정보상의 연락망을 얻었습니다. ":"마차를 타고 옛 흔적을 좇습니다. "):"";
@@ -1067,8 +1072,13 @@
 +  return route+(allies.length&&!["releaseTitle","releaseNoTitle","ill","broke"].includes(state.ending)?allies.join("·")+"은 다음 겨울에도 도련님의 지시를 따르겠다고 전했습니다. ":"")+"가장 단련된 능력은 "+top+"이었습니다. 팬텀사의 개발품은 "+state.unlocked.length+"종, 저택에 합류한 고용인은 "+peopleInHouse().filter(id=>servants[id].job).length+"명입니다.";
  }
  function canBuyTownhouse(){return state.phase==="plan" && !state.flags.townhouse && state.fund>=250;}
- function townhouseGuestsDue(run){
-@@ -577,7 +638,9 @@
+-function townhouseGuestsDue(run){
+-  return Boolean(run.flags.townhouse&&!run.flags.visitPrince&&!(run.people.soma&&run.people.agni));
+-}
+ function startTownhouseGuests(run){
+   if(run.pending||!["plan","result"].includes(run.phase)||!townhouseGuestsDue(run))return false;
+   if(run.phase==="plan")run.recruitReturn="estate";
+@@ -577,7 +635,9 @@
      if(!eligible){copy.pending=copy.eventQueue?.shift()||null;copy.phase=copy.pending?"event":"result";}
    }
    // Older releases could queue a staff event before the new prerequisites.
@@ -1078,22 +1088,37 @@
      if(id==="homecoming"&&copy.phase==="event"&&copy.pending===id)return canTanakaReturn(copy);
      if(id==="maid")return copy.people.finny&&!copy.people.mey&&!copy.flags.maid;
      const arrival=events.find(e=>e.id===id&&e.household);
-@@ -586,9 +649,11 @@
+@@ -586,16 +646,25 @@
    if(copy.eventQueue)copy.eventQueue=copy.eventQueue.filter(allowed);
    if(copy.phase==="event"&&copy.pending&&!allowed(copy.pending)){
      delete copy.recruitPage;
 -    copy.pending=copy.eventQueue?.shift()||null;copy.phase=copy.pending?"event":"result";
 -  }
 -  if(["maid","circus","visitPrince"].includes(copy.recruitPage?.id)&&copy.recruitPage.version!==2)delete copy.recruitPage;
-+    copy.pending=copy.eventQueue?.shift()||null;copy.phase=copy.pending?"event":copy.recruitReturn==="vow"?"vow":"result";
++    copy.pending=copy.eventQueue?.shift()||null;copy.phase=copy.pending?"event":copy.recruitReturn==="vow"?"vow":copy.recruitReturn==="estate"?"plan":"result";
 +    if(!copy.pending)delete copy.recruitReturn;
 +  }
-+  if(copy.recruitPage?.id==="circus"&&copy.recruitPage.version!==3)delete copy.recruitPage;
-+  if(["maid","visitPrince"].includes(copy.recruitPage?.id)&&copy.recruitPage.version!==2)delete copy.recruitPage;
++  if(copy.recruitPage?.id==="circus"&&copy.recruitPage.version===3){
++    // Readers past the old promise of a visit resume at the revised conversation.
++    const meeting=recruitScenes.circus.lines.findIndex(page=>page.speaker==="시엘"&&page.text.includes("조커가 누구지"));
++    copy.recruitPage.at=Math.min(pageAt("circus",copy.recruitPage.at),meeting);
++    copy.recruitPage.version=4;
++  }
++  if(copy.recruitPage?.id==="circus"&&copy.recruitPage.version!==4)delete copy.recruitPage;
++  if(copy.recruitPage?.id==="visitPrince"&&copy.recruitPage.version!==3)delete copy.recruitPage;
++  if(copy.recruitPage?.id==="maid"&&copy.recruitPage.version!==2)delete copy.recruitPage;
    if(copy.recruitPage?.id==="cook"&&copy.recruitPage.version==null){
      // The original cut had five pages before Ciel's first question.
      copy.recruitPage.at=pageAt("cook",copy.recruitPage.at-5);
-@@ -603,6 +668,10 @@
+     copy.recruitPage.version=2;
+   }
+   if(["result","vow"].includes(copy.phase)&&!copy.pending){
+-    const arrival=overdueArrival(copy)||(tanakaReturns(copy)?"homecoming":null);
++    const arrival=overdueArrival(copy)||(tanakaReturns(copy)?"homecoming":null)||(townhouseGuestsDue(copy)?"visitPrince":null);
+     if(arrival){
+       if(copy.phase==="vow")copy.recruitReturn="vow";
+       copy.pending=arrival;copy.phase="event";
+@@ -603,6 +672,10 @@
    }
    startFinnyAtTurn(copy);
    startTownhouseGuests(copy);
@@ -1104,7 +1129,7 @@
    return copy;
  }
  function recordPanel(){
-@@ -619,10 +688,27 @@
+@@ -619,10 +692,27 @@
        return '<details><summary>'+monthText(record.month||state.month)+' · '+event.title+'</summary><p>'+note+'</p>'+btn('영입 장면 다시 보기','recruit-memory:'+event.id)+'</details>';
      }
      const choice=event.choices[record.index];
@@ -1134,7 +1159,7 @@
  }
  function savePanel(){
    const rows=["auto","1","2","3"].map((id,index)=>{
-@@ -631,7 +717,7 @@
+@@ -631,7 +721,7 @@
        (record?monthText(record.month)+" · "+phaseNames[record.phase]:"빈 슬롯")+'</span></div><div class="opts">'+
        (index?btn("저장","store:"+id,false,"slot-write"):"")+btn("불러오기","load:"+id,!record,"slot-read")+'</div></div>';
    }).join("");
@@ -1143,7 +1168,7 @@
      '<div class="notebook-actions">'+(state.phase!=="contract"?btn("프롤로그 다시 보기","recollect"):"")+btn("새 회차","reset")+btn("표지로","tab:title")+'</div>');
  }
  function statusPanel(){
-@@ -646,7 +732,7 @@
+@@ -646,7 +736,7 @@
      return '<div class="meter '+styles[i]+'"><span>'+conditions[i]+'</span><span class="track" aria-hidden="true"><i class="fill" style="width:'+
        value+'%"></i></span><b>'+value+'</b><em class="'+((i===1?delta>0:delta<0)?"danger":"good")+'">'+(delta?signed(delta):"–")+'</em></div>';
    }).join("");
@@ -1152,7 +1177,7 @@
      (state.phase==="plan"?"월말 예상 변동":"이번 달 변동")+'</span></div><div class="hud-group">'+meters+
      '</div><div class="hud-group"><div class="attributes"><div class="attribute attr-label muted"><span>능력치</span><b>현재</b><em>변동</em></div>'+
      stats.map(name=>{
-@@ -796,8 +882,9 @@
+@@ -796,8 +886,9 @@
  }
  function managementPanel(){
    const company=tab==="company",active=state.phase==="plan";
@@ -1163,7 +1188,7 @@
    if(tab==="staffing")return header+staffBoard();
    const actual=state.salesBook.at(-1);
    const settled=["event","result","vow","investiture","ending"].includes(state.phase);
-@@ -811,6 +898,17 @@
+@@ -811,6 +902,17 @@
  }
  
  const marketGoods={
@@ -1181,7 +1206,7 @@
    tea:{name:"홍차 한 잔",cost:12,stat:"stress",amount:-5,label:"스트레스",line:"마침 차가 잘 우러났어. 한 잔 하겠어?"},
    scone:{name:"버터 스콘",cost:15,stat:"hp",amount:6,label:"건강",line:"스콘은 따뜻할 때 반으로 갈라야 버터가 스며들지."}
  };
-@@ -818,21 +916,22 @@
+@@ -818,21 +920,22 @@
  function marketPanel(){
    const cards=Object.entries(marketGoods).map(([id,g])=>
      '<button type="button" class="goods-ticket" data-action="goods:'+id+'" aria-pressed="'+(selectedGood===id)+'">'+
@@ -1213,7 +1238,7 @@
  state=normalizeSave(state);
  if(state.phase==="event")tab="plan";
  function sheetTitle(){
-@@ -843,48 +942,46 @@
+@@ -843,48 +946,46 @@
      if(state.phase==="ending")return endingLabels[state.ending][0];
      return "월간 일정";
    }
@@ -1283,7 +1308,7 @@
    musicPlayer.sync(trackForView());
    stopPlayback();
    $("system-back").disabled=tab==="home";
-@@ -932,7 +1029,7 @@
+@@ -932,7 +1033,7 @@
    $("home-standing").hidden=!(home||calendar||tab==="status"||tab==="title");
    $("calendar").hidden=!calendar;
    $("scene").dataset.calendar=String(calendar);
@@ -1292,7 +1317,7 @@
    $("nav").hidden=!home;
    $("sheet").hidden=home||calendar;
    $("scene").dataset.sheet=String(!home);
-@@ -1115,6 +1212,21 @@
+@@ -1115,6 +1216,21 @@
  }
  function handleAction(key,rect,confirmed=false){
    const [action,id,value]=key.split(":");
@@ -1314,7 +1339,7 @@
    if(action==="recruit-memory"&&tab==="record"&&state.events.some(e=>e.id===id)){openRecruitMemory(id);return;}
    if(tab==="staffMemory"&&["system-back","back"].includes(action)){closeRecruitMemory();return;}
    const fund=state.fund;
-@@ -1123,10 +1235,15 @@
+@@ -1123,10 +1239,15 @@
    if(action==="open-guide"){showGuidePage(0);return;}
    if(action==="goods"&&tab==="market"&&Object.hasOwn(marketGoods,id)){
      selectedGood=id;
@@ -1331,7 +1356,7 @@
    }
    if(action==="greet-ciel"){greetCiel();return;}
    if(action==="open-menu"){
-@@ -1173,11 +1290,16 @@
+@@ -1173,11 +1294,16 @@
    if(action==="skip"){finishScene();respond("step",rect);return;}
    if(action==="speed"){speed=speed===1?3:1;const b=$("playback").querySelector('[data-action="speed"]');if(b)b.textContent="재생 ×"+speed;respond("step",rect);return;}
    if(action==="category"){lessonPage=Number(id);render();focusAction(key);respond("tap",rect,".lesson-index");return;}
@@ -1349,7 +1374,7 @@
    if(action==="annex"||action==="townhouse"){
      if(action==="annex"&&state.phase!=="plan")return;
      if(action==="townhouse"){
-@@ -1224,6 +1346,8 @@
+@@ -1224,6 +1350,8 @@
      return;
    }
    if(action==="tab"){
@@ -1358,7 +1383,7 @@
      if(["contract","guide"].includes(state.phase)&&!["save","plan"].includes(id)){tab="plan";render(true);return;}
      if(id==="chat"&&state.phase!=="plan"){announce("진행 중인 일정과 결산을 먼저 마쳐 주세요.");return;}
      if(id==="plan")lessonPage=Math.max(0,categories.findIndex(([,list])=>list.includes(state.plan[selectedSlot])));
-@@ -1232,9 +1356,10 @@
+@@ -1232,9 +1360,10 @@
      }else utilityOrigin=null;
      if(id==="staffing"){selectedEmployee=null;estateReturnScroll=$("panel").scrollTop;}
      const openManagement=tab==="home"&&id==="estate";
@@ -1372,7 +1397,7 @@
        state.managementTab=tab;persist();
      }
      render(true);respond("tap",rect);return;
-@@ -1288,7 +1413,7 @@
+@@ -1288,7 +1417,7 @@
      render(true);return;
    }
    if(action==="execute"&&!confirmed&&state.phase==="plan"){
@@ -1381,7 +1406,7 @@
      const instructions='<details class="desk-review"><summary>이달 운영 지시 확인·변경</summary>'+
        '<div><p><b>저택</b><br>'+(state.people.tanaka?"타나카 · "+dutyName(state.jobs.tanaka)+" · ":"")+'시설 상태 '+houseValues().시설상태+'</p>'+btn("저택 지시 변경","inspect:estate")+'</div>'+
        '<div><p><b>팬텀사</b><br>'+products[state.product].name+' '+state.qty+'개 · 판매가 '+money(state.price)+'</p>'+btn("팬텀사 지시 변경","inspect:company")+'</div></details>';
-@@ -1321,11 +1446,18 @@
+@@ -1321,11 +1450,18 @@
      if(action==="buy"){
        const g=marketGoods[id];
        if(tab!=="market"||!Object.hasOwn(marketGoods,id)||state.fund<g.cost)return;
@@ -1405,7 +1430,7 @@
      }else if(action==="activity"){
        pattern="schedule";state.plan[Number(id)]=value;
        message=slotNames[Number(id)]+" · "+actions[value].name;
-@@ -1375,7 +1507,7 @@
+@@ -1375,7 +1511,7 @@
    persist();
    if(action==="store"&&!storageOk)message="현재 탭에 임시 저장";
    const scroll=$("panel").scrollTop;
@@ -1414,7 +1439,7 @@
    render(!keepScroll);
    if(keepScroll)$("panel").scrollTop=scroll;
    focusAction(key);
-@@ -1405,7 +1537,7 @@
+@@ -1405,7 +1541,7 @@
        const key=button.dataset.action;
        handleAction(key,rect);
        const pressed=button.isConnected?button:document.querySelector('button[data-action="'+key+'"]:not(:disabled)');
@@ -1423,7 +1448,7 @@
          pressed.animate([{scale:".98"},{scale:"1"}],{duration:140,easing:"ease-out"});
        }
      }
-@@ -1418,5 +1550,7 @@
+@@ -1418,5 +1554,7 @@
  });
  render();
  if(state.phase==="guide"&&tab==="plan")showGuidePage(0);
@@ -1431,6 +1456,64 @@
 +matchMedia("(prefers-reduced-motion: reduce)").addEventListener?.("change",syncMotion);
  $("launch-help").hidden=true;
  $("mobile-menu").hidden=false;
+--- /dev/null
++++ b/js/prince.js
+@@ -0,0 +1,55 @@
++"use strict";
++
++function townhouseGuestsDue(run){
++  return Boolean(run.flags.townhouse && run.people.bard && run.people.finny && run.people.mey &&
++    !run.flags.visitPrince && !(run.people.soma && (run.people.agni || run.flags.agni)));
++}
++
++const princeChapter={
++  name:"소마·아그니", title:"런던 집의 두 주인", result:"소마와 아그니가 보수를 받고 런던 타운하우스의 관리를 맡았다.",
++  scenes:[
++    {title:"골목에서 고른 편",art:"street",music:"gloomy",cast:["ciel","seb"],lines:[
++      ["장면","런던 이스트엔드. 시엘과 세바스찬이 골목을 돌아서자, 일거리를 기다리던 인도인 사내 몇이 둘을 에워쌌다. 맨 앞의 사내가 시엘의 옷깃을 움켜쥐었다."],
++      ["사내","부두에선 우리 보고 인도로 돌아가라더군. 거기선 너희 나라 사람들이 일자리를 차지하고 있는데 말이야. 도련님은 어느 쪽으로 가라고 할 텐가?"],
++      ["시엘","내 옷깃을 놓으면 대답하지."],
++      ["소마","아그니! 영국 귀족 하나에 집사까지 붙었잖느냐. 나는 우리 동포 편이다. 저 둘을 제압해라!"]]},
++    {title:"왕자의 첫 명령",art:"street",music:"gloomy",cast:["agni","seb"],lines:[
++      ["장면","사내의 손이 시엘의 깃에서 떨어졌다. 고개를 돌렸을 때 세바스찬은 벌써 낯선 남자와 맞붙어 있었다. 마차 한 대가 골목을 지나도록 어느 쪽도 물러서지 않았다."],
++      ["아그니","……이상하군요. 보통 사람이라면 벌써 몇 번은 정신을 잃었을 텐데. 어찌 아직 서 계십니까?"],
++      ["세바스찬","글쎄요. 도련님께서 아직 돌아가시라는 말씀을 안 하셔서."],
++      ["시엘","잠깐, 네가 봤다는 건 어디부터지? 내 옷깃을 잡은 건 저쪽이야. 내가 영국인이면 그건 물을 필요도 없나?"]]},
++    {title:"왕자의 두 번째 명령",art:"london",music:"daily",cast:["soma","ciel"],lines:[
++      ["소마","그랬느냐? 이봐, 정말 저 땅꼬마가 먼저 아무 짓도 안 했는데 붙들었어?"],
++      ["장면","사내가 시엘의 옷깃에서 뜯어낸 단추를 슬쩍 놓았다. 돌바닥에 떨어지는 소리에 소마의 눈썹이 올라갔다."],
++      ["소마","그럼 잘못한 건 이쪽이잖느냐. 아그니, 명령을 바꾸겠다! 저 땅꼬마와 그 집사를 도와라."],
++      ["장면","소란이 가라앉았을 때 골목의 사내들은 하나같이 바닥에 뻗어 있었다. 소년은 제 이름이 소마 아스만 카다르라고 외치고는, 아그니를 데리고 저만치 가 버렸다."],
++      ["세바스찬","우선 이분들부터 시경에 인계하지요. 단추는 제가 달아 드리겠습니다."]]},
++    {title:"돌아온 일행",art:"parlour",music:"daily",cast:["finny","mey"],lines:[
++      ["장면","타운하우스 문이 열렸다. 피니안이 시엘의 외투를 받고 메이린이 모자를 받았다. 바르도는 젖은 장갑을 말리겠다며 부엌에서 집게를 들고 나왔다.","타운하우스 문이 열렸다. 피니안이 외투를, 메이린이 모자를 받았다. 바르도가 부엌 집게로 시엘의 장갑을 집으려 하자 타나카가 말없이 은쟁반을 내밀었다."],
++      ["시엘","세바스찬. 그런데 하룻밤 묵는 데 왜 셋을 전부 데려온 거지?"],
++      ["세바스찬","지난번 잭 더 리퍼 사건 때는 셋에게 집을 맡겼지요. 돌아와 보니 밖에서도 식당 안이 훤히 보이더군요. 원래 벽이 있던 쪽으로요."],
++      ["시엘","그 얘기는 됐어. 세바스찬, 홍차. 오늘은 이제 아무도 만나고 싶지 않아."]]},
++    {title:"은인은 손님으로",art:"parlour",music:"cheerful",cast:["soma","agni"],lines:[
++      ["소마","그럼 마침 잘됐다! 우린 아까 만났으니 새 손님을 맞을 필요도 없잖느냐."],
++      ["장면","세바스찬이 찻잔 하나를 들고 돌아왔다. 소마는 벌써 시엘 옆에 앉아 있었다. 등 뒤에 선 아그니가 마침 컵을 하나 더 꺼내던 참이었다."],
++      ["소마","우리가 너희를 도왔지? 우리나라에선 은인이 찾아오면 집에 들여 잘 대접한다. 차는 아그니 몫까지 부탁하마. 그런데 우린 어느 방에서 자면 되느냐?"],
++      ["시엘","……차 한 잔에서 침대 두 개까지 가는 데 숨도 한 번 안 쉬는군."]]},
++    {title:"집사보다 이른 손님",art:"bedroom",music:"daily",cast:["agni","seb"],lines:[
++      ["장면","이튿날, 세바스찬이 시엘의 방문에 손을 대자 문이 안에서 열렸다. 시엘은 벌써 옷깃을 여미고 있었다. 아그니가 빈 세숫대야를 들고 길을 비켰다."],
++      ["세바스찬","그럼 저는 정원부터……."],
++      ["아그니","물은 해가 들기 전에 주었습니다. 밤새 마른 빨래는 방마다 나눠 두었고요. 아침 식사는 십 분 뒤면 됩니다."],
++      ["세바스찬","아그니 씨, 여기는 남의 집이고 당신은 손님입니다. 적어도 식사만큼은 앉아서 받아 주셔도 됩니다만."],
++      ["아그니","전하께서 신세를 지시는 집이지 않습니까. 제가 할 수 있는 일이 눈앞에 있는데, 굳이 누가 와서 하실 때까지 두는 편이 더 불편합니다."],
++      ["장면","마침 커튼이 걷혔다. 세바스찬의 눈에는 햇살이 죄다 아그니의 등 뒤로 모인 것처럼 보였다."],
++      ["세바스찬","……아그니 씨. 혹시 내일도 이 시간에 뵐 수 있을까요?"]]},
++    {title:"런던 집의 열쇠",art:"parlour",music:"cheerful",cast:["soma","ciel"],lines:[
++      ["소마","아그니, 아주 훌륭했다! 그럼 나는 올라가서 한숨 더 자겠다."],
++      ["시엘","잠깐. 그 방이 마음에 들면 계속 써도 좋아. 대신 이 집을 맡아. 손님을 만나고, 편지를 받고, 무슨 일이 있었는지 내게 알려. 아그니와 둘이서."],
++      ["소마","내게 집을 맡기겠다고? 내가 손님을 고르고 아그니와 의논해서 직접 꾸려도 된다는 거냐?"],
++      ["시엘","그래. 일한 보수도 지불하지. 부모님 지갑에서 꺼낸 돈으론 네가 아그니에게 차 한 잔을 사 줘도 결국 누가 산 건지 애매하잖아."],
++      ["소마","좋다! 내 첫 급료로는 내가 아그니를 대접하겠다. 들었느냐, 아그니? 오늘부터 여긴 우리가 맡는다!"],
++      ["장면","소마가 열쇠를 받자마자 아그니와 손님 명부를 펼쳤다. 시엘은 두 사람이 고개를 맞댄 사이 세바스찬에게 외투를 내밀었다."],
++      ["시엘","마차를 대. 내일 아침은 본저택에서 먹겠어."],
++      ["세바스찬","예, 도련님. 이번에는 홍차도 한 분 몫만 준비해 두겠습니다."]]}
++  ]
++};
 --- a/js/prologue.js
 +++ b/js/prologue.js
 @@ -152,7 +152,7 @@
@@ -1499,7 +1582,7 @@
        ["타나카","예, 도련님. 그 전에…… 세바스찬 씨, 잠시 손을 펴 주시겠습니까?"],
        ["장면","타나카가 조끼에서 회중시계를 꺼내 세바스찬의 흰 장갑 위에 놓았다. 뚜껑에는 팬텀하이브가의 문장이 새겨져 있었다."],
        ["세바스찬","이 시계를 제게 주시는 겁니까?"],
-@@ -93,53 +93,77 @@
+@@ -93,62 +93,63 @@
        ["타나카","제가 아직 당신이 어떤 분인지는 잘 모릅니다만…… 도련님을 잘 부탁드립니다."],
        ["세바스찬","……예. 팬텀하이브가의 집사로서 최선을 다해 도련님을 모시겠습니다."]]}
    ]},
@@ -1526,6 +1609,36 @@
 -      ["스네이크","에밀리. 아까 말한 건 오스카고. ……둘 다 같이 있어도 돼?"],
 -      ["시엘","네가 데려온 식구잖아. 방은 세바스찬이 보여 줄 거야."],
 -      ["스네이크","그럼 여기서 일할게. ……이건 내가 하는 말이야."]]}
+-  ]},
+-  visitPrince:{name:"소마·아그니",title:"이스트엔드에서 만난 두 사람",result:"소마와 아그니가 런던 타운하우스에 함께 입주했다.",scenes:[
+-    {title:"이스트엔드",art:"london",cast:["ciel","seb"],lines:[
+-      ["장면","런던 집을 산 날, 시엘과 세바스찬은 이스트엔드에 잠시 들렀다. 골목에 들어선 지 얼마 되지 않아 한 사내가 시엘의 옷깃을 붙들었다."],
+-      ["사내","그렇게 잘 차려입고 여기까지 오셨으니, 주머니도 좀 무거우시겠어?"],
+-      ["장면","세바스찬이 그 손을 떼어 냈다. 그 순간 길 건너에서 낯선 소년의 목소리가 날아왔다."],
+-      ["낯선 소년","아그니! 저 사람을 도와줘라!"]]},
+-    {title:"잘못 짚은 편",art:"london",cast:["soma","agni"],lines:[
+-      ["장면","아그니가 두 사람 사이에 섰다. 세바스찬은 시엘의 옷깃에서 뜯겨 나간 단추를 가리켰다. 아직 사내의 손에 있었다."],
+-      ["아그니","전하. 먼저 손을 댄 쪽은 이분인 듯합니다."],
+-      ["소마","뭐야? ……이봐, 그 단추는 돌려주고 가야지!"],
+-      ["장면","단추가 돌바닥에서 한 바퀴 돌았다. 소년은 직접 주워 손수건으로 닦더니 시엘에게 내밀었다."]]},
+-    {title:"이름을 묻다",art:"london",cast:["soma","ciel"],lines:[
+-      ["소마","내가 잘못 봤다. 미안하다. 나는 벵골에서 온 소마 아스만 카다르다. 네 이름은 뭐냐?"],
+-      ["시엘","……시엘 팬텀하이브. 남의 일에 뛰어들기 전에 그걸 먼저 물어보는 게 어때?"],
+-      ["소마","그럼 이번엔 먼저 물으마, 시엘. 혹시 미나라는 여자를 아느냐? 어릴 때부터 나를 돌봐 주던 사람이다."],
+-      ["시엘","이 동네에 있다는 거야? 그 이름 하나로 런던을 다 뒤질 셈이야?"],
+-      ["소마","그래서 여기 사람들에게 묻고 있었다. 아그니랑 나는 미나를 찾으러 왔거든."]]},
+-    {title:"런던 집의 열쇠",art:"london",cast:["ciel","agni"],lines:[
+-      ["세바스찬","해가 지는군요. 두 분이 묵으시는 곳까지 마차로 모셔다드릴까요?"],
+-      ["아그니","말씀은 감사합니다. 사실 오늘은 여관부터 찾아야 합니다. 전하께서 배에서 내리시자마자 이 거리로 오셨거든요."],
+-      ["시엘","세바스찬, 마차를 런던 집으로 돌려. 위층에 손님방이 둘 있었지?"],
+-      ["시엘","둘 다 거기서 지내. 미나를 찾는 동안은 방 걱정까지 할 필요 없어."]]},
+-    {title:"첫날 저녁",art:"parlour",cast:["soma","agni"],lines:[
+-      ["아그니","전하와 제 방까지 마련해 주시다니. 신세를 지겠습니다, 백작님."],
+-      ["소마","고맙다, 시엘. 그럼 내일 아침엔 같이 먹자. 단추도 돌려줬으니 이번엔 제대로 인사하고 싶다!"],
+-      ["시엘","아침 아홉 시야. 그 전엔 내 방 문을 두드리지 마."],
+-      ["소마","들었지, 아그니? 아홉 시에 두드리면 된단다!"],
+-      ["시엘","……아홉 시에 식당에서 보자는 뜻이야."]]}
+-  ]}
 +  circus:{name:"스네이크",title:"봉투에 적힌 이름",result:"스네이크는 타운하우스에서 소마와 아그니를 만났다. 본저택에서 시엘과 이야기를 나눈 뒤, 뱀들과 함께 풋맨으로 일하기로 했다.",scenes:[
 +    {title:"봉투에 적힌 이름",music:"gloomy",art:"field",cast:["snake"],lines:[
 +      ["장면","공연이 끝나면 조커가 돈을 세고, 스네이크는 뱀을 셌다. 오늘은 뱀을 다 세고도 천막을 떠날 수 없었다."],
@@ -1536,12 +1649,12 @@
 +    {title:"타운하우스의 문간",music:"daily",art:"london",cast:["snake","soma"],lines:[
 +      ["소마","야, 그러다 해 지겠다! 문고리를 그렇게 보고만 있으면 안에서 어떻게 열어 줘?"],
 +      ["스네이크","이 편지를 읽을 사람을 찾고 있어. 여기 ‘팬텀하이브 백작 귀하’라고 쓰여 있지? ⋯라고 오스카가 말했어."],
-+      ["소마","팬텀하이브 백작이면 시엘인데? 오늘은 본저택에 있어. 아그니, 우리 마차가 벌써 나갔나?"]]},
++      ["소마","팬텀하이브가에 볼일이 있어? 그럼 시엘을 만나 봐. 오늘은 본저택에 있어. 아그니, 우리 마차가 벌써 나갔나?"]]},
 +    {title:"손으로 전할 편지",music:"daily",art:"london",cast:["snake","agni"],lines:[
 +      ["아그니","아직 마구간에 있습니다, 전하. 손님, 봉투만 전해 드려도 되겠습니까?"],
-+      ["스네이크","친절은 고맙습니다만, 이건 손수 전하고 싶답니다. ⋯라고 키츠가 말했어."],
++      ["스네이크","고마워. 그래도 이건 스네이크가 직접 건네고 싶대. ⋯라고 키츠가 말했어."],
 +      ["아그니","그렇다면 마차를 대겠습니다. 바구니도 이리 주십시오."],
-+      ["스네이크","바구니는 밑을 받쳐 주시겠어요? 에밀리가 손잡이에 턱을 괴고 자거든요. ⋯라고 키츠가 말했어."]]},
++      ["스네이크","바구니는 밑을 받쳐 줘. 에밀리가 손잡이에 턱을 괴고 자거든. ⋯라고 키츠가 말했어."]]},
 +    {title:"마차를 빌리다",music:"daily",art:"london",cast:["snake","soma"],lines:[
 +      ["소마","내 마차라면 다 자면서 가도 된다! 시엘을 만나거든 안부도 전해 다오. 지난번 체스는 아직 내 차례라고!"]]},
 +    {title:"온실 앞",music:"daily",art:"garden",cast:["snake"],lines:[
@@ -1552,14 +1665,19 @@
 +      ["스네이크","우리랑 같이 온 애는 스네이크야. 장갑이 마음에 든 저 애는 와일드고. ⋯라고 에밀리가 말했어."],
 +      ["장면","스네이크는 벌떡 일어섰다. 손에 쥐고 온 편지를 내미는 데는 한참이 더 걸렸다."],
 +      ["스네이크","조커의 짐에서 이게 나왔어. 우리 식구들을 데려가라고 한 게 당신이야? ⋯라고 와일드가 말했어."],
-+      ["시엘","내가 야드에 넘긴 건 실종된 아이들의 명단이야. 그런데 조커가 누구지?"],
++      ["시엘","편지부터 좀 보자. 그런데 조커가 누구지?"],
 +      ["스네이크","우리 서커스의 단장 대리야. 밤에 스네이크가 떨면 자기가 입던 웃옷을 덮어 줬어. 그 애는 자느라 몰랐지만 난 봤어. ⋯라고 에밀리가 말했어."],
-+      ["시엘","그랬군. 봉투에 적힌 건 내 이름이 맞아. 왜 그 사람 짐에 있었는지는 나도 모르겠어."],
-+      ["스네이크","얼굴만이라도 볼 수 있어? ⋯라고 오스카가 말했어."],
-+      ["시엘","오늘은 어려워. 야드에서 면회를 받기 시작하면 내게 알려 달라고 하지."],
++      ["스네이크","얼굴만이라도 볼 수 있어? 우리가 왔다고 조커한테 전해 줘. ⋯라고 오스카가 말했어."],
++      ["시엘","서커스단이라면…… 노아의 방주 서커스단인가?"],
++      ["장면","시엘은 며칠 전 야드에서 받아 본 보고서를 떠올렸다. 첫 장에는 잡혀간 단원들의 명단이, 그 뒤에는 아이들이 사라진 날짜와 서커스의 순회 일정이 나란히 적혀 있었다."],
++      ["스네이크","맞아. 그게 우리 천막에 걸린 이름이야. ⋯라고 와일드가 말했어."],
++      ["시엘","그럼 왜 잡혀갔는지도 알아 둬. 네가 같이 지낸 단원들이 공연을 다니면서 아이들을 납치했어. 야드가 쫓고 있던 건 그 사건이야."],
++      ["장면","봉투 가장자리가 바스락거렸다. 스네이크는 구겨진 데를 엄지로 몇 번이고 폈다. 먼저 입을 연 건 목도리 속에 있던 에밀리였다."],
++      ["스네이크","조커가 그랬다고? 매일 같은 천막에서 잤는데 스네이크한텐 아무 말도 안 했어. ⋯라고 에밀리가 말했어."],
++      ["시엘","네가 그 사람을 보고 싶은 건 알겠어. 그래도 내 이름으로 면회시켜 주진 않아. 아직 아이가 돌아오길 기다리는 집이 있어."],
 +      ["장면","시엘은 편지를 접힌 자국대로 접어 돌려주었다. 스네이크가 봉투를 받았는데도 그 손은 거기 그대로 있었다."]]},
 +    {title:"열어 둘 문",music:"romantic",art:"garden",cast:["snake","ciel"],lines:[
-+      ["시엘","기다리는 동안 여기서 일해, 스네이크. 면회 신청서에는 내 이름도 쓰게 해 줄게."],
++      ["시엘","스네이크. 네가 보고 들은 건 야드에 네 입으로 얘기해. 그다음에 돌아갈 곳이 없으면 여기로 와. 일손이 하나 필요하거든."],
 +      ["스네이크","문지기는 벌써 있는데 우리한테 무슨 일을 맡기려고? ⋯라고 와일드가 말했어."],
 +      ["시엘","아까부터 저 문지기 뒤에 몇이나 서 있었지?"],
 +      ["스네이크","둘. 나중에 하나가 더 왔어. 왼발을 조금 끌어. ⋯라고 오스카가 말했어."],
@@ -1568,44 +1686,21 @@
 +      ["스네이크","내일 아침엔 우리가 문을 열게. 빗장은 어디 있는지 벌써 봐 뒀어. ⋯라고 오스카가 말했어."],
 +      ["장면","그가 손을 잡고 일어서자 바구니에서 에밀리가 따라 나왔다. 소맷부리와 소맷부리 사이, 두 사람의 손등을 건너갔다."]]},
 +    {title:"신임 경비원의 침구",music:"romantic",art:"garden",cast:["seb","ciel"],lines:[
-+      ["세바스찬","그의 면회까지 주선해 주실 줄은 몰랐습니다. 오늘 들은 이야기로는 도련님께 퍽 화가 나 있는 모양이던데요."],
-+      ["시엘","그래서 데려온 거야. 묻고 싶은 게 있으면 여기 와서 내 얼굴을 보고 물으면 돼. 그 정도는 나도 대답할 수 있어."],
++      ["세바스찬","조커를 만나게 해 달라고 다시 찾아올지도 모릅니다. 그래도 저택의 문을 맡기시겠습니까?"],
++      ["시엘","그때도 대답은 같아. 하지만 저 녀석은 내 뒤에 몇 사람이 서 있었는지 맞혔잖아. 그 솜씨까지 야드에 줄 건 없지."],
 +      ["세바스찬","그럼 근무표에 올리겠습니다. 그런데 도련님, 장갑은 되찾으셨습니까?"],
 +      ["시엘","마음에 들었다잖아. 첫 급료에서 장갑 값을 떼면 주인이 너무 옹졸해 보이겠지?"],
 +      ["세바스찬","그럼 장부에는 신임 경비원의 침구 한 벌로 적어 두지요."]]}
-   ]},
-   visitPrince:{name:"소마·아그니",title:"이스트엔드에서 만난 두 사람",result:"소마와 아그니가 런던 타운하우스에 함께 입주했다.",scenes:[
--    {title:"이스트엔드",art:"london",cast:["ciel","seb"],lines:[
-+    {title:"이스트엔드",music:"gloomy",art:"london",cast:["ciel","seb"],lines:[
-       ["장면","런던 집을 산 날, 시엘과 세바스찬은 이스트엔드에 잠시 들렀다. 골목에 들어선 지 얼마 되지 않아 한 사내가 시엘의 옷깃을 붙들었다."],
-       ["사내","그렇게 잘 차려입고 여기까지 오셨으니, 주머니도 좀 무거우시겠어?"],
-       ["장면","세바스찬이 그 손을 떼어 냈다. 그 순간 길 건너에서 낯선 소년의 목소리가 날아왔다."],
-       ["낯선 소년","아그니! 저 사람을 도와줘라!"]]},
--    {title:"잘못 짚은 편",art:"london",cast:["soma","agni"],lines:[
-+    {title:"잘못 짚은 편",music:"daily",art:"london",cast:["soma","agni"],lines:[
-       ["장면","아그니가 두 사람 사이에 섰다. 세바스찬은 시엘의 옷깃에서 뜯겨 나간 단추를 가리켰다. 아직 사내의 손에 있었다."],
-       ["아그니","전하. 먼저 손을 댄 쪽은 이분인 듯합니다."],
-       ["소마","뭐야? ……이봐, 그 단추는 돌려주고 가야지!"],
-       ["장면","단추가 돌바닥에서 한 바퀴 돌았다. 소년은 직접 주워 손수건으로 닦더니 시엘에게 내밀었다."]]},
--    {title:"이름을 묻다",art:"london",cast:["soma","ciel"],lines:[
-+    {title:"이름을 묻다",music:"daily",art:"london",cast:["soma","ciel"],lines:[
-       ["소마","내가 잘못 봤다. 미안하다. 나는 벵골에서 온 소마 아스만 카다르다. 네 이름은 뭐냐?"],
-       ["시엘","……시엘 팬텀하이브. 남의 일에 뛰어들기 전에 그걸 먼저 물어보는 게 어때?"],
-       ["소마","그럼 이번엔 먼저 물으마, 시엘. 혹시 미나라는 여자를 아느냐? 어릴 때부터 나를 돌봐 주던 사람이다."],
-       ["시엘","이 동네에 있다는 거야? 그 이름 하나로 런던을 다 뒤질 셈이야?"],
-       ["소마","그래서 여기 사람들에게 묻고 있었다. 아그니랑 나는 미나를 찾으러 왔거든."]]},
--    {title:"런던 집의 열쇠",art:"london",cast:["ciel","agni"],lines:[
-+    {title:"런던 집의 열쇠",music:"daily",art:"london",cast:["ciel","agni"],lines:[
-       ["세바스찬","해가 지는군요. 두 분이 묵으시는 곳까지 마차로 모셔다드릴까요?"],
-       ["아그니","말씀은 감사합니다. 사실 오늘은 여관부터 찾아야 합니다. 전하께서 배에서 내리시자마자 이 거리로 오셨거든요."],
-       ["시엘","세바스찬, 마차를 런던 집으로 돌려. 위층에 손님방이 둘 있었지?"],
-       ["시엘","둘 다 거기서 지내. 미나를 찾는 동안은 방 걱정까지 할 필요 없어."]]},
--    {title:"첫날 저녁",art:"parlour",cast:["soma","agni"],lines:[
-+    {title:"첫날 저녁",music:"cheerful",art:"parlour",cast:["soma","agni"],lines:[
-       ["아그니","전하와 제 방까지 마련해 주시다니. 신세를 지겠습니다, 백작님."],
-       ["소마","고맙다, 시엘. 그럼 내일 아침엔 같이 먹자. 단추도 돌려줬으니 이번엔 제대로 인사하고 싶다!"],
-       ["시엘","아침 아홉 시야. 그 전엔 내 방 문을 두드리지 마."],
-@@ -158,16 +182,108 @@
++  ]},
++  visitPrince:princeChapter
+ };
+ for(const book of Object.values(recruitScenes)){
+-  book.lines=book.scenes.flatMap((scene,i)=>scene.lines.map(([speaker,text])=>({scene,i,speaker,text})));
++  book.lines=book.scenes.flatMap((scene,i)=>scene.lines.map(([speaker,text,withTanaka])=>({scene,i,speaker,text,withTanaka})));
+ }
+ function pageAt(id,at){return Number.isInteger(at)?Math.min(Math.max(0,at),recruitScenes[id].lines.length-1):0;}
+ function recruitPage(id){return pageAt(id,state.recruitPage?.id===id?state.recruitPage.at:0);}
+@@ -158,18 +159,110 @@
      stage.style.setProperty("--portrait-scene-width",entry.contentRect.width+"px");
    });
    observer.observe(stage);
@@ -1707,16 +1802,20 @@
      '<p>'+text+' '+next+'</p></article>';
  }
  const recruitNames={ciel:"시엘",seb:"세바스찬",finny:"피니안",mey:"메이린",bard:"바르도",tanaka:"타나카",snake:"스네이크",soma:"소마",agni:"아그니"};
+-function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers=""){
+-  const book=recruitScenes[id],{scene,speaker,text}=book.lines[at];
 +function readerControls(at,last,auto){
 +  return '<div class="opening-top recruit-controls" role="group" aria-label="대사 재생">'+
 +    '<button type="button" data-read="previous" '+(at===0?'disabled':'')+'>이전</button>'+
 +    '<button type="button" data-read="auto" aria-pressed="'+auto+'" '+(last?'disabled':'')+'>'+(auto?'자동 멈춤':'자동 재생')+'</button>'+
 +    '<button type="button" data-read="skip" '+(last?'disabled':'')+'>건너뛰기</button></div>';
 +}
- function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers=""){
-   const book=recruitScenes[id],{scene,speaker,text}=book.lines[at];
++function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers="",hasTanaka=false){
++  const book=recruitScenes[id],{scene,speaker,text,withTanaka}=book.lines[at];
    const art=recruitArt[scene.art],bg=file(art.bg),last=at===book.lines.length-1;
-@@ -181,10 +297,7 @@
+   const backdrop=art.crop
+     ? '<svg class="review-room recruit-backdrop '+art.tone+'" viewBox="'+art.crop.join(" ")+'" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><image width="680" height="380" href="'+bg+'"/></svg>'
+@@ -181,25 +274,25 @@
    }).join("");
    const label=last?(readOnly?"회상 마치기":"영입 확정"):"다음 대사";
    const arrow=answers?'':'<button type="button" class="line-next" data-read="'+(last?'finish':'next')+'" aria-label="'+label+'">▼</button>';
@@ -1726,12 +1825,18 @@
 -    '<button type="button" data-read="skip" '+(last?'disabled':'')+'>건너뛰기</button></div>';
 +  const controls=readerControls(at,last,auto);
    const props=scene.prop?'<img class="recruit-tea" alt="닐기리 홍차" src="'+file(recruitProps[scene.prop])+'">':'';
-   return backdrop+actors+props+sceneLine(speaker==="장면"?"":speaker,text,arrow,
+-  return backdrop+actors+props+sceneLine(speaker==="장면"?"":speaker,text,arrow,
++  return backdrop+actors+props+sceneLine(speaker==="장면"?"":speaker,hasTanaka&&withTanaka?withTanaka:text,arrow,
      'data-book="'+id+'" data-leaf="'+at+'" aria-live="polite" aria-atomic="true"')+answers+controls;
-@@ -195,11 +308,14 @@
+ }
+ let recruitTimer=0,recruitAuto=false;
+ function stopRecruitAuto(){clearTimeout(recruitTimer);recruitTimer=0;recruitAuto=false;}
+-function drawRecruitReader(host,id,at,file,readOnly,onPage,onFinish,answers=""){
++function drawRecruitReader(host,id,at,file,readOnly,onPage,onFinish,answers="",hasTanaka=false){
    const end=recruitScenes[id].lines.length-1;
    clearTimeout(recruitTimer);if(at===end)stopRecruitAuto();
-   host.innerHTML=recruitMarkup(id,at,file,readOnly,recruitAuto,answers);
+-  host.innerHTML=recruitMarkup(id,at,file,readOnly,recruitAuto,answers);
++  host.innerHTML=recruitMarkup(id,at,file,readOnly,recruitAuto,answers,hasTanaka);
 +  bindSceneReader(host,at,end,recruitScenes[id].lines[at].text,onPage,answers?null:onFinish);
 +}
 +function bindSceneReader(host,at,end,text,onPage,onFinish){
@@ -1744,7 +1849,7 @@
      recruitTimer=setTimeout(()=>{if(line.isConnected&&!document.hidden)step(at+1);else stopRecruitAuto();},delay);
    }
    function click(e){
-@@ -215,7 +331,7 @@
+@@ -215,7 +308,7 @@
      if(read==="previous"&&at>0)step(at-1);
      if(read==="next"&&at<end)step(at+1);
      if(read==="skip"&&at<end)step(end);
@@ -1753,16 +1858,17 @@
    }
    function keydown(e){
      if(e.altKey||e.ctrlKey||e.metaKey||e.repeat||!["ArrowLeft","ArrowRight"].includes(e.key))return;
-@@ -235,31 +351,32 @@
+@@ -235,32 +328,34 @@
    const hasChoices=at===recruitScenes[id].lines.length-1&&event.choices.length>1;
    const answers=hasChoices?'<div class="answers" role="group" aria-label="대화 선택지">'+
      event.choices.map((c,i)=>btn(c.label,"choose:"+i,Boolean(c.when&&!c.when(state)),"vn-choice")).join("")+'</div>':"";
 -  host.hidden=false;drawRecruitReader(host,id,at,recruitArtwork(id,state.month),false,to=>{
 -    if(!current())return;state.recruitPage={id,at:to,...(["maid","cook","circus","visitPrince"].includes(id)?{version:2}:{})};persist();render();
 +  host.hidden=false;drawRecruitReader(host,id,at,recruitArtwork(currentCielAge()),false,to=>{
-+    if(!current())return;state.recruitPage={id,at:to,...(id==="circus"?{version:3}:["maid","cook","visitPrince"].includes(id)?{version:2}:{})};persist();render();
++    if(!current())return;state.recruitPage={id,at:to,...(id==="circus"?{version:4}:id==="visitPrince"?{version:3}:["maid","cook"].includes(id)?{version:2}:{})};persist();render();
      host.querySelector(".line-next, .answers button")?.focus({preventScroll:true});
-   },()=>{if(current())choose(0)},answers);
+-  },()=>{if(current())choose(0)},answers);
++  },()=>{if(current())choose(0)},answers,Boolean(state.people.tanaka));
  }
  function recruitAge(id,month){return id==="gardener"?10:ageAt(month,28);}
 -function recruitArtwork(id,month){
@@ -1777,7 +1883,8 @@
 -  recruitMemory={id,at:0,month};tab="staffMemory";render(true);
 +  const entry=state.events.find(entry=>entry.id===id);
 +  const month=entry?.month||state.month;
-+  recruitMemory={id,at:0,month,previousTrack:musicPlayer.backgroundTrack,age:entry?.age||recruitAge(id,month)};tab="staffMemory";render(true);
++  const hadTanaka=entry?.hadTanaka??state.events.slice(0,state.events.indexOf(entry)).some(e=>e.id==="homecoming");
++  recruitMemory={id,at:0,month,hadTanaka,previousTrack:musicPlayer.backgroundTrack,age:entry?.age||recruitAge(id,month)};tab="staffMemory";render(true);
  }
  function closeRecruitMemory(){
 -  stopRecruitAuto();const id=recruitMemory?.id;recruitMemory=null;tab="record";render();
@@ -1794,7 +1901,10 @@
 +  drawRecruitReader(host,id,at,recruitArtwork(age),true,to=>{
      if(tab!=="staffMemory"||memory!==recruitMemory)return;
      memory.at=to;render();host.querySelector(".line-next")?.focus({preventScroll:true});
-   },closeRecruitMemory);
+-  },closeRecruitMemory);
+-}
++  },closeRecruitMemory,"",memory.hadTanaka);
++}
 --- a/js/reports.js
 +++ b/js/reports.js
 @@ -128,7 +128,7 @@
@@ -2077,7 +2187,7 @@
 +  const records=(state.london?.book||[]).slice().reverse().map(entry=>'<p><b>'+monthText(entry.month)+'</b><br>'+entry.summary+(entry.story?'<br>'+entry.story:'')+'</p>').join("");
 +  return '<div class="property-grid staff-board london-board"><section class="property-grounds london-rooms"><h3>런던 타운하우스</h3>'+roomButtons+'</section>'+
 +    '<section class="property-desk staff-roster"><div class="work-title"><h3>이번 달 배치</h3></div><p>'+
-+    (!ids.length?'소마와 아그니가 입주하면 업무를 맡길 수 있습니다.':locked?'일정을 마치면 다음 달 배치를 바꿀 수 있습니다.':'인물을 누른 뒤 방을 선택하세요. 두 사람이 한 방을 맡으면 효과가 합산됩니다.')+'</p>'+roster+
++    (!ids.length?'바르도·피니안·메이린이 모두 합류하면 소마와 아그니를 만날 수 있습니다. 입주 후 업무를 맡겨 주세요.':locked?'일정을 마치면 다음 달 배치를 바꿀 수 있습니다.':'인물을 누른 뒤 방을 선택하세요. 두 사람이 한 방을 맡으면 효과가 합산됩니다.')+'</p>'+roster+
 +    (ids.length?'<button type="button" data-duty="off" '+(locked?'disabled':'')+'>대기 배치</button>':'')+
 +    '<p>배치한 달마다 숙련도 +1. 숙련도 10마다 맡은 업무의 효과가 1씩 늘어납니다.</p>'+
 +    '<section class="budget-book london-request"><h3>'+request.name+'</h3><p>'+request.rooms.map(id=>londonRooms[id].name).join(" + ")+'에 각각 한 명을 배치하면 월말에 가문 명성 +1</p><b>'+(ready?'준비 완료':'준비 중')+'</b></section>'+
@@ -2151,8 +2261,10 @@
 +    sees:s=>dueSnakeVisit(s)==="circus",
      choices:[effectChoice(["풋맨으로 맞는다",recruitScenes.circus.result,{recruit:"snake"}])]});
    fixed.push({id:"visitPrince",household:true,chapter:true,speaker:"소마",title:recruitScenes.visitPrince.title,
-     text:"시엘이 런던 이스트엔드에서 소마와 아그니를 처음 만나 두 사람에게 거처를 내준다.",
-     sees:townhouseGuestsDue,choices:[choice("두 사람에게 방을 내준다",recruitScenes.visitPrince.result,()=>{
+-    text:"시엘이 런던 이스트엔드에서 소마와 아그니를 처음 만나 두 사람에게 거처를 내준다.",
+-    sees:townhouseGuestsDue,choices:[choice("두 사람에게 방을 내준다",recruitScenes.visitPrince.result,()=>{
++    text:"이스트엔드의 골목에서 시엘과 소마가 서로 다른 편에 선다. 이튿날 두 사람은 런던 집의 열쇠를 놓고 거래한다.",
++    sees:townhouseGuestsDue,choices:[choice("두 사람에게 런던 집을 맡긴다",recruitScenes.visitPrince.result,()=>{
        recruit("soma");recruit("agni");state.flags.agni=true;
 +      scheduleSnakeVisit(state);
      })]});
@@ -2312,7 +2424,7 @@
 +<button type="button" id="rail-music" aria-label="배경음악" aria-pressed="true">BGM 켜짐</button>
  </nav></main></div>
 -<script src="js/recruit.js?v=27041d4d6af2"></script><script>const previewAsset=k=>k;
-+<script src="js/recruit.js?v=31a74d36fd5b"></script><script src="js/audio.js?v=a2c2b562bba2"></script><script>
++<script src="js/prince.js?v=e8a735fc28a4"></script><script src="js/recruit.js?v=19d63d834b19"></script><script src="js/audio.js?v=a2c2b562bba2"></script><script>
 +const tourSession=false;
 +document.getElementById("rail-music").addEventListener("click",()=>toggleChannel("bgm"));
 +for(const type of ["click","keydown"])document.addEventListener(type,e=>{if(e.isTrusted)musicPlayer.unlock();},{capture:true,once:true});
@@ -2323,17 +2435,20 @@
 +  if(stage.dataset.artOnly==="true")setArtOnly(stage,false);
    stopRecruitAuto();
    document.querySelectorAll("[data-id]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.id===id)));
-   const age=({cook:11,homecoming:11,circus:12})[id]||10;
+-  const age=({cook:11,homecoming:11,circus:12})[id]||10;
 -  stage.style.setProperty("--ciel-scale",cielPortraitScale(age));
++  const age=({cook:11,homecoming:11,visitPrince:11,circus:12})[id]||10;
 +  setPortraitAge(stage,age);
    function asset(k){const ciel=[recruitCast.ciel,recruitCast.ciel11,recruitCast.ciel12][age-10];return previewAsset(k===recruitCast.ciel?ciel:k);}
    function finish(){
      stopRecruitAuto();
-@@ -42,6 +49,7 @@
+@@ -42,7 +49,8 @@
      const button=host.querySelector("button");button.onclick=()=>openBook(id);button.focus({preventScroll:true});
    }
    function draw(at){
+-    drawRecruitReader(host,id,at,asset,true,draw,finish);
 +    musicPlayer.sync(recruitTrack(id,at));
-     drawRecruitReader(host,id,at,asset,true,draw,finish);
++    drawRecruitReader(host,id,at,asset,true,draw,finish,"",true);
      host.querySelector(".line-next")?.focus({preventScroll:true});
    }
+   draw(0);

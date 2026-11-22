@@ -97,7 +97,7 @@ function layeredEvent(event,buttons){
   const next=response||atPrompt?null:"event-line:"+page;
   const action=response?(response.summary?'<small>'+escapeHTML(response.summary)+'</small>':"")+btn("기록을 덮는다","event-close"):"";
   return '<div class="review-room" style="background-image:url(&quot;'+sceneArt[room]+'&quot;)"></div>'+
-    dialogueCast("세바스찬",beat[2]?.cast)+storyLine(beat[0],beat[1],atPrompt?buttons:action,next);
+    dialogueCast("세바스찬",beat[2]?.cast)+storyLine(beat[0],state.people.tanaka&&beat[2]?.withTanaka?beat[2].withTanaka:beat[1],atPrompt?buttons:action,next);
 }
 function eventPresentationAction(action,page){
   if(!["slotEvent","event"].includes(state.phase)||tab!=="plan")return false;
@@ -116,8 +116,9 @@ function closePendingEvent(){
     state.pending=state.sequence.slotQueue?.shift()||null;
     if(!state.pending){openReview();return;}
   }else{
-    state.pending=state.eventQueue?.shift()||null;
-    state.phase=state.pending?"event":"result";
+    state.pending=state.eventQueue?.shift()||(townhouseGuestsDue(state)?"visitPrince":null);
+    if(!state.pending&&state.princeFromPlan){delete state.princeFromPlan;state.phase="plan";tab="estate";}
+    else state.phase=state.pending?"event":"result";
   }
   persist();render(true);
 }

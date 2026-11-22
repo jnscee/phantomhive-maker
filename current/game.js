@@ -154,6 +154,7 @@ function settleMonth(){
   const event=state.duration===35?(candidates.find(e=>birthdayScenes[e.id]&&[12,24].includes(state.month))||candidates.find(e=>e.chapter)||candidates[0]):candidates.find(e=>!e.chapter);
   const seasonal=state.duration===35?events.find(e=>e.season&&e.sees(state)&&!state.flags[e.id]):null;
   state.eventQueue=[event,seasonal].filter(Boolean).map(e=>e.id);
+  if(townhouseGuestsDue(state))state.eventQueue.push("visitPrince");
   queueSnakeArrival(state);
   state.pending=state.eventQueue.shift()||null;
   state.phase=state.pending?"event":"result";
@@ -485,6 +486,18 @@ function normalizeSave(run){
   });
   // Both London hosts appeared in the prince chapter, including its older second choice.
   if(copy.people.soma&&copy.flags.visitPrince)copy.flags.agni=true;
+  if(!townhouseGuestsDue(copy)){
+    if(copy.eventQueue)copy.eventQueue=copy.eventQueue.filter(id=>id!=="visitPrince");
+    if(copy.pending==="visitPrince"&&!copy.eventResponse){
+      delete copy.eventPage;
+      copy.pending=copy.eventQueue?.shift()||null;
+      copy.phase=copy.pending?"event":copy.princeFromPlan?"plan":"result";
+      if(!copy.pending)delete copy.princeFromPlan;
+    }
+  }else if(!copy.pending&&["plan","result"].includes(copy.phase)){
+    copy.princeFromPlan=copy.phase==="plan";
+    copy.pending="visitPrince";copy.phase="event";
+  }
   if(copy.eventQueue)copy.eventQueue=copy.eventQueue.filter(id=>id!=="circus");
   if(copy.phase==="event"&&copy.pending==="circus"){
     copy.pending=copy.eventQueue?.shift()||null;
@@ -734,6 +747,7 @@ function marketPanel(){
 }
 const panels={market:marketPanel,title:titlePanel,plan:planPanel,status:statusPanel,estate:managementPanel,townhouse:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
 state=normalizeSave(state);
+if(state.phase==="event")tab="plan";
 function sheetTitle(){
   if(tab==="plan"){
     if(state.phase==="event")return castName(pendingEvent());
@@ -1064,6 +1078,9 @@ function handleAction(key,rect,confirmed=false){
       state.fund-=cost;state.annex[id]++;
     }
     postPurchase(action,fund);
+    if(action==="townhouse"&&state.phase==="plan"&&townhouseGuestsDue(state)){
+      state.princeFromPlan=true;state.pending="visitPrince";state.phase="event";tab="plan";persist();render(true);return;
+    }
     const panelScroll=$("panel").scrollTop;
     persist();render();
     const detail=document.querySelector(action==="townhouse"?".annexes:last-child":".annexes");
