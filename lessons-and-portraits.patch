@@ -165,19 +165,19 @@
 -<script src="js/prologue.js"></script>
 -<script src="js/chapters.js?v=5a5076c319bb"></script>
 +<script src="js/tour.js?v=e380777efa81"></script>
-+<script src="js/content.js?v=a51a55a6c9b6"></script>
++<script src="js/content.js?v=198f383520f4"></script>
 +<link rel="stylesheet" href="css/recruit.css?v=b0fcf649ce20">
-+<script src="js/recruit.js?v=ef0e9809d6b0"></script>
-+<script src="js/story.js?v=67ad4d7098cb"></script>
-+<script src="js/scenes.js?v=2e1e189eb7d7"></script>
++<script src="js/recruit.js?v=3a83a76463ef"></script>
++<script src="js/story.js?v=ddb6eb8c8bd4"></script>
++<script src="js/scenes.js?v=8fa047d42156"></script>
 +<script src="js/audio.js?v=7e43118c7776"></script>
-+<script src="js/reports.js?v=5035d3c15d3a"></script>
++<script src="js/reports.js?v=4d5b61c3b929"></script>
 +<script src="js/prologue.js?v=9bdb9de8c466"></script>
-+<script src="js/chapters.js?v=87e63c14af69"></script>
++<script src="js/chapters.js?v=ac342466190e"></script>
  <script src="js/staffing.js?v=00ba2d2a1ea6"></script>
 -<script src="js/game.js?v=11b0f98b15d2"></script></body></html>
 +<script src="js/term-events.js?v=88ff00703568"></script>
-+<script src="js/game.js?v=26f3ad3963a4"></script></body></html>
++<script src="js/game.js?v=1a5a2ecc1238"></script></body></html>
 --- a/js/audio.js
 +++ b/js/audio.js
 @@ -1,6 +1,9 @@
@@ -247,11 +247,73 @@
  const guide=[
   ["날짜판과 명패","오늘 날짜는 왼쪽 위 달력을 보십시오. 연도 옆에는 서른다섯 달 중 몇 달째인지 적어 두었습니다. 저택의 오른쪽 위 명패에는 도련님의 나이와 가문의 잔금이 있습니다."],
 - ["일정표","왼쪽 아래 ‘일정표’에 상순·중순·하순 세 칸을 마련했습니다. 어느 때를 비워 두시겠습니까? 바꾸실 칸을 먼저 짚고 활동을 고르시면 제가 적겠습니다. £ 옆의 숫자가 그 비용입니다."],
-+ ["일정표","왼쪽 아래 ‘일정표’에 상순·중순·하순 세 칸을 마련했습니다. 쉬고 나면 다음 수업에 집중하기 쉽습니다. 배운 과목이 쌓이면 제가 서로 다른 과목을 묶어 시험을 내지요. 바꾸실 칸을 먼저 짚고 활동을 고르시면 제가 적겠습니다. £ 옆의 숫자가 그 비용입니다."],
++ ["일정표","왼쪽 아래 ‘일정표’에 상순·중순·하순 세 칸을 마련했습니다. 쉬고 나면 다음 수업에 집중하기 쉽습니다. 수업을 거듭하거나 실력이 충분히 자라면 제가 시험을 내겠습니다. 바꾸실 칸을 먼저 짚고 활동을 고르시면 제가 적겠습니다. £ 옆의 숫자가 그 비용입니다."],
   ["자유행동","‘자유행동’은 도련님의 외출을 위해 비워 둔 칸입니다. 한 달에 한 곳을 정하실 수 있습니다. 누구와 무슨 이야기를 나누실지는 도착한 뒤에 정하셔도 됩니다."],
   ["팬텀사","‘관리 · 경영’에서 ‘팬텀 사(社)’를 여십시오. 개발실에서는 상품을, 제작실에서는 수량을, 판매점에서는 값을 정하시면 됩니다. 수업료가 모자라겠다면 이번 생산량을 조금 줄이는 편이 좋겠습니다."],
   ["저택","‘관리 · 경영’의 지도에서 방을 짚으시면 시설과 근무지를 살필 수 있습니다. 개수를 명하시기 전에 비용과 이달의 관리 상태를 보십시오. 간식이 필요하시면 저택 메뉴의 ‘상점’으로 모시겠습니다."],
-@@ -136,7 +136,7 @@
+@@ -36,14 +36,23 @@
+    '<details class="guide-topic"><summary><b>'+title+'</b><small>'+paths[i]+'</small></summary><p>'+body+'</p></details>').join("")+'</details>';
+ }
+ const visitsVN={
+- library:["archive","서가 맨 아래에 그을린 장부가 누워 있다.","이 장은 제가 보관해 두었습니다. 귀퉁이가 타도 날짜는 읽히지요.","가문의 장서표를 대조한다"],
+- garden:["garden","온실의 유리에 물방울이 맺혔다.","도련님, 이 새순 좀 보세요. 오늘은 힘을 빼고 옮겨 심었어요!","흙이 마른 화분부터 살핀다"],
+- kitchen:["office","식탁에 저녁 식단과 빈 접시가 놓여 있다.","오늘은 오븐으로만 구웠습니다. 한 조각 먼저 드셔 보시죠.","저녁 식단을 함께 짠다"],
+- quarters:["bedroom","복도 끝 옷걸이에 새 앞치마가 걸려 있다.","단추를 전부 다시 달았어요, 도련님. 이번엔 틀림없습니다요!","사용인들의 작업 일지를 본다"],
+- parlor:["ballroom","은쟁반 위에 다음 다과회의 답신이 쌓여 있다.","","명함의 호칭을 확인한다"],
+- company:["office","시제품 옆에 반품된 상자가 놓여 있다.","","상자를 직접 열어 본다"],
+- town:["street","비에 젖은 쇼윈도 너머로 완구점 주인이 손을 흔든다.","","요즘 팔리는 물건을 묻는다"],
+- townhouse:["ballroom","손님방에 따뜻한 물이 준비되어 있다.","시엘! 오늘만큼은 내가 고른 차를 먼저 마셔 봐라.","찻잔을 받아 든다"]
++ library:["archive","서가 맨 아래에 그을린 장부가 누워 있다.","가문의 장서표를 대조한다"],
++ garden:["garden","온실의 유리에 물방울이 맺혔다.","흙이 마른 화분부터 살핀다"],
++ kitchen:["office","식탁에 저녁 식단과 빈 접시가 놓여 있다.","저녁 식단을 함께 짠다"],
++ quarters:["bedroom","복도 끝 옷걸이에 새 앞치마가 걸려 있다.","사용인들의 작업 일지를 본다"],
++ parlor:["ballroom","은쟁반 위에 다음 다과회의 답신이 쌓여 있다.","명함의 호칭을 확인한다"],
++ company:["office","시제품 옆에 반품된 상자가 놓여 있다.","상자를 직접 열어 본다"],
++ town:["street","비에 젖은 쇼윈도 너머로 완구점 주인이 손을 흔든다.","요즘 팔리는 물건을 묻는다"],
++ townhouse:["ballroom","손님방에 따뜻한 물이 준비되어 있다.","찻잔을 받아 든다"]
++};
++const trustedGreetings={
++ tanaka:["찾으시는 해의 장부를 꺼내 두었습니다. 끈이 낡았으니 제가 풀어 드리지요.","요즘은 늘 그 권부터 펴시는군요. 오늘은 책상에 올려 두었습니다.","여기서 필체가 달라지지요. 제 짐작을 말씀드리기 전에 도련님 눈에는 어찌 보이는지 듣고 싶습니다.","이 귀퉁이의 연필 자국은 접니다. 그날 차마 잉크로 쓰지 못한 이름인데…… 오늘은 말씀드릴 수 있겠군요."],
++ finny:["도련님, 바닥이 젖었어요. 제가 먼저 지나가 볼게요!","또 와 주셨어요! 오늘은 도련님 구두에 흙 안 튀게 물부터 줬어요.","가지를 이쪽으로 유인할까요? 전 이 문으로 들어올 때 꽃이 보였으면 좋겠는데, 도련님은요?","처음엔 손 댄 걸 들킬까 봐 부러진 가지를 숨겼어요. 이건 제가 부러뜨린 거예요. 그런데 보세요. 붙여 놓은 데서 잎이 났어요!"],
++ mey:["리넨은 이쪽입니다요, 도련님. 잠깐만요, 안경부터 바로 쓰고요!","오실 줄 알고 도련님 셔츠는 따로 걸어 뒀습니다요. 단추도 세 봤고요!","해 질 무렵이면 저 창에 맞은편 지붕이 비칩니다요. 커튼은 제가 닫을까요, 조금 더 볼까요?","이 방에선 안경을 벗고 있어도 마음이 놓입니다요. 도련님 발소리는 이제 헷갈릴 일이 없거든요."],
++ bard:["오븐은 제가 보겠습니다. 도련님은 문에서 조금만 물러서 주시죠.","오늘은 탄 데부터 잘라 낼 필요가 없습니다. 끝 쪽 한 조각 드시겠습니까?","이 고기, 지금 썰면 육즙이 다 빠집니다. 손님이 재촉해도 오 분만 더 벌어 주시겠습니까?","옛날 버릇이라 식탁에 앉아도 문부터 보게 됩니다. 도련님이 맞은편에 계신 날엔 그냥 먹습니다만."],
++ snake:["방금 복도를 지나간 건 우리 애들이야. 놀라지 마. ……라고 에밀리가 말했어.","오늘도 왔구나. 오스카가 발소리를 먼저 알아들었어.","서쪽 창을 조금만 열어 둘까? 누가 오는지 우리가 먼저 알 수 있어. ……라고 와일드가 말했어.","오늘 야간 순찰엔 나도 같이 가고 싶어. ……응? 아니, 방금 건 내가 한 말이야."],
++ soma:["시엘! 내 옆에 앉아라. 오늘 차는 내가 고르겠다!","네 자리는 거기다, 시엘. 거긴 오후에도 눈에 볕이 안 들더라.","네가 먼저 한 모금 마셔 봐라. 내가 좋다고 다들 좋다는 건 아니라더구나.","오늘은 그냥 나랑 앉아 있어 다오. 네 앞에선 굳이 떠들지 않아도 심심하지 않더라."],
++ agni:["어서 오십시오, 시엘 님. 전하께서 곧 내려오십니다.","오늘도 창가에 두 잔 놓았습니다. 시엘 님은 우유를 따로 드렸습니다.","전하께 드릴 말씀인데 제가 꺼내면 먼저 걱정하실 겁니다. 시엘 님이라면 어떻게 운을 떼시겠습니까?","처음 이 집에서 아침상을 차리던 날엔 손이 떨렸습니다. 전하께는 비밀로 해 주시겠습니까? 오늘은 웃으며 말씀드릴 수 있군요."]
+ };
+ function visitPerson(id){
+  let person=visiting[id][1];
+@@ -62,12 +71,12 @@
+    forecast.people={...state.people,[person]:{...relation,toward:Math.min(20,relation.toward+1)}};
+  }
+  const possible=events.filter(e=>e.visitPlace===id&&!state.flags[e.id]&&e.sees(forecast));
+- const encounter=visitName(person)+" · "+visitsVN[id][3];
++ const encounter=visitName(person)+" · "+visitsVN[id][2];
+  return possible.length?encounter+" / 교류할 수 있는 사건이 있습니다.":encounter;
+ }
+ const visitGrowth={library:"통찰",garden:"체력",kitchen:"지성",quarters:"통찰",parlor:"기품",company:"경영",town:"매력",townhouse:"매력"};
+ function visitScene(){
+- const id=state.visit,[room,plain,spoken,label]=visitsVN[id];
++ const id=state.visit,[room,plain,label]=visitsVN[id];
+  const seq=state.sequence;
+  if(seq.visitEvent){
+    const event=events.find(e=>e.id===seq.visitEvent);
+@@ -80,12 +89,9 @@
+      btn(seq.index===0?"상순으로":"월말 결산으로","visit-finish"),visits[id]+" · 자유행동 결과",room);
+  }
+  const person=visitPerson(id);
+- let line=spoken;
+- if(person==="snake")line="오늘 복도는 조용하다고, 에밀리가 말했어.";
+- if(person==="agni")line="소마 님께서는 도련님이 오시기 전에 잔부터 데워 두셨습니다.";
+  const memory=visitMemory(id,person);
+- if(memory)line=memory.line;
+- return staged(visitName(person),"",person?line:plain,btn(label,"visit-done:engage")+btn("잠시 머물다 돌아간다","visit-done:quiet"),"",room);
++ const line=memory?.line || (person?trustedGreetings[person][trustTier(state.people[person].toward)]:plain);
++ return staged(visitName(person),"",line,btn(label,"visit-done:engage")+btn("잠시 머물다 돌아간다","visit-done:quiet"),"",room);
+ }
+ function visitDone(engage){
+  if(state.phase!=="visit"||state.sequence.visitBefore||state.visitTurn===state.month)return;
+@@ -136,7 +142,7 @@
  function chapterView(){
   if(tab!=="plan")return "";
   if(state.phase==="guide"){const i=state.guidePage||0;return staged("세바스찬",guide[i][0],guideMenu(i)+guide[i][1],btn(i===guide.length-1?"저택으로":"다음 안내","guide-next")+btn("안내 마치기","guide-end"),"조작 안내 "+(i+1)+" / "+guide.length);}
@@ -260,7 +322,7 @@
   if(state.phase==="visit")return visitScene();
   return "";
  }
-@@ -160,11 +160,27 @@
+@@ -160,11 +166,27 @@
   ["dance","기품","무도 실기","반주가 한 박자 멎었습니다. 상대의 발끝이 아직 떠 있군요.","체중이 옮겨질 때까지 기다린다","발의 위치를 다시 맞춘다"],
   ["social","매력","다과회 실기","초면인 손님 둘이 같은 은쟁반을 집었습니다. 도련님이라면요?","둘의 공통 관심사를 꺼낸다","잔을 새로 내온다"],
   ["negotiate","경영","협상 실기","납품가는 같고 도착일이 다릅니다. 어느 조건부터 물으시겠습니까?","지연 때의 부담을 확인한다","견적을 다시 읽는다"],
@@ -291,7 +353,16 @@
  function calendarEvents(){
   const out=[];
   for(let m=1;m<=35;m++){
-@@ -229,3 +245,262 @@
+@@ -183,7 +205,7 @@
+  choice("서재 열쇠를 돌려준다","타나카 복귀 · 서재 근무",()=>{recruit("tanaka");state.staff="library";}),
+  choice("먼저 다과를 함께한다","타나카 복귀 · 신뢰 상승",()=>{recruit("tanaka");state.staff="library";talkTrust("tanaka",2);})]},
+  {id:"unasked",speaker:"세바스찬",title:"명령보다 한 박자 먼저",text:"시엘이 손을 내밀자 장갑이 이미 그 위에 놓였다. “아직 부르지 않았는데.” 세바스찬은 반대쪽 장갑의 단추를 풀었다. “다시 벗겨 드릴까요?”",sees:s=>s.month>=4&&(s.flags.attention||0)>=3,choices:[choice("말없이 다음 장갑을 건넨다","둘만의 아침 습관 기록",()=>{state.flags.morningGloves=true;}),choice("도련님의 대답을 기다린다","의지 +15",()=>changeStat("의지",15))]}];}
+-function sourceNote(e){return e.source||({jubilee:"1887년 6월 빅토리아 여왕 즉위 50주년 · 가문 참여 IF",match:"1888년 런던 성냥공장 파업 · 회사 대응 IF",circus:"타나카 복귀 뒤 · 서커스단의 편지와 풋맨 합류",visitPrince:"런던 타운하우스 취득 후 · 소마와 아그니 동반 입주",gardener:"원작 연구소 탈출 · 첫 만남과 명명 / 게임 달력에 배치",maid:"원작 30권 · 올빼미에게 건넨 고용 제안 / 피니안 합류 뒤 월말 추첨",cook:"원작의 서재 면담 · 메이린 합류 뒤 게임 달력에 배치",homecoming:"원작 회중시계 계승 장면 · 저택 복귀일의 서재로 각색"}[e.id])||"";}
++function sourceNote(e){return e.source||({jubilee:"1887년 6월 빅토리아 여왕 즉위 50주년 · 가문 참여 IF",match:"1888년 런던 성냥공장 파업 · 회사 대응 IF",circus:"런던 타운하우스 · 소마와 아그니가 맞이한 방문객",visitPrince:"런던 타운하우스 취득 후 · 소마와 아그니 동반 입주",gardener:"원작 연구소 탈출 · 첫 만남과 명명 / 게임 달력에 배치",maid:"원작 30권 · 올빼미에게 건넨 고용 제안 / 피니안 합류 뒤 월말 추첨",cook:"원작의 서재 면담 · 메이린 합류 뒤 게임 달력에 배치",homecoming:"원작 회중시계 계승 장면 · 저택 복귀일의 서재로 각색"}[e.id])||"";}
+ function houseValues(){
+  const staff=Object.values(state.jobs),matched=Object.entries(state.jobs).filter(([p,r])=>servants[p]?.job===r).length;
+  const rooms=[...Object.values(state.level),...Object.values(state.annex)],improvements=rooms.reduce((s,v)=>s+v-1,0);
+@@ -229,3 +251,262 @@
   return '<div class="annex-line"><div><b>'+f.name+' · '+n+'단계</b><small>'+f.desc+'</small></div><div>월 £'+cost+'<br>상태 '+condition+'</div></div>';
   }).join("")+'<p>공통 관리비 £36에 시설비를 합하고 경비 절감액을 반영합니다.</p></details>';
  }
@@ -645,6 +716,16 @@
  function ageAt(turn,day=1){const d=calendarDate(turn,day);return d.getUTCFullYear()-1875-(d.getUTCMonth()<11||d.getUTCDate()<14?1:0);}
  function peopleInHouse(){return Object.keys(servants).filter(k=>state.people[k]);}
  function talkTrust(id,n=1,other=1){
+@@ -132,7 +149,8 @@
+   if(changes.length)run.log.push("사용인 실무 숙련도 · "+changes.join(" / "));
+ }
+ function shiftAssigned(room){return Object.entries(state.jobs).some(([p,r])=>r===room&&servants[p].job===room);}
+-function rank(n){return n>=9?"속을 터놓음":n>=5?"의지함":n>=3?"익숙함":"살피는 중";}
++function trustTier(n){return n>=9?3:n>=5?2:n>=3?1:0;}
++function rank(n){return ["살피는 중","익숙함","의지함","속을 터놓음"][trustTier(n)];}
+ 
+ const stats = ["지성","기품","매력","경영","통찰","의지","체력"];
+ const abilityMax = 500;
 --- a/js/game.js
 +++ b/js/game.js
 @@ -31,8 +31,13 @@
@@ -689,18 +770,53 @@
  
  function pendingEvent(){
    return events.find(event=>event.id===state.pending);
-@@ -185,8 +191,8 @@
+@@ -132,6 +138,18 @@
+   // Equal chance for each remaining month, including the month Bard moves in.
+   return canTanakaReturn(run)&&(run.month>=lastTanakaMonth || monthlyDraw(run,0x54414e41)<1/(lastTanakaMonth-run.month+1));
+ }
++function canReceiveSnake(run){
++  return run.duration===35 && run.flags.townhouse && run.people.soma && run.people.agni && !run.people.snake;
++}
++function scheduleSnakeVisit(run){
++  if(!canReceiveSnake(run)||Number.isInteger(run.snakeArrivalMonth))return;
++  const monthsLeft=Math.min(3,run.duration-run.month+1);
++  run.snakeArrivalMonth=run.month+Math.floor(monthsLeft*monthlyDraw(run,0x534e414b));
++}
++function dueSnakeVisit(run){
++  if(!canReceiveSnake(run)||!Number.isInteger(run.snakeArrivalMonth)||run.month<run.snakeArrivalMonth)return null;
++  return run.flags.circus||run.flags.snakeSafe?"snakeReturn":"circus";
++}
+ // Also serves unfinished older saves that have already passed a deadline.
+ function overdueArrival(run){
+   if(run.duration!==35)return null;
+@@ -139,13 +157,7 @@
+   if(run.month>=22&&owlAppears(run))return "maid";
+   if(run.month>=23&&run.people.finny&&run.people.mey&&!run.people.bard&&!run.flags.cook)return "cook";
+   if(run.month>=24&&canTanakaReturn(run))return "homecoming";
+-  if(run.people.tanaka&&!run.people.snake){
+-    const returnedThisMonth=run.events.some(e=>e.id==="homecoming"&&e.month===run.month);
+-    if(run.month===run.duration || (!returnedThisMonth && run.month>=25)){
+-      return run.flags.circus||run.flags.snakeSafe?"snakeReturn":"circus";
+-    }
+-  }
+-  return null;
++  return dueSnakeVisit(run);
+ }
+ function settleMonth(){
+   const {unit,demand,receipt=state.price,investment,opening:before}=state.sequence;
+@@ -185,8 +197,9 @@
    state.log.push("저택 유지·채무 상환 "+money(bills));
    if(trade?.order)state.log.push(productBuyers[trade.order.id]+" 납품 "+trade.shipped+"/"+trade.order.qty+"개 · "+money(trade.wholesale)+(trade.short?" · 미납 부담금 "+money(trade.penalty):""));
    if(state.flags.market&&state.marketMonth!==state.month){state.flags.market=false;state.renown+=1;}
 -  const candidates=events.filter(e=>!e.slot&&!e.season&&!e.household&&!e.visitOnly&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
 -  const event=state.duration===35?(candidates.find(e=>e.chapter)||candidates[0]):candidates.find(e=>!e.chapter);
++  scheduleSnakeVisit(state);
 +  const candidates=events.filter(e=>!e.slot&&!e.statExam&&!e.season&&!e.household&&!e.visitOnly&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
 +  const event=state.duration===35?(candidates.find(e=>birthdayDialogue[e.id]&&[12,24].includes(state.month))||candidates.find(e=>e.chapter)||candidates[0]):candidates.find(e=>!e.chapter);
    const seasonal=state.duration===35?events.find(e=>e.season&&e.sees(state)&&!state.flags[e.id]):null;
    const queue=[event?.id,seasonal?.id].filter(Boolean);
    for(const e of events){
-@@ -223,10 +229,29 @@
+@@ -223,10 +236,29 @@
    if(!["event","slotEvent"].includes(state.phase)||!choice||(choice.when&&!choice.when(state)))return;
    const isRecruit=Object.hasOwn(recruitScenes,event.id);
    if(isRecruit&&recruitPage(event.id)!==recruitScenes[event.id].lines.length-1)return;
@@ -732,7 +848,7 @@
    state.pending=null;
    if(event.id==="visitPrince"&&state.recruitReturn==="estate"){
      delete state.recruitReturn;state.phase="plan";tab="estate";persist();render(true);return;
-@@ -234,7 +259,11 @@
+@@ -234,7 +266,11 @@
    if(event.id==="gardener"&&state.recruitReturn==="plan"){
      delete state.recruitReturn;state.phase="plan";tab="home";persist();render(true);return;
    }
@@ -745,7 +861,7 @@
    state.pending=state.eventQueue?.shift()||null;
    if(!state.pending)state.pending=overdueArrival(state);
    if(!state.pending&&tanakaReturns(state))state.pending="homecoming";
-@@ -247,12 +276,17 @@
+@@ -247,12 +283,17 @@
    return titleRequirements().every(Boolean);
  }
  function finish(id){
@@ -764,7 +880,7 @@
  function beginFinale(id){
    if(!isApprovedEnding(id)){finish(id);return;}
    state.ending=id;state.phase="investiture";persist();render(true);
-@@ -276,7 +310,7 @@
+@@ -276,7 +317,7 @@
    state.arrears=state.fund<0?state.arrears+1:0;
    if(state.unwell>=2){finish("ill");return;}
    if(state.arrears>=2){finish("broke");return;}
@@ -773,7 +889,7 @@
    if(state.month===6&&state.duration===6){beginFinale(qualifies()?"title":state.fund>=260&&state.stats.경영>=31?"business":"defer");return;}
    if(state.prototype?.approved){
      const p=state.prototype;if(!state.unlocked.includes(p.product))state.unlocked.push(p.product);state.productNotes??={};state.productNotes[p.product]=p;delete state.prototype;
-@@ -286,8 +320,24 @@
+@@ -286,8 +327,24 @@
  function fatigueThreshold(stamina){
    return 65+Math.floor(cap(stamina,abilityMax)*10/abilityMax);
  }
@@ -799,7 +915,7 @@
    const tolerance=fatigueThreshold(run.stats.체력);
    const tired=(run.hp<40||run.stress>=tolerance||run.motivation<35)&&a.stress>0;
    const room=trainingRooms[id];
-@@ -299,9 +349,11 @@
+@@ -299,9 +356,11 @@
    run.hp=cap(run.hp+(a.health||0)-fieldPenalty+restBonus-(run.stress>=75?6:0));
    if(id==="walk")run.stress=cap(run.stress-(run.annex.garden-1)*5-(shiftAssigned("garden")?2:0));
    run.motivation=cap(run.motivation+(a.stress<0?8:tired?-7:-2));
@@ -812,7 +928,7 @@
      run.stats[name]=cap(before+gain,statMax(name));
      return name+" "+signed(run.stats[name]-before);
    });
-@@ -318,8 +370,12 @@
+@@ -318,8 +377,12 @@
    }
  }
  function projectTraining(){
@@ -827,7 +943,7 @@
    applyEstateTraining(run);
    return run;
  }
-@@ -358,7 +414,7 @@
+@@ -358,7 +421,7 @@
    broke:["자금 부족으로 종료","월말 자금 부족이 두 달 연속 발생했습니다."]
  };
  const slotNames=["상순","중순","하순"];
@@ -836,7 +952,7 @@
  const escapeHTML=value=>String(value).replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
  function frame(title,body,tag=""){
    return '<div class="panel-head"><h2 tabindex="-1">'+title+'</h2>'+(tag?'<span class="small">'+tag+'</span>':"")+
-@@ -395,7 +451,7 @@
+@@ -395,7 +458,7 @@
  
  function plannerNote(id){
    if(!editingVisit&&!actions[id])return slotNames[selectedSlot]+" 활동을 선택하세요.";
@@ -845,7 +961,7 @@
  }
  
  function previewPlannerCard(event){
-@@ -450,12 +506,9 @@
+@@ -450,12 +513,9 @@
      }).join("")+'</div>');
    }
    if(state.phase==="result")return monthlyResults();
@@ -859,7 +975,7 @@
        tile("경영",state.stats.경영)+tile("완료 사건",state.events.length)+'</div>'+
        '<p>'+epilogue()+'</p><div class="inline">'+btn("장부 보기","tab:record")+btn("새 회차","reset",false,"primary")+'</div>','회차 종료');
    }
-@@ -473,7 +526,7 @@
+@@ -473,10 +533,10 @@
  }
  const legacyEventIds={"비어 있는 천막":"circus","타운하우스의 손님":"visitPrince","돌아온 집사":"homecoming","불을 지키는 사람":"cook","서재의 열쇠":"return","새벽의 일정표":"discipline","비어 있는 장부":"proof","여왕의 초청장":"audience","상점 진열장":"trade","손님이 돌아간 뒤":"room"};
  function updateMoney(){
@@ -867,8 +983,12 @@
 +  $("money").innerHTML='<div class="nameplate"><small>CIEL</small><b>PHANTOMHIVE</b></div><div class="id-details"><span>'+currentCielAge()+'세</span><span>'+(state.ill?"병중":"12.14")+'</span><span class="sign-mark" aria-label="사수자리"></span></div><strong class="wealth">'+money(state.fund)+'</strong>';
  }
  function relationBook(){
-   return '<h3>인물 관계</h3>'+peopleInHouse().map(id=>{const r=state.people[id];return '<div class="work-ledger"><b>'+servants[id].name+'</b><span>상대 → 시엘　'+rank(r.toward)+'</span></div>';}).join("");
-@@ -485,7 +538,7 @@
+-  return '<h3>인물 관계</h3>'+peopleInHouse().map(id=>{const r=state.people[id];return '<div class="work-ledger"><b>'+servants[id].name+'</b><span>상대 → 시엘　'+rank(r.toward)+'</span></div>';}).join("");
++  return '<h3>인물 관계</h3>'+peopleInHouse().map(id=>{const r=state.people[id];return '<div class="work-ledger"><b>'+servants[id].name+'</b><span>상대 → 시엘 신뢰　'+rank(r.toward)+'</span></div>';}).join("");
+ }
+ function titlePanel(){
+   return frame("팬텀하이브 메이커",'<div class="book-cover"><small>1886 — 1888</small><h2>EARL<br>PHANTOMHIVE<br>MAKER</h2><p>팬텀하이브 메이커</p>'+btn('<span class="return-label">회차로 돌아가기</span>',"back",false,"return-control")+btn("새 회차","reset")+'</div>');
+@@ -485,7 +545,7 @@
    const allies=peopleInHouse().filter(k=>state.people[k].toward>=5).map(k=>servants[k].name);
    const top=Object.keys(state.stats).sort((a,b)=>state.stats[b]/statMax(b)-state.stats[a]/statMax(a))[0];
    const route=state.ending==="vowNoTitle"?((state.stats.경영>=140&&state.fund>=260)?"런던의 사업가로 자리 잡았습니다. ":state.stats.통찰>=140?"정보상의 연락망을 얻었습니다. ":"마차를 타고 옛 흔적을 좇습니다. "):"";
@@ -877,7 +997,32 @@
  }
  function canBuyTownhouse(){return state.phase==="plan" && !state.flags.townhouse && state.fund>=250;}
  function townhouseGuestsDue(run){
-@@ -603,6 +656,10 @@
+@@ -577,7 +637,9 @@
+     if(!eligible){copy.pending=copy.eventQueue?.shift()||null;copy.phase=copy.pending?"event":"result";}
+   }
+   // Older releases could queue a staff event before the new prerequisites.
++  scheduleSnakeVisit(copy);
+   const allowed=id=>{
++    if(id==="circus"||id==="snakeReturn")return id===dueSnakeVisit(copy);
+     if(id==="homecoming"&&copy.phase==="event"&&copy.pending===id)return canTanakaReturn(copy);
+     if(id==="maid")return copy.people.finny&&!copy.people.mey&&!copy.flags.maid;
+     const arrival=events.find(e=>e.id===id&&e.household);
+@@ -586,9 +648,11 @@
+   if(copy.eventQueue)copy.eventQueue=copy.eventQueue.filter(allowed);
+   if(copy.phase==="event"&&copy.pending&&!allowed(copy.pending)){
+     delete copy.recruitPage;
+-    copy.pending=copy.eventQueue?.shift()||null;copy.phase=copy.pending?"event":"result";
+-  }
+-  if(["maid","circus","visitPrince"].includes(copy.recruitPage?.id)&&copy.recruitPage.version!==2)delete copy.recruitPage;
++    copy.pending=copy.eventQueue?.shift()||null;copy.phase=copy.pending?"event":copy.recruitReturn==="vow"?"vow":"result";
++    if(!copy.pending)delete copy.recruitReturn;
++  }
++  if(copy.recruitPage?.id==="circus"&&copy.recruitPage.version!==3)delete copy.recruitPage;
++  if(["maid","visitPrince"].includes(copy.recruitPage?.id)&&copy.recruitPage.version!==2)delete copy.recruitPage;
+   if(copy.recruitPage?.id==="cook"&&copy.recruitPage.version==null){
+     // The original cut had five pages before Ciel's first question.
+     copy.recruitPage.at=pageAt("cook",copy.recruitPage.at-5);
+@@ -603,6 +667,10 @@
    }
    startFinnyAtTurn(copy);
    startTownhouseGuests(copy);
@@ -888,7 +1033,7 @@
    return copy;
  }
  function recordPanel(){
-@@ -619,10 +676,27 @@
+@@ -619,10 +687,27 @@
        return '<details><summary>'+monthText(record.month||state.month)+' · '+event.title+'</summary><p>'+note+'</p>'+btn('영입 장면 다시 보기','recruit-memory:'+event.id)+'</details>';
      }
      const choice=event.choices[record.index];
@@ -918,7 +1063,7 @@
  }
  function savePanel(){
    const rows=["auto","1","2","3"].map((id,index)=>{
-@@ -631,7 +705,7 @@
+@@ -631,7 +716,7 @@
        (record?monthText(record.month)+" · "+phaseNames[record.phase]:"빈 슬롯")+'</span></div><div class="opts">'+
        (index?btn("저장","store:"+id,false,"slot-write"):"")+btn("불러오기","load:"+id,!record,"slot-read")+'</div></div>';
    }).join("");
@@ -927,7 +1072,7 @@
      '<div class="notebook-actions">'+(state.phase!=="contract"?btn("프롤로그 다시 보기","recollect"):"")+btn("새 회차","reset")+btn("표지로","tab:title")+'</div>');
  }
  function statusPanel(){
-@@ -646,7 +720,7 @@
+@@ -646,7 +731,7 @@
      return '<div class="meter '+styles[i]+'"><span>'+conditions[i]+'</span><span class="track" aria-hidden="true"><i class="fill" style="width:'+
        value+'%"></i></span><b>'+value+'</b><em class="'+((i===1?delta>0:delta<0)?"danger":"good")+'">'+(delta?signed(delta):"–")+'</em></div>';
    }).join("");
@@ -936,7 +1081,7 @@
      (state.phase==="plan"?"월말 예상 변동":"이번 달 변동")+'</span></div><div class="hud-group">'+meters+
      '</div><div class="hud-group"><div class="attributes"><div class="attribute attr-label muted"><span>능력치</span><b>현재</b><em>변동</em></div>'+
      stats.map(name=>{
-@@ -811,6 +885,17 @@
+@@ -811,6 +896,17 @@
  }
  
  const marketGoods={
@@ -954,7 +1099,7 @@
    tea:{name:"홍차 한 잔",cost:12,stat:"stress",amount:-5,label:"스트레스",line:"마침 차가 잘 우러났어. 한 잔 하겠어?"},
    scone:{name:"버터 스콘",cost:15,stat:"hp",amount:6,label:"건강",line:"스콘은 따뜻할 때 반으로 갈라야 버터가 스며들지."}
  };
-@@ -818,17 +903,18 @@
+@@ -818,17 +914,18 @@
  function marketPanel(){
    const cards=Object.entries(marketGoods).map(([id,g])=>
      '<button type="button" class="goods-ticket" data-action="goods:'+id+'" aria-pressed="'+(selectedGood===id)+'">'+
@@ -981,7 +1126,7 @@
      btn(money(g.cost)+" 구매","buy:"+selectedGood,Boolean(reason),"shop-buy")+'</div>'+
      (reason?'<small>'+reason+'</small>':'')+'</section></div>';
  }
-@@ -848,43 +934,41 @@
+@@ -848,43 +945,41 @@
  const homeRemarks=["무슨 일이지?","차가 식기 전에 마저 마시겠어.","오늘 일정은 확인했나?","잠깐이라면 들어주지."];
  let remarkIndex=0;
  let remarkTimeout;
@@ -1044,7 +1189,7 @@
    musicPlayer.sync(trackForView());
    stopPlayback();
    $("system-back").disabled=tab==="home";
-@@ -1115,6 +1199,21 @@
+@@ -1115,6 +1210,21 @@
  }
  function handleAction(key,rect,confirmed=false){
    const [action,id,value]=key.split(":");
@@ -1066,7 +1211,7 @@
    if(action==="recruit-memory"&&tab==="record"&&state.events.some(e=>e.id===id)){openRecruitMemory(id);return;}
    if(tab==="staffMemory"&&["system-back","back"].includes(action)){closeRecruitMemory();return;}
    const fund=state.fund;
-@@ -1123,10 +1222,15 @@
+@@ -1123,10 +1233,15 @@
    if(action==="open-guide"){showGuidePage(0);return;}
    if(action==="goods"&&tab==="market"&&Object.hasOwn(marketGoods,id)){
      selectedGood=id;
@@ -1083,7 +1228,17 @@
    }
    if(action==="greet-ciel"){greetCiel();return;}
    if(action==="open-menu"){
-@@ -1177,7 +1281,6 @@
+@@ -1173,11 +1288,16 @@
+   if(action==="skip"){finishScene();respond("step",rect);return;}
+   if(action==="speed"){speed=speed===1?3:1;const b=$("playback").querySelector('[data-action="speed"]');if(b)b.textContent="재생 ×"+speed;respond("step",rect);return;}
+   if(action==="category"){lessonPage=Number(id);render();focusAction(key);respond("tap",rect,".lesson-index");return;}
++  if(action==="chat-reply"){
++    if(tab==="chat"&&state.spoken?.turn===state.month&&state.spoken.reply){
++      state.spoken.replyRead=true;persist();render(true);
++    }
++    return;
++  }
+   if(action==="chatline"){speak(id);respond("decision",rect,".dialogue");return;}
    if(action==="read-verdict"&&state.phase==="investiture"){
      tab="plan";finish(state.ending);return;
    }
@@ -1091,7 +1246,7 @@
    if(action==="annex"||action==="townhouse"){
      if(action==="annex"&&state.phase!=="plan")return;
      if(action==="townhouse"){
-@@ -1288,7 +1391,7 @@
+@@ -1288,7 +1408,7 @@
      render(true);return;
    }
    if(action==="execute"&&!confirmed&&state.phase==="plan"){
@@ -1100,7 +1255,7 @@
      const instructions='<details class="desk-review"><summary>이달 운영 지시 확인·변경</summary>'+
        '<div><p><b>저택</b><br>'+(state.people.tanaka?"타나카 · "+dutyName(state.jobs.tanaka)+" · ":"")+'시설 상태 '+houseValues().시설상태+'</p>'+btn("저택 지시 변경","inspect:estate")+'</div>'+
        '<div><p><b>팬텀사</b><br>'+products[state.product].name+' '+state.qty+'개 · 판매가 '+money(state.price)+'</p>'+btn("팬텀사 지시 변경","inspect:company")+'</div></details>';
-@@ -1321,11 +1424,18 @@
+@@ -1321,11 +1441,18 @@
      if(action==="buy"){
        const g=marketGoods[id];
        if(tab!=="market"||!Object.hasOwn(marketGoods,id)||state.fund<g.cost)return;
@@ -1124,7 +1279,7 @@
      }else if(action==="activity"){
        pattern="schedule";state.plan[Number(id)]=value;
        message=slotNames[Number(id)]+" · "+actions[value].name;
-@@ -1405,7 +1515,7 @@
+@@ -1405,7 +1532,7 @@
        const key=button.dataset.action;
        handleAction(key,rect);
        const pressed=button.isConnected?button:document.querySelector('button[data-action="'+key+'"]:not(:disabled)');
@@ -1133,7 +1288,7 @@
          pressed.animate([{scale:".98"},{scale:"1"}],{duration:140,easing:"ease-out"});
        }
      }
-@@ -1418,5 +1528,7 @@
+@@ -1418,5 +1545,7 @@
  });
  render();
  if(state.phase==="guide"&&tab==="plan")showGuidePage(0);
@@ -1154,7 +1309,83 @@
    if(i+step>=openingLines.length){finishOpening();return;}
 --- a/js/recruit.js
 +++ b/js/recruit.js
-@@ -158,16 +158,108 @@
+@@ -93,29 +93,52 @@
+       ["타나카","제가 아직 당신이 어떤 분인지는 잘 모릅니다만…… 도련님을 잘 부탁드립니다."],
+       ["세바스찬","……예. 팬텀하이브가의 집사로서 최선을 다해 도련님을 모시겠습니다."]]}
+   ]},
+-  circus:{name:"스네이크",title:"천막에 남은 편지",result:"스네이크가 뱀들과 함께 저택에 머물며 풋맨으로 일하게 되었다.",scenes:[
+-    {title:"빈 천막",art:"field",cast:["snake"],lines:[
+-      ["장면","스코틀랜드 야드의 마차가 떠났다. 스네이크가 우리에 덮을 천을 걷자, 깔짚 틈에서 구겨진 편지 한 통이 떨어졌다."],
+-      ["스네이크","조커의 글씨야. 봐, 에밀리. 영문 대문자 J를 쓸 때면 꼭 이렇게 잉크가 튀잖아."],
+-      ["장면","물에 젖은 종이를 펴니 몇 줄은 서로 붙어 있었다. 가운데 이름 하나가 온전히 남았다. ‘팬텀하이브 백작.’"],
+-      ["스네이크","백작……? 우리 식구들이 왜 백작한테 가?"]]},
+-    {title:"편지에 남은 이름",art:"library",cast:["snake","ciel"],lines:[
+-      ["스네이크","당신이 팬텀하이브 백작이야? 조커가 여기 왔어?"],
+-      ["시엘","조커라면 노아의 방주 단장 대리 말이야? 야드에서 단원들을 데려갔다고 들었는데."],
+-      ["스네이크","알아. 난 거기 있었어. 그래도…… 이걸 보면 당신은 뭔가 알 줄 알았어."],
+-      ["장면","시엘은 편지를 창가에 비춰 보았다. 겹쳐 붙은 종이 사이로 잉크가 거뭇하게 배어 나왔다."],
+-      ["시엘","……내 이름이 왜 여기 있지?"],
+-      ["스네이크","그걸 물으러 왔어. ……라고 오스카가 말해."],
+-      ["장면","시엘이 읽은 자리를 손가락으로 짚어 주고 편지를 돌려주었다. 스네이크는 한참 그 이름을 내려다보다가 주머니에 넣었다."]]},
+-    {title:"돌아갈 곳",art:"parlour",cast:["snake","ciel"],lines:[
+-      ["시엘","그런데 넌 이제 어디로 갈 거야?"],
+-      ["스네이크","천막을 걷으면…… 모르겠어. 이 아이들을 데리고 들어갈 데가 없어."],
+-      ["시엘","갈 곳이 없으면 우리 집으로 와. 마침 풋맨이 하나 필요해."],
+-      ["스네이크","나한테 손님을 맞으라고? 다들 날 보면 뱀부터 보는데."],
+-      ["시엘","그럼 나부터 알아 둬야겠군. 네 소매에서 날 보고 있는 건 누구야?"],
+-      ["스네이크","에밀리. 아까 말한 건 오스카고. ……둘 다 같이 있어도 돼?"],
+-      ["시엘","네가 데려온 식구잖아. 방은 세바스찬이 보여 줄 거야."],
+-      ["스네이크","그럼 여기서 일할게. ……이건 내가 하는 말이야."]]}
++  circus:{name:"스네이크",title:"봉투에 적힌 이름",result:"스네이크는 타운하우스에서 소마와 아그니를 만났다. 본저택에서 시엘과 이야기를 나눈 뒤, 뱀들과 함께 풋맨으로 일하기로 했다.",scenes:[
++    {title:"봉투에 적힌 이름",art:"field",cast:["snake"],lines:[
++      ["장면","공연이 끝나면 조커가 돈을 세고, 스네이크는 뱀을 셌다. 오늘은 뱀을 다 세고도 천막을 떠날 수 없었다."],
++      ["장면","스코틀랜드 야드가 단원들을 데려간 뒤였다. 조커의 짐 속에 마른 분 냄새가 밴 편지 한 통이 남아 있었다. ‘팬텀하이브 백작 귀하.’"]]},
++    {title:"런던의 번지",art:"london",cast:["snake"],lines:[
++      ["장면","런던의 타운하우스. 스네이크는 봉투에 적힌 번지와 눈앞의 문패를 번갈아 보았다. 목도리 속에서 오스카가 먼저 고개를 내밀었다."],
++      ["스네이크","여기야. 저 문 안쪽에서 스마일 냄새가 나. ……라고 오스카가 말했어."]]},
++    {title:"타운하우스의 문간",art:"london",cast:["snake","soma"],lines:[
++      ["소마","야, 그러다 해 지겠다! 문고리를 그렇게 보고만 있으면 안에서 어떻게 열어 줘?"],
++      ["스네이크","스마일을 만나러 왔어. 키가 이만하고, 잘 안 웃는 애. 웃으라고 하면 더 안 웃어. ……라고 오스카가 말했어."],
++      ["소마","그건 틀림없이 시엘이다. 그런데 스마일이라고? 아그니, 시엘이 그런 이름으로도 불렸나?"]]},
++    {title:"손으로 전할 편지",art:"london",cast:["snake","agni"],lines:[
++      ["아그니","그 이야기는 시엘 님께 직접 여쭙는 편이 좋겠군요. 손님, 편지는 제가 전해 드릴까요?"],
++      ["스네이크","친절은 고맙습니다만, 이건 손수 전하고 싶답니다. ……라고 키츠가 말했어."],
++      ["아그니","그렇다면 마차를 대겠습니다. 바구니도 이리 주십시오."],
++      ["스네이크","그 바구니는 밑을 받쳐 줘. 에밀리가 자고 있어."]]},
++    {title:"마차를 빌리다",art:"london",cast:["snake","soma"],lines:[
++      ["소마","내 마차라면 다 자면서 가도 된다! 시엘을 만나거든 안부도 전해 다오. 지난번 체스는 아직 내 차례라고!"]]},
++    {title:"온실 앞",art:"garden",cast:["snake"],lines:[
++      ["장면","본저택 온실 앞에서 마차가 멎었다. 스네이크가 바구니 뚜껑을 조금 들자 납작한 머리들이 볕 드는 돌턱으로 하나씩 미끄러져 나왔다."],
++      ["스네이크","누굴 기다리든 여기서 기다려. 배가 따뜻한 동안은 내가 널 용서할 테니까. ……라고 와일드가 말했어."]]},
++    {title:"스마일에게 묻다",art:"garden",cast:["snake","ciel"],lines:[
++      ["시엘","……거기 내 장갑을 깔고 누운 녀석한테도 한마디 전해 줄래?"],
++      ["스네이크","스마일."],
++      ["장면","스네이크는 벌떡 일어섰다. 손에 쥐고 온 편지를 내미는 데는 한참이 더 걸렸다."],
++      ["스네이크","조커의 짐에 왜 네 이름이 있어? 경찰이 다 데려갈 때 너만 어디 있었어? 대답해! ……라고 와일드가 말했어."],
++      ["시엘","내게 보내려고 쓴 거야. 봐, 안쪽에 조커의 서명이 있지. 난 공연이 끝난 도시마다 아이가 하나씩 사라지는 이유를 조사하고 있었어."],
++      ["스네이크","조커는 밤에 내가 추울까 봐 자기 웃옷까지 벗어 줬어. 내가 자는 줄 알고. ……그런 사람이야."],
++      ["시엘","그랬겠지. 내게도 구두끈을 묶어 줬어. 첫날, 남들이 다 보고 있는데 내가 두 번이나 넘어졌거든."],
++      ["스네이크","……그런데도 잡혀가게 뒀어?"],
++      ["시엘","응. 아이들 집에서도 누군가 밤새 문을 열어 두고 기다렸을 테니까. 조커한테 물어야 할 게 있어. 네게도 있을 거야."],
++      ["장면","시엘은 편지를 접힌 자국대로 접어 돌려주었다. 스네이크가 봉투를 받았는데도 그 손은 거기 그대로 있었다."],
++      ["시엘","여기서 일해, 스네이크. 단원들 면회가 허락되면 내 이름으로 신청해 줄게. 무슨 말을 할지는 네가 정해."],
++      ["스네이크","저택에는 벌써 문지기가 있잖아. 우리 애들까지 데려온 걸 알면 다들……."],
++      ["시엘","아까부터 저 문지기 뒤에 몇이나 서 있었지?"],
++      ["스네이크","둘. 나중에 하나가 더 왔어. 왼발을 조금 끌어. ……라고 오스카가 말했어."],
++      ["시엘","내가 들은 건 둘이야. 그럼 너한테 맡길 일이 하나 생겼군. 바구니째 와. 따뜻한 곳은 네가 더 잘 고르겠지."],
++      ["장면","스네이크는 손바닥을 바지에 한 번 닦았다. 시엘이 기다렸다. 이번에는 어느 뱀도 그의 귓가로 올라오지 않았다."],
++      ["스네이크","……나도 여기 있고 싶어."],
++      ["장면","그가 손을 잡고 일어서자 바구니에서 에밀리가 따라 나왔다. 소맷부리와 소맷부리 사이, 두 사람의 손등을 건너갔다."]]},
++    {title:"신임 경비원의 침구",art:"garden",cast:["seb","ciel"],lines:[
++      ["세바스찬","그의 면회까지 주선해 주실 줄은 몰랐습니다. 오늘 들은 이야기로는 도련님께 퍽 화가 나 있는 모양이던데요."],
++      ["시엘","그래서 데려온 거야. 묻고 싶은 게 있으면 여기 와서 내 얼굴을 보고 물으면 돼. 그 정도는 나도 대답할 수 있어."],
++      ["세바스찬","그럼 근무표에 올리겠습니다. 그런데 도련님, 장갑은 되찾으셨습니까?"],
++      ["시엘","마음에 들었다잖아. 첫 급료에서 장갑 값을 떼면 주인이 너무 옹졸해 보이겠지?"],
++      ["세바스찬","그럼 장부에는 신임 경비원의 침구 한 벌로 적어 두지요."]]}
+   ]},
+   visitPrince:{name:"소마·아그니",title:"이스트엔드에서 만난 두 사람",result:"소마와 아그니가 런던 타운하우스에 함께 입주했다.",scenes:[
+     {title:"이스트엔드",art:"london",cast:["ciel","seb"],lines:[
+@@ -158,16 +181,108 @@
      stage.style.setProperty("--portrait-scene-width",entry.contentRect.width+"px");
    });
    observer.observe(stage);
@@ -1265,7 +1496,7 @@
  function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers=""){
    const book=recruitScenes[id],{scene,speaker,text}=book.lines[at];
    const art=recruitArt[scene.art],bg=file(art.bg),last=at===book.lines.length-1;
-@@ -181,10 +273,7 @@
+@@ -181,10 +296,7 @@
    }).join("");
    const label=last?(readOnly?"회상 마치기":"영입 확정"):"다음 대사";
    const arrow=answers?'':'<button type="button" class="line-next" data-read="'+(last?'finish':'next')+'" aria-label="'+label+'">▼</button>';
@@ -1277,7 +1508,7 @@
    const props=scene.prop?'<img class="recruit-tea" alt="닐기리 홍차" src="'+file(recruitProps[scene.prop])+'">':'';
    return backdrop+actors+props+sceneLine(speaker==="장면"?"":speaker,text,arrow,
      'data-book="'+id+'" data-leaf="'+at+'" aria-live="polite" aria-atomic="true"')+answers+controls;
-@@ -195,11 +284,14 @@
+@@ -195,11 +307,14 @@
    const end=recruitScenes[id].lines.length-1;
    clearTimeout(recruitTimer);if(at===end)stopRecruitAuto();
    host.innerHTML=recruitMarkup(id,at,file,readOnly,recruitAuto,answers);
@@ -1293,7 +1524,7 @@
      recruitTimer=setTimeout(()=>{if(line.isConnected&&!document.hidden)step(at+1);else stopRecruitAuto();},delay);
    }
    function click(e){
-@@ -215,7 +307,7 @@
+@@ -215,7 +330,7 @@
      if(read==="previous"&&at>0)step(at-1);
      if(read==="next"&&at<end)step(at+1);
      if(read==="skip"&&at<end)step(end);
@@ -1302,13 +1533,14 @@
    }
    function keydown(e){
      if(e.altKey||e.ctrlKey||e.metaKey||e.repeat||!["ArrowLeft","ArrowRight"].includes(e.key))return;
-@@ -235,21 +327,21 @@
+@@ -235,21 +350,21 @@
    const hasChoices=at===recruitScenes[id].lines.length-1&&event.choices.length>1;
    const answers=hasChoices?'<div class="answers" role="group" aria-label="대화 선택지">'+
      event.choices.map((c,i)=>btn(c.label,"choose:"+i,Boolean(c.when&&!c.when(state)),"vn-choice")).join("")+'</div>':"";
 -  host.hidden=false;drawRecruitReader(host,id,at,recruitArtwork(id,state.month),false,to=>{
+-    if(!current())return;state.recruitPage={id,at:to,...(["maid","cook","circus","visitPrince"].includes(id)?{version:2}:{})};persist();render();
 +  host.hidden=false;drawRecruitReader(host,id,at,recruitArtwork(currentCielAge()),false,to=>{
-     if(!current())return;state.recruitPage={id,at:to,...(["maid","cook","circus","visitPrince"].includes(id)?{version:2}:{})};persist();render();
++    if(!current())return;state.recruitPage={id,at:to,...(id==="circus"?{version:3}:["maid","cook","visitPrince"].includes(id)?{version:2}:{})};persist();render();
      host.querySelector(".line-next, .answers button")?.focus({preventScroll:true});
    },()=>{if(current())choose(0)},answers);
  }
@@ -1329,7 +1561,7 @@
  }
  function closeRecruitMemory(){
    stopRecruitAuto();const id=recruitMemory?.id;recruitMemory=null;tab="record";render();
-@@ -257,9 +349,9 @@
+@@ -257,9 +372,9 @@
    if(button){button.closest("details").open=true;button.focus({preventScroll:true});}
  }
  function showRecruitMemory(host){
@@ -1352,13 +1584,26 @@
    practicum:"마지막 영수증까지 제자리에 있습니다. 내일은 이 원장부터 펴겠습니다.",
    developToy:"도련님이 표시하신 축을 고치니 바퀴가 끝까지 돌아갑니다.",
    supplier:"견본과 납품표에 같은 표시를 남기셨군요. 다음 주문 때 대조하기 좋겠습니다.",
-@@ -151,14 +151,51 @@
+@@ -145,20 +145,64 @@
+   }else state.phase="review";
+   persist();render(true);
+ }
++// On a successful lesson the same achievement draws a different response as Ciel grows.
++const butlerLessonPraise={
++ study:["맞았습니다. 그럼 밑줄을 긋고, 다음 문장도 같은 식으로 읽어 보십시오.","이 구절은 혼자 푸셨군요. 어디서 실마리를 잡으셨습니까?","원문의 농담까지 살리셨군요. 제가 적어 둔 풀이는 접어 두지요.","이 문장에는 저도 한참 걸렸습니다. 도련님의 번역을 한 부 가져도 되겠습니까?"],
++ etiquette:["찻잔을 소리 없이 놓으셨군요. 다음 잔도 그렇게 부탁드립니다.","손님이 말하는 동안 잔을 채우셨군요. 당사자는 눈치도 못 챘겠습니다.","이번 다과에는 제가 접시를 낼 차례조차 짚어 드릴 일이 없었군요.","오늘은 제가 손님이었던 덕을 봤군요. 마지막 한 모금까지 대접을 잘 받았습니다, 도련님."],
++ riding:["거기서 멈추십시오. 지금처럼 어깨를 내리시면 됩니다.","고삐를 늦출 때를 잡으셨군요. 이번에는 제가 옆에서 걷겠습니다.","오늘은 제가 먼저 돌아가도 되겠군요. 말이 도련님 손만 기다리고 있습니다.","마지막 굽이를 제가 잘못 짚었군요. 도련님이 고르신 길로 돌아가겠습니다."]
++};
+ function reviewMarkup(){
+   const seq=state.sequence,id=state.plan[seq.index],a=actions[id],after=snapStats(state);
+   const changed=Object.keys(after).filter(k=>after[k]!==seq.before[k]);
    const preferred=Object.keys(a.gains).filter(k=>after[k]>seq.before[k]).sort((a,b)=>(after[b]-seq.before[b])-(after[a]-seq.before[a]));
    const tired=a.stress>0&&(seq.before.건강<40||seq.before.스트레스>=fatigueThreshold(seq.before.체력)||seq.before.의욕<35);
    let line=reviewLines[id];
 -  if(tired)line="끝까지 자리를 지키셨군요. 다음 순에는 차를 일찍 올리겠습니다. 오늘은 평소보다 피로가 짙으셨습니다.";
 +  if(seq.grade)line=lessonFeedback(id,seq.grade,seq.remark);
-+  else if(tired)line="끝까지 자리를 지키셨군요. 다음 순에는 차를 일찍 올리겠습니다. 오늘은 평소보다 피로가 짙으셨습니다.";
++  if(seq.grade==="great"&&seq.remark===1&&butlerLessonPraise[id])line=butlerLessonPraise[id][sebastianRegard(state.stats)];
++  if(!seq.grade&&tired)line="끝까지 자리를 지키셨군요. 다음 순에는 차를 일찍 올리겠습니다. 오늘은 평소보다 피로가 짙으셨습니다.";
    const lead=preferred[0]||(["건강","스트레스","의욕"].find(k=>after[k]!==seq.before[k]));
 -  if(!changed.length)line="오늘 기록은 지난 순과 같군요. 다음에는 다른 과목을 편성해 보시겠습니까, 도련님?";
 +  if(!changed.length&&!seq.grade)line="오늘 기록은 지난 순과 같군요. 다음에는 다른 과목을 편성해 보시겠습니까, 도련님?";
@@ -1485,7 +1730,7 @@
    if(tab==="staffMemory"&&recruitMemory){showRecruitMemory(con);return true;}
    if(event&&Object.hasOwn(recruitScenes,event.id)){con.dataset.review="false";showMonthlyRecruit(con,event);return true;}
    const review=state.phase==="review"&&tab==="plan";
-@@ -83,7 +95,7 @@
+@@ -83,16 +95,35 @@
    con.hidden=false;
    if(event){
      const buttons=event.choices.map((c,i)=>btn(c.label+(c.when&&!c.when(state)?' · '+c.hint:""),"choose:"+i,Boolean(c.when&&!c.when(state)),"vn-choice")).join("");
@@ -1494,9 +1739,72 @@
    }
    const c=chatDialogue();
    con.innerHTML=dialogueCast("세바스찬")+'<article class="dialogue"><small>'+c.caption+'</small><p>'+c.line+'</p>'+(c.effects?'<small>'+escapeHTML(c.effects)+'</small>':'')+'<div class="answers">'+c.buttons+'</div></article>';
+   return true;
+ }
++function sebastianRegard(abilities){
++  const average=stats.reduce((total,key)=>total+abilities[key],0)/stats.length;
++  return average>=350?3:average>=225?2:average>=100?1:0;
++}
++const butlerGreetings=[
++  "차를 한 잔 드시지요. 잔은 오른쪽에 두었습니다. 편지를 펼치시기 전에 봉투의 이름부터 확인하시고요.",
++  "편지 두 통과 차를 가져왔습니다. 어떤 편지를 먼저 여시겠습니까? 오늘은 제가 순서를 매기지 않았습니다.",
++  "봉투는 그대로 두었습니다. 제 짐작을 말씀드리면 도련님 생각을 들을 기회를 놓치겠지요.",
++  "오늘 답신을 기다릴 분께는 차를 한 잔 더 내드렸습니다. ……도련님께서 어느 봉투를 나중에 여실지, 저도 이제 제법 잘 맞히지요?"
++];
++const butlerReplies={
++ health:["삼십 분 늦추겠습니다. 그동안만큼은 장부를 제게 주시지요.","그 정도면 차가 식기 전에 눈을 좀 붙이실 수 있겠군요. 깨워 드리겠습니다.","삼십 분이면 충분하시겠습니까? 그럼 그 시각에 맞춰 손님을 들이겠습니다.","예. 삼십 분 뒤에 깨워 드리지요. 다시 부르실 때까지 여기 있겠습니다."],
++ business:["그럼 이 매듭을 한 손으로 풀어 보십시오. 다른 손엔 장난감을 들고 있다고 생각하시고요.","리본부터 보셨군요. 어느 끝을 당겨야 하는지 아이도 알아볼까요?","알겠습니다. 매듭만 바꾼 견본을 하나 더 가져오지요. 두 상자 중 어느 것을 먼저 집는지 보시겠습니까?","저도 뚜껑을 고쳐야겠다 싶었습니다만, 리본 하나를 빼면 그만이군요. 이번엔 도련님 안이 한 수 위였습니다."],
++ tea:["한 잔 더 올리지요. 이번엔 설탕을 넣기 전에 향부터 맡아 보십시오.","조금 더 진하게 우려 보았습니다. 어느 쪽이 나은지는 도련님께서 말씀해 주시지요.","예, 같은 차로 올리겠습니다. 두 번째 잔을 청하시면 그날의 차는 합격이라고 여겨도 되겠습니까?","한 잔 더, 입니까. 그럼 저도 배운 보람이 있군요. ……예전에는 다시 우려 오라는 분부를 더 자주 내리셨거든요."]
++};
+ function chatDialogue(){
+   const spoken=state.spoken?.turn===state.month?state.spoken:null;
+-  if(spoken)return {caption:"시엘 팬텀하이브",line:spoken.line,effects:spoken.effects,buttons:btn("대화를 마친다","back")};
+-  return {caption:"세바스찬 미카엘리스",line:state.hp<35?"차는 침실로 올리겠습니다. 오늘은 어느 서류를 물릴까요?":state.stress>60?"오늘은 찻잔이 식을 때까지 한 장도 넘기지 않으셨군요.":"오후의 홍차가 준비됐습니다. 오늘은 어떤 이야기를 나누시겠습니까?",
++  if(spoken){
++    const end=btn("대화를 마친다","back");
++    if(spoken.replyRead&&spoken.reply)return {caption:"세바스찬 미카엘리스",line:spoken.reply,buttons:end};
++    return {caption:"시엘 팬텀하이브",line:spoken.line,effects:spoken.effects,buttons:spoken.reply?btn("세바스찬의 대답을 듣는다","chat-reply")+end:end};
++  }
++  return {caption:"세바스찬 미카엘리스",line:state.ill||state.hp<35?"차는 침실로 올리겠습니다. 오늘은 어느 서류를 물릴까요?":state.stress>60?"오늘은 찻잔이 식을 때까지 한 장도 넘기지 않으셨군요.":butlerGreetings[sebastianRegard(state.stats)],
+     buttons:btn("몸 상태를 묻는다","chatline:health")+btn("팬텀사 이야기를 꺼낸다","chatline:business")+btn("차를 한 잔 더 따른다","chatline:tea")+btn("다음에","back")};
+ }
+ function speak(id){
+@@ -100,6 +131,7 @@
+   const lines={health:["몸 상태","“내가 무리하면 먼저 눈치챌 건 너잖아. 오늘 회의는 삼십 분 늦춰.”"],business:["","“장식은 나중이야. 아이가 혼자서도 상자를 열 수 있는지부터 봐.”"],tea:["오후의 홍차","“……그래. 한 잔만 더. 그동안은 서류도 그대로 두고.”"]};
+   if(!Object.hasOwn(lines,id))return;
+   if(id==="tea"||id==="health")state.flags.attention=(state.flags.attention||0)+1;
++  const reply=butlerReplies[id][sebastianRegard(state.stats)];
+   const before=snapStats(state);
+   if(id==="health"){
+     changeStat("통찰",6);
+@@ -119,6 +151,6 @@
+   let line=usual;
+   if(id==="tea"&&state.flags.teaBlend)line="“설탕은 하나. 그래, 오늘도 그걸로.” 시엘이 서류에서 눈을 떼지 않고 잔을 받습니다.";
+   if(id==="health"&&state.flags.morningGloves)line="“손을 내밀기도 전에 장갑부터 챙기는 녀석이 그걸 물어?” 시엘이 반대쪽 손도 내밉니다.";
+-  state.spoken={turn:state.month,title,line,effects};
++  state.spoken={turn:state.month,title,line,reply,effects};
+   persist();render(true);
+ }
 --- a/js/story.js
 +++ b/js/story.js
-@@ -66,7 +66,7 @@
+@@ -44,13 +44,14 @@
+     sees:s=>s.month>=19&&s.people.finny&&s.people.mey&&!s.people.bard,
+     choices:[effectChoice(["바르도 영입",recruitScenes.cook.result,{recruit:"bard"}])]});
+   fixed.push({id:"circus",household:true,chapter:true,speaker:"스네이크",title:recruitScenes.circus.title,
+-    text:"서커스단이 남긴 편지에서 백작의 이름을 읽은 스네이크가 저택을 찾아온다.",
+-    sees:s=>s.duration===35&&s.people.tanaka&&!s.people.snake&&!s.flags.snakeSafe&&!s.events.some(e=>e.id==="homecoming"&&e.month===s.month),
++    text:"단원들이 남긴 편지에서 백작의 이름을 읽은 스네이크가 런던의 타운하우스 문을 두드린다.",
++    sees:s=>dueSnakeVisit(s)==="circus",
+     choices:[effectChoice(["풋맨으로 맞는다",recruitScenes.circus.result,{recruit:"snake"}])]});
+   fixed.push({id:"visitPrince",household:true,chapter:true,speaker:"소마",title:recruitScenes.visitPrince.title,
+     text:"시엘이 런던 이스트엔드에서 소마와 아그니를 처음 만나 두 사람에게 거처를 내준다.",
+     sees:townhouseGuestsDue,choices:[choice("두 사람에게 방을 내준다",recruitScenes.visitPrince.result,()=>{
+       recruit("soma");recruit("agni");state.flags.agni=true;
++      scheduleSnakeVisit(state);
+     })]});
+   const local=[
+     ["study",3,"ink","번진 잉크","마지막 줄에서 잉크가 번졌습니다. 시엘은 답을 외운 채 새 종이를 달라고 합니다.","풀이를 말로 듣는다","지성",5,"잠시 펜을 놓는다","stress",-6],
+@@ -66,7 +67,7 @@
      ["dance",2,"turn","왈츠의 셋째 박","시엘의 구두가 같은 자리를 두 번 밟습니다. 반주를 한 박 늦춥니다.","발밑부터 다시 본다","체력",5,"손을 잡아 박을 맞춘다","기품",5],
      ["social",2,"calling","남겨진 명함","손님의 명함 가장자리가 접혀 있습니다. 오늘 방문의 뜻이 거기에 있습니다.","답방을 약속한다","매력",5,"가문의 관습을 찾아본다","지성",5],
      ["negotiate",2,"quote","빈 가격란","견적서의 마지막 줄은 비었습니다. 액수를 먼저 쓰는 쪽이 값을 정하게 됩니다.","납기부터 확인한다","경영",6,"상대의 표정을 읽는다","통찰",5],
@@ -1640,7 +1948,7 @@
  <button type="button" data-id="gardener">피니안</button><button type="button" data-id="maid">메이린</button><button type="button" data-id="cook">바르도</button><button type="button" data-id="homecoming">타나카</button><button type="button" data-id="circus">스네이크</button><button type="button" data-id="visitPrince">소마·아그니</button>
  </nav></main></div>
 -<script src="js/recruit.js?v=27041d4d6af2"></script><script>const previewAsset=k=>k;
-+<script src="js/recruit.js?v=ef0e9809d6b0"></script><script>const previewAsset=k=>k;
++<script src="js/recruit.js?v=3a83a76463ef"></script><script>const previewAsset=k=>k;
  const host=document.getElementById("conversation"),stage=document.getElementById("scene");
  observePortraitStage(stage);
  function openBook(id){

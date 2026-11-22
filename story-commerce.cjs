@@ -20,10 +20,45 @@ for(const phase of ['result','vow']){
   while(run('state.phase')==='event'){
     assert.ok(sequence.length<9);sequence.push(run('state.pending'));run('persist();state=normalizeSave(saves.auto)');pick();
   }
-  assert.deepEqual(sequence,['gardener','maid','cook','homecoming','circus']);assert.equal(run('state.phase'),phase);
+  assert.deepEqual(sequence,['gardener','maid','cook','homecoming']);assert.equal(run('state.phase'),phase);
 }
 setup('state.month=29;state.flags.snakeSafe=true;state.flags.circus=true;state.events=[{id:"circus",index:1,month:20}];for(const id of ["finny","mey","bard","tanaka"])recruit(id);state.phase="result";state=normalizeSave(state)');
+assertOk('!state.pending&&!state.people.snake');
+run('state.flags.townhouse=true;recruit("soma");recruit("agni");state.month=35;state=normalizeSave(state)');
 assert.equal(run('state.pending'),'snakeReturn');pick();assertOk('state.people.snake&&state.events.some(x=>x.id==="circus"&&x.index===1)');
+for(const omit of ["townhouse","soma","agni"]){
+  ctx.omit=omit;
+  setup('state.month=35;state.phase="event";state.pending="circus";state.recruitPage={id:"circus",at:7,version:2};state.eventQueue=["snakeReturn"];for(const p of ["finny","mey","bard","tanaka","soma","agni"])recruit(p);state.flags.townhouse=omit!=="townhouse";delete state.people[omit];state=normalizeSave(state)');
+  assertOk('!state.people.snake && !state.recruitPage && !["circus","snakeReturn"].includes(state.pending) && !state.snakeArrivalMonth');
+}
+setup('state.month=5;state.phase="plan";state.fund=500;handleAction("townhouse",null,true)');
+assert.equal(run('state.pending'),'visitPrince');pick();
+assertOk('state.people.soma && state.people.agni && !state.people.tanaka && state.snakeArrivalMonth>=5 && state.snakeArrivalMonth<=7');
+run('state.month=state.snakeArrivalMonth;state.phase="result";advance();state=normalizeSave(state)');
+assert.equal(run('state.pending'),'circus');
+assertOk('["스네이크","소마","아그니","시엘","세바스찬"].every(name=>recruitScenes.circus.lines.some(page=>page.speaker===name))');
+assertOk('recruitScenes.circus.lines.every((page,i)=>recruitMarkup("circus",i).includes(page.text))');
+run('state.recruitPage={id:"circus",at:13,version:3};state=normalizeSave(state)');assert.equal(run('recruitPage("circus")'),13);
+pick();assertOk('state.people.snake && !dueSnakeVisit(state) && state.events.filter(e=>e.id==="circus").length===1');
+for(const [person,place,month] of [["tanaka","library",1],["finny","garden",1],["mey","quarters",1],["bard","kitchen",1],["snake","quarters",2],["soma","townhouse",1],["agni","townhouse",2]]){
+  Object.assign(ctx,{person,place,month});
+  setup('recruit(person);state.phase="visit";state.visit=place;state.month=month;state.sequence={index:2}');
+  for(const [tier,trust] of [2,3,5,9].entries()){
+    Object.assign(ctx,{tier,trust});
+    run('state.people[person].toward=trust');
+    assertOk('visitScene().includes(trustedGreetings[person][tier]) && relationBook().includes("상대 → 시엘 신뢰　"+rank(trust))');
+  }
+}
+for(const [tier,value] of [45,100,225,350].entries()){
+  Object.assign(ctx,{tier,value});
+  for(const topic of ["health","business","tea"]){
+    ctx.topic=topic;
+    setup('tab="chat";for(const key of stats)state.stats[key]=value');
+    assertOk('chatDialogue().line===butlerGreetings[tier]');
+    run('speak(topic);handleAction("chat-reply");state=normalizeSave(state)');
+    assertOk('chatDialogue().caption==="세바스찬 미카엘리스"&&chatDialogue().line===butlerReplies[topic][tier]');
+  }
+}
 setup('state.events=[{id:"unasked",index:0}];state.flags.gloves=true;state=normalizeSave(state)');assertOk('!state.flags.gloves&&state.flags.morningGloves');
 run('state.events.push({id:"gloves",index:1});state.flags.gloves=true;state=normalizeSave(state)');assertOk('state.flags.gloves&&state.flags.morningGloves');
 for(const [id,place,person] of [['greenhouseKey','garden','finny'],['finnyRoseLabel','garden','finny'],['bardSupper','kitchen','bard'],['linenMarks','quarters','mey'],['postalReply','library','tanaka']]){
@@ -55,25 +90,29 @@ run('state.phase="result";handleAction("sample:approve",null,true);advance()');a
 setup('state.fund=500;handleAction("expand:works",null,true);handleAction("liquidate:works",null,true);handleAction("liquidate:works",null,true)');assertOk('state.shop.works===1&&state.fund===462&&state.accounts.divest===37');
 setup('delete state.fineStock;delete state.productHistory;state.salesBook=[{month:1,product:"toys",sold:8}];state.quality="fine";state.stock.toys=4;state=normalizeSave(state);state=normalizeSave(state)');assertOk('state.productHistory.toys.units===8&&state.fineStock.toys===4');
 assertOk('orderDesk().includes("재주문") && inventoryRows().includes("누적 판매")');
-console.log('PASS late-save recruitment, final vow return, legacy Snake, independent gloves, 10 visit echoes and reloads, both history branches, graded inventory, cross-product deliveries, fees, cash reconciliation, upgrade and liquidation.');
+console.log('PASS townhouse invitation, trust greetings for seven characters, Sebastian growth and replies, late-save recruitment, final vow return, legacy Snake, independent gloves, 10 visit echoes and reloads, both history branches, graded inventory, cross-product deliveries, fees, cash reconciliation, upgrade and liquidation.');
 
 const result=vm.runInContext(`(()=>{
- const all=new Set(),last={};for(let seed=0;seed<4096;seed++){
+ const all=new Set(),last={},arrivals=new Set();for(let seed=0;seed<4096;seed++){
   const run=initial();run.owlSeed=seed;run.people.finny={};const births=[];
   for(let m=13;m<=25;m++){
    run.month=m;
    // Queue recruitment candidates against the start-of-settlement roster.
    const maid=owlAppears(run),cook=events.find(e=>e.id==='cook').sees(run);
-   const snake=events.find(e=>e.id==='circus').sees(run);
+   if(m===21){run.flags.townhouse=true;run.people.soma={};run.people.agni={}}
+   scheduleSnakeVisit(run);
+   const snake=dueSnakeVisit(run);
+   if(snake && (m<21||m>23||snake!=="circus"))throw Error("Invalid Snake window");
    if(cook){run.people.bard={};births.push('B'+m)}
    if(maid){run.people.mey={};births.push('M'+m)}
    if(tanakaReturns(run)){run.people.tanaka={};births.push('T'+m);run.events.push({id:'homecoming',month:m})}
-   if(snake){run.people.snake={};births.push('S'+m)}
+   if(snake){run.people.snake={};arrivals.add(m);births.push('S'+m)}
   }
-  if(!run.people.snake||births.map(s=>s[0]).join('')!=='MBTS')throw Error(seed+':'+births.join());
+  if(!run.people.snake||births.map(s=>s[0]).filter(id=>id!=='S').join('')!=='MBT')throw Error(seed+':'+births.join());
   for(const s of births){const k=s[0];last[k]=Math.max(last[k]||0,+s.slice(1))}
   all.add(births.join(','));
  }
+ if(arrivals.size!==3)throw Error("Expected three possible visiting months");
  return {patterns:all.size,latest:last};
 })()`,ctx,{timeout:12000});
 console.log('4096 seeds',JSON.stringify(result));
