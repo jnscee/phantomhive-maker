@@ -8,10 +8,10 @@
 .opening-mat {z-index:2;display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;padding:clamp(14px,2.4cqw,34px) clamp(18px,4cqw,52px) clamp(15px,2.6cqw,35px);box-sizing:border-box;background:linear-gradient(180deg,#0d0e17ac,transparent 28%,transparent 48%,#0d0d17b0 83%,#0b0d16f0);pointer-events:none}
 .opening-top,.opening-controls {display:flex;align-items:center;gap:7px}
 .opening-top {justify-content:space-between;color:#faf0d7;font:700 clamp(12px,1.1cqw,15px)/1.2 "Gowun Batang",serif;letter-spacing:.05em;text-shadow:0 1px 5px #000}
-#overture .opening-top button {pointer-events:auto;border:1px solid #c5b89d7d;border-radius:2px;background:#13131dbd;color:var(--ink);font:inherit;font-weight:700;min-height:34px;padding:5px 15px;line-height:1.4;text-shadow:none;box-shadow:none;cursor:pointer}
-#overture .opening-top button:is(:hover,:focus-visible):enabled,#overture #opening-auto[aria-pressed="true"] {background:#453b38;border-color:#f1d5a2}
-#overture button:focus-visible {outline:2px solid #f4d8a4;outline-offset:2px}
-#overture button:disabled {opacity:.38;cursor:default}
+:is(#overture,#conversation) .opening-top button {pointer-events:auto;border:1px solid #c5b89d7d;border-radius:2px;background:#13131dbd;color:var(--ink);font:inherit;font-weight:700;min-height:34px;padding:5px 15px;line-height:1.4;text-shadow:none;box-shadow:none;cursor:pointer}
+:is(#overture,#conversation) .opening-top button:is(:hover,:focus-visible):enabled,#overture #opening-auto[aria-pressed="true"] {background:#453b38;border-color:#f1d5a2}
+:is(#overture,.recruit-controls) button:focus-visible {outline:2px solid #f4d8a4;outline-offset:2px}
+:is(#overture,.recruit-controls) button:disabled {opacity:.38;cursor:default}
 .opening-caption {align-self:flex-start;margin-top:auto;margin-bottom:clamp(9px,1.6cqw,24px);color:#fff8e8;text-shadow:0 2px 10px #080911,0 1px 3px #080911}
 .opening-caption span {font:italic clamp(17px,2.4cqw,38px)/1.1 Baskerville,"Times New Roman",serif;letter-spacing:.025em;color:#f6dbb0}
 .opening-caption h2 {color:inherit;font:700 clamp(21px,3.0cqw,46px)/1.2 "Gowun Batang",Georgia,serif;letter-spacing:-.045em;margin:4px 0}
@@ -31,14 +31,14 @@
  .opening-mat {padding:16px 4% 15px;background:linear-gradient(180deg,#100f19aa,transparent 24%,transparent 38%,#110e1980 55%,#110e19 71%)}
  .opening-transcript {padding:14px 14px 10px}
  .opening-voice {min-height:6em}
- #overture .opening-top button{min-height:40px}
+ :is(#overture,#conversation) .opening-top button{min-height:40px}
 }
 @media (max-height:540px) and (orientation:landscape) {
  .opening-mat {padding:6px 3% 8px}
  .opening-caption {margin-bottom:4px}.opening-caption span,.opening-caption small {display:none}
  .opening-caption h2 {font-size:18px}.opening-voice {min-height:0}
  .opening-transcript {padding:6px 12px}.opening-voice p {font-size:15px;line-height:1.35;margin:3px 0}
- #overture .opening-top button {min-height:27px;padding:2px 10px}
+ :is(#overture,#conversation) .opening-top button {min-height:27px;padding:2px 10px}
 }
 @media (prefers-reduced-motion:reduce){.opening-cg.ready{animation:none}}
 .expansion-quote {margin:12px 0 8px;padding:10px 12px;background:#dce6ed;color:#243a4b;border-inline-start:3px solid #6985a0}
@@ -103,7 +103,7 @@
 }
 
 /* Prologue playback controls */
-#overture .opening-top {
+:is(#overture,#conversation) .opening-top {
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:3px;
@@ -117,7 +117,7 @@
 }
 #overture[data-voice-only=true] .opening-top,
 #overture[data-signing=true] .opening-top {display:none}
-#overture .opening-top button {
+:is(#overture,#conversation) .opening-top button {
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -132,30 +132,18 @@
   color:#edf1f8;
   text-shadow:0 1px 3px #0a1527;
 }
-#overture .opening-top button::before {
+:is(#overture,#conversation) .opening-top button::before {
   content:"";
   width:10px;
   height:10px;
   background:currentColor;
 }
-#opening-prev::before {clip-path:polygon(75% 5%,22% 50%,75% 95%,89% 81%,52% 50%,89% 19%)}
-#opening-auto::before {clip-path:polygon(14% 4%,96% 50%,14% 96%)}
-#opening-auto[aria-pressed=true]::before {clip-path:polygon(12% 6%,38% 6%,38% 94%,12% 94%,12% 6%,62% 6%,88% 6%,88% 94%,62% 94%,62% 6%)}
-#opening-skip::before {clip-path:polygon(0 8%,43% 44%,43% 8%,97% 50%,43% 92%,43% 56%,0 92%)}
-#overture .opening-top button:is(:hover,:focus-visible):enabled {background:#506a8b80;border-color:#b8c8de94}
-#overture #opening-auto[aria-pressed=true] {background:#3c57758f;color:#fff1d2;border-color:#d4c295ba}
+:is(#opening-prev,[data-read="previous"])::before {clip-path:polygon(75% 5%,22% 50%,75% 95%,89% 81%,52% 50%,89% 19%)}
+:is(#opening-auto,[data-read="auto"])::before {clip-path:polygon(14% 4%,96% 50%,14% 96%)}
+:is(#opening-auto,[data-read="auto"])[aria-pressed=true]::before {clip-path:polygon(12% 6%,38% 6%,38% 94%,12% 94%,12% 6%,62% 6%,88% 6%,88% 94%,62% 94%,62% 6%)}
+:is(#opening-skip,[data-read="skip"])::before {clip-path:polygon(0 8%,43% 44%,43% 8%,97% 50%,43% 92%,43% 56%,0 92%)}
+:is(#overture,#conversation) .opening-top button:is(:hover,:focus-visible):enabled {background:#506a8b80;border-color:#b8c8de94}
+:is(#overture,#conversation) :is(#opening-auto,[data-read="auto"])[aria-pressed=true] {background:#3c57758f;color:#fff1d2;border-color:#d4c295ba}
 @media(pointer:coarse) {
-  #overture .opening-top button {min-height:44px}
-}
-
-#overture[data-dialogue-hidden=true] .opening-mat {background:none}
-#overture[data-dialogue-hidden=true] :is(#opening-dialogue,#opening-prev,#opening-auto,#opening-skip) {display:none}
-#overture[data-dialogue-hidden=true] .opening-still .opening-cg {object-fit:contain;scale:1}
-#overture[data-dialogue-hidden=true] .opening-still {background:#111820}
-#overture[data-ending=true] .opening-cg {object-position:center}
-#overture[data-ending=true][data-art=command] .opening-cg {object-position:53% center}
-#overture #opening-toggle {white-space:nowrap}
-@media(max-width:540px) {
-  #overture .opening-top {gap:4px}
-  #overture .opening-top button {padding-inline:7px;font-size:clamp(11px,3vw,13px)}
+  :is(#overture,#conversation) .opening-top button {min-height:44px}
 }

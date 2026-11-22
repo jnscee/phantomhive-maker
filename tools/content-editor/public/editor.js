@@ -81,6 +81,10 @@ function getAsset(field, input) {
     const track=data.groups.find(group=>group.key==="music-"+input);
     return track?value(track.fields.find(row=>row.type==="audio")):null;
   }
+  if(field.media==="recruitArt") {
+    const art=data.groups.find(group=>group.key==="recruit-art-"+input);
+    return art?value(art.fields[0]):null;
+  }
   if(field.media==="room") {
     const room=data.groups.find(group=>group.key==="sceneArt-"+input);
     return room?value(room.fields[0]):null;
@@ -133,21 +137,22 @@ function assetPreview(filename, target) {
   target.append(media,node("small",filename),actions,upload);
 }
 
-function linesEditor(parent,initial,onChange) {
+function linesEditor(parent,initial,onChange,field={}) {
   let list=structuredClone(initial);
   const body=node("div");
   const add=button("＋ 대사 추가",()=>{
-    list.push(["연출",""]);
+    list.push(["",""]);
     draw();
     body.lastElementChild.querySelector("input").focus();
     onChange(list);
   },"add-line");
   function draw() {
     body.replaceChildren();
-    list.forEach(([who,text],index)=>{
+    list.forEach(([who,text,metadata],index)=>{
       const row=node("div",undefined,"line");
       const speaker=node("input");
       speaker.value=who;
+      speaker.placeholder="화자 없음";
       speaker.setAttribute("aria-label",(index+1)+"번 화자");
       speaker.addEventListener("input",()=>{list[index][0]=speaker.value;onChange(list);});
       const line=node("textarea");
@@ -177,6 +182,36 @@ function linesEditor(parent,initial,onChange) {
       remove.setAttribute("aria-label",(index+1)+"번 대사 삭제");
       actions.append(up,down,remove);
       row.append(node("span",String(index+1),"line-num"),speaker,line,actions);
+      if(field.metadata==="illustration") {
+        const image=select([["","대표 CG"],...field.artOptions],metadata??"");
+        image.setAttribute("aria-label",(index+1)+"번 대사의 CG");
+        image.addEventListener("input",()=>{
+          if(image.value) list[index][2]=image.value;
+          else list[index].length=2;
+          onChange(list);
+        });
+        const media=node("div",undefined,"asset-preview line-media");
+        function drawCG(){assetPreview(data.inventory.ending[image.value||field.defaultArt],media);}
+        image.addEventListener("input",drawCG);
+        drawCG();
+        const details=node("details",undefined,"line-options");
+        details.append(node("summary","CG · "+(field.artOptions.find(([id])=>id===metadata)?.[1]??"대표 CG")),image,media);
+        image.addEventListener("input",()=>{details.firstChild.textContent="CG · "+image.selectedOptions[0].textContent;});
+        row.append(details);
+      }
+      if(field.metadata==="tanaka" && (metadata!==undefined || field.hasTanaka)) {
+        const option=node("label","타나카가 있을 때만 표시","line-options");
+        const toggle=node("input");
+        toggle.type="checkbox";
+        toggle.checked=Boolean(metadata);
+        toggle.addEventListener("input",()=>{
+          if(toggle.checked) list[index][2]=true;
+          else list[index].length=2;
+          onChange(list);
+        });
+        option.prepend(toggle);
+        row.append(option);
+      }
       body.append(row);
     });
   }
@@ -200,7 +235,7 @@ function fieldEditor(field) {
   if(field.type==="lines") {
     const block=node("fieldset",undefined,"field");
     block.append(node("legend",field.label));
-    linesEditor(block,current,input=>modify(field,structuredClone(input)));
+    linesEditor(block,current,input=>modify(field,structuredClone(input)),field);
     return block;
   }
   const block=node("div",undefined,"field");

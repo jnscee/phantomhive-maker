@@ -1,44 +1,32 @@
 "use strict";
 const tourSteps=[
-  ["home","tab:plan","이달 일정표 펴기","도련님, ‘일정표’를 펴 주시겠습니까? 이번 달 첫 수업을 적어 두겠습니다."],
-  ["plan","activity:0:study","상순에 수업 넣기","달을 셋으로 나눠 쓰지요. 첫 열흘은 ‘서재 수업’으로 시작하시겠습니까?"],
-  ["plan","pick:1","중순 펼치기","상순은 정해졌습니다. 그 옆의 ‘중순’을 짚어 보십시오."],
-  ["plan","activity:1:study","중순 수업 고르기","‘서재 수업’을 한 번 더 넣어 보시지요. 수업료는 £ 옆에 적혀 있습니다."],
-  ["plan","pick:2","하순 펼치기","이제 마지막 열흘입니다. ‘하순’을 열어 주십시오."],
-  ["plan","activity:2:etiquette","하순 수업 고르기","마지막은 ‘귀족 예법’이 어떻습니까? 찻잔은 제가 준비하겠습니다."],
-  ["plan","pick-visit","방문 일정 잡기","수업 세 칸이 찼군요. ‘자유행동’에선 한 달에 한 곳을 방문하실 수 있습니다."],
-  ["plan","visit:library","서재 방문 예약하기","오늘은 ‘서재’로 모시겠습니다. 누구와 무슨 얘기를 나눌지는 도착해서 정하시지요."],
-  ["plan","execute","예상 지출 보기","‘이달 일정 실행’을 여시지요. 결재하시기 전에 수업료를 먼저 보여 드리겠습니다."],
-  ["confirm","close","지출 확인하고 돌아가기","예상 지출은 확인하셨습니까? 연습 중이니 ‘취소’를 눌러도 일정은 그대로입니다."],
-  ["plan","system-back","저택으로 돌아가기","이달 일정은 준비됐습니다. ‘뒤로’를 누르시면 저택으로 모시겠습니다."],
-  ["home","tab:estate","저택 지도 펼치기","이번엔 집 안을 보시지요. ‘관리 · 경영’에 저택 지도를 펴 두었습니다."],
-  ["estate","station:kitchen","주방 살펴보기","지도에서 ‘주방’을 짚어 보십시오. 설비와 개수 비용을 함께 보실 수 있습니다."],
-  ["estate","tab:staffing","근무표 펼치기","주방을 맡길 사람이 필요하군요. ‘사용인 배치’에 명단을 준비했습니다."],
-  ["staffing","back","사용인 근무지 살피기","이름을 방으로 옮기면 근무지가 바뀝니다. 오늘은 명단만 보시고 ‘뒤로’ 가시지요."],
-  ["estate","tab:company","회사 장부 펼치기","저택 살림도 회사 수입에서 나옵니다. ‘팬텀 사(社)’의 장부를 보시겠습니까?"],
-  ["company","station:works","원가 확인하기","‘제작실’에서 완구 하나의 원가를 보십시오. 몇 개를 만들지는 그 뒤에 정하시지요."],
-  ["company","system-back","저택으로 돌아가기","원가는 확인했습니다. ‘뒤로’를 누르시면 저택에서 차를 올리겠습니다."],
-  ["home","tab:market","상점 둘러보기","도련님, 차에 곁들일 것을 고르시겠습니까? ‘상점’에 오늘 들어온 간식이 있습니다."],
-  ["market","system-back","물건의 효과 살피기","물건을 고르면 드시기 전후의 수치가 보입니다. 오늘은 ‘뒤로’ 돌아가시지요."],
-  ["home","tab:chat","세바스찬 부르기","제게 하실 말씀이 있으시면 ‘대화’로 불러 주십시오."],
-  ["chat","back","화제 살펴보기","부르셨습니까, 도련님? 화제는 가운데 있습니다. 급한 용건이 아니시면 ‘다음에’를 눌러 주십시오."],
-  ["home","tab:status","시엘의 상태 보기","‘상태’에서 건강과 스트레스를 함께 보십시오. 다음 열흘을 비워 둘지 가늠하실 수 있습니다."],
-  ["status","tab:record","가문 장부 펼치기","지난 사건을 찾으십니까? 달력 위 ‘가문 장부’에 날짜순으로 정리해 두었습니다."],
-  ["record","tab:save","저장 수첩 펼치기","작위 심의 기록까지 보셨군요. 이번에는 ‘수첩 · 저장’을 열어 주시겠습니까?"],
-  ["save",null,"안내 마치기","회차를 남길 칸과 음량은 이곳에 있습니다. ‘마치기’를 누르시면 도련님의 일정으로 돌아갑니다."]
+  ["home","tab:plan","저택 → 일정표","도련님, 이달 일정표를 가져왔습니다. 날짜는 위쪽 달력에, 잔금은 명패에 적어 두었습니다. 아래의 ‘일정표’를 여시면 제가 설명드리겠습니다."],
+  ["plan","activity:0:study","일정표 → 상순","먼저 상순에 서재 수업을 적어 보겠습니다."],
+  ["plan","pick:1","일정표 → 중순","이제 ‘중순’ 칸을 열어 보시겠습니까?"],
+  ["plan","activity:1:study","중순 → 서재 수업","중순에는 ‘서재 수업’이 어떻습니까? 제가 맡은 수업입니다. £ 옆에 수업료도 적혀 있습니다."],
+  ["plan","pick:2","일정표 → 하순","하순 일정도 도련님께서 정하십니다. ‘하순’을 열어 주십시오."],
+  ["plan","activity:2:etiquette","하순 → 귀족 예법","하순에는 귀족 예법을 넣겠습니다."],
+  ["plan","pick-visit","일정표 → 자유행동","세 칸을 모두 채우셨군요. 다음은 ‘자유행동’입니다."],
+  ["plan","visit:library","자유행동 → 서재","평소에는 도련님께서 방문지를 정하십니다. 오늘은 연습이니 서재를 골라 보겠습니다. 방문은 하순 일정을 마친 뒤입니다."],
+  ["plan","execute","일정표 → 실행 확인","서재로 적었습니다. ‘이달 일정 실행’을 열면 확정하기 전에 지출을 검토할 수 있습니다."],
+  ["confirm","close","실행 전 확인","세 번의 일정에 이만큼 들겠군요. 오늘은 연습이니 ‘취소’로 일정표만 덮겠습니다."],
+  ["plan","system-back","일정표 → 저택","저택도 한 바퀴 돌아보시겠습니까? 돌아가는 길은 화면 아래의 ‘뒤로’입니다."],
+  ["home","tab:estate","저택 → 관리 · 경영","다음은 저택 관리입니다. ‘관리 · 경영’을 여시면 저택 지도를 펼쳐 드리겠습니다."],
+  ["estate","station:kitchen","저택 지도 → 주방","주방부터 살펴보겠습니다. 지도에서 주방을 짚으면 현재 등급과 개수 비용이 함께 나옵니다."],
+  ["estate","tab:staffing","주방 → 사용인 배치","주방을 맡길 사람이 필요하겠군요. 시설 정보 아래 ‘사용인 배치’에 명단을 준비했습니다."],
+  ["staffing","back","사용인 배치 → 저택 관리","오늘 명단에는 메이린을 올려 두었습니다. 근무지를 정하실 때는 이름을 원하는 방으로 옮기시면 됩니다. 지금은 ‘뒤로’ 가겠습니다."],
+  ["estate","tab:company","저택 관리 → 팬텀 사(社)","다음은 회사 장부입니다. 위쪽의 ‘팬텀 사(社)’를 열어 보시겠습니까?"],
+  ["company","station:works","팬텀 사 → 제작실","제작실에서 먼저 보실 것은 한 개당 원가입니다. 품질도 이곳에 적혀 있으니, 둘을 살핀 뒤 생산량을 정하시는 편이 좋겠습니다."],
+  ["company","system-back","제작실 → 저택 메뉴","생산에 쓸 돈은 확인하셨습니까? 아래의 ‘뒤로’를 누르시면 저택으로 돌아갑니다."],
+  ["home","tab:market","저택 → 상점","잠시 차를 드시겠습니까, 도련님? ‘상점’을 여시면 오늘 나온 간식과 가격을 보실 수 있습니다."],
+  ["market","system-back","상점 → 저택","간식을 하나 고르면 드시기 전후의 수치를 비교할 수 있습니다. 오늘은 값만 알아두고 ‘뒤로’ 돌아가겠습니다."],
+  ["home","tab:chat","저택 → 대화","도련님께서 부르시면 언제든 대답하겠습니다. ‘대화’로 한번 불러 보시겠습니까?"],
+  ["chat","back","대화 → 저택","부르셨습니까, 도련님? 가운데서 화제를 고르시면 됩니다. 급한 용건이 없으시다면 ‘다음에’ 듣겠습니다."],
+  ["home","tab:status","저택 → 상태","이번에는 도련님의 차례입니다. ‘상태’를 여시면 건강과 그간의 성과를 보실 수 있습니다."],
+  ["status","tab:record","상태 → 가문 장부","무리한 일정이었는지는 건강과 스트레스, 의욕에 드러납니다. 이제 아래의 ‘가문 장부’를 함께 보겠습니다."],
+  ["record","tab:save","가문 장부 → 수첩","가문의 사건을 기록하는 장부입니다. 궁정에 어떤 소문이 도는지도 여기 적어 두겠습니다. 마지막으로 보여 드릴 것은 ‘수첩 · 저장’입니다."],
+  ["save",null,"수첩 · 저장","기록을 남길 칸과 음악·효과음의 크기는 여기서 정하실 수 있습니다. ‘마치기’를 누르시면 연습은 끝입니다. 이달의 첫 명령을 기다리겠습니다, 도련님."]
 ];
-const tourChapters=[{label:"일정표",start:0},{label:"저택·팬텀사",start:11},{label:"생활·기록",start:18}];
-function showTourHint(hint){
-  const line=$("tour-hint");
-  line.replaceChildren();
-  for(const part of hint.split(/(‘[^’]+’)/)){
-    if(part.startsWith("‘")){
-      const strong=document.createElement("strong");
-      strong.textContent=part.slice(1,-1);
-      line.append(strong);
-    }else line.append(part);
-  }
-}
 // Practice uses the game's renderer with a temporary state. Keep the live run by
 // reference so that replaying or leaving the guide cannot edit a save slot.
 let tourSession=null;
@@ -47,8 +35,8 @@ let tourLocks=[];
 function beginGuide(){
   const panel=$("panel");
   tourSession={
-    state,saves,tab,selectedSlot,editingVisit,lessonPage,selectedRoom,selectedDepartment,
-    selectedEmployee,pendingConfirmation,playbackElapsed,dialogueHidden,focus:document.activeElement,
+    age:campaignAge(state),state,saves,tab,selectedSlot,editingVisit,lessonPage,selectedRoom,selectedDepartment,
+    selectedEmployee,pendingConfirmation,playbackElapsed,focus:document.activeElement,
     panelTop:panel.scrollTop,calendarTop:$("calendar").scrollTop,
     pageX:window.scrollX,pageY:window.scrollY,
     sections:[...panel.querySelectorAll("details")].map(section=>section.open)
@@ -74,7 +62,7 @@ function endGuide(){
   unlockPractice();
   const origin=tourSession;
   ({state,saves,tab,selectedSlot,editingVisit,lessonPage,selectedRoom,selectedDepartment,
-    selectedEmployee,pendingConfirmation,dialogueHidden}=origin);
+    selectedEmployee,pendingConfirmation}=origin);
   tourSession=null;
   guideResize.disconnect();
   cancelAnimationFrame(positionFrame);positionFrame=0;
@@ -100,7 +88,7 @@ function showGuidePage(page){
   unlockPractice();
   tourPage=page;
   const [view,action,title,hint]=tourSteps[page];
-  state=initial();state.month=tourSession.state.month;state.planMonth=state.month;state.phase="plan";state.people.mey={toward:2};state.jobs.mey="parlor";
+  state=initial();state.month=state.planMonth=tourSession.state.month;state.phase="plan";state.people.mey={toward:2};state.jobs.mey="parlor";
   tab=view==="confirm"?"plan":view;
   selectedSlot=page>=5?2:page>=3?1:0; lessonPage=0; editingVisit=page===7;
   if(page>=2)state.plan[0]="study";
@@ -114,15 +102,8 @@ function showGuidePage(page){
   if(view==="confirm")handleAction("execute");
   const guide=$("guide-replay");
   $("guide-replay-title").textContent=title;
-  showTourHint(hint);
-  const section=tourChapters.filter(chapter=>page>=chapter.start).length-1;
-  const start=tourChapters[section].start,end=tourChapters[section+1]?.start??tourSteps.length;
-  $("tour-count").textContent=(page-start+1)+" / "+(end-start);
-  $("tour-count").setAttribute("aria-label",tourChapters[section].label+" "+(page-start+1)+"번째 안내, 총 "+(end-start)+"개");
-  guide.querySelectorAll("[data-tour-chapter]").forEach((button,i)=>{
-    if(i===section)button.setAttribute("aria-current","step");
-    else button.removeAttribute("aria-current");
-  });
+  $("tour-hint").textContent=hint;
+  $("tour-count").textContent=(page+1)+" / "+tourSteps.length;
   guide.querySelector('[data-action="guide-prev"]').disabled=page===0;
   const next=guide.querySelector('[data-action="guide-forward"]');
   next.textContent=action?"다음":"마치기";
@@ -176,10 +157,6 @@ document.addEventListener("click",event=>{
   if(!button||button.disabled)return;
   if(button===tourTarget){showGuidePage(tourPage+1);return;}
   if(!$("guide-replay").contains(button))return;
-  if(button.hasAttribute("data-tour-chapter")){
-    showGuidePage(tourChapters[Number(button.dataset.tourChapter)].start);
-    return;
-  }
   switch(button.dataset.action){
     case "guide-close":endGuide();break;
     case "guide-prev":if(tourPage>0)showGuidePage(tourPage-1);break;

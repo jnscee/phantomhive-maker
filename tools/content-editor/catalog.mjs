@@ -63,7 +63,11 @@ export function catalog(files, publishedAssets = []) {
     if (type === "number" && node.type === "UnaryExpression") initial = Number(files[file].slice(node.start,node.end));
     if (type === "lines") {
       const list = rows(node);
-      if (!list.length || !list.every(line => rows(line).length === 2 && rows(line).every(strings))) return;
+      if (!list.length || !list.every(line => {
+        const parts=rows(line);
+        return parts.length>=2 && parts.length<=(extra.metadata?3:2) && parts.slice(0,2).every(strings)
+          && (parts.length===2 || (extra.metadata==="tanaka"?typeof value(parts[2])==="boolean":strings(parts[2])));
+      })) return;
       initial = list.map(line => rows(line).map(value));
       for (const line of list) for (const element of rows(line)) covered.add(file+":"+element.start);
     }
@@ -98,37 +102,60 @@ export function catalog(files, publishedAssets = []) {
     add(g,"prologue.js",prop(scene,"lines"),"대사 순서","lines");
   });
 
-  const endingArt = properties(variable("endings.js","endingArt"));
-  const artOptions = endingArt.map(p=>[propertyName(p),value(rows(p.value)[1])]);
-  const endingLabels = {vowTitle:"복수 계속 · 작위 회복",vowNoTitle:"복수 계속 · 작위 보류",releaseTitle:"복수 포기 · 작위 회복",releaseNoTitle:"복수 포기 · 작위 보류",title:"작위 회복",business:"팬텀사",defer:"작위 보류",ill:"병환",broke:"파산"};
-  for (const p of properties(variable("endings.js","endings"))) {
+  const descriptions = properties(variable("chapters.js","endingArtDescriptions"));
+  const endingLabels = properties(variable("game.js","endingLabels"));
+  const availableCG = publishedAssets.filter(path=>/^assets\/endings\/[^/]+\.webp$/.test(path));
+  const artOptions = availableCG.map(path=>{
+    const id=path.split("/").at(-1).slice(0,-5);
+    return [id,value(prop(variable("chapters.js","endingArtDescriptions"),id))??id];
+  });
+  inventory.ending=Object.fromEntries(artOptions.map(([id])=>[id,"assets/endings/"+id+".webp"]));
+  for (const p of properties(variable("chapters.js","endingScenes"))) {
     const id=propertyName(p);
-    const title=endingLabels[id]??id;
-    const g=group("story","ending-"+id,"엔딩 · "+title,id,{kind:"ending",id,scene:0});
-    add(g,"endings.js",prop(p.value,"track"),"엔딩 BGM","select",trackOptions,{media:"track"});
-    add(g,"endings.js",prop(p.value,"flavor"),"마지막 문장");
-    rows(prop(p.value,"scenes")).forEach((scene,i)=>{
-      const part=group("story","ending-"+id+"-"+i,title+" · 장면 "+(i+1),id,{kind:"ending",id,scene:i});
-      add(part,"endings.js",rows(scene)[0],"장면 CG","select",artOptions,{media:"endingKey"});
-      add(part,"endings.js",rows(scene)[1],"대사 순서","lines");
-    });
+    const title=value(rows(endingLabels.find(label=>propertyName(label)===id)?.value)[0])??id;
+    const g=group("story","ending-"+id,"엔딩 · "+title,id,{kind:"ending",id});
+    add(g,"audio.js",prop(variable("audio.js","endingTracks"),id),"엔딩 BGM","select",trackOptions,{media:"track"});
+    add(g,"chapters.js",prop(p.value,"alt"),"대표 CG 대체 설명");
+    add(g,"chapters.js",prop(p.value,"lines"),"대사 순서","lines",undefined,{metadata:"illustration",artOptions,defaultArt:id});
   }
-  for (const p of properties(variable("endings.js","shortEndings"))) {
-    const id=propertyName(p);
-    const g=group("story","ending-"+id,"엔딩 · "+(endingLabels[id]??id),id,{kind:"ending",id,scene:0});
-    const [art,bgm,title,lines,flavor]=rows(p.value);
-    add(g,"endings.js",art,"장면 CG","select",artOptions,{media:"endingKey"});
-    add(g,"endings.js",bgm,"엔딩 BGM","select",trackOptions,{media:"track"});
-    add(g,"endings.js",title,"장면 제목");
-    add(g,"endings.js",lines,"대사 순서","lines");
-    add(g,"endings.js",flavor,"마지막 문장");
+  for (const [id,title] of artOptions) {
+    const g=group("assets","cg-"+id,"엔딩 CG · "+id,title);
+    g.asset=inventory.ending[id];
+    add(g,"chapters.js",descriptions.find(p=>propertyName(p)===id)?.value,"CG 대체 설명");
   }
-  inventory.ending = Object.fromEntries(endingArt.map(p=>[propertyName(p),"assets/endings/"+value(rows(p.value)[0])+".webp"]));
-  for (const p of endingArt) {
-    const id=propertyName(p);
-    const g=group("assets","cg-"+id,"엔딩 CG · "+id);
-    add(g,"endings.js",rows(p.value)[0],"CG 파일","ending",undefined,{fixed:true});
-    add(g,"endings.js",rows(p.value)[1],"대체 설명");
+
+  const recruitArt = properties(variable("recruit.js","recruitArt"));
+  const recruitArtOptions=recruitArt.map(p=>[propertyName(p),propertyName(p)]);
+  const recruitCast=properties(variable("recruit.js","recruitCast"));
+  const recruitCastOptions=recruitCast.map(p=>[propertyName(p),propertyName(p)]);
+  inventory.recruitArt=Object.fromEntries(recruitArt.map(p=>[propertyName(p),value(prop(p.value,"bg"))]));
+  const recruitBooks=properties(variable("recruit.js","recruitScenes"));
+  for(const book of recruitBooks) {
+    const id=propertyName(book);
+    const file=id==="visitPrince"?"prince.js":"recruit.js";
+    const definition=id==="visitPrince"?variable(file,"princeChapter"):book.value;
+    const name=value(prop(definition,"name"));
+    const g=group("story","recruit-"+id,name+" 영입",value(prop(definition,"title")),{kind:"recruit",id,scene:0});
+    add(g,file,prop(definition,"title"),"영입 제목");
+    add(g,file,prop(definition,"result"),"영입 기록");
+    for(const [i,scene] of rows(prop(definition,"scenes")).entries()){
+      const title=prop(scene,"title");
+      const sceneGroup=group("story","recruit-"+id+"-"+i,name+" · "+value(title),"영입 장면 "+(i+1),{kind:"recruit",id,scene:i});
+      add(sceneGroup,file,title,"장면 제목");
+      add(sceneGroup,file,prop(scene,"art"),"장면 배경","select",recruitArtOptions,{media:"recruitArt"});
+      add(sceneGroup,file,prop(scene,"music"),"장면 BGM","select",trackOptions,{media:"track"});
+      if(!prop(scene,"music")){
+        const field={id:file+":"+scene.start+":music",label:"장면 BGM",type:"select",value:"",options:[["","기본 음악"],...trackOptions],file,media:"track"};
+        fields.set(field.id,{field,node:scene,insert:"music"});
+        sceneGroup.fields.push(field);
+      }
+      rows(prop(scene,"cast")).forEach((actor,n)=>add(sceneGroup,file,actor,"등장인물 "+(n+1),"select",recruitCastOptions));
+      add(sceneGroup,file,prop(scene,"lines"),"대사 순서","lines",undefined,{metadata:"tanaka",hasTanaka:id==="visitPrince"});
+    }
+  }
+  for (const p of recruitArt) {
+    const g=group("assets","recruit-art-"+propertyName(p),"영입 배경 · "+propertyName(p));
+    add(g,"recruit.js",prop(p.value,"bg"),"이미지 파일","image",undefined,{paths:publishedAssets.filter(file=>/\.(webp|png|jpe?g|gif|avif)$/i.test(file))});
   }
 
   for (const section of ["timed","local"]) {
@@ -161,7 +188,7 @@ export function catalog(files, publishedAssets = []) {
       add(g,file,option.arguments?.[4]??prop(option,"hint"),"조건 안내 "+(i+1));
     });
   }
-  for (const file of ["story.js","chapters.js","snake.js"]) walk(roots[file], [],node=>{
+  for (const file of ["story.js","chapters.js"]) walk(roots[file], [],node=>{
     if (node.type!=="ObjectExpression" || !strings(prop(node,"id")) || !strings(prop(node,"title"))) return;
     const id=value(prop(node,"id"));
     const g=event(id,value(prop(node,"title")),id==="snakeArrival"?"타운하우스 보유 · 소마·아그니 교류 후 발생":"기존 발생 조건");
@@ -173,22 +200,13 @@ export function catalog(files, publishedAssets = []) {
     add(g,file,prop(prompt[2],"room"),"마지막 배경","select",roomOptions,{media:"room"});
   });
 
-  for (const p of properties(variable("lessons.js","birthdayScenes"))) {
+  for (const p of properties(variable("term-events.js","birthdayDialogue"))) {
     const g=event(propertyName(p),propertyName(p));
-    add(g,"lessons.js",prop(p.value,"room"),"장면 배경","select",roomOptions,{media:"room"});
-    add(g,"lessons.js",prop(p.value,"lines"),"대사 순서","lines");
-    rows(prop(p.value,"answers")).forEach((row,i)=>{
-      add(g,"lessons.js",rows(row)[0],"응답 "+(i+1)+" 화자");
-      add(g,"lessons.js",rows(row)[1],"응답 "+(i+1));
-    });
+    add(g,"term-events.js",prop(p.value,"room"),"장면 배경","select",roomOptions,{media:"room"});
+    add(g,"term-events.js",prop(p.value,"lines"),"대사 순서","lines");
+    rows(prop(p.value,"replies")).forEach((reply,i)=>
+      add(g,"term-events.js",reply,"선택지 "+(i+1)+" 이후 대사","lines"));
   }
-  rows(variable("snake.js","scenes")).forEach((scene,i)=>{
-    const g=group("story","snake-"+i,"스네이크 영입 · 장면 "+(i+1),"봉투에 적힌 이름",{kind:"snake",id:"snakeArrival",scene:i});
-    add(g,"snake.js",prop(scene,"room"),"배경","select",roomOptions,{media:"room"});
-    rows(prop(scene,"cast")).forEach((actor,i)=>add(g,"snake.js",actor,"등장인물 "+(i+1),"select",
-      [["시엘","시엘"],...properties(variable("chapters.js","portraits")).map(p=>[propertyName(p),propertyName(p)]).filter(([name])=>name!=="시엘")]));
-    add(g,"snake.js",prop(scene,"lines"),"대사 순서","lines");
-  });
 
   rows(variable("chapters.js","exams")).forEach(row=>{
     const [slot,,title,text,a,b]=rows(row);
@@ -206,7 +224,7 @@ export function catalog(files, publishedAssets = []) {
     g.cueMonths=months;
   });
   for (const [id,g] of eventGroups) {
-    if (g.cueMonths) g.cueMonths.forEach(month=>eventOption(g,"season-"+month,"cheerful"));
+    if (g.cueMonths) g.cueMonths.forEach(month=>eventOption(g,"season-"+month,month%12===1?"newYear":month%12===9?"harvest":"cheerful"));
     else eventOption(g,id,id.startsWith("exam-")?"test":"daily");
   }
 
@@ -250,7 +268,7 @@ export function catalog(files, publishedAssets = []) {
     }
   }
 
-  for(const path of publishedAssets.filter(path=>path.startsWith("assets/sprites/") && /\.png$/i.test(path))) {
+  for(const path of publishedAssets.filter(path=>path.startsWith("assets/lessons/") && /\.png$/i.test(path))) {
     const g=group("assets","sprite-"+path,"동작 프레임 · "+path.split("/").at(-1));
     g.asset=path;
   }
@@ -280,16 +298,36 @@ export function catalog(files, publishedAssets = []) {
     add(g,"staffing.js",title,"업무 제목");
     add(g,"staffing.js",prop(row,"result"),"업무 완료 문구");
   });
+  for(const card of rows(variable("visitors.js","visitEncounterCards"))){
+    const id=value(prop(card,"id"));
+    const g=group("events","visitor-"+id,value(prop(card,"title")),"자유행동 · "+value(prop(card,"place")),{kind:"visit",id});
+    add(g,"visitors.js",prop(card,"title"),"방문 사건 제목");
+    add(g,"visitors.js",prop(card,"lines"),"대사 순서","lines");
+    rows(prop(card,"choices")).forEach((choice,i)=>{
+      add(g,"visitors.js",prop(choice,"label"),"선택지 "+(i+1));
+      add(g,"visitors.js",rows(prop(choice,"reply"))[1],"응답 "+(i+1));
+    });
+  }
+  for(const entry of rows(variable("festivals.js","londonFestivals"))){
+    const id=value(prop(entry,"id"));
+    const g=group("events","fair-"+id,value(prop(entry,"title")),"런던 행사",{kind:"fair",month:value(prop(entry,"month"))});
+    for(const [key,label] of [["title","행사 제목"],["date","날짜 표기"],["historical","역사 소개"],["invitation","참여 안내"]])
+      add(g,"festivals.js",prop(entry,key),label);
+    rows(prop(entry,"options")).forEach((option,i)=>{
+      for(const [key,label] of [["label","종목"],["line","참여 지문"],["success","호평 결과"],["practice","참가 결과"]])
+        add(g,"festivals.js",prop(option,key),label+" "+(i+1));
+    });
+  }
   const extraDialogue = {
-    "chapters.js":["visitsVN","examEvents","guide"], "lessons.js":["courseFeedback","masteryPaths"],
-    "snake.js":["snakeRounds"], "scenes.js":["lines"], "game.js":["homeRemarks","marketGoods"],
+    "chapters.js":["visitsVN","examEvents","guide","trustedGreetings","visitRecollections"], "term-events.js":["examDialogue","portfolios"],
+    "scenes.js":["lines","butlerGreetings","butlerReplies"], "game.js":["homeRemarks","marketGoods"],
     "content.js":["visiting"], "reports.js":["reviewLines"]
   };
   for (const [file,names] of Object.entries(extraDialogue)) {
     for (const name of names) {
       const root = variable(file,name) ?? roots[file].body.find(node=>node.type==="FunctionDeclaration"&&node.id.name===name);
       if (!root) continue;
-      const labels={guide:"첫 조작 안내",visitsVN:"자유행동 대화",examEvents:"세바스찬 시험 대사",courseFeedback:"수업 성과 대사",masteryPaths:"응용 실기",snakeRounds:"스네이크 순찰 대사",lines:"시엘과의 대화",homeRemarks:"시엘의 메인 화면 대사",marketGoods:"상점 대사",visiting:"방문 장소 안내",reviewLines:"일정 총평"};
+      const labels={trustedGreetings:"인물별 신뢰도 대사",visitRecollections:"방문 회상",examDialogue:"실기 장면 대사",portfolios:"응용·최종 실기",butlerGreetings:"세바스찬의 인사",butlerReplies:"세바스찬의 답변",guide:"첫 조작 안내",visitsVN:"자유행동 대화",examEvents:"세바스찬 시험 대사",courseFeedback:"수업 성과 대사",masteryPaths:"응용 실기",snakeRounds:"스네이크 순찰 대사",lines:"시엘과의 대화",homeRemarks:"시엘의 메인 화면 대사",marketGoods:"상점 대사",visiting:"방문 장소 안내",reviewLines:"일정 총평"};
       const g=group("dialogue",name,labels[name],file);
       walk(root,[],(node,parents)=>{
         if(!strings(node)||!hangul.test(node.value)||node.value.length<4||/[<>]/.test(node.value)||covered.has(file+":"+node.start)) return;
@@ -310,11 +348,19 @@ function textValue(input, limit=5000) {
   return input;
 }
 
-function lineValues(input) {
+function lineValues(input, field = {}) {
   if(!Array.isArray(input)||!input.length||input.length>250) throw new Error("대사는 1~250줄이어야 합니다.");
   return input.map(row=>{
-    if(!Array.isArray(row)||row.length!==2) throw new Error("화자와 대사를 입력해 주세요.");
-    return [textValue(row[0],80),textValue(row[1])];
+    if(!Array.isArray(row)||row.length<2||row.length>(field.metadata?3:2))
+      throw new Error("화자와 대사를 입력해 주세요.");
+    const line=[row[0]===""?"":textValue(row[0],80),textValue(row[1])];
+    if(row.length===3){
+      const extra=row[2];
+      if(field.metadata==="tanaka" && typeof extra==="boolean") line.push(extra);
+      else if(field.metadata==="illustration" && field.artOptions.some(([id])=>id===extra)) line.push(extra);
+      else throw new Error("대사에 연결된 연출 값을 확인해 주세요.");
+    }
+    return line;
   });
 }
 
@@ -329,7 +375,7 @@ function statementValue(field, input, assetSet) {
     case "image": case "audio":
       if(!field.paths.includes(input)||!assetSet.has(input)) throw new Error("등록된 리소스를 선택해 주세요.");
       return input;
-    case "lines": return lineValues(input);
+    case "lines": return lineValues(input,field);
     default:
       if(field.fixed) throw new Error("이 항목은 파일 교체로 수정할 수 있습니다.");
       return textValue(input);
@@ -349,13 +395,15 @@ export function applyEdits(model, request) {
   for(const [id,input] of Object.entries(request.changes??{})) {
     const entry=model.fields.get(id);
     if(!entry) throw new Error("항목을 찾을 수 없습니다. 편집기를 새로 열어 주세요.");
-    const {field,node,cue}=entry;
+    const {field,node,cue,insert}=entry;
     if(JSON.stringify(field.value)===JSON.stringify(input)) continue;
     const checked=statementValue(field,input,model.assetSet);
     if (cue) {
       if(checked) cues[cue]=checked;
       else delete cues[cue];
       cuesChanged=true;
+    } else if(insert) {
+      if(checked)replace(field.file,node.start+1,node.start+1,insert+":"+quoted(checked)+",");
     } else {
       let text=quoted(checked);
       if(field.type==="lines") {

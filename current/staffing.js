@@ -69,7 +69,7 @@ function londonBoard(){
   const records=(state.london?.book||[]).slice().reverse().map(entry=>'<p><b>'+monthText(entry.month)+'</b><br>'+entry.summary+(entry.story?'<br>'+entry.story:'')+'</p>').join("");
   return '<div class="property-grid staff-board london-board"><section class="property-grounds london-rooms"><h3>런던 타운하우스</h3>'+roomButtons+'</section>'+
     '<section class="property-desk staff-roster"><div class="work-title"><h3>이번 달 배치</h3></div><p>'+
-    (!ids.length?'소마와 아그니가 입주하면 업무를 맡길 수 있습니다.':locked?'일정을 마치면 다음 달 배치를 바꿀 수 있습니다.':'인물을 누른 뒤 방을 선택하세요. 두 사람이 한 방을 맡으면 효과가 합산됩니다.')+'</p>'+roster+
+    (!ids.length?'바르도·피니안·메이린이 모두 합류하면 소마와 아그니를 만날 수 있습니다. 입주 후 업무를 맡겨 주세요.':locked?'일정을 마치면 다음 달 배치를 바꿀 수 있습니다.':'인물을 누른 뒤 방을 선택하세요. 두 사람이 한 방을 맡으면 효과가 합산됩니다.')+'</p>'+roster+
     (ids.length?'<button type="button" data-duty="off" '+(locked?'disabled':'')+'>대기 배치</button>':'')+
     '<p>배치한 달마다 숙련도 +1. 숙련도 10마다 맡은 업무의 효과가 1씩 늘어납니다.</p>'+
     '<section class="budget-book london-request"><h3>'+request.name+'</h3><p>'+request.rooms.map(id=>londonRooms[id].name).join(" + ")+'에 각각 한 명을 배치하면 월말에 가문 명성 +1</p><b>'+(ready?'준비 완료':'준비 중')+'</b></section>'+

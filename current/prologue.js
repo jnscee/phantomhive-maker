@@ -66,23 +66,6 @@ const openingScenes=[
   ]}
 ];
 const openingLines=openingScenes.flatMap((scene,sceneIndex)=>scene.lines.map(([speaker,text],beat)=>({scene,sceneIndex,beat,speaker,text})));
-let dialogueHidden=false;
-function syncDialogueVisibility(){
-  const surface=$("overture"),available=surface.dataset.voiceOnly!=="true"&&surface.dataset.signing!=="true";
-  const hidden=available&&dialogueHidden;
-  surface.dataset.dialogueHidden=String(hidden);
-  $("opening-toggle").hidden=!available;
-  $("opening-toggle").textContent=hidden?"대화창 표시":"대화창 숨기기";
-  $("opening-toggle").setAttribute("aria-pressed",String(hidden));
-}
-function toggleDialogue(){
-  if(!inOpening()&&!endingId()||$("opening-toggle").hidden)return;
-  dialogueHidden=!dialogueHidden;
-  if(dialogueHidden){openingAuto=false;endingAuto=false;}
-  if(endingId())drawEnding(endingId());
-  else drawOpening();
-  $("opening-toggle").focus({preventScroll:true});
-}
 let recollectionLine=0, openingAuto=false, openingTimer=0, openingSession=false;
 
 function openingHold(entry){
@@ -125,7 +108,7 @@ function drawOpening(focus=false){
   const i=openingIndex(), signing=i===openingLines.length, replay=tab==="recollection";
   const entry=openingLines[signing?i-1:i],scene=entry.scene;
   const surface=$("overture");
-  if(!openingSession){openingAuto=true;openingSession=true;dialogueHidden=false;}
+  if(!openingSession){openingAuto=true;openingSession=true;}
   surface.dataset.art=scene.art;
   surface.dataset.close=String(!signing&&((scene.art==="seal"&&entry.beat>=5)||(scene.art==="cell"&&entry.beat>=6)||(scene.art==="ring"&&entry.beat>=3&&entry.beat<=6)));
   surface.dataset.establish=String(!signing&&entry.beat===0&&["fire","manor"].includes(scene.art));
@@ -134,7 +117,6 @@ function drawOpening(focus=false){
   surface.dataset.voiceOnly=String(voiceOnly);
   $("opening-dialogue").classList.toggle("dialogue",!voiceOnly);
   const reader=$("opening-read");
-  reader.hidden=!voiceOnly;
   reader.tabIndex=voiceOnly?0:-1;
   reader.setAttribute("aria-hidden",String(!voiceOnly));
   reader.setAttribute("aria-label","다음 대사");
@@ -159,19 +141,18 @@ function drawOpening(focus=false){
   $("opening-auto").hidden=signing;
   $("opening-auto").setAttribute("aria-pressed",String(openingAuto));
   $("opening-auto").textContent=openingAuto?"자동 멈춤":"자동 재생";
-  syncDialogueVisibility();
-  if(openingAuto&&!dialogueHidden&&!signing&&!document.hidden&&!$("picker").open)
+  if(openingAuto&&!signing&&!document.hidden&&!$("picker").open)
     openingTimer=setTimeout(()=>stepOpening(1),openingHold(entry)+(surface.dataset.establish==="true"?900:0));
   if(focus)(voiceOnly?reader:signing?$("opening-slots").querySelector("button"):$("opening-next")).focus({preventScroll:true});
 }
 function finishOpening(){
-  stopOpeningAuto();dialogueHidden=false;
+  stopOpeningAuto();
   if(tab==="recollection"){tab="save";render(true);focusAction("recollect");return;}
   if(state.contractFiled){state.phase="guide";state.guidePage=0;persist();render();showGuidePage(0);return;}
   state.openingLine=openingLines.length;persist();drawOpening(true);
 }
 function stepOpening(step){
-  if(!inOpening()||$("picker").open)return;
+  if(!inOpening()||$("picker").open||$("scene").dataset.artOnly==="true")return;
   if($("overture").dataset.pause&&step>0){drawOpening(true);return;}
   const i=openingIndex();
   if(i+step>=openingLines.length){finishOpening();return;}
@@ -191,7 +172,7 @@ function openingAction(action,id,confirmed,rect){
     recollectionLine=0;stopOpeningAuto();tab="recollection";render(true);return true;
   }
   if(!inOpening())return false;
-  if(action==="opening-next"){if(dialogueHidden)return true;stopOpeningAuto();stepOpening(1);return true;}
+  if(action==="opening-next"){stopOpeningAuto();stepOpening(1);return true;}
   if(action==="opening-prev"){stopOpeningAuto();stepOpening(-1);return true;}
   if(action==="opening-auto"){openingAuto=!openingAuto;drawOpening();return true;}
   if(action==="opening-skip"){finishOpening();return true;}

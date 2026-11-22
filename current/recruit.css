@@ -1,0 +1,114 @@
+/* Cast and dialogue inherit the same stage rules as other story events. */
+#scene:has(#conversation:not([hidden]) [data-book]) :is(#money,#date){visibility:hidden}
+#conversation .recruit-controls{pointer-events:auto;z-index:3}
+#conversation .recruit-backdrop{width:100%;height:100%}
+#conversation .review-room.cold{filter:grayscale(.7) brightness(.65)}
+#conversation .review-room.blackout{filter:grayscale(1) brightness(.27)}
+#conversation .review-room.night{filter:grayscale(.4) sepia(.18) hue-rotate(174deg) brightness(.45)}
+#conversation .review-room.night::after{content:"";position:absolute;top:8%;left:44%;width:clamp(28px,6vw,68px);aspect-ratio:1;border-radius:50%;background:#e4e4cf;box-shadow:0 0 26px #cbd5de77}
+.recruit-tea{position:absolute;top:22%;left:44%;width:12%;max-width:92px;height:auto;pointer-events:none;filter:drop-shadow(0 4px 5px #24202d99)}
+
+/* A shared camera crops each cutout at the bottom. Wide sleeves and full-length art
+   can no longer move an actor's eyes or change the apparent size of their face. */
+#scene {
+  --cast-unit:calc(var(--portrait-height) * var(--standing-zoom) * var(--cast-camera,1));
+}
+#scene .standing-window {
+  --window-height:calc(var(--cast-unit) * var(--figure-height));
+  height:var(--window-height);
+  display:block;overflow:hidden;pointer-events:none;scale:none;
+}
+#scene .standing-window > img {
+  position:absolute;top:0;left:50%;translate:-50% 0;
+  width:auto;max-width:none;height:calc(var(--cast-unit) * var(--figure-scale));
+}
+#scene #conversation:not([data-review=true]) > .standing-window {
+  position:absolute;bottom:1%;width:44%;max-width:none;translate:-50% 0;margin:0;
+}
+#scene #conversation > .standing-window.cast-left {left:33%;right:auto}
+#scene #conversation > .standing-window.cast-right {left:67%;right:auto}
+#scene #conversation .standing-window.review-butler, #scene .standing-window.lau-standing {
+  height:var(--window-height);scale:none;
+}
+#scene #conversation .standing-window.review-butler {bottom:0}
+@media (max-width:960px) and (orientation:portrait), (max-width:540px) {
+  #scene #conversation:not([data-review=true]) > .standing-window {
+    position:relative;inset:auto;grid-area:1/1;align-self:end;min-height:0;
+    width:47%;margin-inline:2%;translate:none;
+  }
+}
+
+/* The open record takes input above both the schedule and the date plaque. */
+#scene[data-mode="record"] #sheet {z-index:8}
+#scene[data-mode="record"] #date {pointer-events:none}
+
+#dialogue-visibility {display:none}
+#scene[data-story=true] #dialogue-visibility {
+  display:block;position:absolute;z-index:10;right:3%;top:2%;
+  color:#f3f5fa;background:#182536db;border:1px solid #a3b4c4;border-radius:5px;
+  font:inherit;font-size:clamp(12px,1.4cqw,15px);padding:6px 12px;cursor:pointer;
+}
+#scene[data-art-only=true] :is(#date,#money,.opening-mat,#opening-read,
+  #conversation .dialogue,#conversation .answers,#conversation .opening-top,
+  #conversation .review-bubble,#conversation .review-slip) {
+  visibility:hidden;pointer-events:none;
+}
+body.guiding #scene #dialogue-visibility {display:none}
+@media(pointer:coarse){#scene[data-story=true] #dialogue-visibility {min-height:44px}}
+
+/* The native greeting button contains the visible, age-specific portrait. */
+#scene[data-mode=home] #ciel-greet {
+  left:50%;right:auto;margin:0;translate:-50% 0;max-width:100%;
+  overflow:visible;touch-action:manipulation;
+}
+#scene[data-mode=home] #ciel-greet > #home-standing {
+  position:static;display:block;width:100%;height:100%;scale:none;
+  object-fit:contain;object-position:center bottom;pointer-events:none;
+}
+#ciel-greet > .greeting-hop {animation:ciel-greeting-hop 540ms ease-out}
+@keyframes ciel-greeting-hop {
+  0%,100% {transform:translateY(0)}
+  15% {transform:scale(1.05,.95)}
+  43% {transform:translateY(-6%) scale(.99,1.02)}
+  68% {transform:scale(1.04,.96)}
+  82% {transform:translateY(-1.4%)}
+}
+html[data-game-motion=reduced] :is(#ciel-greet > .greeting-hop,.performer,.motion-object) {animation:none!important}
+#playback .lesson-plane {
+  width:100%;
+  width:max(var(--portrait-scene-width),calc(var(--portrait-scene-height) * 1.5));
+}
+
+#overture .opening-mat[hidden] {display:none!important}
+
+#scene #conversation .ending-cg {
+  position:absolute;inset:0;z-index:0;width:100%;height:100%;
+  object-fit:cover;object-position:50% 42%;pointer-events:none;background:#11131c;
+}
+#conversation:has(.ending-cg) .dialogue {z-index:2}
+#scene[data-art-only=true] #conversation .ending-cg {object-fit:contain}
+.ending-album {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(135px,100%),1fr));gap:8px}
+.ending-thumb {display:grid;gap:5px;max-width:24rem;text-align:left;padding:5px;color:inherit;background:transparent;font:inherit;cursor:pointer}
+.ending-thumb img {width:100%;aspect-ratio:16/9;object-fit:cover}
+@media(max-width:540px),(max-width:960px) and (orientation:portrait){
+  #scene #conversation .ending-cg {object-fit:contain;object-position:center 30%}
+  #scene[data-art-only=true] #conversation .ending-cg {object-position:center}
+}
+
+#scene #conversation .cast[alt="시엘"] {
+  scale:calc(var(--ciel-scale) * var(--standing-zoom) * var(--cast-camera,1));
+}
+.lesson-plane[data-room=gym] {--foot-x:56%;--foot-y:82%}
+#scene[data-mode=market] .goods-list {
+  max-height:clamp(126px,37vh,330px);overflow-y:auto;overscroll-behavior:contain;
+  scrollbar-gutter:stable;padding:2px;
+}
+#scene[data-mode=market] .goods-ticket:focus-visible {outline:2px solid #735327;outline-offset:-3px}
+/* An intentional tap still has a small response with OS motion reduction.
+   The game's explicit reduced setting keeps the pose still. */
+html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
+  animation:ciel-small-hop 300ms ease-out 1!important;
+}
+@keyframes ciel-small-hop {0%,100%{transform:none}45%{transform:translateY(-4px)}}
+
+#scene[data-art-only=true] #conversation :is(.dialogue,.answers,.opening-top,.review-bubble,.review-slip){display:none!important}

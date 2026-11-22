@@ -1,0 +1,61 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>팬텀하이브 · 영입 회상</title><link rel="stylesheet" href="css/base.css?v=d5c5498f2621"><link rel="stylesheet" href="css/edition.css?v=9b6efb2e6eb0"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=96f581c02ee6"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><link rel="stylesheet" href="css/recruit.css?v=b0fcf649ce20"><style>
+.home-standing,.cast[alt="시엘"],.performer img { filter:url(#ciel-tailoring) drop-shadow(1px 3px 2px #17264344); }
+.review-room,.stage-room,.property-map[aria-label] .map-base,.property-map .map-fitting,
+.property-map .delivery-cart { filter:url(#estate-ink); }
+
+</style></head><body><svg class="ink-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="estate-ink" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">
+      <feColorMatrix type="matrix" values=".41 .36 .10 0 .008  .30 .59 .12 0 .025  .46 .43 .25 0 .053  0 0 0 1 0"/>
+    </filter>
+    <filter id="ciel-tailoring" color-interpolation-filters="sRGB">
+      <!-- Jacket cloth is the green-dominant part of this sprite. Neutrals, hair, and skin keep their original RGB. -->
+      <feColorMatrix in="SourceGraphic" result="greenMask" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  -24 24 0 0 -.12"/>
+      <feColorMatrix in="SourceGraphic" result="cloth" type="matrix" values=".27 .30 .025 0 .004  .08 .65 .11 0 .014  .12 .48 .63 0 .045  0 0 0 1 0"/>
+      <feComposite in="cloth" in2="greenMask" operator="in" result="blueCloth"/>
+      <feComposite in="SourceGraphic" in2="greenMask" operator="out" result="rest"/>
+      <feComposite in="blueCloth" in2="rest" operator="arithmetic" k2="1" k3="1"/>
+    </filter>
+  </defs>
+</svg><div class="shell">
+<header class="titlebar"><i aria-hidden="true"></i><h1>Earl Phantomhive Maker</h1></header>
+<main class="game-frame"><div class="scene-mount">
+<div class="iris-surround" aria-hidden="true"><span lang="en">Phantomhive</span></div>
+<div class="scene" id="scene" data-mode="plan" data-story="true" data-prologue="false" aria-label="영입 장면">
+<button type="button" id="dialogue-visibility" aria-pressed="false">대화창 숨기기</button>
+<section id="conversation" aria-label="대화" data-review="false"></section>
+</div></div>
+<nav class="system-rail" aria-label="영입 회상"><span class="imprint" lang="en"><span>EARL</span> <span>PHANTOMHIVE</span> <span>MAKER</span></span>
+<button type="button" data-id="gardener">피니안</button><button type="button" data-id="maid">메이린</button><button type="button" data-id="cook">바르도</button><button type="button" data-id="homecoming">타나카</button><button type="button" data-id="circus">스네이크</button><button type="button" data-id="visitPrince">소마·아그니</button>
+<button type="button" id="rail-music" aria-label="배경음악" aria-pressed="true">BGM 켜짐</button>
+</nav></main></div>
+<script src="js/prince.js?v=e8a735fc28a4"></script><script src="js/recruit.js?v=19d63d834b19"></script><script src="js/audio.js?v=a2c2b562bba2"></script><script>
+const tourSession=false;
+document.getElementById("rail-music").addEventListener("click",()=>toggleChannel("bgm"));
+for(const type of ["click","keydown"])document.addEventListener(type,e=>{if(e.isTrusted)musicPlayer.unlock();},{capture:true,once:true});
+const previewAsset=k=>k;
+const host=document.getElementById("conversation"),stage=document.getElementById("scene");
+observePortraitStage(stage);
+function openBook(id){
+  if(stage.dataset.artOnly==="true")setArtOnly(stage,false);
+  stopRecruitAuto();
+  document.querySelectorAll("[data-id]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.id===id)));
+  const age=({cook:11,homecoming:11,visitPrince:11,circus:12})[id]||10;
+  setPortraitAge(stage,age);
+  function asset(k){const ciel=[recruitCast.ciel,recruitCast.ciel11,recruitCast.ciel12][age-10];return previewAsset(k===recruitCast.ciel?ciel:k);}
+  function finish(){
+    stopRecruitAuto();
+    host.innerHTML=sceneLine("",recruitScenes[id].result,'<button type="button" class="line-next" aria-label="처음부터 다시 보기">↻</button>');
+    const button=host.querySelector("button");button.onclick=()=>openBook(id);button.focus({preventScroll:true});
+  }
+  function draw(at){
+    musicPlayer.sync(recruitTrack(id,at));
+    drawRecruitReader(host,id,at,asset,true,draw,finish,"",true);
+    host.querySelector(".line-next")?.focus({preventScroll:true});
+  }
+  draw(0);
+}
+document.querySelector(".system-rail").addEventListener("click",e=>{if(e.target.dataset.id)openBook(e.target.dataset.id);});
+const previewBooks={"#bard":"cook","#mey":"maid","#tanaka":"homecoming","#snake":"circus","#soma-agni":"visitPrince"};
+openBook(previewBooks[location.hash]||"gardener");
+</script></body></html>

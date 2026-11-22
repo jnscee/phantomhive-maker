@@ -67,3 +67,9 @@ dialog iframe{display:block;width:100%;height:min(77vh,790px);border:0;backgroun
   .line textarea{grid-column:2/-1;grid-row:2}
   .line-actions{grid-column:3;grid-row:1}
 }
+
+.line-options{grid-column:3/-1;font-size:.8rem;color:var(--muted)}
+.line-options summary{cursor:pointer}
+.line-options select{margin:.5rem 0}
+.line-options input{width:auto;margin-right:.5rem}
+@media(max-width:750px){.line-options{grid-column:2/-1}}

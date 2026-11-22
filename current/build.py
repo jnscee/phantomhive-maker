@@ -27,14 +27,6 @@ def build(output):
                 del needed[name]
     if needed:
         raise SystemExit("Missing original assets: " + ", ".join(needed))
-    with zipfile.ZipFile(source / "images.zip") as images:
-        for name in images.namelist():
-            path = Path(name)
-            if path.is_absolute() or ".." in path.parts or path.parts[0] != "assets":
-                raise SystemExit(f"Invalid image path: {name}")
-            target = output / path
-            target.parent.mkdir(exist_ok=True, parents=True)
-            target.write_bytes(images.read(name))
     # Individual media files from the editor override the archived originals.
     for asset in (source / "assets").rglob("*"):
         if asset.is_file():
@@ -46,15 +38,15 @@ def build(output):
         folder.mkdir(exist_ok=True)
         for path in source.glob(f"*.{extension}"):
             shutil.copyfile(path, folder / path.name)
-    html = (source / "index.html").read_text(encoding="utf-8")
-    # Rebuilding game files must also invalidate URLs stored by browsers.
-    def version_script(match):
-        path = match[1]
+    def version_file(match):
+        attribute, path = match.groups()
         digest = hashlib.sha256((output / path).read_bytes()).hexdigest()[:12]
-        return f'src="{path}?v={digest}"'
+        return f'{attribute}="{path}?v={digest}"'
 
-    html = re.sub(r'src="(js/[\w-]+\.js)(?:\?v=[^"]+)?"', version_script, html)
-    (output / "index.html").write_text(html, encoding="utf-8")
+    for page in source.glob("*.html"):
+        html = page.read_text(encoding="utf-8")
+        html = re.sub(r'(src|href)="((?:js|css)/[\w-]+\.(?:js|css))(?:\?v=[^"]+)?"', version_file, html)
+        (output / page.name).write_text(html, encoding="utf-8")
 
 
 if __name__ == "__main__":

@@ -92,7 +92,7 @@ body{padding:0;min-height:100svh;background:#0d1015;display:grid;place-items:cen
  .dialogue{left:3%;right:3%;bottom:3%;max-height:46%;overflow:auto}.dialogue p{font-size:14px}.answers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.answers button{font-size:12px;padding:5px}
 }
 @media(max-height:550px) and (orientation:landscape){.shell{width:min(100vw,calc(100svh*1.77778))}.shortcuts{display:flex;position:absolute;bottom:0;right:0;background:#12161eef;padding:0 6px;height:22px;z-index:6}.shortcuts .imprint,.keyhelp{display:none}.shortcuts button{font-size:10px;min-height:20px}.scene,.scene[data-calendar=true],.scene[data-sheet=true]{min-height:0;height:auto;aspect-ratio:16/9}.lesson{min-height:33px}.lesson .activity-icon{display:none}.calendar-head{padding:4px 0}.index-tab{min-height:22px}.calendar-foot{margin-bottom:6px}.stage-top{padding:3px 7px}.stage-record{min-width:148px;bottom:22%}}
-@media(prefers-reduced-motion:reduce){.performer,.motion-object{animation:none!important}.motion-object{opacity:.65}}
+@media(prefers-reduced-motion:reduce){html:not([data-game-motion=full]) :is(.performer,.motion-object){animation:none!important}.motion-object{opacity:.65}}
 
 /* Brass press marks and ink-like edges use the same small palette as the command plates. */
 .press-mark{position:absolute;pointer-events:none;display:block;width:0;height:0;--press-color:#a3c5e5;--press-shadow:#30486e}
