@@ -42,6 +42,21 @@ async function check(browserType){
         await page.locator('[data-action="guide-close"]').click();
         assert.equal(await page.evaluate(()=>state.month),month);
       }
+      await page.evaluate(()=>{state=initial();state.phase='plan';tab='estate';render();});
+      const londonTab=page.getByRole('button',{name:'타운하우스',exact:true});
+      assert.equal(await londonTab.count(),0);
+      await page.evaluate(()=>{state.flags.townhouse=true;recruit('soma');recruit('agni');render();});
+      await londonTab.click();
+      await page.locator('[data-employee="soma"]').click();
+      await page.locator('[data-duty="salon"]').click();
+      await page.locator('[data-employee="agni"]').click();
+      await page.locator('[data-duty="kitchen"]').click();
+      assert.ok((await page.locator('.london-request').innerText()).includes('준비 완료'));
+      await page.reload();
+      await page.locator('#nav [data-action="tab:estate"]').click();
+      assert.equal(await page.locator('[data-duty="salon"] em').textContent(),'소마');
+      assert.equal(await page.locator('[data-duty="kitchen"] em').textContent(),'아그니');
+      await page.evaluate(()=>{state=initial();state.phase='plan';tab='home';render();});
       await page.locator('#nav [data-action="tab:plan"]').click();
       await page.locator('#system-book').click();
       assert.ok(await page.locator('#sheet').isVisible());

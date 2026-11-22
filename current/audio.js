@@ -50,7 +50,7 @@ function trackForView(){
   if(finale)return endings[finale].track;
   if(inOpening())return "prologue";
   if(tab==="market")return "market";
-  if(tab==="company"||tab==="estate"||tab==="staffing")return "business";
+  if(tab==="company"||tab==="estate"||tab==="staffing"||tab==="townhouse")return "business";
   if(tab==="chat")return "daily";
   if(tab==="plan"){
     if(state.phase==="visit")return eventTrack(state.sequence?.visitEvent);

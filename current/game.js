@@ -75,7 +75,7 @@ function forecast(shop=state.shop){
   const unit=Math.max(2,p.unit+(quality?3:0)-(shop.works-1)*2-Math.floor(state.stats.경영/19));
   const design=state.productNotes?.[state.product];
   const appeal=design?((design.brief==="gift"&&season>=9)?4:1)+(design.reworked?2:0):0;
-  const demand=Math.max(0,baseline+appeal+businessTailwind(state.product).bonus+(state.month===5?1:0)+(state.month===18?3:0)+(state.month===31&&state.product==="toys"?-3:0)+(shop.store-1)*3+Math.floor(state.stats.경영/9)
+  const demand=Math.max(0,baseline+appeal+londonPlan(state).power.salon+businessTailwind(state.product).bonus+(state.month===5?1:0)+(state.month===18?3:0)+(state.month===31&&state.product==="toys"?-3:0)+(shop.store-1)*3+Math.floor(state.stats.경영/9)
      +(state.visit==="town"?3:0)+(quality?5:0)-Math.round((state.price-p.price)*1.65));
   const receipt=state.price+(shop.design-1)*(quality?2:1)+(shop.store-1);
   const sold=Math.min(demand,state.stock[state.product]+state.qty);
@@ -127,6 +127,7 @@ function settleMonth(){
   delete state.sequence;
   state.neglect=state.houseCare==="defer"?(state.neglect||0)+1:Math.max(0,(state.neglect||0)-1);
   if(state.neglect>=2){state.renown=Math.max(0,state.renown-1);state.log.push("관리 지연 · 가문 명성 하락");}
+  settleLondon(state);
   trainHousehold(state);
   applyEstateTraining(state);
   const assessment=houseValues();
@@ -684,8 +685,9 @@ function salesBooks(){
 }
 function managementPanel(){
   const company=tab==="company",active=state.phase==="plan";
-  const nav='<div class="property-nav">'+option("저택","tab:estate",!company)+option("팬텀 사(社)","tab:company",company)+'</div>';
+  const nav='<div class="property-nav">'+option("저택","tab:estate",tab==="estate"||tab==="townhouse"||tab==="staffing")+(state.flags.townhouse?option("타운하우스","tab:townhouse",tab==="townhouse"):"")+option("팬텀 사(社)","tab:company",company)+'</div>';
   const header='<div class="property-head">'+nav+'<div><span>'+monthText(state.month)+'</span><b>'+money(state.fund)+'</b></div></div>';
+  if(tab==="townhouse"&&state.flags.townhouse)return header+londonBoard();
   if(tab==="staffing")return header+staffBoard();
   const actual=state.salesBook.at(-1);
   const settled=["event","result","vow","ending"].includes(state.phase);
@@ -730,7 +732,7 @@ function marketPanel(){
     btn(money(g.cost)+" 구매","buy:"+selectedGood,Boolean(reason),"shop-buy")+'</div>'+
     (reason?'<small>'+reason+'</small>':'')+'</section></div>';
 }
-const panels={market:marketPanel,title:titlePanel,plan:planPanel,status:statusPanel,estate:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
+const panels={market:marketPanel,title:titlePanel,plan:planPanel,status:statusPanel,estate:managementPanel,townhouse:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
 state=normalizeSave(state);
 function sheetTitle(){
   if(tab==="plan"){
@@ -739,7 +741,7 @@ function sheetTitle(){
     if(state.phase==="ending")return endingLabels[state.ending][0];
     return "월간 일정";
   }
-  return {market:"라우의 상점",title:"Earl Phantomhive Maker",status:"상태",estate:"저택 관리",staffing:"사용인 배치",company:"팬텀 사 경영",record:"가문 장부",save:"수첩 · 저장 및 소리"}[tab];
+  return {market:"라우의 상점",title:"Earl Phantomhive Maker",status:"상태",estate:"저택 관리",townhouse:"런던 타운하우스",staffing:"사용인 배치",company:"팬텀 사 경영",record:"가문 장부",save:"수첩 · 저장 및 소리"}[tab];
 }
 const homeRemarks=["무슨 일이지?","차가 식기 전에 마저 마시겠어.","오늘 일정은 확인했나?","잠깐이라면 들어주지."];
 let remarkIndex=0;
@@ -762,7 +764,7 @@ function render(focus=false,playbackOffset=0){
   $("ciel-aside").textContent="";
   $("home-standing").classList.remove("ciel-hop");
   const panel=$("panel");
-  const sameDesk=(tab==="estate"||tab==="company"||tab==="staffing") && $("scene").dataset.mode===tab && !$("sheet").hidden;
+  const sameDesk=(tab==="estate"||tab==="company"||tab==="townhouse"||tab==="staffing") && $("scene").dataset.mode===tab && !$("sheet").hidden;
   const deskScroll=sameDesk?panel.scrollTop:0;
   const openSections=new Set(sameDesk
     ? Array.from(panel.querySelectorAll("details[open] > summary"),summary=>summary.textContent)
@@ -825,7 +827,7 @@ function render(focus=false,playbackOffset=0){
   $("home-standing").hidden=!(home||calendar||tab==="status"||tab==="title");
   $("calendar").hidden=!calendar;
   $("scene").dataset.calendar=String(calendar);
-  $("scene").dataset.business=String(tab==="company"||tab==="estate"||tab==="staffing");
+  $("scene").dataset.business=String(tab==="company"||tab==="estate"||tab==="townhouse"||tab==="staffing");
   $("nav").hidden=!home;
   $("sheet").hidden=home||calendar;
   $("scene").dataset.sheet=String(!home);
@@ -1095,6 +1097,8 @@ function handleAction(key,rect,confirmed=false){
     return;
   }
   if(action==="tab"){
+    if(id==="townhouse"&&!state.flags.townhouse)return;
+    if(id==="townhouse")selectedEmployee=null;
     if(["contract","guide"].includes(state.phase)&&!["save","plan"].includes(id)){tab="plan";render(true);return;}
     if(id==="chat"&&state.phase!=="plan"){announce("진행 중인 일정과 결산을 먼저 마쳐 주세요.");return;}
     if(id==="plan")lessonPage=Math.max(0,categories.findIndex(([,list])=>list.includes(state.plan[selectedSlot])));
@@ -1103,9 +1107,10 @@ function handleAction(key,rect,confirmed=false){
     }else utilityOrigin=null;
     if(id==="staffing"){selectedEmployee=null;estateReturnScroll=$("panel").scrollTop;}
     const openManagement=tab==="home"&&id==="estate";
-    lastMenu=(id==="company"||id==="staffing")?"tab:estate":key;
-    tab=openManagement&&state.managementTab==="company"?"company":id;
-    if((tab==="estate"||tab==="company")&&state.managementTab!==tab){
+    lastMenu=(["company","staffing","townhouse"].includes(id))?"tab:estate":key;
+    const lastDesk=state.managementTab;
+    tab=openManagement&&(lastDesk==="company"||(lastDesk==="townhouse"&&state.flags.townhouse))?lastDesk:id;
+    if(["estate","company","townhouse"].includes(tab)&&state.managementTab!==tab){
       state.managementTab=tab;persist();
     }
     render(true);respond("tap",rect);return;
@@ -1245,7 +1250,7 @@ function handleAction(key,rect,confirmed=false){
   persist();
   if(action==="store"&&!storageOk)message="현재 탭에 임시 저장";
   const scroll=$("panel").scrollTop;
-  const keepScroll=action==="activity"||action==="visit"||tab==="company"||tab==="estate"||tab==="staffing";
+  const keepScroll=action==="activity"||action==="visit"||tab==="company"||tab==="estate"||tab==="townhouse"||tab==="staffing";
   render(!keepScroll);
   if(keepScroll)$("panel").scrollTop=scroll;
   focusAction(key);

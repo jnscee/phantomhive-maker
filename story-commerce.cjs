@@ -49,6 +49,29 @@ for(const [person,place,month] of [["tanaka","library",1],["finny","garden",1],[
     assertOk('visitScene().includes(trustedGreetings[person][tier]) && relationBook().includes("상대 → 시엘 신뢰　"+rank(trust))');
   }
 }
+setup('tab="estate"');
+assertOk('!managementPanel().includes("tab:townhouse")');
+run('handleAction("tab:townhouse")');assert.equal(run('tab'),"estate");
+run('handleAction("townhouse",null,true)');pick();
+assertOk('managementPanel().includes("tab:townhouse")');
+run('handleAction("tab:townhouse")');
+assertOk('tab==="townhouse" && managementPanel().includes("이번 달 배치")');
+run('placeEmployee("soma","salon");placeEmployee("agni","kitchen");state=normalizeSave(state)');
+assertOk('londonPlan(state).ready && !state.jobs.soma && !state.jobs.agni');
+const demandWithVisitors=run('forecast().demand');
+run('placeEmployee("soma","off")');assert.equal(run('forecast().demand'),demandWithVisitors-3);
+run('placeEmployee("soma","salon");state.london.skill={soma:9,agni:9};state.hp=99;state.phase="scene"');
+run('placeEmployee("agni","post");settleLondon(state);settleLondon(state);state=normalizeSave(state)');
+assertOk('state.london.book.length===1 && state.london.jobs.agni==="kitchen" && state.london.skill.agni===10 && state.hp===100 && state.renown===1');
+assertOk('londonPlan(state).power.salon===4 && state.london.book[0].summary.includes("건강 +1")');
+run('state.month=2;state.phase="plan";placeEmployee("agni","post");state.stats.통찰=499;settleLondon(state)');
+assertOk('state.stats.통찰===500 && state.renown===2 && state.london.book.length===2');
+run('state.month=3;placeEmployee("agni","off");placeEmployee("soma","off");settleLondon(state)');
+assertOk('state.london.book.length===2 && londonPlan(state).power.salon===0');
+setup('state.flags.townhouse=true;recruit("soma");recruit("agni");tab="townhouse";placeEmployee("soma","post");placeEmployee("agni","post")');
+assertOk('londonPlan(state).power.post===4 && !londonPlan(state).ready');
+setup('state.flags.townhouse=true;recruit("soma");recruit("agni");tab="townhouse";placeEmployee("soma","salon");placeEmployee("agni","kitchen");state.plan=["rest","study","reading"];state.visit="none";state.sequence={...forecast(),opening:{fund:state.fund,stats:{...state.stats}}};settleMonth();state=normalizeSave(state)');
+assertOk('state.london.book[0].month===1 && state.london.skill.soma===1 && state.log.some(entry=>entry.includes("완구상 초청 다과회"))');
 // Recruitment, the ledger replay and the public reader share the same authored scene cues.
 setup('tab="plan";state.phase="event";state.pending="circus"');
 const snakeLines=run('recruitScenes.circus.lines.map(p=>[p.scene.title,p.speaker,p.text])');

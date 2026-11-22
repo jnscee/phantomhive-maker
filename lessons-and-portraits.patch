@@ -20,6 +20,30 @@
  
  /* Brass press marks and ink-like edges use the same small palette as the command plates. */
  .press-mark{position:absolute;pointer-events:none;display:block;width:0;height:0;--press-color:#a3c5e5;--press-shadow:#30486e}
+--- a/css/iris.css
++++ b/css/iris.css
+@@ -1273,3 +1273,21 @@
+     filter:drop-shadow(0 1px 3px #24344966);
+   }
+ }
++
++.london-board .london-rooms { display:grid; gap:8px; padding:12px; }
++.london-rooms h3 { color:#edf2f8; font:600 19px var(--serif); margin:0 0 4px; }
++.staff-board .london-rooms [data-duty] { display:grid; grid-template-columns:clamp(54px,17%,106px) 1fr auto; gap:10px; align-items:center; text-align:left; padding:0 10px 0 0; overflow:hidden; }
++.london-rooms button > img { width:100%; height:74px; object-fit:cover; background:#314255; }
++.london-rooms [data-duty=kitchen] > img { object-fit:contain; }
++.london-rooms button span { display:grid; gap:2px; }
++.london-rooms button b { font:600 17px var(--serif); }
++.london-rooms button small,.london-rooms button em { color:#d6e0eb; font-size:12px; font-style:normal; }
++.london-rooms button strong { color:#f0d69b; font-size:12px; }
++.london-request,.london-book { grid-column:1/-1; }
++.london-request b { color:#efd599; }
++@media(max-width:640px) {
++  .property-grid.london-board { display:flex; flex-direction:column; }
++  .london-board > .london-rooms { display:grid; width:100%; box-sizing:border-box; order:1; }
++  .london-board > .staff-roster { order:0; }
++  .london-board .london-rooms > * { width:auto; }
++}
 --- a/css/recruit.css
 +++ b/css/recruit.css
 @@ -7,3 +7,108 @@
@@ -136,7 +160,7 @@
 @@ -1,5 +1,5 @@
  <!doctype html>
 -<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Earl Phantomhive Maker · 팬텀하이브 메이커</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="css/base.css"><link rel="stylesheet" href="css/edition.css"><link rel="stylesheet" href="css/folio.css"><link rel="stylesheet" href="css/iris.css"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><style>
-+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Earl Phantomhive Maker · 팬텀하이브 메이커</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="css/base.css?v=d5c5498f2621"><link rel="stylesheet" href="css/edition.css?v=9b6efb2e6eb0"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=90dbc336659a"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><style>
++<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Earl Phantomhive Maker · 팬텀하이브 메이커</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="css/base.css?v=d5c5498f2621"><link rel="stylesheet" href="css/edition.css?v=9b6efb2e6eb0"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=96f581c02ee6"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><style>
  .home-standing,.cast[alt="시엘"],.performer img { filter:url(#ciel-tailoring) drop-shadow(1px 3px 2px #17264344); }
  .review-room,.stage-room,.property-map[aria-label] .map-base,.property-map .map-fitting,
  .property-map .delivery-cart { filter:url(#estate-ink); }
@@ -164,20 +188,21 @@
 -<script src="js/reports.js"></script>
 -<script src="js/prologue.js"></script>
 -<script src="js/chapters.js?v=5a5076c319bb"></script>
+-<script src="js/staffing.js?v=00ba2d2a1ea6"></script>
+-<script src="js/game.js?v=11b0f98b15d2"></script></body></html>
 +<script src="js/tour.js?v=e380777efa81"></script>
 +<script src="js/content.js?v=198f383520f4"></script>
 +<link rel="stylesheet" href="css/recruit.css?v=b0fcf649ce20">
 +<script src="js/recruit.js?v=31a74d36fd5b"></script>
 +<script src="js/story.js?v=b1233e361879"></script>
 +<script src="js/scenes.js?v=8fa047d42156"></script>
-+<script src="js/audio.js?v=4904e09712a1"></script>
++<script src="js/audio.js?v=a2c2b562bba2"></script>
 +<script src="js/reports.js?v=4d5b61c3b929"></script>
 +<script src="js/prologue.js?v=9bdb9de8c466"></script>
 +<script src="js/chapters.js?v=072674c3e401"></script>
- <script src="js/staffing.js?v=00ba2d2a1ea6"></script>
--<script src="js/game.js?v=11b0f98b15d2"></script></body></html>
++<script src="js/staffing.js?v=0196e37f8664"></script>
 +<script src="js/term-events.js?v=88ff00703568"></script>
-+<script src="js/game.js?v=1a5a2ecc1238"></script></body></html>
++<script src="js/game.js?v=4176f3093fa2"></script></body></html>
 --- a/js/audio.js
 +++ b/js/audio.js
 @@ -1,6 +1,9 @@
@@ -190,7 +215,7 @@
    titleApproval:{title:"작위 승인",file:"assets/audio/title-approval.mp3",once:true},
    goodEnding:{title:"굿엔딩",file:"assets/audio/good-ending.mp3"},
    dance:{title:"Studying of Dance",file:"assets/audio/dance.mp3"},
-@@ -37,20 +40,36 @@
+@@ -37,29 +40,45 @@
  };
  
  const eventTracks={
@@ -230,9 +255,10 @@
 +  if(state.ill && !["staffMemory","recollection","endingMemory","title"].includes(tab))return "illness";
 +  if(tab==="staffMemory"&&recruitMemory)return recruitTrack(recruitMemory.id,recruitMemory.at);
    if(tab==="market")return "market";
-   if(tab==="company"||tab==="estate"||tab==="staffing")return "business";
+-  if(tab==="company"||tab==="estate"||tab==="staffing")return "business";
++  if(tab==="company"||tab==="estate"||tab==="staffing"||tab==="townhouse")return "business";
    if(tab==="chat")return "daily";
-@@ -58,8 +77,8 @@
+   if(tab==="plan"){
      if(state.phase==="visit")return eventTrack(state.sequence?.visitEvent);
      if(state.phase==="event"||state.phase==="slotEvent"){
        const event=pendingEvent();
@@ -789,6 +815,15 @@
  }
  function forecast(shop=state.shop){
    const p=products[state.product];
+@@ -63,7 +69,7 @@
+   const appeal=design?((design.brief==="gift"&&season>=9)?3:1)+(design.reworked?1:0):0;
+   const reputation=Math.floor(productHistory(state,state.product).reputation/5);
+   const premium=terms.premium+(quality?2:0);
+-  const demand=Math.max(0,baseline+appeal+terms.reach+reputation-terms.pressure+businessTailwind(state.product).bonus
++  const demand=Math.max(0,baseline+appeal+londonPlan(state).power.salon+terms.reach+reputation-terms.pressure+businessTailwind(state.product).bonus
+     +(state.month===5?1:0)+(state.month===18?3:0)+(state.month===31&&state.product==="toys"?-3:0)
+     +(shop.store-1)*2+Math.min(3,Math.floor(state.stats.경영/80))+(state.visit==="town"?2:0)
+     -Math.round((state.price-p.price-premium)*1.9));
 @@ -97,7 +103,7 @@
    state.flags[id]=true;
    effect();
@@ -832,7 +867,15 @@
  }
  function settleMonth(){
    const {unit,demand,receipt=state.price,investment,opening:before}=state.sequence;
-@@ -185,8 +197,9 @@
+@@ -154,6 +166,7 @@
+   delete state.sequence;
+   state.neglect=state.houseCare==="defer"?(state.neglect||0)+1:Math.max(0,(state.neglect||0)-1);
+   if(state.neglect>=2){state.renown=Math.max(0,state.renown-1);state.log.push("관리 지연 · 가문 명성 하락");}
++  settleLondon(state);
+   trainHousehold(state);
+   applyEstateTraining(state);
+   const assessment=houseValues();
+@@ -185,8 +198,9 @@
    state.log.push("저택 유지·채무 상환 "+money(bills));
    if(trade?.order)state.log.push(productBuyers[trade.order.id]+" 납품 "+trade.shipped+"/"+trade.order.qty+"개 · "+money(trade.wholesale)+(trade.short?" · 미납 부담금 "+money(trade.penalty):""));
    if(state.flags.market&&state.marketMonth!==state.month){state.flags.market=false;state.renown+=1;}
@@ -844,7 +887,7 @@
    const seasonal=state.duration===35?events.find(e=>e.season&&e.sees(state)&&!state.flags[e.id]):null;
    const queue=[event?.id,seasonal?.id].filter(Boolean);
    for(const e of events){
-@@ -223,10 +236,29 @@
+@@ -223,10 +237,29 @@
    if(!["event","slotEvent"].includes(state.phase)||!choice||(choice.when&&!choice.when(state)))return;
    const isRecruit=Object.hasOwn(recruitScenes,event.id);
    if(isRecruit&&recruitPage(event.id)!==recruitScenes[event.id].lines.length-1)return;
@@ -876,7 +919,7 @@
    state.pending=null;
    if(event.id==="visitPrince"&&state.recruitReturn==="estate"){
      delete state.recruitReturn;state.phase="plan";tab="estate";persist();render(true);return;
-@@ -234,7 +266,11 @@
+@@ -234,7 +267,11 @@
    if(event.id==="gardener"&&state.recruitReturn==="plan"){
      delete state.recruitReturn;state.phase="plan";tab="home";persist();render(true);return;
    }
@@ -889,7 +932,7 @@
    state.pending=state.eventQueue?.shift()||null;
    if(!state.pending)state.pending=overdueArrival(state);
    if(!state.pending&&tanakaReturns(state))state.pending="homecoming";
-@@ -247,12 +283,17 @@
+@@ -247,12 +284,17 @@
    return titleRequirements().every(Boolean);
  }
  function finish(id){
@@ -908,7 +951,7 @@
  function beginFinale(id){
    if(!isApprovedEnding(id)){finish(id);return;}
    state.ending=id;state.phase="investiture";persist();render(true);
-@@ -276,7 +317,7 @@
+@@ -276,7 +318,7 @@
    state.arrears=state.fund<0?state.arrears+1:0;
    if(state.unwell>=2){finish("ill");return;}
    if(state.arrears>=2){finish("broke");return;}
@@ -917,7 +960,7 @@
    if(state.month===6&&state.duration===6){beginFinale(qualifies()?"title":state.fund>=260&&state.stats.경영>=31?"business":"defer");return;}
    if(state.prototype?.approved){
      const p=state.prototype;if(!state.unlocked.includes(p.product))state.unlocked.push(p.product);state.productNotes??={};state.productNotes[p.product]=p;delete state.prototype;
-@@ -286,8 +327,24 @@
+@@ -286,8 +328,24 @@
  function fatigueThreshold(stamina){
    return 65+Math.floor(cap(stamina,abilityMax)*10/abilityMax);
  }
@@ -943,7 +986,7 @@
    const tolerance=fatigueThreshold(run.stats.체력);
    const tired=(run.hp<40||run.stress>=tolerance||run.motivation<35)&&a.stress>0;
    const room=trainingRooms[id];
-@@ -299,9 +356,11 @@
+@@ -299,9 +357,11 @@
    run.hp=cap(run.hp+(a.health||0)-fieldPenalty+restBonus-(run.stress>=75?6:0));
    if(id==="walk")run.stress=cap(run.stress-(run.annex.garden-1)*5-(shiftAssigned("garden")?2:0));
    run.motivation=cap(run.motivation+(a.stress<0?8:tired?-7:-2));
@@ -956,7 +999,7 @@
      run.stats[name]=cap(before+gain,statMax(name));
      return name+" "+signed(run.stats[name]-before);
    });
-@@ -318,8 +377,12 @@
+@@ -318,8 +378,12 @@
    }
  }
  function projectTraining(){
@@ -971,7 +1014,7 @@
    applyEstateTraining(run);
    return run;
  }
-@@ -358,7 +421,7 @@
+@@ -358,7 +422,7 @@
    broke:["자금 부족으로 종료","월말 자금 부족이 두 달 연속 발생했습니다."]
  };
  const slotNames=["상순","중순","하순"];
@@ -980,7 +1023,7 @@
  const escapeHTML=value=>String(value).replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
  function frame(title,body,tag=""){
    return '<div class="panel-head"><h2 tabindex="-1">'+title+'</h2>'+(tag?'<span class="small">'+tag+'</span>':"")+
-@@ -395,7 +458,7 @@
+@@ -395,7 +459,7 @@
  
  function plannerNote(id){
    if(!editingVisit&&!actions[id])return slotNames[selectedSlot]+" 활동을 선택하세요.";
@@ -989,7 +1032,7 @@
  }
  
  function previewPlannerCard(event){
-@@ -450,12 +513,9 @@
+@@ -450,12 +514,9 @@
      }).join("")+'</div>');
    }
    if(state.phase==="result")return monthlyResults();
@@ -1003,7 +1046,7 @@
        tile("경영",state.stats.경영)+tile("완료 사건",state.events.length)+'</div>'+
        '<p>'+epilogue()+'</p><div class="inline">'+btn("장부 보기","tab:record")+btn("새 회차","reset",false,"primary")+'</div>','회차 종료');
    }
-@@ -473,10 +533,10 @@
+@@ -473,10 +534,10 @@
  }
  const legacyEventIds={"비어 있는 천막":"circus","타운하우스의 손님":"visitPrince","돌아온 집사":"homecoming","불을 지키는 사람":"cook","서재의 열쇠":"return","새벽의 일정표":"discipline","비어 있는 장부":"proof","여왕의 초청장":"audience","상점 진열장":"trade","손님이 돌아간 뒤":"room"};
  function updateMoney(){
@@ -1016,7 +1059,7 @@
  }
  function titlePanel(){
    return frame("팬텀하이브 메이커",'<div class="book-cover"><small>1886 — 1888</small><h2>EARL<br>PHANTOMHIVE<br>MAKER</h2><p>팬텀하이브 메이커</p>'+btn('<span class="return-label">회차로 돌아가기</span>',"back",false,"return-control")+btn("새 회차","reset")+'</div>');
-@@ -485,7 +545,7 @@
+@@ -485,7 +546,7 @@
    const allies=peopleInHouse().filter(k=>state.people[k].toward>=5).map(k=>servants[k].name);
    const top=Object.keys(state.stats).sort((a,b)=>state.stats[b]/statMax(b)-state.stats[a]/statMax(a))[0];
    const route=state.ending==="vowNoTitle"?((state.stats.경영>=140&&state.fund>=260)?"런던의 사업가로 자리 잡았습니다. ":state.stats.통찰>=140?"정보상의 연락망을 얻었습니다. ":"마차를 타고 옛 흔적을 좇습니다. "):"";
@@ -1025,7 +1068,7 @@
  }
  function canBuyTownhouse(){return state.phase==="plan" && !state.flags.townhouse && state.fund>=250;}
  function townhouseGuestsDue(run){
-@@ -577,7 +637,9 @@
+@@ -577,7 +638,9 @@
      if(!eligible){copy.pending=copy.eventQueue?.shift()||null;copy.phase=copy.pending?"event":"result";}
    }
    // Older releases could queue a staff event before the new prerequisites.
@@ -1035,7 +1078,7 @@
      if(id==="homecoming"&&copy.phase==="event"&&copy.pending===id)return canTanakaReturn(copy);
      if(id==="maid")return copy.people.finny&&!copy.people.mey&&!copy.flags.maid;
      const arrival=events.find(e=>e.id===id&&e.household);
-@@ -586,9 +648,11 @@
+@@ -586,9 +649,11 @@
    if(copy.eventQueue)copy.eventQueue=copy.eventQueue.filter(allowed);
    if(copy.phase==="event"&&copy.pending&&!allowed(copy.pending)){
      delete copy.recruitPage;
@@ -1050,7 +1093,7 @@
    if(copy.recruitPage?.id==="cook"&&copy.recruitPage.version==null){
      // The original cut had five pages before Ciel's first question.
      copy.recruitPage.at=pageAt("cook",copy.recruitPage.at-5);
-@@ -603,6 +667,10 @@
+@@ -603,6 +668,10 @@
    }
    startFinnyAtTurn(copy);
    startTownhouseGuests(copy);
@@ -1061,7 +1104,7 @@
    return copy;
  }
  function recordPanel(){
-@@ -619,10 +687,27 @@
+@@ -619,10 +688,27 @@
        return '<details><summary>'+monthText(record.month||state.month)+' · '+event.title+'</summary><p>'+note+'</p>'+btn('영입 장면 다시 보기','recruit-memory:'+event.id)+'</details>';
      }
      const choice=event.choices[record.index];
@@ -1091,7 +1134,7 @@
  }
  function savePanel(){
    const rows=["auto","1","2","3"].map((id,index)=>{
-@@ -631,7 +716,7 @@
+@@ -631,7 +717,7 @@
        (record?monthText(record.month)+" · "+phaseNames[record.phase]:"빈 슬롯")+'</span></div><div class="opts">'+
        (index?btn("저장","store:"+id,false,"slot-write"):"")+btn("불러오기","load:"+id,!record,"slot-read")+'</div></div>';
    }).join("");
@@ -1100,7 +1143,7 @@
      '<div class="notebook-actions">'+(state.phase!=="contract"?btn("프롤로그 다시 보기","recollect"):"")+btn("새 회차","reset")+btn("표지로","tab:title")+'</div>');
  }
  function statusPanel(){
-@@ -646,7 +731,7 @@
+@@ -646,7 +732,7 @@
      return '<div class="meter '+styles[i]+'"><span>'+conditions[i]+'</span><span class="track" aria-hidden="true"><i class="fill" style="width:'+
        value+'%"></i></span><b>'+value+'</b><em class="'+((i===1?delta>0:delta<0)?"danger":"good")+'">'+(delta?signed(delta):"–")+'</em></div>';
    }).join("");
@@ -1109,7 +1152,18 @@
      (state.phase==="plan"?"월말 예상 변동":"이번 달 변동")+'</span></div><div class="hud-group">'+meters+
      '</div><div class="hud-group"><div class="attributes"><div class="attribute attr-label muted"><span>능력치</span><b>현재</b><em>변동</em></div>'+
      stats.map(name=>{
-@@ -811,6 +896,17 @@
+@@ -796,8 +882,9 @@
+ }
+ function managementPanel(){
+   const company=tab==="company",active=state.phase==="plan";
+-  const nav='<div class="property-nav">'+option("저택","tab:estate",!company)+option("팬텀 사(社)","tab:company",company)+'</div>';
++  const nav='<div class="property-nav">'+option("저택","tab:estate",tab==="estate"||tab==="townhouse"||tab==="staffing")+(state.flags.townhouse?option("타운하우스","tab:townhouse",tab==="townhouse"):"")+option("팬텀 사(社)","tab:company",company)+'</div>';
+   const header='<div class="property-head">'+nav+'<div><span>'+monthText(state.month)+'</span><b>'+money(state.fund)+'</b></div></div>';
++  if(tab==="townhouse"&&state.flags.townhouse)return header+londonBoard();
+   if(tab==="staffing")return header+staffBoard();
+   const actual=state.salesBook.at(-1);
+   const settled=["event","result","vow","investiture","ending"].includes(state.phase);
+@@ -811,6 +898,17 @@
  }
  
  const marketGoods={
@@ -1127,7 +1181,7 @@
    tea:{name:"홍차 한 잔",cost:12,stat:"stress",amount:-5,label:"스트레스",line:"마침 차가 잘 우러났어. 한 잔 하겠어?"},
    scone:{name:"버터 스콘",cost:15,stat:"hp",amount:6,label:"건강",line:"스콘은 따뜻할 때 반으로 갈라야 버터가 스며들지."}
  };
-@@ -818,17 +914,18 @@
+@@ -818,21 +916,22 @@
  function marketPanel(){
    const cards=Object.entries(marketGoods).map(([id,g])=>
      '<button type="button" class="goods-ticket" data-action="goods:'+id+'" aria-pressed="'+(selectedGood===id)+'">'+
@@ -1154,7 +1208,18 @@
      btn(money(g.cost)+" 구매","buy:"+selectedGood,Boolean(reason),"shop-buy")+'</div>'+
      (reason?'<small>'+reason+'</small>':'')+'</section></div>';
  }
-@@ -848,43 +945,41 @@
+-const panels={market:marketPanel,title:titlePanel,plan:planPanel,status:statusPanel,estate:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
++const panels={market:marketPanel,title:titlePanel,plan:planPanel,status:statusPanel,estate:managementPanel,townhouse:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
+ state=normalizeSave(state);
+ if(state.phase==="event")tab="plan";
+ function sheetTitle(){
+@@ -843,48 +942,46 @@
+     if(state.phase==="ending")return endingLabels[state.ending][0];
+     return "월간 일정";
+   }
+-  return {market:"라우의 상점",title:"Earl Phantomhive Maker",status:"상태",estate:"저택 관리",staffing:"사용인 배치",company:"팬텀 사 경영",record:"가문 장부",save:"수첩 · 저장 및 소리"}[tab];
++  return {market:"라우의 상점",title:"Earl Phantomhive Maker",status:"상태",estate:"저택 관리",townhouse:"런던 타운하우스",staffing:"사용인 배치",company:"팬텀 사 경영",record:"가문 장부",save:"수첩 · 저장 및 소리"}[tab];
+ }
  const homeRemarks=["무슨 일이지?","차가 식기 전에 마저 마시겠어.","오늘 일정은 확인했나?","잠깐이라면 들어주지."];
  let remarkIndex=0;
  let remarkTimeout;
@@ -1196,7 +1261,8 @@
 +    $("home-standing").classList.remove("greeting-hop");
 +  }
    const panel=$("panel");
-   const sameDesk=(tab==="estate"||tab==="company"||tab==="staffing") && $("scene").dataset.mode===tab && !$("sheet").hidden;
+-  const sameDesk=(tab==="estate"||tab==="company"||tab==="staffing") && $("scene").dataset.mode===tab && !$("sheet").hidden;
++  const sameDesk=(tab==="estate"||tab==="company"||tab==="townhouse"||tab==="staffing") && $("scene").dataset.mode===tab && !$("sheet").hidden;
    const deskScroll=sameDesk?panel.scrollTop:0;
    const openSections=new Set(sameDesk
      ? Array.from(panel.querySelectorAll("details[open] > summary"),summary=>summary.textContent)
@@ -1217,7 +1283,16 @@
    musicPlayer.sync(trackForView());
    stopPlayback();
    $("system-back").disabled=tab==="home";
-@@ -1115,6 +1210,21 @@
+@@ -932,7 +1029,7 @@
+   $("home-standing").hidden=!(home||calendar||tab==="status"||tab==="title");
+   $("calendar").hidden=!calendar;
+   $("scene").dataset.calendar=String(calendar);
+-  $("scene").dataset.business=String(tab==="company"||tab==="estate"||tab==="staffing");
++  $("scene").dataset.business=String(tab==="company"||tab==="estate"||tab==="townhouse"||tab==="staffing");
+   $("nav").hidden=!home;
+   $("sheet").hidden=home||calendar;
+   $("scene").dataset.sheet=String(!home);
+@@ -1115,6 +1212,21 @@
  }
  function handleAction(key,rect,confirmed=false){
    const [action,id,value]=key.split(":");
@@ -1239,7 +1314,7 @@
    if(action==="recruit-memory"&&tab==="record"&&state.events.some(e=>e.id===id)){openRecruitMemory(id);return;}
    if(tab==="staffMemory"&&["system-back","back"].includes(action)){closeRecruitMemory();return;}
    const fund=state.fund;
-@@ -1123,10 +1233,15 @@
+@@ -1123,10 +1235,15 @@
    if(action==="open-guide"){showGuidePage(0);return;}
    if(action==="goods"&&tab==="market"&&Object.hasOwn(marketGoods,id)){
      selectedGood=id;
@@ -1256,7 +1331,7 @@
    }
    if(action==="greet-ciel"){greetCiel();return;}
    if(action==="open-menu"){
-@@ -1173,11 +1288,16 @@
+@@ -1173,11 +1290,16 @@
    if(action==="skip"){finishScene();respond("step",rect);return;}
    if(action==="speed"){speed=speed===1?3:1;const b=$("playback").querySelector('[data-action="speed"]');if(b)b.textContent="재생 ×"+speed;respond("step",rect);return;}
    if(action==="category"){lessonPage=Number(id);render();focusAction(key);respond("tap",rect,".lesson-index");return;}
@@ -1274,7 +1349,30 @@
    if(action==="annex"||action==="townhouse"){
      if(action==="annex"&&state.phase!=="plan")return;
      if(action==="townhouse"){
-@@ -1288,7 +1408,7 @@
+@@ -1224,6 +1346,8 @@
+     return;
+   }
+   if(action==="tab"){
++    if(id==="townhouse"&&!state.flags.townhouse)return;
++    if(id==="townhouse")selectedEmployee=null;
+     if(["contract","guide"].includes(state.phase)&&!["save","plan"].includes(id)){tab="plan";render(true);return;}
+     if(id==="chat"&&state.phase!=="plan"){announce("진행 중인 일정과 결산을 먼저 마쳐 주세요.");return;}
+     if(id==="plan")lessonPage=Math.max(0,categories.findIndex(([,list])=>list.includes(state.plan[selectedSlot])));
+@@ -1232,9 +1356,10 @@
+     }else utilityOrigin=null;
+     if(id==="staffing"){selectedEmployee=null;estateReturnScroll=$("panel").scrollTop;}
+     const openManagement=tab==="home"&&id==="estate";
+-    lastMenu=(id==="company"||id==="staffing")?"tab:estate":key;
+-    tab=openManagement&&state.managementTab==="company"?"company":id;
+-    if((tab==="estate"||tab==="company")&&state.managementTab!==tab){
++    lastMenu=(["company","staffing","townhouse"].includes(id))?"tab:estate":key;
++    const lastDesk=state.managementTab;
++    tab=openManagement&&(lastDesk==="company"||(lastDesk==="townhouse"&&state.flags.townhouse))?lastDesk:id;
++    if(["estate","company","townhouse"].includes(tab)&&state.managementTab!==tab){
+       state.managementTab=tab;persist();
+     }
+     render(true);respond("tap",rect);return;
+@@ -1288,7 +1413,7 @@
      render(true);return;
    }
    if(action==="execute"&&!confirmed&&state.phase==="plan"){
@@ -1283,7 +1381,7 @@
      const instructions='<details class="desk-review"><summary>이달 운영 지시 확인·변경</summary>'+
        '<div><p><b>저택</b><br>'+(state.people.tanaka?"타나카 · "+dutyName(state.jobs.tanaka)+" · ":"")+'시설 상태 '+houseValues().시설상태+'</p>'+btn("저택 지시 변경","inspect:estate")+'</div>'+
        '<div><p><b>팬텀사</b><br>'+products[state.product].name+' '+state.qty+'개 · 판매가 '+money(state.price)+'</p>'+btn("팬텀사 지시 변경","inspect:company")+'</div></details>';
-@@ -1321,11 +1441,18 @@
+@@ -1321,11 +1446,18 @@
      if(action==="buy"){
        const g=marketGoods[id];
        if(tab!=="market"||!Object.hasOwn(marketGoods,id)||state.fund<g.cost)return;
@@ -1307,7 +1405,16 @@
      }else if(action==="activity"){
        pattern="schedule";state.plan[Number(id)]=value;
        message=slotNames[Number(id)]+" · "+actions[value].name;
-@@ -1405,7 +1532,7 @@
+@@ -1375,7 +1507,7 @@
+   persist();
+   if(action==="store"&&!storageOk)message="현재 탭에 임시 저장";
+   const scroll=$("panel").scrollTop;
+-  const keepScroll=action==="activity"||action==="visit"||tab==="company"||tab==="estate"||tab==="staffing";
++  const keepScroll=action==="activity"||action==="visit"||tab==="company"||tab==="estate"||tab==="townhouse"||tab==="staffing";
+   render(!keepScroll);
+   if(keepScroll)$("panel").scrollTop=scroll;
+   focusAction(key);
+@@ -1405,7 +1537,7 @@
        const key=button.dataset.action;
        handleAction(key,rect);
        const pressed=button.isConnected?button:document.querySelector('button[data-action="'+key+'"]:not(:disabled)');
@@ -1316,7 +1423,7 @@
          pressed.animate([{scale:".98"},{scale:"1"}],{duration:140,easing:"ease-out"});
        }
      }
-@@ -1418,5 +1545,7 @@
+@@ -1418,5 +1550,7 @@
  });
  render();
  if(state.phase==="guide"&&tab==="plan")showGuidePage(0);
@@ -1900,6 +2007,138 @@
 +  state.spoken={turn:state.month,title,line,reply,effects};
    persist();render(true);
  }
+--- a/js/staffing.js
++++ b/js/staffing.js
+@@ -5,12 +5,84 @@
+ function dutyName(room){
+   return (facilities[room]||annex[room])?.name||"대기";
+ }
++function staffCard(id,name,assignment,bonus,locked){
++  return '<button type="button" class="staff-card" data-employee="'+id+'" aria-pressed="'+(id===selectedEmployee)+'" '+(locked?'disabled':'')+'><img draggable="false" src="'+portraits[name]+'" alt=""><span><b>'+name+'</b><small>'+assignment+'</small><small>'+bonus+'</small></span></button>';
++}
++const londonHosts={soma:{name:"소마",role:"왕자",specialty:"salon"},agni:{name:"아그니",role:"집사",specialty:"kitchen"}};
++const londonRooms={
++  salon:{name:"응접실",work:"팬텀사 견본 소개",effect:"소매 수요",unit:"개",image:"room-ballroom.webp"},
++  kitchen:{name:"주방",work:"본저택으로 보낼 식사 준비",effect:"시엘 건강",unit:"",image:"goods-tea.webp"},
++  post:{name:"서신실",work:"시엘에게 보낼 런던 소식 정리",effect:"시엘 통찰",unit:"",image:"room-office.webp"}
++};
++const londonRequests=[
++  {name:"완구상 초청 다과회",rooms:["salon","kitchen"],result:"찻잔을 거둔 뒤에도 손님들은 자리를 뜨지 않았다. 마지막 태엽이 다 풀릴 때까지 견본 둘레에 서 있었다."},
++  {name:"런던 상인 간담회",rooms:["post","salon"],result:"회신을 보내 온 상인들의 명함이 은쟁반에 쌓였다. 다음 모임의 날짜는 손님들 쪽에서 먼저 물었다."},
++  {name:"자선병원 식사 후원",rooms:["post","kitchen"],result:"병동마다 필요한 식사 수를 확인하고 따뜻한 그릇을 보냈다. 저녁 우편에 빈 바구니와 간호사의 답장이 함께 돌아왔다."}
++];
++function londonResidents(run){
++  if(!run.flags.townhouse)return [];
++  return Object.keys(londonHosts).filter(id=>run.people[id]||(id==="agni"&&run.flags.agni&&run.people.soma));
++}
++function londonPlan(run){
++  const power={salon:0,kitchen:0,post:0};
++  const request=londonRequests[(run.month-1)%londonRequests.length];
++  for(const id of londonResidents(run)){
++    const room=run.london?.jobs?.[id];
++    if(!Object.hasOwn(londonRooms,room))continue;
++    const skill=run.london.skill?.[id]||0;
++    power[room]+=2+Number(londonHosts[id].specialty===room)+Math.floor(skill/10);
++  }
++  return {power,request,ready:request.rooms.every(room=>power[room]>0)};
++}
++function settleLondon(run){
++  const residents=londonResidents(run);
++  const office=run.london;
++  if(!residents.length||!office||office.book?.at(-1)?.month===run.month)return;
++  const working=residents.filter(id=>Object.hasOwn(londonRooms,office.jobs?.[id]));
++  if(!working.length)return;
++  const {power,request,ready}=londonPlan(run);
++  const health=Math.min(100-run.hp,power.kitchen);
++  const insight=Math.min(statMax("통찰")-run.stats.통찰,power.post);
++  run.hp+=health;
++  run.stats.통찰+=insight;
++  if(ready)run.renown++;
++  office.skill??={};
++  for(const id of working)office.skill[id]=Math.min(30,(office.skill[id]||0)+1);
++  const summary=[power.salon?"팬텀사 소매 수요 +"+power.salon+"개":"",power.kitchen?"건강 +"+health:"",power.post?"통찰 +"+insight:"",ready?request.name+" · 가문 명성 +1":""].filter(Boolean).join(" / ");
++  (office.book??=[]).push({month:run.month,summary,story:ready?request.result:""});
++  run.log.push("타운하우스 · "+summary);
++}
++function londonBoard(){
++  const {power,request,ready}=londonPlan(state);
++  const ids=londonResidents(state);
++  const jobs=state.london?.jobs||{};
++  const locked=state.phase!=="plan";
++  const roomButtons=Object.entries(londonRooms).map(([id,room])=>{
++    const names=ids.filter(person=>jobs[person]===id).map(person=>londonHosts[person].name).join(" · ");
++    return '<button type="button" data-duty="'+id+'" '+(locked?'disabled':'')+'><img alt="" src="assets/'+room.image+'"><span><b>'+room.name+'</b><small>'+room.work+'</small><strong>'+room.effect+' +'+power[id]+room.unit+'</strong></span><em>'+(names||'미배치')+'</em></button>';
++  }).join("");
++  const roster=ids.map(id=>{
++    const host=londonHosts[id];
++    const skill=state.london?.skill?.[id]||0;
++    return staffCard(id,host.name,host.role+" · "+(londonRooms[jobs[id]]?.name||"대기")+" · 숙련도 "+skill+"/30","특기 "+londonRooms[host.specialty].name+" +1 · 숙련 보너스 +"+Math.floor(skill/10),locked);
++  }).join("");
++  const records=(state.london?.book||[]).slice().reverse().map(entry=>'<p><b>'+monthText(entry.month)+'</b><br>'+entry.summary+(entry.story?'<br>'+entry.story:'')+'</p>').join("");
++  return '<div class="property-grid staff-board london-board"><section class="property-grounds london-rooms"><h3>런던 타운하우스</h3>'+roomButtons+'</section>'+
++    '<section class="property-desk staff-roster"><div class="work-title"><h3>이번 달 배치</h3></div><p>'+
++    (!ids.length?'소마와 아그니가 입주하면 업무를 맡길 수 있습니다.':locked?'일정을 마치면 다음 달 배치를 바꿀 수 있습니다.':'인물을 누른 뒤 방을 선택하세요. 두 사람이 한 방을 맡으면 효과가 합산됩니다.')+'</p>'+roster+
++    (ids.length?'<button type="button" data-duty="off" '+(locked?'disabled':'')+'>대기 배치</button>':'')+
++    '<p>배치한 달마다 숙련도 +1. 숙련도 10마다 맡은 업무의 효과가 1씩 늘어납니다.</p>'+
++    '<section class="budget-book london-request"><h3>'+request.name+'</h3><p>'+request.rooms.map(id=>londonRooms[id].name).join(" + ")+'에 각각 한 명을 배치하면 월말에 가문 명성 +1</p><b>'+(ready?'준비 완료':'준비 중')+'</b></section>'+
++    '<details class="annexes london-book"><summary>런던 운영 일지</summary>'+(records||'<p>첫 근무를 마치면 여기에 결과가 기록됩니다.</p>')+'</details></section></div>';
++}
+ function staffBoard(){
+   const staff=peopleInHouse().filter(id=>servants[id].job);
+   const locked=state.phase!=="plan";
+   const roster=staff.map(id=>{
+     const name=servants[id].name;
+-    return '<button type="button" class="staff-card" data-employee="'+id+'" aria-pressed="'+(id===selectedEmployee)+'" '+(locked?'disabled':'')+'><img draggable="false" src="'+portraits[name]+'" alt=""><span><b>'+name+'</b><small>'+(servants[id].role?servants[id].role+' · ':'')+dutyName(state.jobs[id])+' · 숙련도 '+(state.people[id].skill||0)+'/30</small></span></button>';
++    const skill=state.people[id].skill||0, room=state.jobs[id];
++    const metric=staffDutyMetric[room];
++    return staffCard(id,name,(servants[id].role?servants[id].role+" · ":"")+dutyName(room)+" · 숙련도 "+skill+"/30",metric?metric+" +"+Math.floor(skill/5)+" (숙련도 5당 +1)":"배치하면 시설 관리 수치가 오릅니다.",locked);
+   }).join("");
+   const zone=(id,coords)=>{
+     const names=staff.filter(p=>state.jobs[p]===id).map(p=>servants[p].name);
+@@ -20,15 +92,28 @@
+   return '<div class="property-grid staff-board"><div class="property-grounds"><div class="property-map staff-map" aria-label="저택 근무지"><img class="map-base" src="'+businessArt.estate+'" alt="팬텀하이브 저택 단면도">'+Object.entries(dutyPins).map(([id,coords])=>zone(id,coords)).join("")+'</div></div><section class="property-desk staff-roster"><div class="work-title"><h3>고용인 명단</h3></div><p>'+(!staff.length?'사건을 통해 영입한 사용인이 이곳에 표시됩니다.':locked?'근무지는 월간 계획을 세울 때 변경할 수 있습니다.':'사용인을 근무지로 끌어 놓으세요. 사용인과 근무지를 차례로 눌러도 됩니다.')+'</p>'+roster+(staff.length?zone("off",null):'')+'</section></div>';
+ }
+ function placeEmployee(id,room){
+-  if(tab!=="staffing"||state.phase!=="plan"||!state.people[id]||!servants[id]?.job)return;
+-  if(room!=="off"&&!Object.hasOwn(dutyPins,room))return;
+-  if(room==="off")delete state.jobs[id];
+-  else state.jobs[id]=room;
+-  if(id==="tanaka")state.staff=facilities[room]?room:null;
++  if(state.phase!=="plan")return;
++  let name,assignment;
++  if(tab==="townhouse"){
++    if(!londonResidents(state).includes(id)||(room!=="off"&&!Object.hasOwn(londonRooms,room)))return;
++    state.london??={};state.london.jobs??={};
++    if(room==="off")delete state.london.jobs[id];
++    else state.london.jobs[id]=room;
++    name=londonHosts[id].name;
++    assignment=londonRooms[room]?.name||"대기";
++  }else{
++    if(tab!=="staffing"||!state.people[id]||!servants[id]?.job)return;
++    if(room!=="off"&&!Object.hasOwn(dutyPins,room))return;
++    if(room==="off")delete state.jobs[id];
++    else state.jobs[id]=room;
++    if(id==="tanaka")state.staff=facilities[room]?room:null;
++    name=servants[id].name;
++    assignment=dutyName(room);
++  }
+   selectedEmployee=null;
+   persist();render();
+   document.querySelector('[data-employee="'+id+'"]')?.focus({preventScroll:true});
+-  announce(servants[id].name+" · "+dutyName(room));
++  announce(name+" · "+assignment);
+ }
+ let staffDrag=null;
+ document.addEventListener("pointerdown",event=>{
+@@ -44,7 +129,7 @@
+   if(!d.ghost){
+     d.ghost=document.createElement("span");
+     d.ghost.className="staff-ghost";
+-    d.ghost.textContent=servants[d.card.dataset.employee].name;
++    d.ghost.textContent=d.card.querySelector("b").textContent;
+     document.body.append(d.ghost);
+   }
+   d.ghost.style.left=event.clientX+"px";d.ghost.style.top=event.clientY+"px";
 --- a/js/story.js
 +++ b/js/story.js
 @@ -44,13 +44,14 @@
@@ -2057,7 +2296,7 @@
 +++ b/recruit-preview.html
 @@ -1,4 +1,4 @@
 -<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>팬텀하이브 · 영입 회상</title><link rel="stylesheet" href="css/base.css?v=d1a35b3ecad4"><link rel="stylesheet" href="css/edition.css?v=79a1b1b79323"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=90dbc336659a"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><link rel="stylesheet" href="css/recruit.css?v=d8ddc41fce62"><style>
-+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>팬텀하이브 · 영입 회상</title><link rel="stylesheet" href="css/base.css?v=d5c5498f2621"><link rel="stylesheet" href="css/edition.css?v=9b6efb2e6eb0"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=90dbc336659a"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><link rel="stylesheet" href="css/recruit.css?v=b0fcf649ce20"><style>
++<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>팬텀하이브 · 영입 회상</title><link rel="stylesheet" href="css/base.css?v=d5c5498f2621"><link rel="stylesheet" href="css/edition.css?v=9b6efb2e6eb0"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=96f581c02ee6"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><link rel="stylesheet" href="css/recruit.css?v=b0fcf649ce20"><style>
  .home-standing,.cast[alt="시엘"],.performer img { filter:url(#ciel-tailoring) drop-shadow(1px 3px 2px #17264344); }
  .review-room,.stage-room,.property-map[aria-label] .map-base,.property-map .map-fitting,
  .property-map .delivery-cart { filter:url(#estate-ink); }
@@ -2073,7 +2312,7 @@
 +<button type="button" id="rail-music" aria-label="배경음악" aria-pressed="true">BGM 켜짐</button>
  </nav></main></div>
 -<script src="js/recruit.js?v=27041d4d6af2"></script><script>const previewAsset=k=>k;
-+<script src="js/recruit.js?v=31a74d36fd5b"></script><script src="js/audio.js?v=4904e09712a1"></script><script>
++<script src="js/recruit.js?v=31a74d36fd5b"></script><script src="js/audio.js?v=a2c2b562bba2"></script><script>
 +const tourSession=false;
 +document.getElementById("rail-music").addEventListener("click",()=>toggleChannel("bgm"));
 +for(const type of ["click","keydown"])document.addEventListener(type,e=>{if(e.isTrusted)musicPlayer.unlock();},{capture:true,once:true});

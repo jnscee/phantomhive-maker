@@ -1388,3 +1388,21 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; }
 .lesson-plane[data-room=gym] {--foot-x:58%;--foot-y:83%}
 .condition-detail {margin:4px 0;line-height:1.45}
 .condition-warning {margin:0;color:#fff0d5;background:#6e4243;padding:5px 8px;border-radius:4px}
+
+.london-board .london-rooms { display:grid; gap:8px; padding:12px; }
+.london-rooms h3 { color:#edf2f8; font:600 19px var(--serif); margin:0 0 4px; }
+.staff-board .london-rooms [data-duty] { display:grid; grid-template-columns:clamp(54px,17%,106px) 1fr auto; gap:10px; align-items:center; text-align:left; padding:0 10px 0 0; overflow:hidden; }
+.london-rooms button > img { width:100%; height:74px; object-fit:cover; background:#314255; }
+.london-rooms [data-duty=kitchen] > img { object-fit:contain; }
+.london-rooms button span { display:grid; gap:2px; }
+.london-rooms button b { font:600 17px var(--serif); }
+.london-rooms button small,.london-rooms button em { color:#d6e0eb; font-size:12px; font-style:normal; }
+.london-rooms button strong { color:#f0d69b; font-size:12px; }
+.london-request,.london-book { grid-column:1/-1; }
+.london-request b { color:#efd599; }
+@media(max-width:640px) {
+  .property-grid.london-board { display:flex; flex-direction:column; }
+  .london-board > .london-rooms { display:grid; width:100%; box-sizing:border-box; order:1; }
+  .london-board > .staff-roster { order:0; }
+  .london-board .london-rooms > * { width:auto; }
+}
