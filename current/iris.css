@@ -631,7 +631,6 @@ body { background:radial-gradient(ellipse at 50% 42%,#263247,#0c1421 78%); }
 .staff-map [data-duty] b { white-space:nowrap; }
 .staff-board .staff-card { color:#f4f8ff; background:#243c54; }
 
-#scene[data-mode=record] #sheet,
 #scene[data-mode=save] #sheet { z-index:8; }
 #scene[data-mode=save] .sheet-head { background:#22334b; }
 #scene[data-mode=save] .panel-body { gap:12px; padding:clamp(10px,1.4cqw,20px); }
@@ -673,26 +672,8 @@ body { background:radial-gradient(ellipse at 50% 42%,#263247,#0c1421 78%); }
 #picker[data-confirmation] .panel-head .close { justify-self:end; }
 #picker[data-confirmation] .panel-body { background:transparent; padding:clamp(18px,4vw,28px); gap:20px; }
 #picker[data-confirmation] .panel-body > p { text-align:center; margin:0; line-height:1.75; color:#edf3fa; word-break:keep-all; overflow-wrap:anywhere; }
-#picker[data-confirmation] .panel-body > .inline:last-child {
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  width:min(100%,18rem);
-  margin-inline:auto;
-  gap:8px;
-}
-#picker[data-confirmation] .panel-body > .inline:last-child > button {
-  box-sizing:border-box;
-  display:grid;
-  place-items:center;
-  width:100%;
-  min-width:0;
-  min-height:44px;
-  height:auto;
-  margin:0;
-  padding:10px clamp(10px,3vw,20px);
-  line-height:1.35;
-  white-space:nowrap;
-}
+#picker[data-confirmation] .panel-body > .inline { justify-content:center; gap:8px; }
+#picker[data-confirmation] .panel-body > .inline button { min-height:40px; padding:7px 16px; }
 
 
 #panel .property-desk .staff-entry {
@@ -896,40 +877,29 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; }
   box-shadow:0 0 0 1px #4f4535,0 0 0 200vmax rgb(7 17 30 / 24%);
 }
 #guide-replay {
-  position:fixed; z-index:41; box-sizing:border-box; width:min(24rem,calc(100vw - 20px));
-  max-height:calc(100dvh - 20px); overflow:auto; padding:10px 13px;
-  border:1px solid #91a3b7; border-radius:9px; color:#f4f7fc;
-  background:linear-gradient(130deg,#263b50,#142638 78%);
+  position:fixed; z-index:41; box-sizing:border-box; width:min(22rem,calc(100vw - 20px));
+  max-height:calc(100dvh - 20px); overflow:auto; padding:14px 17px 12px;
+  border:1px solid #a5b9ce; border-radius:10px; color:#f4f7fc;
+  background:linear-gradient(140deg,#273b52f2,#112337f5);
   box-shadow:inset 0 1px #e4efff38,0 5px 20px #07121e66;
 }
 #guide-replay[hidden],#tour-ring[hidden] { display:none; }
-#guide-replay button { font:inherit; cursor:pointer; }
-.tour-chapters { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; }
-#guide-replay .tour-chapters button { min-height:30px; padding:3px; font-size:13px; line-height:1.2; border:0; border-bottom:2px solid #52677b; border-radius:0; color:#c7d7e5; background:transparent; }
-#guide-replay .tour-chapters [aria-current] { color:#ffe0a2; border-color:#dfbc77; font-weight:bold; }
-.tour-speech { display:grid; grid-template-columns:62px minmax(0,1fr); align-items:start; gap:12px; padding:12px 0; }
-.tour-portrait { box-sizing:border-box; width:62px; aspect-ratio:1; border-radius:50%; border:1px solid #d1bb8c;
-  background:#c6c5c2 url("../assets/sebastian.webp") 50% 1% / 153% auto no-repeat;
-  box-shadow:0 0 0 2px #233545,0 0 0 3px #8393a0; margin:3px 0 0 1px; }
-.tour-byline { display:flex; align-items:center; justify-content:space-between; color:#efd3a1; font-size:13px; font-weight:bold; }
-#tour-count { font:normal 12px/1.3 system-ui,sans-serif; font-variant-numeric:tabular-nums; color:#c1d2e0; }
-#guide-replay h2 { margin:3px 0 4px; font-size:clamp(16px,1.5vw,19px); line-height:1.35; }
-#guide-replay p { margin:0; line-height:1.55; font-size:15px; word-break:keep-all; overflow-wrap:anywhere; }
-#tour-hint strong { color:#ffe2aa; }
-#guide-replay footer { display:flex; align-items:center; gap:6px; }
-#guide-replay footer button { background:#30465d; color:#fff; border:1px solid #8599ad; border-radius:5px; min-height:34px; padding:4px 12px; font-size:14px; }
-#guide-replay footer button:first-child { margin-right:auto; background:transparent; border-color:transparent; color:#c7d7e5; }
-#guide-replay footer button:last-child { color:#202f40; background:#e4cd9f; border-color:#f6dfb0; font-weight:bold; }
-#guide-replay button:focus-visible { outline:2px solid white; outline-offset:2px; }
+#guide-replay header,#guide-replay footer { display:flex; align-items:center; gap:6px; }
+#guide-replay header { justify-content:space-between; color:#c8d9e8; font-size:12px; }
+#tour-count { font-variant-numeric:tabular-nums; color:#e9d5a6; }
+#guide-replay h2 { margin:7px 0 4px; font-size:clamp(17px,1.6vw,21px); line-height:1.3; }
+#guide-replay p { margin:0; line-height:1.55; font-size:14px; word-break:keep-all; overflow-wrap:anywhere; }
+#guide-replay footer { margin-top:10px; }
+#guide-replay button { background:#30465d; color:#fff; border:1px solid #8599ad; border-radius:5px; min-height:34px; padding:4px 12px; }
+#guide-replay button:first-child { margin-right:auto; }
 #guide-replay button:disabled { opacity:.48; }
-#guide-replay button:hover:enabled { filter:brightness(1.12); }
-@media (pointer:coarse) { #guide-replay footer button { min-height:44px; } }
-@media(max-width:420px),(max-height:480px) {
-  #guide-replay { width:min(21rem,calc(100vw - 20px)); padding:7px 10px; }
-  .tour-speech { grid-template-columns:45px minmax(0,1fr); gap:9px; padding:8px 0; }
-  .tour-portrait { width:45px; }
-  #guide-replay h2 { font-size:16px; margin:2px 0; }
-  #guide-replay p { font-size:14px; }
+#guide-replay button:is(:hover,:focus-visible):enabled { background:#465e78; }
+@media (pointer:coarse) { #guide-replay button { min-height:44px; } }
+@media(max-height:480px) {
+  #guide-replay { width:min(18rem,calc(100vw - 20px)); padding:8px 12px; }
+  #guide-replay h2 { margin:4px 0; font-size:16px; }
+  #guide-replay p { font-size:13px; }
+  #guide-replay footer { margin-top:5px; }
 }
 
 /* Monthly plan: itinerary above, spending breakdown and closing balance below. */
@@ -1303,91 +1273,6 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; }
     filter:drop-shadow(0 1px 3px #24344966);
   }
 }
-
-/* Cast layers are balanced against Sebastian's height and share a baseline. */
-#scene {
-  --standing-zoom:1;
-  --standing-stage:calc(var(--portrait-scene-height, 440px) * .96);
-}
-#scene .home-standing,
-#scene[data-mode=home] #ciel-greet {
-  height:calc(var(--standing-stage) * var(--ciel-height));
-  scale:none;
-}
-#scene[data-mode=home] #ciel-greet {
-  z-index:5;
-  aspect-ratio:var(--ciel-aspect, .4);
-  width:auto;
-  max-width:50%;
-}
-#scene #conversation:not([data-review=true]) > img.cast {
-  height:calc(var(--standing-stage) * var(--cast-height));
-  scale:none;
-  object-position:center bottom;
-}
-#scene #conversation .review-butler {
-  height:var(--standing-stage);
-  scale:none;
-}
-#scene .lau-standing {
-  height:calc(var(--standing-stage) * 177 / 189);
-  scale:none;
-}
-#scene .home-standing.ciel-hop {
-  animation:ciel-hop 540ms ease-out;
-  will-change:transform;
-}
-@keyframes ciel-hop {
-  0%,100% {transform:none}
-  14% {transform:scale(1.04,.96)}
-  43% {transform:translateY(-7%) scale(.985,1.02)}
-  68% {transform:scale(1.035,.965)}
-  82% {transform:translateY(-1.7%)}
-}
-@media (prefers-reduced-motion:reduce) {
-  #scene .home-standing.ciel-hop {animation:ciel-acknowledge 300ms ease-out}
-  @keyframes ciel-acknowledge {50% {opacity:.78}}
-}
-.scene-date {
-  position:absolute;top:max(7%,calc(var(--frame-y) * .64));left:var(--inner);z-index:4;
-  display:grid;gap:7px;width:clamp(120px,15%,165px);
-  scale:1.12;transform-origin:top left;
-}
-#scene .scene-date #date {position:relative;inset:auto;width:100%;min-width:0;scale:none}
-#scene-book {
-  color:#e5edf8;background:#203654dd;border:1px solid #a4b7cf;border-radius:5px;
-  min-height:32px;padding:3px 6px;white-space:nowrap;
-}
-#scene:not([data-mode=home]) #scene-book,
-#scene[data-prologue=true] .scene-date,
-#scene[data-calendar=true] .scene-date,
-#scene[data-business=true] .scene-date,
-#scene[data-settled=true] .scene-date,
-#scene[data-mode=market] .scene-date,
-.game-frame:has(#scene[data-mode=home]) #rail-book {display:none}
-#scene[data-mode=play] .scene-date {pointer-events:none}
-#scene .goods-list .goods-ticket {min-height:64px}
-#scene .goods-list {max-height:min(35vh,260px);overflow:auto;overscroll-behavior:contain;padding:2px 5px 3px 2px}
-#scene .goods-ticket strong {font-size:clamp(16px,2cqw,25px)}
-#scene .goods-ticket img {height:clamp(27px,3.8cqw,48px)}
-#scene .shop-trade .stat-preview {flex:1 1 12rem}
-#scene .shop-trade .stat-values {margin:4px 0}
-.lesson-plane .performer[data-action-id] img {width:auto;height:100%;max-width:none}
-.lesson-plane .performer[data-action-id] {animation-name:none}
-.lesson-plane .performer[data-action-id="outing"] {animation-name:lesson-walk;animation-duration:6.2s;animation-iteration-count:1}
-@media (max-width:960px) and (orientation:portrait),(max-width:540px) {
-  #scene {--standing-stage:min(calc(var(--portrait-scene-height, 450px) * .78),calc(var(--portrait-scene-width, 360px) * .8))}
-  #scene #conversation:not([data-review=true]) > img.cast {
-    width:47%;max-width:47%;align-self:end;object-position:center bottom;
-  }
-  #scene[data-mode=home] #home-standing,
-  #scene[data-mode=home] #ciel-greet {height:calc(var(--phone-ciel-height, 60%) * var(--ciel-height) * 1.2)}
-  .scene-date {top:4%;scale:1;width:clamp(98px,27%,135px)}
-  #scene-book {min-height:36px;font-size:13px}
-}
-.lesson-plane[data-room=gym] {--foot-x:58%;--foot-y:83%}
-.condition-detail {margin:4px 0;line-height:1.45}
-.condition-warning {margin:0;color:#fff0d5;background:#6e4243;padding:5px 8px;border-radius:4px}
 
 .london-board .london-rooms { display:grid; gap:8px; padding:12px; }
 .london-rooms h3 { color:#edf2f8; font:600 19px var(--serif); margin:0 0 4px; }

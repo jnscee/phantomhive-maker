@@ -1,0 +1,66 @@
+"use strict";
+
+// Served only by the local editor. The iframe has a separate storage origin.
+persist=()=>{};
+storageOk=false;
+saves={};
+state=initial();
+tab="plan";
+
+if(editorPreview?.kind==="opening"){
+  openingSession=true;
+  openingAuto=false;
+  state.openingLine=openingLines.findIndex(line=>line.sceneIndex===editorPreview.scene);
+}else if(editorPreview?.kind==="ending"){
+  endingReplay={id:editorPreview.id,at:0,origin:"record"};
+  state.phase="plan";
+  tab="endingMemory";
+}else if(["event","recruit"].includes(editorPreview?.kind)){
+  const event=events.find(candidate=>candidate.id===editorPreview.id);
+  if(event){
+    state.phase=event.slot?"slotEvent":"event";
+    state.pending=event.id;
+    state.sequence={index:0,slotQueue:[],grade:1};
+    state.eventQueue=[];
+    if(Object.hasOwn(recruitScenes,event.id)){
+      const book=recruitScenes[event.id];
+      const at=book.lines.findIndex(line=>line.i===(editorPreview.scene??0));
+      state.recruitPage={id:event.id,at:Math.max(0,at),version:3};
+      if(event.id==="visitPrince")state.people.tanaka={toward:2};
+    }
+    finishEventChoice=()=>{
+      state.phase="plan";
+      state.pending=null;
+      delete state.termOutcome;
+      delete state.termPage;
+      tab="home";
+      render(true);
+    };
+  }
+}else if(editorPreview?.kind==="visit"){
+  const card=visitEncounterCards.find(item=>item.id===editorPreview.id);
+  state.phase="visit";
+  state.visit=card.place;
+  state.sequence={index:2,visitEvent:card.id,visitBefore:snapStats(state)};
+}else if(editorPreview?.kind==="fair"){
+  state.phase="plan";
+  state.month=state.planMonth=editorPreview.month;
+  tab="plan";
+}else if(editorPreview?.kind==="london"){
+  state.phase="plan";
+  state.month=editorPreview.month;
+  state.planMonth=state.month;
+  state.flags.townhouse=true;
+  recruit("soma");
+  recruit("agni");
+  const [soma,agni]=londonRequests[state.month-1].rooms;
+  state.london={jobs:{soma,agni}};
+  settleLondon(state);
+  tab="townhouse";
+}else if(editorPreview?.kind==="activity"){
+  state.phase="plan";
+  state.visit="none";
+  state.plan=[editorPreview.id,"rest","rest"];
+  execute();
+}
+render();

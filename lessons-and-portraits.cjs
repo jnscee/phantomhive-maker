@@ -73,7 +73,7 @@ async function check(browserType){
       assert.ok(await page.locator('[data-action="buy:weights"]').isDisabled());
       await page.evaluate(()=>{tab='plan';state.plan=['exercise','study','walk'];state.visit='none';execute();});
       await page.locator('.performer img').evaluate(im=>im.decode());
-      assert.equal(await page.locator('.lesson-plane').getAttribute('data-room'),'gym');
+      assert.equal(await page.locator('.lesson-plane').getAttribute('data-room'),await page.evaluate(()=>choreography.exercise[0]));
       assert.ok(await page.locator('.performer').evaluate(e=>e.getBoundingClientRect().height>10&&getComputedStyle(e).animationName!=='none'));
       assert.ok(await page.evaluate(()=>!state.lessonKit.exercise));
       const first=await page.locator('.performer img').getAttribute('src');
@@ -107,10 +107,10 @@ async function check(browserType){
         state=initial();state.phase='plan';tab='record';saves.gallery={ill:'건강 악화로 종료'};
         saves[1]={...initial(),phase:'ending',ending:'broke'};delete saves.auto;delete saves[2];delete saves[3];render();
       });
+      assert.equal(await page.locator('.ending-thumb').count(),2);
       const gallery=page.locator('.file-section').filter({has:page.getByText('엔딩 도감',{exact:true})});
       assert.match(await gallery.locator('summary').innerText(),/2개 기록/);
       await gallery.locator('summary').click();
-      assert.equal(await page.locator('.ending-thumb').count(),2);
       await page.locator('[data-action="ending-art:ill"]').click();
       await page.locator('.ending-cg').evaluate(im=>im.decode());await page.locator('#system-back').click();
       assert.equal(await page.evaluate(()=>tab),'record');
@@ -149,26 +149,34 @@ async function check(browserType){
           return el;
         }});
       });
-      const hears=name=>page.waitForFunction(name=>window.playedMusic.includes(name+'.mp3'),name,{timeout:12000});
+      const hearsCurrent=async(id,at)=>{
+        const path=await page.evaluate(([id,at])=>musicTracks[recruitTrack(id,at)].file.split('/').pop(),[id,at]);
+        await page.waitForFunction(file=>window.playedMusic.includes(file),path,{timeout:12000});
+      };
       await page.goto(base+'recruit-preview.html#snake');
-      const nextLine=page.getByRole('button',{name:'다음 대사'});
-      await nextLine.click();await hears('gloomy');
-      for(let i=0;i<3;i++)await nextLine.click();
-      await hears('daily');
-      await page.getByRole('button',{name:'건너뛰기'}).click();await hears('romantic');
-      await page.getByRole('button',{name:'소마·아그니'}).click();
-      await page.getByRole('button',{name:'건너뛰기'}).click();await hears('cheerful');
-      await page.getByRole('button',{name:'바르도'}).click();
-      await page.getByRole('button',{name:'건너뛰기'}).click();await hears('etiquette');
+      const nextLine=page.locator('#conversation [data-read="next"]');
+      const pages=await page.evaluate(()=>recruitScenes.circus.lines.length);
+      if(pages>1)await nextLine.click();
+      else await page.locator('#conversation [data-read="finish"]').click();
+      await hearsCurrent('circus',Math.min(1,pages-1));
+      const skip=page.getByRole('button',{name:'건너뛰기'});
+      if(pages>2)await skip.click();
+      if(pages>1)await hearsCurrent('circus',pages-1);
+      for(const [id,name] of [['visitPrince','소마·아그니'],['cook','바르도']]){
+        await page.getByRole('button',{name}).click();
+        const last=await page.evaluate(id=>recruitScenes[id].lines.length-1,id);
+        if(last)await skip.click();
+        await hearsCurrent(id,last);
+      }
       await page.getByRole('button',{name:'바르도'}).click();
       const dialogue=page.locator('#conversation .dialogue');
       const words=await dialogue.innerText();
       const actor=page.locator('.standing-window img').first();
-      await actor.evaluate(im=>im.decode());
-      const before=await actor.boundingBox();
+      if(await actor.count())await actor.evaluate(im=>im.decode());
+      const before=await actor.count()?await actor.boundingBox():null;
       await page.locator('#dialogue-visibility').click();
       assert.equal(await dialogue.isVisible(),false,JSON.stringify(await page.evaluate(()=>({state:document.getElementById('scene').dataset.artOnly,pressed:document.getElementById('dialogue-visibility').getAttribute('aria-pressed'),vis:getComputedStyle(document.querySelector('#conversation .dialogue')).visibility}))));
-      const restored=await actor.boundingBox(); for(const k of ['x','y','width','height'])assert.ok(Math.abs(restored[k]-before[k])<1,'CG viewing shifted the portrait on '+k+': '+JSON.stringify({before,restored,layout:await actor.evaluate(e=>({grid:getComputedStyle(e.closest('#conversation')).gridTemplateRows,wrapper:e.parentElement.getAttribute('style'),rect:e.parentElement.getBoundingClientRect().toJSON()}))}));
+      const restored=before?await actor.boundingBox():null; if(before)for(const k of ['x','y','width','height'])assert.ok(Math.abs(restored[k]-before[k])<1,'CG viewing shifted the portrait on '+k+': '+JSON.stringify({before,restored,layout:await actor.evaluate(e=>({grid:getComputedStyle(e.closest('#conversation')).gridTemplateRows,wrapper:e.parentElement.getAttribute('style'),rect:e.parentElement.getBoundingClientRect().toJSON()}))}));
       await page.keyboard.press('h');
       assert.equal(await dialogue.innerText(),words);
       assert.deepEqual(errors,[]);

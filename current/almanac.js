@@ -5,7 +5,7 @@ function visitorEvents(){
     id:card.id, title:card.title, speaker:card.npc, text:card.lines[0][1], visitPlace:card.place,
     visitOnly:true, source:"저택과 런던의 방문 기록",
     sees:run=>run.visit===card.place && card.condition(run) &&
-      (card.place!=="quarters" || !run.sequence?.visitPerson || servants[run.sequence.visitPerson]?.name===card.npc),
+      (card.place!=="quarters" || visitName(visitPerson("quarters"))===card.npc),
     choices:card.choices.map(answer=>({
       label:answer.label, result:answer.reply[1],
       effect(){
@@ -122,7 +122,7 @@ function familyFolio(rows,history,album,extra=""){
     filedSection("인물 관계",'<p>각 인물이 시엘에게 보내는 신뢰입니다.</p>'+relations,allies.length+"명")+
     filedSection("사건 기록",history||"첫 사건을 마치면 선택이 기록됩니다.",state.events.length+"건")+
     filedSection("런던 행사",fairHistory.join("")||"참가한 행사의 결과가 기록됩니다.",fairHistory.length+"건")+
-    filedSection("엔딩 도감",album,Object.keys(saves.gallery||{}).length+"개 기록")+extra+'</div>';
+    filedSection("엔딩 도감",album,Object.keys(endingScenes).filter(hasEndingRecord).length+"개 기록")+extra+'</div>';
 }
 function healthNotice(run){
   if(run.ill||run.illness)return "병중 · 무리한 일정은 요양으로 바뀝니다. 휴식·요양 또는 왕진으로 건강과 스트레스를 회복하세요.";

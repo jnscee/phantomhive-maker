@@ -18,58 +18,71 @@ function effectChoice(row){
     }
   },gate,hint);
 }
+// Additional one-time campaign events from the content editor.
+const authoredEvents=[];
+function authoredStoryEvents(){
+  return authoredEvents.map(({id,month,title,room,track,lines,label,result})=>({
+    id,title,room,track,lines,authored:true,text:lines[0][1],response:result,
+    sees:run=>run.duration===35&&run.month===month,
+    choices:[choice(label,title,()=>{})]
+  }));
+}
 function scriptedEvents(){
   const timed=[
     [5,"expo","박람회의 유리 진열장","전시 책임자가 완구 하나만 골라 달라고 합니다. 태엽 인형 곁에는 아이가 직접 굴릴 수 있는 작은 수레가 있습니다.",
       ["수레를 시연한다","팬텀사 인지도 상승",{renown:2}],["구동 구조를 기록한다","경영 +8",{경영:8}]],
-    [9,"gardener","장미 줄기를 쥔 손","소년이 힘을 주자 삽자루가 갈라집니다. 시엘은 부러진 자루보다 온전한 뿌리를 먼저 봅니다.",
-      ["온실 열쇠를 건넨다","피니안 합류 · 정원 담당",{recruit:"finny",flag:"greenhouse"}],["가벼운 일부터 가르친다","피니안 합류 · 기품 +3",{recruit:"finny",기품:3}]],
     [12,"birthday","열한 번째 생일","식탁 위에 초가 열한 개입니다. 시엘은 장부를 덮고, 빈 의자 하나를 잠깐 바라봅니다.",
-      ["홍차와 케이크를 낸다","스트레스 −12",{stress:-12}],["도련님의 말을 기다린다","의지 +1",{의지:1}]],
-    [15,"maid","창문 너머의 눈금","세바스찬이 검은 조끼 차림의 올빼미를 창가로 데려온다. 시엘이 소매 끝으로 가리킨 정원 표식의 숫자를, 그녀는 눈을 가늘게 뜨지도 않고 읽어 낸다.",
-      ["저택의 시야를 맡긴다","메이린 합류 · 보안 기록 확보",{recruit:"mey",flag:"lookout"}],["타나카에게 교육을 맡긴다","메이린 합류",{recruit:"mey",trust:1}]],
+      ["홍차와 케이크를 낸다","스트레스 −12",{stress:-12}],["도련님의 말을 기다린다","의지 +5",{의지:5}]],
     [18,"jubilee","황금빛 초대장","1887년 6월 21일, 여왕의 행렬이 웨스트민스터 사원으로 향합니다. 창가에서 보던 시엘이 돌아섭니다. 왕실 앞으로 보낼 가문의 서신이 아직 책상 위에 있습니다.",
       ["직접 가문을 소개한다","왕실 신뢰 상승",{royal:3},s=>s.stats.기품>=28,"기품 28"],["헌정 완구를 보낸다","가문 명성 상승",{renown:2}]],
-    [19,"cook","불을 지키는 사람","바르도가 주방 문 앞에 섭니다. 구리 팬 하나, 들통 하나. 그가 익숙한 것은 큰 불 쪽입니다.",
-      ["조리대를 맡긴다","바르도 합류 · 건강 +3",{recruit:"bard",hp:3}],["화구 수리부터 함께한다","바르도 합류 · 경영 +4",{recruit:"bard",경영:4}]],
     [24,"birthday2","열두 번째 생일","올해의 케이크 장식은 설탕으로 만든 체스 말입니다. 한 칸 움직이면 곧장 무너질 자리입니다.",
       ["먼저 한 수 둔다","통찰 +6",{통찰:6}],["도련님이 고를 때까지 둔다","의욕 +9",{motivation:9}]],
     [31,"match","상자에 남은 이름","런던의 성냥공장 파업 소식이 들어옵니다. 시엘은 팬텀사의 하청 명부도 가져오라고 합니다.",
       ["납품 조건을 조사한다","협력 공장 기록 확보",{flag:"audit",경영:7}],["직원 대표를 만난다","가문 명성 상승",{renown:2}]],
     [33,"chapel","화이트채플에서 온 전보","동부에서 들어온 전보에 수신인이 빠져 있습니다. 시엘은 봉투에 남은 우편 소인부터 살핍니다.",
-      ["소인의 경로를 맞춘다","조사 기록 확보",{flag:"postmark",통찰:8},s=>s.stats.통찰>=33,"통찰 33"],["연락망을 정리한다","의지 +1",{의지:1}]]
+      ["소인의 경로를 맞춘다","조사 기록 확보",{flag:"postmark",통찰:8},s=>s.stats.통찰>=33,"통찰 33"],["연락망을 정리한다","의지 +5",{의지:5}]]
   ];
-  const fixed=timed.map(([month,id,title,text,a,b])=>({id,title,text,chapter:true,speaker:"세바스찬",sees:s=>s.month>=month&&s.month<=month+2,choices:[a,b].map(effectChoice)}));
-  const rooms={street:"street",london:"street",parlour:"ballroom",bedroom:"bedroom"};
-  const cast={seb:"세바스찬",ciel:"시엘",soma:"소마",agni:"아그니",finny:"피니안",mey:"메이린"};
-  fixed.push({id:"visitPrince",title:princeChapter.title,speaker:"소마",chapter:true,scheduled:true,
-    text:princeChapter.result,sees:townhouseGuestsDue,
-    lines:princeChapter.scenes.flatMap(scene=>scene.lines.map(([speaker,line,withTanaka])=>[
-      speaker==="장면"?"연출":speaker,line,{room:rooms[scene.art],cast:scene.cast.map(id=>cast[id]),withTanaka}
-    ])),
-    prompt:["연출","런던 집의 열쇠가 소마의 손에 남았다.",{room:"ballroom",cast:["소마","아그니"]}],
-    choices:[choice("두 사람에게 런던 집을 맡긴다",princeChapter.result,()=>{recruit("soma");state.flags.agni=true;})]});
+  const fixed=timed.map(([month,id,title,text,a,b])=>({id,title,text,chapter:true,speaker:"세바스찬",sees:s=>s.month>=month&&s.month<=month+2,choices:[a,b].filter(Boolean).map(effectChoice)}));
+  // Dispatched by a completed investigation or the January turn opener.
+  fixed.push({id:"gardener",title:recruitScenes.gardener.title,text:"연구소에서 빠져나온 S-012는 시엘에게 이름과 책을 받았다.",chapter:true,speaker:"세바스찬",sees:()=>false,
+    choices:[effectChoice(["피니안 영입",recruitScenes.gardener.result,{recruit:"finny"}])]});
+  fixed.push({id:"maid",title:recruitScenes.maid.title,text:"아침 홍차를 따르던 중 저택의 창이 깨진다.",chapter:true,speaker:"세바스찬",sees:()=>false,
+    choices:[effectChoice(["메이린 영입",recruitScenes.maid.result,{recruit:"mey",flag:"lookout"}])]});
+  fixed.push({id:"cook",household:true,chapter:true,speaker:"시엘",title:recruitScenes.cook.title,
+    text:"서재에서 시엘은 세바스찬에게 미군 출신을 셰프로 고용하려는 이유를 묻는다.",
+    sees:s=>s.month>=19&&s.people.finny&&s.people.mey&&!s.people.bard,
+    choices:[effectChoice(["바르도 영입",recruitScenes.cook.result,{recruit:"bard"}])]});
+  fixed.push({id:"circus",household:true,chapter:true,speaker:"스네이크",title:recruitScenes.circus.title,
+    text:"단원들이 남긴 편지에서 백작의 이름을 읽은 스네이크가 런던의 타운하우스 문을 두드린다.",
+    sees:s=>dueSnakeVisit(s)==="circus",
+    choices:[effectChoice(["풋맨으로 맞는다",recruitScenes.circus.result,{recruit:"snake"}])]});
+  fixed.push({id:"visitPrince",household:true,chapter:true,speaker:"소마",title:recruitScenes.visitPrince.title,
+    text:"이스트엔드의 골목에서 시엘과 소마가 서로 다른 편에 선다. 이튿날 두 사람은 런던 집의 열쇠를 놓고 거래한다.",
+    sees:townhouseGuestsDue,choices:[choice("두 사람에게 런던 집을 맡긴다",recruitScenes.visitPrince.result,()=>{
+      recruit("soma");recruit("agni");state.flags.agni=true;
+      scheduleSnakeVisit(state);
+    })]});
   const local=[
     ["study",3,"ink","번진 잉크","마지막 줄에서 잉크가 번졌습니다. 시엘은 답을 외운 채 새 종이를 달라고 합니다.","풀이를 말로 듣는다","지성",5,"잠시 펜을 놓는다","stress",-6],
     ["etiquette",3,"gloves","흰 장갑 한 켤레","세바스찬이 손님 역을 맡습니다. 장갑을 벗는 손의 순서가 지난번과 다릅니다.","그 까닭을 묻는다","통찰",5,"절을 다시 시킨다","기품",6],
     ["accounts",2,"pence","사라진 동전 한 닢","차변과 대변이 한 페니만큼 어긋납니다. 끝줄의 글씨가 조금 기울어 있습니다.","운임을 다시 본다","경영",6,"서명을 대조한다","통찰",5],
-    ["inquiry",2,"seal","두 개의 봉랍","연도가 같은 편지 두 통에 찍힌 가문 인장의 테두리가 다릅니다.","장부 여백에 본을 뜬다","통찰",6,"타나카를 부른다","trust",1],
-    ["riding",2,"rein","느슨한 고삐","말이 담장 앞에서 멈춥니다. 시엘은 고삐를 쥔 손부터 가만히 폅니다.","천천히 다시 돈다","체력",1,"오늘은 말의 보폭을 본다","통찰",4],
-    ["letters",2,"salute","답신의 마지막 줄","상대가 보낸 편지에는 존칭이 하나 빠져 있습니다. 시엘의 펜촉이 공중에서 멎습니다.","정중하게 끝맺는다","기품",5,"같은 호칭을 돌려준다","의지",1],
+    ["inquiry",2,"seal","두 개의 봉랍","연도가 같은 편지 두 통에 찍힌 가문 인장의 테두리가 다릅니다.","장부 여백에 본을 뜬다","통찰",6,"타나카에게 봉랍을 문의한다","trust",1],
+    ["riding",2,"rein","느슨한 고삐","말이 담장 앞에서 멈춥니다. 시엘은 고삐를 쥔 손부터 가만히 폅니다.","천천히 다시 돈다","체력",5,"오늘은 말의 보폭을 본다","통찰",4],
+    ["letters",2,"salute","답신의 마지막 줄","상대가 보낸 편지에는 존칭이 하나 빠져 있습니다. 시엘의 펜촉이 공중에서 멎습니다.","정중하게 끝맺는다","기품",5,"같은 호칭을 돌려준다","의지",5],
     ["rest",4,"milk","식어 가는 밀크티","시엘의 책장이 한참 동안 넘어가지 않습니다. 잠든 손 곁에서 찻잔을 치웁니다.","커튼을 닫는다","hp",6,"저녁 일정을 비운다","stress",-8],
-    ["walk",3,"rose","먼저 핀 장미","잎보다 먼저 색이 변한 꽃이 눈에 띕니다. 도련님이 걸음을 멈춥니다.","정원사가 한 일을 묻는다","통찰",4,"한 바퀴 더 걷는다","체력",1],
+    ["walk",3,"rose","먼저 핀 장미","잎보다 먼저 색이 변한 꽃이 눈에 띕니다. 도련님이 걸음을 멈춥니다.","정원사가 한 일을 묻는다","통찰",4,"한 바퀴 더 걷는다","체력",5],
     ["language",2,"vowel","편지의 다른 뜻","번역하면 같은 말이지만, 한 단어만 상대의 계급을 드러냅니다.","문맥을 다시 읽는다","지성",5,"소리 내 읽어 본다","매력",5],
-    ["music",2,"strings","끊어진 현","활이 멎자 처음으로 응접실의 시계 소리가 들립니다.","현을 갈고 다시 켠다","의지",1,"박자만 짚어 본다","기품",5],
-    ["dance",2,"turn","왈츠의 셋째 박","시엘의 구두가 같은 자리를 두 번 밟습니다. 반주를 한 박 늦춥니다.","발밑부터 다시 본다","체력",1,"손을 잡아 박을 맞춘다","기품",5],
+    ["music",2,"strings","끊어진 현","활이 멎자 처음으로 응접실의 시계 소리가 들립니다.","현을 갈고 다시 켠다","의지",5,"박자만 짚어 본다","기품",5],
+    ["dance",2,"turn","왈츠의 셋째 박","시엘의 구두가 같은 자리를 두 번 밟습니다. 반주를 한 박 늦춥니다.","발밑부터 다시 본다","체력",5,"손을 잡아 박을 맞춘다","기품",5],
     ["social",2,"calling","남겨진 명함","손님의 명함 가장자리가 접혀 있습니다. 오늘 방문의 뜻이 거기에 있습니다.","답방을 약속한다","매력",5,"가문의 관습을 찾아본다","지성",5],
     ["negotiate",2,"quote","빈 가격란","견적서의 마지막 줄은 비었습니다. 액수를 먼저 쓰는 쪽이 값을 정하게 됩니다.","납기부터 확인한다","경영",6,"상대의 표정을 읽는다","통찰",5],
-    ["exercise",2,"breath","체조실의 열린 창","마지막 동작에서 호흡이 흐트러집니다. 세바스찬이 창을 열고 물잔을 내려놓습니다.","창가에서 숨을 고른다","hp",6,"휴식 뒤 이어 간다","의지",1],
+    ["exercise",2,"breath","창가에서 한 호흡","창가에 닿자 숨이 찹니다. 세바스찬이 다음 발판에서 기다립니다.","걸어서 마친다","hp",6,"휴식 뒤 이어 간다","의지",5],
     ["practicum",2,"copy","먹지 두 장","장부 사본에 원본과 다른 숫자가 하나 남아 있습니다.","영수증을 찾는다","경영",6,"전표의 글씨를 본다","통찰",5],
     ["developToy",2,"axle","삐걱거리는 축","장난감 마차를 세 번 굴리자 한쪽 바퀴만 멎습니다.","축을 바꿔 본다","경영",6,"바닥을 바꿔 굴린다","통찰",6],
     ["supplier",2,"bolt","천의 뒷면","상인은 늘 견본의 앞면만 보여 줍니다. 시엘이 안감을 살짝 접습니다.","봉제 상태를 지적한다","경영",6,"다른 염색 천을 청한다","매력",4],
     ["estateWork",2,"roof","서쪽 지붕의 견적","같은 수리비가 지난달에도 청구되었습니다.","근무 일지를 본다","지성",5,"현장을 직접 찾는다","통찰",5],
     ["reception",2,"chair","한 자리의 거리","응접실에 놓인 의자 하나가 대화에서 비껴나 있습니다.","직접 자리를 옮긴다","매력",5,"좌석표를 고친다","기품",5],
-    ["casework",2,"map","뒤집힌 약도","증인이 그린 골목에는 있어야 할 굴뚝이 없습니다.","창에 비춰 뒤집어 본다","통찰",6,"다른 목격자를 찾는다","의지",1],
+    ["casework",2,"map","뒤집힌 약도","증인이 그린 골목에는 있어야 할 굴뚝이 없습니다.","창에 비춰 뒤집어 본다","통찰",6,"다른 목격자를 찾는다","의지",5],
     ["reading",2,"margin","책 가장자리의 연필","추리소설의 범인 옆에 누군가 이름을 써 두었습니다.","과정을 먼저 짚는다","통찰",5,"마지막 장까지 읽는다","지성",5],
     ["recovery",2,"noon","정오의 왕진","의사가 기침이 멎은 시간을 묻습니다. 시엘은 시계보다 먼저 창문을 봅니다.","낮잠을 연장한다","hp",7,"창가에서 햇빛을 쬔다","motivation",7],
     ["outing",2,"window","작은 진열창","어린 손님 둘이 같은 물건 앞에서 서로 다른 부분을 가리킵니다.","두 사람의 말을 듣는다","경영",5,"진열대를 그려 둔다","통찰",5]
@@ -81,18 +94,14 @@ function scriptedEvents(){
     {id:"teaPrivilege",title:"두 번째 잔",speaker:"세바스찬",text:"시엘이 빈 잔을 내려놓습니다. 명령을 기다릴 필요는 없었습니다. 세바스찬이 두 번째 잔을 채웁니다.",sees:s=>s.flags.quietTea>=3,choices:[
       choice("설탕을 하나 줄인다","둘만의 차 취향 기록 · 의욕 +6",()=>{state.flags.teaBlend=true;shift("motivation",6)}),
       choice("평소대로 따른다","스트레스 −6",()=>shift("stress",-6))]},
-    {id:"agniTray",visitPlace:"townhouse",title:"빈 쟁반을 드는 법",speaker:"아그니",text:"아그니는 빈 쟁반을 거두는 동안에도 소마에게서 시선을 떼지 않습니다. 세바스찬이 그 손놀림을 지켜봅니다.",sees:s=>s.people.soma&&s.visit==="townhouse",choices:[
+    {id:"agniTray",visitPlace:"townhouse",title:"빈 쟁반을 드는 법",speaker:"아그니",text:"아그니는 빈 쟁반을 거두는 동안에도 소마에게서 시선을 떼지 않습니다. 세바스찬이 그 손놀림을 지켜봅니다.",sees:s=>s.people.agni&&s.visit==="townhouse",choices:[
       choice("차를 올리는 순서를 묻는다","집사 교류 기록 · 소마의 신뢰 상승",()=>{state.flags.agniLesson=true;talkTrust("soma",2,1)}),
-      choice("주인의 말을 기다린다","의지 +1",()=>shift("의지",1))]},
+      choice("주인의 말을 기다린다","의지 +5",()=>shift("의지",5))]},
     {id:"greenhouseKey",visitPlace:"garden",title:"온실의 여벌 열쇠",speaker:"피니안",text:"피니안이 도련님의 손바닥에 열쇠를 놓습니다. 오늘은 먼저 들어가 보시겠느냐고 묻습니다.",sees:s=>s.people.finny?.toward>=5&&s.visit==="garden",choices:[
       choice("맡아 둔다","피니안의 신뢰 상승",()=>talkTrust("finny",2,2)),
       choice("함께 온실을 돈다","스트레스 −7",()=>shift("stress",-7))]}
   ];
-  // Retain the former chapter only as a lookup for completed entries in older ledgers.
-  const oldCircus={id:"circus",title:"비어 있는 천막",speaker:"스네이크",sees:()=>false,
-    text:"스코틀랜드 야드가 노아의 방주 서커스단을 연행한 뒤, 한 소년만 우리 옆에 남았습니다. 뱀이 그의 소맷자락에 머리를 숨깁니다.",
-    choices:[{label:"저택에 자리를 마련한다",result:"스네이크 합류"},{label:"우리의 행선지를 확인한다",result:"동물 보호 인계 기록"}]};
-  return fixed.concat(oldCircus,snakeArrivalEvent(),personal,local.map(([act,n,id,title,text,a,k,x,b,j,y])=>({id,title,text,speaker:"세바스찬",slot:act,
+  return fixed.concat(personal,local.map(([act,n,id,title,text,a,k,x,b,j,y])=>({id,title,text,speaker:"세바스찬",slot:act,
     sees:s=>(s.counts[act]||0)>=n,choices:[
       choice(a,k==="trust"?"봉랍 확인을 요청함":(stats.includes(k)?k:({hp:"건강",stress:"스트레스",motivation:"의욕"}[k]))+" "+signed(x),()=>shift(k,x)),
       choice(b,j==="trust"?"봉랍 확인을 요청함":(stats.includes(j)?j:({hp:"건강",stress:"스트레스",motivation:"의욕"}[j]))+" "+signed(y),()=>shift(j,y))]})));
@@ -112,7 +121,7 @@ function initialEvents(){
    sees:s=>s.stress>=55||Object.entries(s.counts).some(([id,count])=>actions[id].stress>0&&count>=4),
    choices:[
      {label:"교육 일정 완화",effect:()=>{state.stress=cap(state.stress-12);state.trust+=1;},result:"스트레스 -12"},
-     {label:"기존 일정 유지",effect:()=>{changeStat("의지",1);state.motivation=cap(state.motivation-5);},result:"의지 +1 · 의욕 -5"}
+     {label:"기존 일정 유지",effect:()=>{changeStat("의지",5);state.motivation=cap(state.motivation-5);},result:"의지 +5 · 의욕 -5"}
    ]},
   {id:"proof",visitPlace:"library",title:"가문 장부 복원",speaker:"증빙",
    text:"가문 심의에 제출할 장부 원본을 발견했습니다.",
@@ -145,4 +154,71 @@ function initialEvents(){
      {label:"접객 일정 종료",effect:()=>{state.trust+=1;state.stress=cap(state.stress-8);},result:"스트레스 -8"}
    ]}
 ];
+}
+
+function recordedChoice(run,id){
+  return run.events.find(entry=>entry.id===id)?.index;
+}
+function storyLine(event){
+  return event.rememberedText ? event.rememberedText(state) : event.text;
+}
+function visitMemory(place,person){
+  if(!person)return null;
+  for(const entry of state.events){
+    if(entry.month>=state.month||state.visitMemories?.[entry.id])continue;
+    const memory=visitRecollections[entry.id];
+    if(memory?.place===place&&memory.person===person&&memory.lines[entry.index])
+      return {id:entry.id,line:memory.lines[entry.index]};
+  }
+  return null;
+}
+const visitRecollections={
+  postalReply:{place:"library",person:"tanaka",lines:[
+    "화이트채플에서 온 두 통은 한 봉투에 들었습니다. 다음에 찾으실 때도 같이 꺼내 드리지요.",
+    "제보자 앞으로 보낸 봉투가 돌아오지 않았습니다. 답신이 오면 이 칸을 먼저 보시지요."]},
+  greenhouseKey:{place:"garden",person:"finny",lines:[
+    "도련님, 오늘은 제가 노크할게요. 지난번에 열쇠 맡아 주셨잖아요!",
+    "지난번에 같이 보신 그 봉오리예요. 오늘 아침에 벌어졌어요."]},
+  finnyRoseLabel:{place:"garden",person:"finny",lines:[
+    "오늘은 돌아가며 보실 필요 없어요. 제 쪽에서 제가 읽어 드릴게요.",
+    "장부의 네 번째 줄이 여기예요. 비가 와도 번호는 그대로라서 금방 찾았어요!"]},
+  bardSupper:{place:"kitchen",person:"bard",lines:[
+    "오늘도 한 숟갈 덜어 놨습니다. 간 보실 분이 계시니까요.",
+    "도련님 접시는 바로 이 뚜껑 밑에 있습니다. 오늘은 따뜻할 겁니다."]},
+  linenMarks:{place:"quarters",person:"mey",lines:[
+    "파란 실은 손님방, 흰 실은 도련님 방. 이번엔 수건이 제자리에 갔습니다요!",
+    "개킨 쪽으로 손을 넣으면 작은 수건부터 잡혀요. 도련님이 보신 그대로예요."]}
+};
+function followupEvents(){
+  const after=(s,id)=>s.events.some(e=>e.id===id&&(e.month==null||e.month<s.month));
+  return [
+    {id:"finnyRoseLabel",visitOnly:true,visitPlace:"garden",title:"장미의 표찰",speaker:"피니안",
+     text:"도련님 쪽에서 읽으시게 꽂았는데, 물을 줄 때마다 제가 반대로 읽어요. 이 이름, 다시 쓸까요?",
+     sees:s=>s.visit==="garden"&&!!s.people.finny,
+     responses:["그럼 이번엔 제가 읽는 쪽으로요. 내일 꽃이 피면 제가 먼저 알려 드릴게요!","장부 순서대로 하나, 둘…… 아, 그럼 잉크가 번져도 어느 화분인지 알겠어요."],
+     choices:[choice("네 글씨대로 둬. 화분을 돌리면 되잖아.","표찰의 방향을 피니안에게 맡겼다.",()=>{}),
+              choice("화분 번호를 장부에도 적어 두지.","장미의 번호를 정원 장부에 옮겼다.",()=>{})]},
+    {id:"bardSupper",visitOnly:true,visitPlace:"kitchen",title:"식기 전에",speaker:"바르도",
+     text:"수프는 다 됐는데 은쟁반이 아직 안 왔습니다. 손님 몫을 다시 끓일까요, 도련님?",
+     sees:s=>s.visit==="kitchen"&&!!s.people.bard,
+     responses:["그럼 여기, 제일 작은 숟가락입니다. 냄비 위에서 드셨단 말은 안 하겠습니다.","뚜껑이 꼭 맞는 그릇이라…… 과연. 불을 다시 지필 필요도 없군요."],
+     choices:[choice("내가 먼저 간을 보지.","바르도가 맛볼 몫을 덜어 두었다.",()=>talkTrust("bard")),
+              choice("한 그릇 덜어서 덮어 둬.","바르도가 시엘의 접시를 따로 덮었다.",()=>shift("hp",2))]},
+    {id:"linenMarks",visitOnly:true,visitPlace:"quarters",title:"리넨장 맨 윗칸",speaker:"메이린",
+     text:"손님방 수건이 또 도련님 방에 들어갔습니다요. 글씨가 어찌나 비슷한지…….",
+     sees:s=>s.visit==="quarters"&&!!s.people.mey&&(!s.people.snake||s.month%2===1),
+     responses:["실 색깔은 저도 금방 알아봅니다요. 바느질 상자를 가져올게요!","아, 손으로도 크기를 알겠어요. 맨 윗칸부터 다시 개겠습니다요."],
+     choices:[choice("가장자리에 다른 색 실을 달아.","메이린이 두 색의 실로 수건을 표시했다.",()=>talkTrust("mey")),
+              choice("접는 방향을 달리해 봐.","메이린이 손으로 수건을 구분하게 됐다.",()=>changeStat("통찰",2))]},
+    {id:"supplierReply",chapter:true,speaker:"세바스찬",title:"인수증의 두 번째 장",text:"공장에서 회신이 왔습니다.",
+     rememberedText:s=>(s.flags.audit||recordedChoice(s,"match")===0)?"조사하신 하청 명부에 같은 작업장의 이름이 두 번 있습니다. 오늘 온 인수증에는 이름 하나가 지워져 있군요.":"지난번에 만나신 직원 대표가 인수증 사본을 보냈습니다. 일한 사람들에겐 한 장도 돌아가지 않았답니다.",
+     sees:s=>after(s,"match"),choices:[choice("다음 납품 때 사본을 양쪽에 보내.","양쪽에 인수증을 보냈다. 새 재주문에서 개당 대금 +£1.",()=>{state.flags.sharedReceipt=true;shift("renown",1)}),
+       choice("경리 담당에게 두 장을 대조시켜.","대조 절차를 마련했다. 새 재주문의 미납 부담이 개당 £1로 감소한다.",()=>{state.flags.checkedReceipt=true;changeStat("경영",5)})]},
+    {id:"postalReply",chapter:true,speaker:"세바스찬",title:"회송 봉투",text:"화이트채플에서 답신이 왔습니다.",
+     rememberedText:s=>(s.flags.postmark||recordedChoice(s,"chapel")===0)?"도련님이 읽으신 소인을 보고 우체국에서 답을 보냈습니다. 전보는 이틀 동안 한 창구에 맡겨져 있었답니다.":"지난번 정리하신 연락망에서 답이 왔습니다. 세 곳에서 같은 전보를 받았는데, 회신할 주소가 서로 다릅니다.",
+     sees:s=>after(s,"chapel"),choices:[choice("원본과 답신을 한 봉투에 넣어.","화이트채플 서신을 가문 기록에 보관했다.",()=>changeStat("통찰",5)),
+       choice("첫 제보자에게 확인을 부탁해.","첫 제보자에게 답장을 보냈다.",()=>changeStat("의지",5))]},
+    {id:"snakeReturn",speaker:"스네이크",title:"돌아오는 길",text:"갈 곳이 없으면 오랬지? 아직 우리 자리가 있어? ⋯라고 에밀리가 말했어.",
+     sees:()=>false,choices:[choice("네 자리는 비워 뒀어. 들어와.","스네이크가 돌아와 풋맨으로 일한다.",()=>recruit("snake"))]}
+  ];
 }

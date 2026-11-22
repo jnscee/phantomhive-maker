@@ -1,29 +1,28 @@
 "use strict";
-function portraitAge(){const run=tourSession?.state??state;return ageAt(run.month,portraitDay(run));}
-function portraitDay(run){return ["event","result","vow","ending"].includes(run.phase)?calendarDate(run.month+1,0).getUTCDate():run.phase==="slotEvent"||run.phase==="review"?Math.min(28,10*((run.sequence?.index??0)+1)):1;}
-const portraits={라우:"assets/npc-lau.webp",세바스찬:"assets/sebastian.webp",타나카:"assets/npc-tanaka.webp",피니안:"assets/npc-finny.webp",메이린:"assets/npc-mey.webp",올빼미:"assets/portraits/mey-owl.webp",바르도:"assets/npc-bard.webp",스네이크:"assets/npc-snake.webp",소마:"assets/portraits/soma.webp",아그니:"assets/portraits/agni.webp",get 엘리자베스(){const age=elizabethAge();return age===13?"assets/npc-lizzy.webp":"assets/npc-lizzy-"+age+(age===12?"-portrait":"")+".webp";},get 시엘(){const age=portraitAge();return age<11?"assets/ciel.png":"assets/ciel-"+Math.min(age,12)+".webp";}};
-const castByEvent={gardener:"피니안",maid:"올빼미",cook:"바르도",circus:"스네이크",visitPrince:"소마",jubilee:"세바스찬",agniTray:"아그니",greenhouseKey:"피니안"};
+const portraits={라우:"assets/npc-lau.webp",세바스찬:"assets/sebastian.webp",타나카:"assets/npc-tanaka.webp",피니안:"assets/npc-finny.webp",메이린:"assets/npc-mey.webp",바르도:"assets/npc-bard.webp",스네이크:"assets/npc-snake.webp",소마:"assets/portraits/soma.webp",아그니:"assets/portraits/agni.webp",get 엘리자베스(){const age=elizabethAge();return age===13?"assets/npc-lizzy.webp":"assets/npc-lizzy-"+age+".webp";},get 시엘(){return cielArt(currentCielAge());}};
+const castByEvent={gardener:"피니안",maid:"메이린",cook:"바르도",circus:"스네이크",visitPrince:"소마",jubilee:"세바스찬",agniTray:"아그니",greenhouseKey:"피니안"};
 function castName(e){return castByEvent[e.id]||((e.speaker in portraits)?e.speaker:"세바스찬");}
-function elizabethAge(){return Math.max(11,Math.min(13,portraitAge()+1));}
-const castHeights={세바스찬:189,타나카:164,피니안:165,메이린:165,올빼미:165,바르도:181,스네이크:172,소마:174,아그니:188,라우:177};
-function dialogueCast(speaker,cast=[speaker==="시엘"?"세바스찬":speaker,"시엘"]){
-  return cast.map((name,index)=>
-    '<img class="butler cast '+(index?"cast-right":"cast-left")+'" alt="'+name+'" style="--cast-height:'+
-    (name==="시엘"?"var(--ciel-height)":(name==="엘리자베스"?[145,151,157][elizabethAge()-11]:castHeights[name]||177)/189)+
-    '" src="'+portraits[name]+'">').join("");
+function elizabethAge(){return Math.max(11,Math.min(13,currentCielAge()+1));}
+function dialogueCast(speaker){
+  const left=speaker==="시엘"?"세바스찬":speaker;
+  return [left,"시엘"].map((name,index)=>
+    sceneStanding(name,index?"right":"left",portraits[name],name==="엘리자베스"?elizabethAge():undefined)).join("");
 }
 function staged(who,title,line,buttons,caption="",room="library",partner=who){
-  return '<div class="review-room" style="background-image:url(&quot;'+sceneArt[room]+'&quot;)"></div>'+dialogueCast(partner)+'<article class="dialogue"><small>'+(caption?caption+'　·　':'')+who+'</small>'+(title?'<h2>'+title+'</h2>':'')+'<p>'+line+(buttons?'</p><div class="answers">'+buttons+'</div>':' <button type="button" class="line-next" aria-label="다음 대사" data-action="intro-next">▼</button></p>')+'</article>';
+  const start='<div class="review-room" style="background-image:url(&quot;'+sceneArt[room]+'&quot;)"></div>'+dialogueCast(partner);
+  const speaker=(caption?caption+'　·　':'')+who,heading=title?'<h2>'+title+'</h2>':'';
+  if(!buttons)return start+sceneLine(speaker,line,'<button type="button" class="line-next" aria-label="다음 대사" data-action="intro-next">▼</button>',"",heading);
+  return start+'<article class="dialogue"><small>'+speaker+'</small>'+heading+'<p>'+line+'</p><div class="answers">'+buttons+'</div></article>';
 }
 const guide=[
  ["날짜판과 명패","오늘 날짜는 왼쪽 위 달력을 보십시오. 연도 옆에는 서른다섯 달 중 몇 달째인지 적어 두었습니다. 저택의 오른쪽 위 명패에는 도련님의 나이와 가문의 잔금이 있습니다."],
- ["일정표","왼쪽 아래 ‘일정표’에 상순·중순·하순 세 칸을 마련했습니다. 어느 때를 비워 두시겠습니까? 바꾸실 칸을 먼저 짚고 활동을 고르시면 제가 적겠습니다. £ 옆의 숫자가 그 비용입니다."],
+ ["일정표","왼쪽 아래 ‘일정표’에 상순·중순·하순 세 칸을 마련했습니다. 쉬고 나면 다음 수업에 집중하기 쉽습니다. 수업을 거듭하거나 실력이 충분히 자라면 제가 시험을 내겠습니다. 바꾸실 칸을 먼저 짚고 활동을 고르시면 제가 적겠습니다. £ 옆의 숫자가 그 비용입니다."],
  ["자유행동","‘자유행동’은 도련님의 외출을 위해 비워 둔 칸입니다. 한 달에 한 곳을 정하실 수 있습니다. 누구와 무슨 이야기를 나누실지는 도착한 뒤에 정하셔도 됩니다."],
  ["팬텀사","‘관리 · 경영’에서 ‘팬텀 사(社)’를 여십시오. 개발실에서는 상품을, 제작실에서는 수량을, 판매점에서는 값을 정하시면 됩니다. 수업료가 모자라겠다면 이번 생산량을 조금 줄이는 편이 좋겠습니다."],
  ["저택","‘관리 · 경영’의 지도에서 방을 짚으시면 시설과 근무지를 살필 수 있습니다. 개수를 명하시기 전에 비용과 이달의 관리 상태를 보십시오. 간식이 필요하시면 저택 메뉴의 ‘상점’으로 모시겠습니다."],
- ["실행","명하신 대로 준비했습니다. 저택의 ‘실행’이나 일정표의 ‘이달 일정 실행’을 고르시면 상순부터 시작하겠습니다. 매 순의 성과는 제가 보고드리겠습니다. 하순 강평 뒤에 정해 두신 곳을 방문합니다. 돌아오시면 그달의 결산을 보고드리겠습니다."],
+ ["실행","명하신 대로 준비했습니다. 저택의 ‘실행’이나 일정표의 ‘이달 일정 실행’을 고르시면 상순부터 시작하겠습니다. 매 순의 성과는 제가 보고드리겠습니다. 하순 강평 뒤에는 정해 두신 곳을 방문하고, 돌아오시면 결산을 보고드리겠습니다."],
  ["대화와 상태","저택에서 ‘대화’로 부르시면 제가 듣겠습니다. ‘상태’에서는 도련님의 건강과 능력을 보실 수 있습니다. 피곤하시면 다음 한 순은 비워 둘까요?"],
- ["가문 장부와 수첩","지나간 사건은 달력 위 ‘가문 장부’에 적어 두었습니다. ‘수첩 · 저장’에서는 저장 칸과 음량을 고르실 수 있습니다. 음악만 잠시 끄시려면 BGM 버튼을, 돌아가시려면 ‘뒤로’를 눌러 주십시오."]
+ ["가문 장부와 수첩","지나간 사건은 아래의 ‘가문 장부’에 적어 두었습니다. ‘수첩 · 저장’에서는 저장 칸과 음량을 고르실 수 있습니다. 음악만 잠시 끄시려면 BGM 버튼을, 돌아가시려면 ‘뒤로’를 눌러 주십시오."]
 ];
 function guideMenu(page){
   const subjects=[[],["일정표"],["일정표"],["관리 · 경영"],["관리 · 경영","상점"],["실행"],["대화","상태"],[]][page];
@@ -37,26 +36,31 @@ function instructionBook(){
    '<details class="guide-topic"><summary><b>'+title+'</b><small>'+paths[i]+'</small></summary><p>'+body+'</p></details>').join("")+'</details>';
 }
 const visitsVN={
- library:["archive","서가 맨 아래에 그을린 장부가 누워 있다.","이 장은 제가 보관해 두었습니다. 귀퉁이가 타도 날짜는 읽히지요.","가문의 장서표를 대조한다"],
- garden:["garden","온실의 유리에 물방울이 맺혔다.","도련님, 이 새순 좀 보세요. 오늘은 힘을 빼고 옮겨 심었어요!","흙이 마른 화분부터 살핀다"],
- kitchen:["office","식탁에 저녁 식단과 빈 접시가 놓여 있다.","오늘은 오븐으로만 구웠습니다. 한 조각 먼저 드셔 보시죠.","저녁 식단을 함께 짠다"],
- quarters:["bedroom","복도 끝 옷걸이에 새 앞치마가 걸려 있다.","단추를 전부 다시 달았어요, 도련님. 이번엔 틀림없습니다요!","사용인들의 작업 일지를 본다"],
- parlor:["ballroom","은쟁반 위에 다음 다과회의 답신이 쌓여 있다.","","명함의 호칭을 확인한다"],
- company:["office","시제품 옆에 반품된 상자가 놓여 있다.","","상자를 직접 열어 본다"],
- town:["street","비에 젖은 쇼윈도 너머로 완구점 주인이 손을 흔든다.","","요즘 팔리는 물건을 묻는다"],
- townhouse:["ballroom","손님방에 따뜻한 물이 준비되어 있다.","시엘! 오늘만큼은 내가 고른 차를 먼저 마셔 봐라.","찻잔을 받아 든다"]
+ library:["archive","서가 맨 아래에 그을린 장부가 누워 있다.","가문의 장서표를 대조한다"],
+ garden:["garden","온실의 유리에 물방울이 맺혔다.","흙이 마른 화분부터 살핀다"],
+ kitchen:["office","식탁에 저녁 식단과 빈 접시가 놓여 있다.","저녁 식단을 함께 짠다"],
+ quarters:["bedroom","복도 끝 옷걸이에 새 앞치마가 걸려 있다.","사용인들의 작업 일지를 본다"],
+ parlor:["ballroom","은쟁반 위에 다음 다과회의 답신이 쌓여 있다.","명함의 호칭을 확인한다"],
+ company:["office","시제품 옆에 반품된 상자가 놓여 있다.","상자를 직접 열어 본다"],
+ town:["street","비에 젖은 쇼윈도 너머로 완구점 주인이 손을 흔든다.","요즘 팔리는 물건을 묻는다"],
+ townhouse:["ballroom","손님방에 따뜻한 물이 준비되어 있다.","찻잔을 받아 든다"]
 };
-function quartersVisitors(){return ["mey","snake"].filter(id=>state.people[id]);}
+const trustedGreetings={
+ tanaka:["찾으시는 해의 장부를 꺼내 두었습니다. 끈이 낡았으니 제가 풀어 드리지요.","요즘은 늘 그 권부터 펴시는군요. 오늘은 책상에 올려 두었습니다.","여기서 필체가 달라지지요. 제 짐작을 말씀드리기 전에 도련님 눈에는 어찌 보이는지 듣고 싶습니다.","이 귀퉁이의 연필 자국은 접니다. 그날 차마 잉크로 쓰지 못한 이름인데…… 오늘은 말씀드릴 수 있겠군요."],
+ finny:["도련님, 바닥이 젖었어요. 제가 먼저 지나가 볼게요!","또 와 주셨어요! 오늘은 도련님 구두에 흙 안 튀게 물부터 줬어요.","가지를 이쪽으로 유인할까요? 전 이 문으로 들어올 때 꽃이 보였으면 좋겠는데, 도련님은요?","처음엔 손 댄 걸 들킬까 봐 부러진 가지를 숨겼어요. 이건 제가 부러뜨린 거예요. 그런데 보세요. 붙여 놓은 데서 잎이 났어요!"],
+ mey:["리넨은 이쪽입니다요, 도련님. 잠깐만요, 안경부터 바로 쓰고요!","오실 줄 알고 도련님 셔츠는 따로 걸어 뒀습니다요. 단추도 세 봤고요!","해 질 무렵이면 저 창에 맞은편 지붕이 비칩니다요. 커튼은 제가 닫을까요, 조금 더 볼까요?","이 방에선 안경을 벗고 있어도 마음이 놓입니다요. 도련님 발소리는 이제 헷갈릴 일이 없거든요."],
+ bard:["오븐은 제가 보겠습니다. 도련님은 문에서 조금만 물러서 주시죠.","오늘은 탄 데부터 잘라 낼 필요가 없습니다. 끝 쪽 한 조각 드시겠습니까?","이 고기, 지금 썰면 육즙이 다 빠집니다. 손님이 재촉해도 오 분만 더 벌어 주시겠습니까?","옛날 버릇이라 식탁에 앉아도 문부터 보게 됩니다. 도련님이 맞은편에 계신 날엔 그냥 먹습니다만."],
+ snake:["방금 복도를 지나간 건 우리 애들이야. 놀라지 마. ⋯라고 에밀리가 말했어.","발소리만 듣고도 맞혔어. 오늘도 그 구두네. ⋯라고 오스카가 말했어.","서쪽 창을 조금만 열어 둘까? 누가 오는지 우리가 먼저 알 수 있어. ⋯라고 와일드가 말했어.","오늘 밤엔 우리랑 한 바퀴 돌자. 온실 지붕에 달이 걸리는 걸 너한테도 보여 주고 싶어. ⋯라고 에밀리가 말했어."],
+ soma:["시엘! 내 옆에 앉아라. 오늘 차는 내가 고르겠다!","네 자리는 거기다, 시엘. 거긴 오후에도 눈에 볕이 안 들더라.","네가 먼저 한 모금 마셔 봐라. 내가 좋다고 다들 좋다는 건 아니라더구나.","오늘은 그냥 나랑 앉아 있어 다오. 네 앞에선 굳이 떠들지 않아도 심심하지 않더라."],
+ agni:["어서 오십시오, 시엘 님. 전하께서 곧 내려오십니다.","오늘도 창가에 두 잔 놓았습니다. 시엘 님은 우유를 따로 드렸습니다.","전하께 드릴 말씀인데 제가 꺼내면 먼저 걱정하실 겁니다. 시엘 님이라면 어떻게 운을 떼시겠습니까?","처음 이 집에서 아침상을 차리던 날엔 손이 떨렸습니다. 전하께는 비밀로 해 주시겠습니까? 오늘은 웃으며 말씀드릴 수 있군요."]
+};
 function visitPerson(id){
- if(id==="quarters"){
-   const visitors=quartersVisitors();
-   return visitors.includes(state.sequence?.visitPerson)?state.sequence.visitPerson:visitors[0]??null;
- }
- const person=visiting[id][1];
- if(id==="townhouse"&&state.flags.agni&&state.month%2===0)return "agni";
+ let person=visiting[id][1];
+ if(id==="quarters"&&state.people.snake&&(!state.people.mey||state.month%2===0))person="snake";
+ if(id==="townhouse"&&state.people.agni&&state.month%2===0)return "agni";
  return state.people[person]?person:null;
 }
-function visitName(person){return person==="agni"?"아그니":servants[person]?.name||"세바스찬";}
+function visitName(person){return servants[person]?.name||"세바스찬";}
 function visitPreview(id){
  if(!id)return "방문지를 선택하세요.";
  if(id==="none")return "방문 생략";
@@ -67,19 +71,19 @@ function visitPreview(id){
    forecast.people={...state.people,[person]:{...relation,toward:Math.min(20,relation.toward+1)}};
  }
  const possible=events.filter(e=>e.visitPlace===id&&!state.flags[e.id]&&e.sees(forecast));
- const encounter=id==="quarters"&&quartersVisitors().length===2?"메이린 · 스네이크 중 선택":visitName(person)+" · "+(person==="snake"?snakeRound(state)[0]:visitsVN[id][3]);
- return [encounter,...possible.map(e=>"가능 사건 · "+e.title)].join(" / ");
+ const encounter=visitName(person)+" · "+visitsVN[id][2];
+ return possible.length?encounter+" / "+castName(possible[0])+" · "+possible[0].title:encounter;
 }
 const visitGrowth={library:"통찰",garden:"체력",kitchen:"지성",quarters:"통찰",parlor:"기품",company:"경영",town:"매력",townhouse:"매력"};
 function visitScene(){
- const id=state.visit,[room,plain,spoken,label]=visitsVN[id];
+ const id=state.visit,[room,plain,label]=visitsVN[id];
  const seq=state.sequence;
  if(seq.visitEvent){
    const page=encounterPage(seq,room);
    if(page)return page;
    const event=events.find(e=>e.id===seq.visitEvent);
    const buttons=event.choices.map((c,i)=>btn(c.label+(c.when&&!c.when(state)?" · "+c.hint:""),"visit-choice:"+i,Boolean(c.when&&!c.when(state)))).join("");
-   return staged(castName(event),"",event.text,buttons,"",room);
+   return staged(castName(event),"",storyLine(event),buttons,"",room);
  }
  if(seq.visitBefore){
    if(seq.encounterReply){
@@ -87,33 +91,25 @@ function visitScene(){
      return staged(speaker,"",line,btn(seq.index===0?"상순으로":"월말 결산으로","visit-finish"),"방문 기록",room,seq.encounterPartner);
    }
    const changes=visitChanges();
-   return staged(visitName(visitPerson(id)),"",changes.join(" · ")||"더 변한 수치는 없습니다.",
+   return staged(seq.visitReply?seq.replySpeaker:visitName(visitPerson(id)),"",seq.visitReply || changes.join(" · ")||"더 변한 수치는 없습니다.",
      btn(seq.index===0?"상순으로":"월말 결산으로","visit-finish"),visits[id]+" · 자유행동 결과",room);
  }
- const visitors=id==="quarters"?quartersVisitors():[];
- const canChoose=visitors.length>1;
- if(canChoose&&!seq.visitPerson){
-   return staged("세바스찬",visits[id],"메이린 씨는 작업 일지를 정리 중입니다. 스네이크 씨는 복도 끝에 있고요. 어느 쪽으로 모실까요?",
-     visitors.map(person=>btn(visitName(person)+" 만나기","visit-person:"+person)).join("")+btn("잠시 머물다 돌아간다","visit-done:quiet"),"자유행동",room);
- }
  const person=visitPerson(id);
- let line=spoken;
- let actionLabel=label;
- if(person==="snake")[actionLabel,line]=snakeRound(state);
- if(person==="agni")line="소마 님께서는 도련님이 오시기 전에 잔부터 데워 두셨습니다.";
- if(id==="garden"&&person&&state.flags.greenhouse)line="그날 주신 열쇠예요. 도련님이 먼저 열어 보실래요?";
- return staged(visitName(person),visits[id],person?line:plain,btn(actionLabel,"visit-done:engage")+btn("잠시 머물다 돌아간다","visit-done:quiet")+(canChoose?btn("만날 사람 다시 고르기","visit-person:back"):""),"자유행동",room);
+ const memory=visitMemory(id,person);
+ const line=memory?.line || (person?trustedGreetings[person][trustTier(state.people[person].toward)]:plain);
+ return staged(visitName(person),"",line,btn(label,"visit-done:engage")+btn("잠시 머물다 돌아간다","visit-done:quiet"),"",room);
 }
 function visitDone(engage){
  if(state.phase!=="visit"||state.sequence.visitBefore||state.visitTurn===state.month)return;
  const id=state.visit,seq=state.sequence;
- if(id==="quarters"&&quartersVisitors().length>1&&!seq.visitPerson&&engage)return;
+ const memory=visitMemory(id,visitPerson(id));
+ if(memory){state.visitMemories??={};state.visitMemories[memory.id]=true;}
  seq.visitBefore=snapStats(state);
  state.visitTurn=state.month;
  if(engage){
    const who=visitPerson(id);
-   if(who==="snake")state.flags.snakeRounds=(state.flags.snakeRounds||0)+1;
-   if(who==="agni")state.flags.agniTea=true;else if(who)talkTrust(who);
+   if(who==="agni")state.flags.agniTea=true;
+   if(who)talkTrust(who);
    if(id==="library"&&state.people.tanaka)state.trust++;
    changeStat(visitGrowth[id],4);
    if(id==="garden")shift("stress",-3);
@@ -137,6 +133,8 @@ function chooseVisitEvent(index){
  if(!choice||(choice.when&&!choice.when(state)))return;
  flagEvent(event.id,choice.effect);
  state.events.push({id:event.id,index,month:state.month});
+ seq.visitReply=event.responses?.[index]||null;
+ seq.replySpeaker=castName(event);
  state.log.push(choice.result);
  if(card){seq.encounterReply=card.choices[index].reply;seq.encounterPartner=card.npc;}
  delete seq.encounterPage;
@@ -149,22 +147,18 @@ function finishVisit(){
  const changes=visitChanges();
  if(changes.length)state.log.push("자유행동 성과 · "+changes.join(" · "));
  delete seq.visitBefore;delete seq.encounterReply;delete seq.encounterPartner;
- delete seq.visitPerson;
  if(seq.index===0)enterSlot();else settleMonth();
 }
 function chapterView(){
  if(tab!=="plan")return "";
  if(state.phase==="guide"){const i=state.guidePage||0;return staged("세바스찬",guide[i][0],guideMenu(i)+guide[i][1],btn(i===guide.length-1?"저택으로":"다음 안내","guide-next")+btn("안내 마치기","guide-end"),"조작 안내 "+(i+1)+" / "+guide.length);}
+ if(state.phase==="investiture")return staged("세바스찬","","도련님, 왕실에서 서신이 왔습니다. 봉랍을 확인했습니다. 도련님 앞으로 온 친서입니다.",btn("서신을 펼친다","read-verdict"),"","library");
  if(state.phase==="visit")return visitScene();
  return "";
 }
 function chapterAction(action,id,confirmed,rect){
  if(state.phase==="guide"&&["guide-end","guide-next"].includes(action)){
  if(action==="guide-end"||state.guidePage>=guide.length-1){state.phase="plan";tab="home";}else state.guidePage++;
- }else if(action==="visit-person"&&state.phase==="visit"&&state.visit==="quarters"&&!state.sequence.visitBefore){
-  if(id==="back")delete state.sequence.visitPerson;
-  else if(quartersVisitors().includes(id))state.sequence.visitPerson=id;
-  else return false;
  }else if(action==="visit-done"&&state.phase==="visit"){visitDone(id==="engage");return true;}
  else if(action==="visit-choice"&&state.phase==="visit"){chooseVisitEvent(Number(id));return true;}
  else if(action==="visit-finish"&&state.phase==="visit"){finishVisit();return true;}
@@ -177,28 +171,32 @@ const exams=[
  ["etiquette","기품","응접실 실기","제가 늦게 도착한 손님이라면, 먼저 오신 손님을 기다리게 하지 않고 어디로 안내하시겠습니까?","비어 있는 옆자리를 권한다","좌석표를 다시 살핀다"],
  ["accounts","경영","재고 실사","완구가 열 개 팔렸는데 대금은 아홉 개분입니다. 무엇을 확인하시겠습니까?","외상 매출 전표를 찾는다","계수부터 다시 한다"],
  ["inquiry","통찰","봉인의 판독","같은 날 보낸 두 봉투에서 서로 다른 밀랍 냄새가 납니다. 어디부터 보시겠습니까?","봉인의 압흔을 대조한다","봉투 무게부터 잰다"],
- ["riding","체력","고삐를 짧게 잡는 때","말이 울타리 끝에서 속도를 높였습니다. 고삐를 당기기 전에 어디부터 살피시겠습니까?","말의 발과 내 자세를 확인한다","정지한 뒤 다시 출발한다"],
- ["letters","매력","답신의 한 문장","초대를 거절하시면서 다음 만남을 청해야 합니다. 어디부터 쓰시겠습니까?","상대와 다시 만나고 싶은 이유를 먼저 쓴다","정중한 인사말부터 고친다"],
  ["language","지성","라틴어 구술","이 문장의 주어를 바꾸면 동사의 어느 부분이 달라집니까?","인칭 어미를 고쳐 읽는다","격변화표를 펼친다"],
  ["music","기품","바이올린 실기","악보를 덮겠습니다. 방금 멈춘 마디부터 이어 주시겠습니까?","앞선 악구를 떠올려 잇는다","처음부터 박자를 센다"],
  ["dance","기품","무도 실기","반주가 한 박자 멎었습니다. 상대의 발끝이 아직 떠 있군요.","체중이 옮겨질 때까지 기다린다","발의 위치를 다시 맞춘다"],
  ["social","매력","다과회 실기","초면인 손님 둘이 같은 은쟁반을 집었습니다. 도련님이라면요?","둘의 공통 관심사를 꺼낸다","잔을 새로 내온다"],
  ["negotiate","경영","협상 실기","납품가는 같고 도착일이 다릅니다. 어느 조건부터 물으시겠습니까?","지연 때의 부담을 확인한다","견적을 다시 읽는다"],
- ["exercise","체력","체조실의 마지막 세트","벽시계의 초침을 세지 않고 마지막 동작까지 호흡을 맞출 수 있겠습니까?","자기 호흡에 맞춰 마친다","앉아서 호흡부터 고른다"]
+ ["exercise","체력","보폭 시험","마지막 왕복입니다. 체조실 문턱까지 보폭을 흐트러뜨리지 않고 가 보시겠습니까?","일정한 보폭으로 완주한다","잠시 호흡을 고른다"]
 ];
-function examReward(run,stat){
- const grade=run.sequence.grade??1;
- return grade===2?28:grade===1?16:-4;
-}
+const examPartners={study:"통찰",etiquette:"매력",accounts:"지성",inquiry:"의지",language:"매력",music:"의지",dance:"체력",social:"기품",negotiate:"통찰",exercise:"의지"};
+const advancedLessons={
+ study:"서로 다른 두 신문의 날짜와 증언을 대조해 사건 연표를 복원합니다.",
+ etiquette:"서열이 같은 두 손님을 어느 쪽도 기다리게 하지 않고 자리로 안내합니다.",
+ accounts:"외상 장부와 납품서를 대조해 중복 청구된 한 줄을 찾아냅니다.",
+ inquiry:"봉랍과 필체가 서로 다른 발신인을 가리킵니다. 편지가 거친 손을 추적합니다.",
+ language:"외교 서한의 완곡한 거절을 원문의 뉘앙스까지 살려 옮깁니다.",
+ music:"반주가 조를 바꿉니다. 첫 음을 다시 짚고 선율을 이어 갑니다.",
+ dance:"상대가 한 박자 늦자 보폭을 줄여 다음 회전에서 다시 맞춥니다.",
+ social:"식탁 양끝에서 끊긴 대화를 손님 둘의 공통 관심사로 이어 줍니다.",
+ negotiate:"단가를 양보하는 대신 반품 비용을 거래처가 부담하도록 계약서를 고칩니다.",
+ exercise:"직선과 회전을 섞은 코스를 돌며 마지막 구간까지 호흡을 유지합니다."
+};
+function advancedCourse(run,id){return advancedLessons[id] && run.flags?.["exam-"+id];}
+function courseName(id){return (advancedCourse(state,id)?"고급 · ":"")+actions[id].name;}
 function examEvents(){return exams.map(([slot,stat,title,text,a,b])=>({id:"exam-"+slot,slot,title,text,speaker:"세바스찬",exam:true,
- lines:[["연출",stageNames[choreography[slot][0]]+". 수업이 끝났는데 세바스찬은 교본을 거두지 않았다."],
-   ["세바스찬","오늘 배운 부분은 제가 짚어 드리지 않겠습니다. 도련님께서 먼저 어느 부분을 보셨는지 듣고 싶습니다."],
-   ["시엘","……문제를 내." ]],
- sees:s=>s.counts[slot]>=2&&s.stats[stat]>=18,
- examSummary:(run,i)=>i?stat+" +8 · 의욕 +5 · 스트레스 −4":stat+" "+signed(examReward(run,stat))+" · "+lessonGrades[run.sequence.grade??1],
- examAnswer:(run,i)=>["세바스찬",i?"여기까지 하시지요. 처음부터 다시 해 보는 건 다음 수업 때의 몫으로 남겨 두겠습니다.":(run.sequence.grade===2?"좋습니다. 이제 제가 곁에서 순서를 불러 드릴 일은 없겠군요.":run.sequence.grade===0?"거기까지만. 어디서부터 놓치셨는지 표시해 두겠습니다.":"답은 나왔습니다. 다음에는 그 생각에 이르기까지 걸린 시간을 줄여 보시지요.")],
- choices:[choice(a,"실기 결과 기록",()=>{const gain=examReward(state,stat);changeStat(stat,gain);shift("stress",gain<0?5:2);}),
-   choice(b,"보충 지도 · "+stat+" +8 · 의욕 +5 · 스트레스 −4",()=>{changeStat(stat,8);shift("motivation",5);shift("stress",-4);})]}));}
+ sees:s=>(s.counts[slot]||0)>=2,
+ choices:[choice(a,"합격 · 고급 과정 진급",()=>{changeStat(stat,14);changeStat(examPartners[slot],8);}),
+          choice(b,"보충 · 다음 수강 후 재시험",()=>{if(!state.events.some(e=>e.id==="exam-"+slot&&e.index===1)){changeStat(stat,8);changeStat(examPartners[slot],4);shift("motivation",5);}delete state.flags["exam-"+slot];})]}));}
 function calendarEvents(){
  const out=[];
  for(let m=1;m<=35;m++){
@@ -213,11 +211,11 @@ function calendarEvents(){
  }
  return out;
 }
-function foundationEvents(){return [{id:"homecoming",chapter:true,speaker:"타나카",title:"돌아온 집사",text:"도련님, 지팡이는 현관에 두어도 되겠습니다. 제 방 열쇠를 아직 간직하고 계셨군요.",sees:s=>s.month>=3&&!s.people.tanaka,choices:[
+function foundationEvents(){return [{id:"homecoming",chapter:true,household:true,speaker:"타나카",title:recruitScenes.homecoming.title,text:"서재로 돌아온 타나카가 그날의 일을 이야기하고 세바스찬에게 집사장의 회중시계를 건넨다.",sees:tanakaReturns,choices:[
  choice("서재 열쇠를 돌려준다","타나카 복귀 · 서재 근무",()=>{recruit("tanaka");state.staff="library";}),
  choice("먼저 다과를 함께한다","타나카 복귀 · 신뢰 상승",()=>{recruit("tanaka");state.staff="library";talkTrust("tanaka",2);})]},
- {id:"unasked",speaker:"세바스찬",title:"명령보다 한 박자 먼저",text:"시엘이 손을 내밀자 장갑이 이미 그 위에 놓였다. “아직 부르지 않았는데.” 세바스찬은 반대쪽 장갑의 단추를 풀었다. “다시 벗겨 드릴까요?”",sees:s=>s.month>=4&&(s.flags.attention||0)>=3,choices:[choice("말없이 다음 장갑을 건넨다","둘만의 아침 습관 기록",()=>{state.flags.gloves=true;}),choice("도련님의 대답을 기다린다","의지 +3",()=>changeStat("의지",3))]}];}
-function sourceNote(e){return e.source||({jubilee:"1887년 6월 빅토리아 여왕 즉위 50주년 · 가문 참여 IF",match:"1888년 런던 성냥공장 파업 · 회사 대응 IF",circus:"원작 서커스 편 · 야드 체포와 합류는 IF",gardener:"원작 인물 설정 · 영입 시점 IF",maid:"원작 인물 설정 · 영입 시점 IF",cook:"원작 인물 설정 · 영입 시점 IF",homecoming:"원작 인물 설정 · 요양 후 복귀 IF"}[e.id])||"";}
+ {id:"unasked",speaker:"세바스찬",title:"명령보다 한 박자 먼저",text:"시엘이 손을 내밀자 장갑이 이미 그 위에 놓였다. “아직 부르지 않았는데.” 세바스찬은 반대쪽 장갑의 단추를 풀었다. “다시 벗겨 드릴까요?”",sees:s=>s.month>=4&&(s.flags.attention||0)>=3,choices:[choice("말없이 다음 장갑을 건넨다","둘만의 아침 습관 기록",()=>{state.flags.morningGloves=true;}),choice("도련님의 대답을 기다린다","의지 +15",()=>changeStat("의지",15))]}];}
+function sourceNote(e){return e.source||({jubilee:"1887년 6월 빅토리아 여왕 즉위 50주년 · 가문 참여 IF",match:"1888년 런던 성냥공장 파업 · 회사 대응 IF",circus:"런던 타운하우스 · 소마와 아그니가 맞이한 방문객",visitPrince:"런던 타운하우스 보유 · 바르도, 피니안, 메이린 합류 후",gardener:"원작 연구소 탈출 · 첫 만남과 명명 / 게임 달력에 배치",maid:"원작 30권 · 올빼미에게 건넨 고용 제안 / 피니안 합류 뒤 월말 추첨",cook:"원작의 서재 면담 · 메이린 합류 뒤 게임 달력에 배치",homecoming:"원작 회중시계 계승 장면 · 저택 복귀일의 서재로 각색"}[e.id])||"";}
 function houseValues(){
  const staff=Object.values(state.jobs),matched=Object.entries(state.jobs).filter(([p,r])=>servants[p]?.job===r).length;
  const rooms=[...Object.values(state.level),...Object.values(state.annex)],improvements=rooms.reduce((s,v)=>s+v-1,0);
@@ -242,8 +240,11 @@ function houseDesk(){
 
 function productPlanning(){
  const project=state.prototype;
- const picker=["family","gift"].map((k,i)=>option(i?"선물용 · 판매 담당":"가정용 · 제작 담당","brief:"+k,(state.brief||"family")===k,state.phase!=="plan")).join(" ");
- return '<h4>시제품 기획</h4>'+(project?'<p>'+products[project.product].name+' · '+(project.brief==="gift"?"선물 포장":"튼튼한 몸체")+' · '+(project.approved?"출시 승인":"월말 검수 예정")+'</p>':picker);
+ if(project)return '<h4>시제품 기획</h4><p>'+products[project.product].name+' · '+(project.brief==="gift"?"선물용":"가정용")+' · '+(project.material==="select"?"엄선 재료":"일반 재료")+' · '+(project.lead==="sales"?"판매 담당":"제작 담당")+' · '+(project.approved?"출시 승인":"월말 검수 예정")+'</p>';
+ const pick=(title,action,options,value)=>'<fieldset><legend>'+title+'</legend><div class="work-actions">'+options.map(([id,label])=>option(label,action+":"+id,id===value,state.phase!=="plan")).join("")+'</div></fieldset>';
+ return '<h4>시제품 기획</h4>'+pick("구매 목적","brief",[["family","가정용"],["gift","선물용 · 연말 수요"]],state.brief||"family")+
+  pick("재료","material",[["common","일반 재료"],["select","엄선 재료 · 원가 +£2, 높은 가격 수용"]],state.material||"common")+
+  pick("담당","lead",[["maker","제작 담당 · 원가 최대 £1 절감"],["sales","판매 담당 · 수요 +2개"]],state.lead||"maker");
 }
 function sampleReview(){
  const p=state.prototype;
@@ -259,4 +260,540 @@ function facilityLedger(){
  const condition=cap(h.시설상태+3*(n-1));
  return '<div class="annex-line"><div><b>'+f.name+' · '+n+'단계</b><small>'+f.desc+'</small></div><div>월 £'+cost+'<br>상태 '+condition+'</div></div>';
  }).join("")+'<p>공통 관리비 £36에 시설비를 합하고 경비 절감액을 반영합니다.</p></details>';
+}
+
+// Later assignments combine subjects that the player actually practised.
+function appliedExams(){
+  const cases=[
+    ["guestBook",3,"오늘 응접실에 손님이 한 분 더 오십니다. 좌석표에도, 식사 장부에도 자리가 없습니다. 어느 쪽을 먼저 손보시겠습니까?",
+      [["두 손님의 대화를 잇는다","매력","기품"],["남은 식사 비용을 계산한다","경영","지성"],["식당까지 직접 동선을 살핀다","체력","통찰"]]],
+    ["lateDispatch",6,"마지막 우편 마차가 곧 떠납니다. 납품서와 거래처의 답장이 서로 다르군요. 제게 어떤 지시를 내리시겠습니까?",
+      [["답장을 대조해 정정본을 쓴다","통찰","지성"],["마차까지 직접 가서 인계한다","체력","의지"],["상대를 만나 납기를 바꾼다","경영","매력"]]],
+    ["hostAlone",8,"오늘 만찬은 제가 문밖에서 기다리겠습니다. 손님들은 벌써 도착하셨는데, 도련님은 어느 자리를 맡으시겠습니까?",
+      [["현관에서 한 사람씩 맞는다","기품","매력"],["모든 방을 돌며 진행을 지휘한다","의지","체력"],["식탁과 장부를 함께 점검한다","지성","경영"]]]
+  ];
+  return cases.map(([id,count,text,options])=>({id,chapter:true,title:"종합 실기",speaker:"세바스찬",text,
+    sees:s=>exams.filter(([slot])=>s.flags["exam-"+slot]).length>=count,
+    choices:options.map(([label,primary,secondary])=>choice(label,primary+" +30 · "+secondary+" +18",()=>{
+      changeStat(primary,30);changeStat(secondary,18);
+    }))}));
+}
+
+const endingArtDescriptions={"letter": "은쟁반 위에 놓인 왕실 서신", "dress": "거울 앞에서 알현복을 갖춰 입는 시엘", "court": "왕실에서 작위를 돌려받는 시엘", "command": "시엘의 명을 받아 무릎을 꿇는 세바스찬", "carriage": "겨울 역 앞에 세워 둔 검은 마차", "gloves": "서재 책상에 남겨진 흰 장갑", "key": "저택 열쇠를 건네는 시엘", "butler": "긴 복도에 서서 시엘의 대답을 기다리는 세바스찬", "departure": "달리는 마차 안에서 약도를 접는 시엘과 대답을 기다리는 세바스찬"};
+const endingScenes={
+  vowTitle:{alt:"왕실의 의뢰서를 펼치는 시엘 뒤로 세바스찬이 외투를 들고 서 있다.",lines:[
+    ["세바스찬","왕실에서 온 편지입니다. 이쪽 쟁반의 것은 직접 뜯으시지요.","letter"],
+    ["시엘","……봉랍이 달라.","letter"],
+    ["세바스찬","오늘은 비서관의 인장이 찍혀 있지 않습니다.","letter"],
+    ["","시엘은 칼 대신 엄지손톱으로 봉랍을 눌렀다. 금이 가는 소리가 났다.","letter"],
+    ["왕실 서신","시엘 팬텀하이브 경. 왕실에 귀속되어 있던 영지와 작위를 그대에게 돌려드립니다.","letter"],
+    ["왕실 서신","서임식은 궁에서 거행합니다. 그대가 다시 우리 앞에 설 날을 기다리겠습니다.","letter"],
+    ["시엘","내 앞으로 온 편지가 맞군.","letter"],
+    ["세바스찬","예. 봉투에도 그렇게 적혀 있습니다.","letter"],
+    ["","거울 앞에는 예복과 장갑, 깃털이 달린 모자가 놓여 있었다. 재단사가 떠난 뒤 세바스찬이 옷깃을 여몄다.","dress"],
+    ["세바스찬","왼쪽 어깨를 조금만 들어 주십시오.","dress"],
+    ["시엘","……됐다. 더 당기면 자국이 눌려.","dress"],
+    ["세바스찬","아직 통증이 있습니까?","dress"],
+    ["시엘","그 정도는 지났어.","dress"],
+    ["","세바스찬의 손이 한 번 멎었다. 시엘은 거울에서 눈을 떼지 않았다.","dress"],
+    ["시엘","가끔은 잊어. 그러다 저걸 보면 누가 해 놓은 일인지 다시 생각나지.","dress"],
+    ["세바스찬","그럼 오늘은 여기까지만 채우겠습니다.","dress"],
+    ["시엘","끝까지 채워. 내내 만질 수도 없잖아.","dress"],
+    ["세바스찬","좋습니다. 이제 잘 어울리십니다.","dress"],
+    ["시엘","그런 말도 제법 자연스럽군.","dress"],
+    ["세바스찬","세 해 동안 매일 연습한 일이니까요.","dress"],
+    ["시엘","마차를 대. 늦겠어.","dress"],
+    ["","궁의 문이 열렸다. 시엘이 걸음을 옮길 때마다 발소리가 높은 천장 아래 남았다.","court"],
+    ["객석","선대의 아들이라지. 저 아이 혼자 저 앞까지 간다고?","court"],
+    ["","시엘은 단 아래에서 멈췄다. 배운 대로 고개를 숙이고, 호명이 끝날 때까지 기다렸다.","court"],
+    ["빅토리아","고개를 들어요, 팬텀하이브 경. 얼굴을 잘 보아 두고 싶군요.","court"],
+    ["시엘","폐하.","court"],
+    ["빅토리아","오래 비워 두었던 자리예요. 돌아온 것을 환영합니다, 팬텀하이브 백작.","court"],
+    ["","견장 위로 새 장식의 무게가 얹혔다. 한 박자 늦게 객석에서 박수가 터졌다.","court"],
+    ["손님","저기서는 도련님 얼굴이 안 보일 텐데요. 가족 곁 자리를 청해 보지 그러셨어요?","court"],
+    ["세바스찬","이 자리면 충분합니다. 백작께서 나오실 때 외투를 드려야 하거든요.","court"],
+    ["세바스찬 · 독백","보이지 않는 얼굴을 굳이 볼 필요도 없었다. 저 아이가 지금 웃고 있을 리는 없었으므로.","court"],
+    ["","문이 닫히자 박수 소리가 끊겼다. 창을 세 개 지나고 나서 세바스찬이 먼저 입을 열었다.","butler"],
+    ["세바스찬","이제 장부의 첫 줄을 고쳐도 되겠군요. 영지와 작위가 모두 도련님 앞으로 돌아왔습니다.","butler"],
+    ["시엘","그래.","butler"],
+    ["세바스찬","저택에는 저녁을 기다리는 사람들이 있고, 내일 초대장을 보내도 기꺼이 올 손님들이 있습니다.","butler"],
+    ["시엘","그런데.","butler"],
+    ["세바스찬","이쯤에서 그만두고 그걸 누리는 데 써 보시겠습니까? 앞으로 남은 시간 말입니다.","butler"],
+    ["","세 번째 창의 빛이 시엘의 등에서 멎었다.","butler"],
+    ["시엘","……그렇게 살아도 잘 살 수 있겠지.","butler"],
+    ["세바스찬","예. 이제는 그러실 수 있습니다.","butler"],
+    ["시엘","그래서 지금 대답하는 거야. 누구도 내게 계속하라고 할 수 없는 때에.","butler"],
+    ["시엘","내가 돌아온 이유는 처음부터 하나였어. 누가 이 집을 태웠는지 알아내고, 내가 그 끝을 내는 것.","butler"],
+    ["시엘","폐하께 받은 이름으로 그 문 앞에 설 거다. 오늘 받은 것 전부를 써서라도.","butler"],
+    ["","시엘이 망토를 뒤로 넘겼다. 아직 빛이 드는 창을 등지고 한 걸음 내디뎠다.","butler"],
+    ["세바스찬 · 독백","마침내 혼자서도 돌아설 수 있는 자리에 세워 놓았더니, 저 발로 다시 어둠을 고른다.","butler"],
+    ["세바스찬 · 독백","그 대답까지 기다린 보람은 있었군.","butler"],
+    ["시엘","명령이다, 세바스찬.","butler"],
+    ["시엘","내가 그자들 앞에 설 때까지 나를 지켜. 길을 막는 건 네가 치워.","butler"],
+    ["시엘","그리고 내가 이기게 해.","butler"],
+    ["","세바스찬의 무릎이 대리석에 닿았다. 복도에 남은 기척은 그 소리 하나뿐이었다.","command"],
+    ["세바스찬","예스, 마이 로드.","command"],
+    ["","왕실 장부에는 그가 돌아온 날만 적혔다. 그날 밤 누가 다시 출발했는지는, 현관에서 외투를 건넨 집사만 알았다.","vowTitle"]
+  ]},
+  vowNoTitle:{alt:"비에 젖은 골목에서 시엘이 문장 없는 마차에 발을 올린다.",lines:[
+    ["세바스찬","왕실에서 회신이 왔습니다. 배달인은 회신을 기다리지 않고 떠났습니다.","letter"],
+    ["시엘","그 편지, 탁자에 둬.","letter"],
+    ["왕실 서신","작위의 환부는 차기 심의까지 보류합니다. 제출된 서류는 왕실에서 보관하겠습니다.","letter"],
+    ["시엘","차기 심의가 언제라고 적혀 있지?","letter"],
+    ["세바스찬","날짜를 적는 자리가 비었습니다.","letter"],
+    ["시엘","……거기부터 봤어야 했는데.","letter"],
+    ["","시엘은 편지를 구기지 않았다. 첫 장부 맨 뒤에 반듯하게 접어 넣었다.","letter"],
+    ["세바스찬","장부는 여기 두시겠습니까?","letter"],
+    ["시엘","그래. 들고 갈 건 따로 있어.","letter"],
+    ["","되돌아온 서류에 모래가 조금 남아 있었다. 봉투를 기울이자 검은 낟알 셋이 굴러 나왔다.","letter"],
+    ["시엘","이건 누가 묻혔지?","letter"],
+    ["세바스찬","저쪽에서 글을 말릴 때 쓴 모래일 겁니다.","letter"],
+    ["시엘","서명에는 안 묻었어. 날짜에만 있어.","letter"],
+    ["세바스찬","답안은 일찌감치 써 두고 날짜만 오늘 넣었군요.","letter"],
+    ["시엘","날 만나지 않고 내린 결정이란 말이지. 좋아. 이번엔 사람 얼굴을 보고 묻겠어.","letter"],
+    ["세바스찬","소개장이 필요하실 텐데요.","letter"],
+    ["시엘","저 종이를 가져가. 내가 문전박대당한 걸 보여 주면, 반가워할 사람이 한 명쯤은 있을 거야.","letter"],
+    ["","책상 위 지도에는 항구, 여관 두 곳, 폐쇄된 역의 옛 이름이 적혀 있었다.","gloves"],
+    ["세바스찬","이 기록은 왕실의 열람 허가를 받아야 이어 볼 수 있습니다.","gloves"],
+    ["시엘","그렇다면 기록을 쓴 사람에게 묻지.","gloves"],
+    ["세바스찬","그 사람은 피신 중입니다.","gloves"],
+    ["시엘","그러니까 세 군데나 표시했잖아.","gloves"],
+    ["세바스찬","마지막 장소에 닿을 즈음이면 해가 지겠습니다.","gloves"],
+    ["시엘","해가 질 때까지 밖에 있으면 되는 일이야. 등도 준비해.","gloves"],
+    ["세바스찬 · 독백","어린 주인이 지도를 접는 법을 배운 건 첫겨울이었다. 이제는 등불 한 자루까지 셈에 넣는다.","gloves"],
+    ["","시엘은 책상 밑 서랍을 열었다. 맨 아래 깔아 둔 오래된 여비 봉투에서 기차표 반쪽이 나왔다.","key"],
+    ["세바스찬","조사 첫날에 사신 겁니다. 그날은 시간이 늦어 역 밖에도 못 나가셨지요.","key"],
+    ["시엘","차표 뒤에 뭐라고 썼는지 읽어 봐.","key"],
+    ["세바스찬","‘역무원은 밤 열한 시에 교대.’ 직접 적으셨군요.","key"],
+    ["시엘","사람이 사라지면 주소는 소용없어. 그래도 그 사람이 하던 일은 누군가 이어받지.","key"],
+    ["세바스찬","그럼 첫 여관보다 역이 먼저겠습니까?","key"],
+    ["시엘","응. 가는 동안 시계도 맞춰 둬. 이번엔 교대 전에 닿아야 해.","key"],
+    ["","시엘은 반쪽짜리 표를 조끼 주머니에 넣었다. 영지를 돌려달라는 탄원서는 책상에 남겼다.","key"],
+    ["","마차 바퀴가 안뜰의 살얼음을 갈랐다. 시엘은 문간에서 저택의 창을 한 번 셌다.","carriage"],
+    ["세바스찬","돌아오실 날은 사용인들에게 어떻게 전할까요?","carriage"],
+    ["시엘","저녁은 늘 먹던 시간에 먹으라고 해. 내 자리까지 비워 둘 필요 없어.","carriage"],
+    ["세바스찬","도련님 몫은 어디에 준비할까요?","carriage"],
+    ["시엘","마차에서 먹겠어. 손에 묻지 않는 걸로.","carriage"],
+    ["","등불이 켜졌다. 길 건너 여관 간판의 마지막 글자가 간신히 읽혔다.","carriage"],
+    ["시엘","궁에서 준 게 없으니 도로 돌려줄 것도 없겠군.","carriage"],
+    ["세바스찬","가지실 수 있는 물건이라면 여기 있습니다. 지도와 수첩, 그리고 가문의 반지입니다.","carriage"],
+    ["시엘","반지는 내가 들지.","butler"],
+    ["세바스찬","그럼 이 마차는 어느 이름으로 예약해 둘까요?","butler"],
+    ["시엘","시엘 팬텀하이브. 그동안 부르던 그대로.","butler"],
+    ["세바스찬","알겠습니다.","butler"],
+    ["시엘","내가 찾아서, 내가 끝낸다. 그 얘기는 한 글자도 바뀌지 않아.","butler"],
+    ["세바스찬","첫 번째 장소에는 마차가 들어가지 못합니다.","butler"],
+    ["시엘","그럼 내려서 걸어. 네가 먼저 길을 봐.","butler"],
+    ["","세바스찬이 발판을 접었다. 닫힌 문 너머에서 시엘이 무릎 위에 지도를 폈다.","butler"],
+    ["세바스찬","예스, 마이 로드.","butler"],
+    ["","공문에 비어 있던 다음 심의 날짜는 결국 채워지지 않았다. 시엘의 지도에는 그날부터 방문한 장소가 하나씩 늘었다.","departure"]
+  ]},
+  releaseTitle:{alt:"작위 문서 곁에서 시엘이 마지막 명령을 내리고 세바스찬이 장갑을 벗는다.",lines:[
+    ["","돌아온 마차에 타기 전, 시엘은 가슴의 장식을 한 번 바로 달았다.","court"],
+    ["세바스찬","모두 보셨습니다. 다시 달지 않으셔도 됩니다.","court"],
+    ["시엘","기울었잖아. 네가 아까 잡아 줬을 때는 멀쩡했는데.","court"],
+    ["세바스찬","박수가 시작될 때 도련님께서 만지셨거든요.","court"],
+    ["시엘","그랬나.","court"],
+    ["","마차 문이 닫혔다. 마주 앉은 세바스찬은 끝내 손을 뻗지 않았다.","court"],
+    ["시엘","저택에 가면 서재로 와. 둘이 있을 때 할 얘기가 있어.","court"],
+    ["","집에 돌아오자 왕실 인장이 찍힌 문서에 수령할 사람의 서명을 청하는 종이가 딸려 있었다.","letter"],
+    ["세바스찬","제가 대리 수령할까요?","letter"],
+    ["시엘","줘. 어차피 이 이름을 쓰러 하루를 다 돌아다녔는데.","letter"],
+    ["","시엘이 이름을 쓰자 철필 끝에서 가느다란 먹빛 선이 꼬리를 끌었다.","letter"],
+    ["시엘","이 펜 아직도 오른쪽에서 걸려.","letter"],
+    ["세바스찬","처음 글씨를 배우실 때부터 그러셨습니다. 새 펜을 드려도 이것부터 집으시지요.","letter"],
+    ["시엘","끝이 어디서 걸리는지 아니까.","letter"],
+    ["세바스찬","이 서류도 가문 장부 첫머리에 넣겠습니다.","letter"],
+    ["시엘","그건 밖에 둬. 아침에 사람들이 와서 읽을 수 있게.","letter"],
+    ["","서재에는 도장이 찍힌 서류와 며칠 전 들여온 수사 기록이 나란히 놓여 있었다.","gloves"],
+    ["세바스찬","어느 쪽부터 정리할까요?","gloves"],
+    ["시엘","수사 기록은 저 상자에 넣어. 열쇠는 내 손에 줘.","gloves"],
+    ["세바스찬","내일 찾으실 수 있게 위에 올려 두겠습니다.","gloves"],
+    ["시엘","내일 찾지 않아.","gloves"],
+    ["","잉크병 뚜껑을 닫고 난 뒤에도 시엘은 손을 책상 위에 얹어 두었다.","gloves"],
+    ["시엘","내가 부탁한 복수는 여기까지다. 누가 했는지 알게 되더라도 내 손으로 끝내는 일은 없을 거야.","gloves"],
+    ["세바스찬","그 이름을 알게 되는 날에도요?","gloves"],
+    ["시엘","그래. 기억은 내 몫으로 남겨. 나머지는 내가 정리하겠어.","gloves"],
+    ["세바스찬","지금 하신 말씀은 명령입니까?","butler"],
+    ["시엘","내가 결정한 일이야. 그러니 사냥할 상대가 없다는 건 너도 받아들여.","butler"],
+    ["","세바스찬은 장갑의 단추를 하나 풀었다. 천이 손등을 지나 책상 위에 떨어졌다.","butler"],
+    ["세바스찬","그렇다면 계약의 마지막 날도 오지 않겠군요.","butler"],
+    ["시엘","그날을 기다렸나?","butler"],
+    ["세바스찬","정성을 들인 일의 끝은 대개 기다리게 됩니다.","butler"],
+    ["시엘","그래. 나도 그럴 줄 알았어.","butler"],
+    ["세바스찬 · 독백","편지에 적힌 것보다 훨씬 작은 목소리였다. 저택에서는 그 정도면 충분했다.","butler"],
+    ["","기록 상자 밑에서 접힌 쪽지가 나왔다. 종이 한가운데에 석탄 두 자루 값이 적혀 있었다.","key"],
+    ["시엘","이게 왜 여기 있지?","key"],
+    ["세바스찬","돌아오신 첫겨울의 영수증입니다. 안쪽에 그날 처음 받아 적은 주소가 있습니다.","key"],
+    ["시엘","……글자가 작군. 공간이 모자랐나?","key"],
+    ["세바스찬","그때는 새 종이를 사는 것보다 석탄값이 먼저였지요.","key"],
+    ["시엘","내일 이 주소로 가면 아직도 뭔가 알아낼 수 있을까?","key"],
+    ["세바스찬","도련님이 명하시면 오늘 밤에도요.","key"],
+    ["시엘","그만둬. 이건 영수증 철에 꽂아. 그 겨울에 집을 데웠다는 기록으로 두겠어.","key"],
+    ["","세바스찬은 계단 아래에서 그 쪽지를 다시 폈다. 주소가 안으로 가도록 접어 제자리에 꽂았다.","key"],
+    ["시엘","나가기 전에 현관 등 하나만 켜 줘. 타나카가 저녁 약을 가지러 내려와.","gloves"],
+    ["세바스찬","소등은 누가 합니까?","gloves"],
+    ["시엘","내가.","gloves"],
+    ["","문이 닫힌 뒤 시엘은 한동안 장갑을 보았다. 그러고는 서랍을 열어 서임장을 넣었다.","gloves"],
+    ["","아래층에 불이 하나 들어왔다. 서재에는 발걸음이 돌아오지 않았다.","gloves"],
+    ["시엘","……내일은 작위가 돌아왔다는 편지부터 써야겠군.","gloves"],
+    ["","시엘은 자기 손으로 펜에 잉크를 묻혔다.","gloves"],
+    ["","그 집의 현관 등은 그날 이후에도 같은 시각에 켜졌다. 마지막으로 계단을 내려가 불을 끄는 사람은 백작이었다.","releaseTitle"]
+  ]},
+  releaseNoTitle:{alt:"인장이 찍히지 않은 종이와 꺼진 촛불을 사이에 두고 둘이 마주한다.",lines:[
+    ["세바스찬","재가를 청하는 서류를 다시 꾸릴 수는 있습니다. 반년 뒤에 심의가 열립니다.","letter"],
+    ["시엘","이번에도 봉투를 돌려보냈어?","letter"],
+    ["세바스찬","가문을 증명하는 종이는 돌려보냈습니다. 답신은 한 줄입니다.","letter"],
+    ["시엘","읽어 봐.","letter"],
+    ["세바스찬","‘현 상황에서 재가하기 어렵습니다.’","letter"],
+    ["","시엘은 편지 끝의 날짜를 읽었다. 날짜만 두 번 읽었다.","letter"],
+    ["시엘","반년 뒤에 쓸 종이값은 남겨 둬. 다른 데 쓸 일이 있겠지.","letter"],
+    ["","사환이 문 앞에 서서 나갈 편지 묶음을 기다렸다. 시엘은 자기 앞에 붙인 임시 봉투의 주소를 선으로 지웠다.","letter"],
+    ["시엘","왕궁으로 갈 차편은 취소해.","letter"],
+    ["세바스찬","이미 삯을 주었습니다. 다른 편지를 태울 수는 있습니다만.","letter"],
+    ["시엘","그럼 이걸 보내. 서쪽 길의 우편물은 아직도 허물어진 문으로 온대.","letter"],
+    ["세바스찬","봉투에 수신인을 누구로 쓸까요?","letter"],
+    ["시엘","새 문을 단 집의 주인. 명패를 붙일 때까지는 우체부한테 그 편이 더 빠르겠어.","letter"],
+    ["세바스찬","답신도 그쪽에서 받으시겠습니까?","letter"],
+    ["시엘","그래. 내게 온 것부터 내가 열어 볼 테니까.","letter"],
+    ["","저녁 종이 울리기 전에 시엘은 주방으로 내려왔다. 은쟁반보다 먼저 낡은 열쇠가 식탁에 놓였다.","key"],
+    ["세바스찬","서쪽 문 열쇠입니다. 그 문턱은 오늘 손봤습니다.","key"],
+    ["시엘","아침에 열어 봤어. 잘 열리더라.","key"],
+    ["세바스찬","그럼 돌려주시는 이유를 여쭤도 되겠습니까?","key"],
+    ["시엘","문을 잘 고쳤다는 건 기억해 둘 거야. 그 문으로 누구를 찾으러 나가는 일은 이제 없겠어.","key"],
+    ["세바스찬","수색을 중단하실 때는 전에도 있었습니다.","key"],
+    ["시엘","이번에는 돌아와서 다시 시작할 생각이 없어.","key"],
+    ["","난로의 재가 가라앉았다. 물이 끓는 소리만 남았다.","key"],
+    ["세바스찬","저들이 다시 모습을 드러내면, 도련님은 어떻게 하시겠습니까?","butler"],
+    ["시엘","그날 내가 지켜야 할 사람이 있으면 그 사람부터 챙기겠지.","butler"],
+    ["세바스찬","셈한 순서가 바뀌었군요.","butler"],
+    ["시엘","그래. 그러니까 네가 기다리는 건 앞으로 없을 일이야.","butler"],
+    ["세바스찬","……알아들었습니다.","butler"],
+    ["세바스찬 · 독백","이 집에서는 저 아이의 말을 몇 번이나 받아 적었다. 오늘 것은 종이를 꺼낼 필요가 없었다.","butler"],
+    ["시엘","내일 몫의 아침도 생각해 놨어?","butler"],
+    ["세바스찬","식빵은 찬장 위 칸, 잼은 아래 칸에 두었습니다.","butler"],
+    ["","찻주전자 옆에 깔던 천은 한쪽 모서리만 유독 얇았다. 시엘이 천을 반 바퀴 돌렸다.","gloves"],
+    ["세바스찬","그쪽으로 놓으면 주전자 손잡이가 왼쪽으로 갑니다.","gloves"],
+    ["시엘","내가 들면 이쪽이 편해.","gloves"],
+    ["세바스찬","그러시군요. 늘 제가 먼저 들었으니 미처 볼 일이 없었습니다.","gloves"],
+    ["시엘","너 처음에 찻물 쏟은 거 기억해?","gloves"],
+    ["세바스찬","찻물이 아니었습니다. 주전자째였습니다.","gloves"],
+    ["시엘","맞아. 손부터 놨지. 뜨겁지도 않았을 텐데.","gloves"],
+    ["세바스찬","기물 하나를 잃은 값을 아주 오래 받으시는군요.","gloves"],
+    ["시엘","그 정도는 받아야지. 그날 내 몫은 한 모금도 안 남았어.","gloves"],
+    ["","세바스찬이 손을 거뒀다. 이번에는 시엘이 두 잔에 차를 나눠 따랐다.","gloves"],
+    ["시엘","열쇠는 가져가. 네가 처음 손본 문이잖아.","key"],
+    ["세바스찬","그 문을 잠그는 법은 알고 계시지요?","key"],
+    ["시엘","안에서 빗장을 지르면 돼.","key"],
+    ["세바스찬","그렇습니다.","key"],
+    ["","세바스찬은 열쇠를 집었다. 손바닥을 덮으니 금속 빛이 보이지 않았다.","key"],
+    ["시엘","이제 가도 돼, 세바스찬.","key"],
+    ["","문이 열리고 찬 공기가 들어왔다. 시엘은 자리에서 일어나 남아 있던 두 번째 잔을 씻었다.","key"],
+    ["","빗장은 그날 밤에도 한 번만 울렸다.","key"],
+    ["","현관의 명패에는 오래전의 흠집이 남았다. 다음 봄, 시엘은 먼저 경첩부터 갈았다.","releaseNoTitle"]
+  ]},
+  ill:{alt:"빈 의자에 책과 리본이 놓여 있고 세바스찬이 침실의 커튼을 연다.",lines:[
+    ["","편지를 가져온 아이는 마차가 돌아나갈 때까지 현관 앞에서 모자를 손에 들고 있었다.","letter"],
+    ["세바스찬","어디서 온 편지인지 보시겠습니까?","letter"],
+    ["시엘","볕에 비춰 봐. 글자가 등까지 비쳤으면 급한 거야. 급하면 다들 눌러 쓰잖아.","letter"],
+    ["세바스찬","아주 가볍게 썼습니다. 안부를 묻는 편지군요.","letter"],
+    ["시엘","그럼 잘 받았다고만 해. 답장을 기다리게 하지 말고.","letter"],
+    ["세바스찬","어디까지 전하면 됩니까?","letter"],
+    ["시엘","볕이 잘 든다고. 그건 네가 봐도 알겠지.","letter"],
+    ["","세바스찬은 봉투를 침대 옆 탁자에 세워 두었다. 겹친 종이에 창살 그림자가 반듯이 걸렸다.","letter"],
+    ["","서재를 열던 열쇠가 찻숟가락과 부딪혔다. 눈을 감고 있던 시엘이 먼저 물었다.","key"],
+    ["시엘","너 어디 문을 열었어?","key"],
+    ["세바스찬","책상 왼쪽 서랍입니다. 아침에 의사가 다녀간 시각을 적어 두려고요.","key"],
+    ["시엘","내 시계로 적어. 복도 시계가 조금 빨라.","key"],
+    ["세바스찬","얼마나요?","key"],
+    ["시엘","세면 알잖아. 이따 종 치면.","key"],
+    ["","종은 네 번 울렸다. 시엘은 세 번째와 네 번째 사이에서 잠깐 숨을 골랐다.","key"],
+    ["세바스찬","오늘은 도련님 시계가 이 분 늦습니다.","key"],
+    ["시엘","그럼 그걸 맞춰야지. 왜 웃어?","key"],
+    ["세바스찬","여전히 시계 두 개를 다 쓰게 하시는군요.","key"],
+    ["세바스찬","오전의 손님은 돌아갔습니다. 오후에도 마차를 부르지 않을 겁니다.","butler"],
+    ["시엘","……네가 취소했어?","butler"],
+    ["세바스찬","도련님께서 어제 저녁에 명하셨습니다.","butler"],
+    ["시엘","그랬지. 그럼 커튼은 조금만 열어 둬.","butler"],
+    ["","커튼 고리가 창대에 한 번 걸렸다. 세바스찬이 손을 끼워 소리가 더 나지 않게 했다.","butler"],
+    ["시엘","방 안에서 들으면 저게 그렇게 커.","butler"],
+    ["세바스찬","평소에는 제가 먼저 열어 놓으니까요.","butler"],
+    ["시엘","내일은 들어와서 물어. 햇빛이 싫은 날도 있을 테니까.","butler"],
+    ["세바스찬","예. 아침마다 여쭙겠습니다.","butler"],
+    ["","오후 약이 든 병 옆에 단추구멍을 꿰매던 작은 가위가 놓여 있었다. 시엘이 베갯잇을 한 번 당겼다.","gloves"],
+    ["시엘","여기 실밥이 있어.","gloves"],
+    ["세바스찬","어느 쪽입니까?","gloves"],
+    ["시엘","손가락 끝. 오른쪽으로 조금 더.","gloves"],
+    ["세바스찬","이겁니까?","gloves"],
+    ["시엘","거기. 베고 있으면 꼭 바늘이 든 것 같아.","gloves"],
+    ["","세바스찬이 매듭을 잘라 냈다. 하얀 천 위에 가느다란 실 한 토막이 남았다.","gloves"],
+    ["시엘","……그거였군. 아침부터 내내.","gloves"],
+    ["세바스찬","이제 편하십니까?","gloves"],
+    ["","시엘은 베개에 뺨을 대어 보고서야 손을 놓았다.","gloves"],
+    ["","해가 기울자 탁자에 세워 둔 안부 편지가 스스로 쓰러졌다. 시엘이 종이 쪽으로 눈을 돌렸다.","letter"],
+    ["시엘","아직 펴 놓지 마. 누가 왔는지는 내일 내가 읽을게.","letter"],
+    ["세바스찬","봉투에는 이름이 쓰여 있지 않습니다.","letter"],
+    ["시엘","그래서 열어 봐야 한다는 거야. 자꾸 먼저 알려 주지 말고.","letter"],
+    ["세바스찬","그럼 쟁반에 그대로 두겠습니다.","letter"],
+    ["시엘","차도 거기 둬. 네가 몇 번이나 새로 끓이는지 다 들려.","letter"],
+    ["세바스찬","이번 것은 아직 따뜻합니다.","letter"],
+    ["","시엘이 잔 손잡이를 한 번 만졌다. 세바스찬은 그 정도로 됐다는 듯 받침을 제자리로 밀었다.","letter"],
+    ["","다음 장부는 책상 오른편에 펼쳐져 있었다. 월과 일이 들어갈 두 칸에는 아직 잉크가 닿지 않았다.","gloves"],
+    ["시엘","오늘은 장부를 여기 가져오지 마.","gloves"],
+    ["세바스찬","예, 도련님.","gloves"],
+    ["시엘","너도 거기 서 있으면 그림자가 져. 의자를 창 옆으로 가져와.","gloves"],
+    ["","집사는 커튼에 그림자가 닿지 않는 자리를 골랐다. 난로에서는 석탄 한 조각이 둘로 갈라졌다.","gloves"],
+    ["세바스찬","이만하면 됩니까?","gloves"],
+    ["시엘","응. 거긴 괜찮아.","gloves"],
+    ["","저택의 시계가 저녁을 알렸다. 침실 곁에는 누구도 새 일정을 들고 오지 않았다.","gloves"],
+    ["","침실 문밖에 비워 둔 의자에는 해가 지도록 아무도 앉지 않았다. 안쪽 창가의 의자는 언제 물어도 곧 대답이 들리는 거리에 있었다.","ill"]
+  ]},
+  broke:{alt:"빈 완구점 진열대에서 시엘과 세바스찬이 마지막 열쇠를 내려놓는다.",lines:[
+    ["","대문으로 들어온 남자는 모자도 외투도 맡기지 않았다. 현관에 서서 금고를 볼 수 있는 시각만 물었다.","letter"],
+    ["세바스찬","약속한 때보다 한 시간 일찍 왔습니다. 돌려보낼까요?","letter"],
+    ["시엘","한 시간 더 있으면 금고 안이 달라져?","letter"],
+    ["세바스찬","동전의 수에는 변함이 없겠습니다.","letter"],
+    ["시엘","그럼 들여. 바깥에 세워 두는 것도 이 집 이름으로 하는 일이야.","letter"],
+    ["세바스찬","어느 방으로 모실까요?","letter"],
+    ["시엘","서재. 의자는 둘만 놔. 내 앞에 서서 얘기하게 하면 내가 먼저 올려다봐야 하잖아.","letter"],
+    ["","세바스찬이 은쟁반을 들자 반송된 어음 아래에서 동그란 찻잔 자국이 드러났다.","letter"],
+    ["","책상 위에는 영수증이 발행일 순서로 묶여 있었다. 마지막 묶음만 철끈에서 빠져 있었다.","gloves"],
+    ["시엘","이건 왜 빼 놨어?","gloves"],
+    ["세바스찬","왼편은 저희가 받을 돈, 오른편은 저희가 줄 돈입니다. 그건 전표가 한 장뿐입니다.","gloves"],
+    ["시엘","물건을 받았는지 확인할 사람이 없군.","gloves"],
+    ["세바스찬","배달인은 이미 떠났습니다.","gloves"],
+    ["시엘","뒷면을 봐. 빗물에 번졌어도 십자가는 남아 있네. 짐을 내릴 때 표시한 거야.","gloves"],
+    ["세바스찬","오른편에 꽂겠습니다. 그럼 부족액이 조금 더 늘겠군요.","gloves"],
+    ["시엘","부족하면 부족한 대로 적어. 내가 읽는 줄만 줄이면 무슨 소용이야.","gloves"],
+    ["","채권자는 탁자 한가운데에 흰 종이를 놓았다. 서명만 받으면 된다고 말했다.","letter"],
+    ["시엘","붓보다 먼저 목록을 줘. 여기 적힌 물건을 전부 가져가겠다는 건가?","letter"],
+    ["채권자","값을 매긴 물건만입니다. 개인 편지는 가지고 계셔도 됩니다.","letter"],
+    ["시엘","서재 책상 두 번째 서랍은 열어 보셨어?","letter"],
+    ["채권자","서랍은 빈 것으로 적었습니다.","letter"],
+    ["시엘","손잡이가 헛돌아서 그래. 세바스찬, 눌러서 열어.","letter"],
+    ["","서랍 안에는 보고서 사이에 끼워 둔 증표와 아직 뜯지 않은 우편이 쌓여 있었다.","letter"],
+    ["세바스찬","제가 한 통씩 분류하겠습니다.","letter"],
+    ["시엘","주인이 있는 건 주소를 찾아서 보내. 우리 앞으로 온 것만 남겨 둬.","letter"],
+    ["세바스찬","마지막 지출을 적었습니다. 사용인들의 이번 주 급료입니다.","key"],
+    ["시엘","그건 밀리지 않았지?","key"],
+    ["세바스찬","예. 다 지급했습니다.","key"],
+    ["시엘","좋아. 빈 금고는 내가 닫을게.","key"],
+    ["","빈 안쪽에서 문짝이 두 번 울렸다. 보통은 돈주머니가 두 번째 소리를 삼켰다.","key"],
+    ["시엘","원래 이런 소리가 나는구나.","key"],
+    ["세바스찬","금고를 산 날에도 같은 소리가 났습니다.","key"],
+    ["시엘","그날은 채울 궁리만 했겠지.","key"],
+    ["세바스찬","도련님은 안에서 문이 잠기는지부터 물으셨습니다.","key"],
+    ["시엘","……그랬어. 그런 건 일찍 물어 두는 게 좋아.","key"],
+    ["","현관 벽에서 사무실 간판을 내리자 햇볕을 덜 받은 네모가 남았다. 바닥에 떨어진 나사를 세바스찬이 주웠다.","butler"],
+    ["세바스찬","이것도 목록에 넣을까요?","butler"],
+    ["시엘","간판 물건이면 같이 줘야지. 나사 없이 어디다 달아.","butler"],
+    ["세바스찬","상자는 하나 남았습니다. 도련님께서 들고 나가실 겁니까?","butler"],
+    ["시엘","네가 들면 사람들이 아직 내게 집이 한 채 더 있는 줄 알겠군.","butler"],
+    ["세바스찬","그랬으면 좋으시겠습니까?","butler"],
+    ["시엘","아니. 받을 돈이 있는 사람이 괜히 따라올지도 몰라.","butler"],
+    ["","그는 제 팔로 상자를 들었다. 한쪽 귀퉁이가 코트 단추에 걸려서야 세바스찬에게 끈을 묶어 달라고 했다.","butler"],
+    ["","열쇠 인수증 맨 아래에 시엘이 서명했다. 잉크가 마르도록 책상을 빌리는 것이 이 집에서 한 마지막 일이었다.","key"],
+    ["채권자","열쇠 하나를 더 받았습니다만. 목록에는 다섯 개입니다.","key"],
+    ["시엘","여섯 번째는 빈 금고 안의 서랍 열쇠예요. 제일 안쪽에 하나 더 있습니다.","key"],
+    ["세바스찬","두고 가실 것은 없습니까?","key"],
+    ["시엘","쓴 펜. 다음 사람이 서명하려면 있어야지.","key"],
+    ["","세바스찬이 마지막으로 문을 잡아 주었다. 시엘은 문지방에서 상자를 고쳐 들었다.","key"],
+    ["시엘","저녁 종은 이제 우리 시간에 안 맞춰도 되겠어.","key"],
+    ["세바스찬","예. 오늘 저녁은 조금 늦겠습니다.","key"],
+    ["","서명은 다 끝났는데도 시엘은 금고 속 작은 서랍의 열쇠까지 세었다. 인수증에 적힌 여섯 개는 틀리지 않았다.","broke"]
+  ]},
+  title:{alt:"응접실 창가에서 시엘이 붉은 인장이 달린 왕실 문서를 읽는다.",lines:[
+    ["","영지 도면을 묶은 붉은 끈이 도화지에 물이 들 만큼 오래 감겨 있었다. 시엘은 끈을 자르지 않고 풀었다.","letter"],
+    ["세바스찬","가위가 여기 있습니다.","letter"],
+    ["시엘","풀어 두면 말아서 다시 넣을 수 있잖아.","letter"],
+    ["세바스찬","이걸 돌려보내실 생각입니까?","letter"],
+    ["시엘","아니. 어느 길로 가서 어디까지 봤는지 적어 둘 거야. 여기에.","letter"],
+    ["","도면 한쪽 끝이 말려 올라가자 문진 대신 낡은 회중시계가 올라갔다.","letter"],
+    ["세바스찬","저쪽 고정쇠를 쓰면 잉크가 덜 묻습니다.","letter"],
+    ["시엘","이 정도 무게면 돼. 우선 읽어 줘.","letter"],
+    ["세바스찬","영지 도면과 계승 서류가 모두 도착했습니다.","court"],
+    ["시엘","도면부터 펴. 가장 먼 집은 어디지?","court"],
+    ["세바스찬","북쪽 숲을 지나면 한 채 있습니다.","court"],
+    ["시엘","좋아. 오늘부터 우리가 갈 곳이 하나 더 생겼군.","court"],
+    ["세바스찬","도로가 끝나는 자리군요. 길이 도중에 끊긴 것처럼 그려져 있습니다.","court"],
+    ["시엘","그럼 저 사람들은 편지를 어디로 받아?","court"],
+    ["세바스찬","장부에는 우체부가 우유 수레에 맡기는 것으로 되어 있습니다.","court"],
+    ["시엘","수레가 건너가는 길이 있다는 뜻이지. 그 길이 왜 여기서 끊겼는지 보러 가자.","court"],
+    ["","옷장에는 새로 돌려받은 문장을 수놓은 외투와, 무릎께에 진흙이 튄 낡은 외투가 함께 걸려 있었다.","dress"],
+    ["세바스찬","어느 쪽을 준비할까요?","dress"],
+    ["시엘","더러워진 쪽. 담장을 넘든 수레에 오르든 마음대로 할 수 있는 걸로.","dress"],
+    ["세바스찬","첫 영지 시찰치고는 사진사에게 불친절한 선택이군요.","dress"],
+    ["시엘","데려가기로 했어?","dress"],
+    ["세바스찬","아직 부르지 않았습니다.","dress"],
+    ["시엘","잘했네. 사진으로 먼저 보면 가서 보고도 똑같은 것만 찾게 돼.","dress"],
+    ["","세바스찬은 준비했던 문장핀을 옷장 안에 놓고 장화 끈을 당겼다.","dress"],
+    ["","마차에서 본 우유 수레는 작은 돌다리를 건넜다. 다리 난간에는 수레바퀴 높이까지 진흙 자국이 나 있었다.","carriage"],
+    ["시엘","길이 끊긴 게 여기야?","carriage"],
+    ["세바스찬","예. 이 다리는 도면을 만든 뒤에 놓은 모양입니다.","carriage"],
+    ["우유","배달부 물 불면 여기로 못 가요. 그때는 집 뒤쪽 빨랫줄에 달아 놓고 호각을 불죠.","carriage"],
+    ["시엘","편지를요?","carriage"],
+    ["우유","배달부 예. 주인 양반한테도 건너오라고 하지 마세요. 가운데 돌이 움직여서.","carriage"],
+    ["세바스찬","도련님, 진흙이 옷자락까지 올라옵니다.","carriage"],
+    ["시엘","기다려. 옷은 네가 빨 수 있지만 틀린 곳은 내가 봐야 적을 수 있어.","carriage"],
+    ["","집 대문에는 큼직한 자물쇠가 있었고, 그 옆에는 매일 여닫는 작은 문이 따로 있었다.","key"],
+    ["세바스찬","돌아갈 시간이 됐습니다.","key"],
+    ["시엘","큰 문은 왜 늘 잠겨 있지?","key"],
+    ["영지","주민 아이들이 물가로 나갈까 봐서요. 작은 문은 안에서 손잡이를 두 번 돌려야 해서 안전해요.","key"],
+    ["시엘","장부에는 폐가라고 쓰여 있어요. 큰 문만 보고 돌아간 모양이군요.","key"],
+    ["영지","주민 그럼 우리 이름을 불러나 주세요. 내일 아침에도 여기 있을 텐데.","key"],
+    ["시엘","철자를 불러 주세요. 제가 적겠습니다.","key"],
+    ["","시엘은 돌담을 책상 삼아 이름 다섯 글자를 도면 가장자리에 옮겼다.","key"],
+    ["","돌아온 도면에는 처음으로 검은 잉크가 묻었다. 시엘은 덜 마른 부분을 피해 종이를 느슨하게 말았다.","letter"],
+    ["세바스찬","오늘 보신 것을 정서해 둘까요?","letter"],
+    ["시엘","내일. 이건 이대로 보관해. 누가 자기 이름을 써 달라고 했는지 내가 봐야 기억하지.","letter"],
+    ["세바스찬","다음에는 어디로 모실까요?","letter"],
+    ["시엘","바로 그 옆집으로. 가장 먼 집을 다녀와 보니까 옆집도 여기선 멀더라.","letter"],
+    ["세바스찬","붉은 끈을 다시 드리겠습니다.","letter"],
+    ["시엘","잠깐. 한 바퀴만 감아. 내일 아침 또 풀 거야.","letter"],
+    ["","시엘은 남은 한쪽 끝을 서랍 손잡이 밖으로 내놓았다.","letter"],
+    ["","왕실에서 보내온 도면에는 집 한 채가 더 생겼다. 그 집에 살던 사람들은 영지에 백작이 돌아오기 전부터 거기 살고 있었다.","title"]
+  ]},
+  business:{alt:"팬텀사 작업대에서 시엘이 새 목제 기관차의 바퀴를 점검한다.",lines:[
+    ["세바스찬","가문의 도장은 보류됐습니다. 팬텀사의 도장은 새로 넘겨받았습니다.","letter"],
+    ["시엘","그쪽부터 가져와.","letter"],
+    ["세바스찬","오늘 찍으면 첫 물량은 다음 주에 나갑니다.","letter"],
+    ["시엘","그럼 오늘 찍어. 저택 식구들한테도 그렇게 전해.","letter"],
+    ["","도장은 뜻밖에 작았다. 시엘이 종이 귀퉁이에 시험 삼아 누르자 글자의 왼쪽 절반만 찍혔다.","letter"],
+    ["시엘","회사 이름을 반만 보내면 돈도 반만 받겠군.","letter"],
+    ["세바스찬","책상 다리 밑이 기웁니다. 이번에는 제 쪽에 놓고 찍어 보시지요.","letter"],
+    ["시엘","잠깐. 공방 책상도 이런지 먼저 물어봐.","letter"],
+    ["","견본 상자 세 개를 같은 높이에서 떨어뜨렸다. 첫째 상자는 벌어졌고, 둘째는 깨끗했다. 셋째는 아무 소리도 나지 않았다.","gloves"],
+    ["시엘","소리가 안 나는 게 제일 잘된 건가?","gloves"],
+    ["세바스찬","열어 보시겠습니까?","gloves"],
+    ["시엘","……비었어.","gloves"],
+    ["세바스찬","서두르니 검수를 마치기도 전에 뚜껑부터 묶었군요.","gloves"],
+    ["시엘","그럼 출고표에 무게 적을 칸을 만들어. 다음부터는 하나씩 다 열지 않아도 알 수 있어.","gloves"],
+    ["세바스찬","칸 하나를 더 넣으면 주문 주소가 한 줄 줄어듭니다.","gloves"],
+    ["시엘","주소는 두 장을 써도 돼. 손님한테 빈 상자를 둘이나 보내는 것보다는 싸겠지.","gloves"],
+    ["","창고 열쇠에는 붉은색 꼬리표가 달려 있었다. 문을 열자 상자의 주소가 전부 같은 높이에서 보였다.","key"],
+    ["시엘","똑바로 놓으니까 예쁘긴 하네. 저 안쪽 것부터 빼려면 몇 개를 들어야 하지?","key"],
+    ["세바스찬","다섯 줄입니다. 손을 빌리면 아주 빨리 끝낼 수도 있겠습니다.","key"],
+    ["시엘","네가 여섯 명은 아니잖아. 내일 네가 이 방에 없어도 되게 정리해.","key"],
+    ["세바스찬","그렇다면 제일 먼저 나가는 것부터 문 앞으로요?","key"],
+    ["시엘","응. 늦게 온 주문이라도 배가 이르면 먼저 나가야 해. 상자에 날짜도 찍고.","key"],
+    ["세바스찬","날짜 도장을 새로 파겠습니다.","key"],
+    ["시엘","숫자가 빠지는 걸로 해. 오래 쓸 거야.","key"],
+    ["","거래처 마차가 창고 뒷문에 섰다. 마부는 짐칸 한가운데를 비워 두고 양옆으로 상자를 쌓았다.","carriage"],
+    ["시엘","하나쯤 더 실을 자리가 있는데?","carriage"],
+    ["마부","돌아오는 길에 저희 쪽 빈 상자를 싣습니다. 한 번에 나르는 편이 싸요.","carriage"],
+    ["시엘","그 빈 상자, 어디까지 가져갑니까?","carriage"],
+    ["마부","강 건너 인쇄소까지요.","carriage"],
+    ["시엘","우리도 그 집에 용무가 있어요. 견적서 봉투 하나만 맡기면 삯이 얼마죠?","carriage"],
+    ["세바스찬","편지라면 제가 곧장 다녀올 수 있습니다만.","carriage"],
+    ["시엘","그렇게 하면 다음번에도 네가 가야 하잖아. 나는 오늘부터 우송비를 알고 싶어.","carriage"],
+    ["","마차가 나간 뒤 첫 발주서를 복도 창에 비춰 보았다. 회사의 도장이 이번에는 모서리까지 선명했다.","butler"],
+    ["세바스찬","왕실 서류는 언제 다시 보시겠습니까?","butler"],
+    ["시엘","뒷장에 회신 기한이 있어?","butler"],
+    ["세바스찬","없습니다. 이 주문서에는 있군요. 내일 정오입니다.","butler"],
+    ["시엘","그럼 내일 정오에 해야 할 일부터 오늘 해. 회신을 늦게 받는 일이라면 내가 겪어 봐서 알아.","butler"],
+    ["세바스찬","봉투에 도련님의 직함을 넣을까요?","butler"],
+    ["시엘","회사 이름을 써. 입금을 받는 쪽도 책임을 지는 쪽도 그게 맞아.","butler"],
+    ["","세바스찬은 봉투에서 장식 인장을 치우고 조금 전의 작은 도장을 골랐다.","butler"],
+    ["","저녁 우편으로 거래처의 답장이 왔다. 마지막 줄에 다음 주문은 두 묶음이면 좋겠다고 적혀 있었다.","letter"],
+    ["시엘","두 묶음 만들어 놓으라는 말 같아?","letter"],
+    ["세바스찬","값을 묻는 것 같습니다. 미리 만들어 두면 싸게 달라고 하겠지요.","letter"],
+    ["시엘","그래. 물건부터 만들지 마. 조건부터 보내.","letter"],
+    ["세바스찬","손님이 다른 집으로 가면요?","letter"],
+    ["시엘","그럼 왜 갔는지 적어 와. 왕실에서 돌아온 서류에 없던 게 바로 그거야.","letter"],
+    ["세바스찬","어떤 서랍에 꽂아 둘까요?","letter"],
+    ["시엘","오른쪽. 다음 발주가 오면 왼쪽부터 비울 테니까.","letter"],
+    ["","회사 이름이 반쪽만 찍힌 시험지는 시엘의 책상에 남았다. 밖으로 나간 첫 발주서에는 회사 이름이 다 찍혔다.","business"]
+  ]},
+  defer:{alt:"닫힌 심의실 문을 등지고 시엘이 외투를 챙기러 돌아선다.",lines:[
+    ["","반송된 봉투에는 풀을 다시 바른 자국이 두 줄 나 있었다. 겉에 찍힌 도장은 한 번뿐이었다.","letter"],
+    ["세바스찬","서류를 돌려받았습니다. 신청서는 아직 쓸 수 있습니다.","letter"],
+    ["시엘","뭐가 비었는지 한 장씩 봐.","letter"],
+    ["세바스찬","오늘 밤에는 모두 보기 어렵겠습니다.","letter"],
+    ["시엘","그럼 첫 장까지만. 나머지는 내일 한다.","letter"],
+    ["세바스찬","맨 위에는 ‘미비’라고만 쓰여 있습니다.","letter"],
+    ["시엘","그건 쓴 사람 이름이 없어. 사유로 옮기면 잉크만 두 번 쓰는 셈이야.","letter"],
+    ["","시엘은 원인을 적어 두려던 칸에 종잇조각을 끼웠다. 글부터 쓰진 않았다.","letter"],
+    ["","문서함 아래에 수리공의 청구서가 끼여 있었다. 삐져나온 모서리에 흙 묻은 손자국이 있었다.","key"],
+    ["시엘","이거 쓴 사람은 글씨를 모르나? 서명이 십자야.","key"],
+    ["세바스찬","뒤에 두 사람이 보증했습니다. 읽어 드릴까요?","key"],
+    ["시엘","이름은 읽을 수 있어. 왜 두 사람이나 필요했는지가 궁금해.","key"],
+    ["세바스찬","한 사람은 이 일을 맡겼고, 한 사람은 끝난 것을 보았답니다.","key"],
+    ["시엘","……그렇군. 재건했다고 내가 쓴 종이에는 내가 한 서명밖에 없어.","key"],
+    ["세바스찬","수리공에게 왕실 서류를 다시 쓰게 하시겠습니까?","key"],
+    ["시엘","아니. 그 사람이 한 일을 물을 거야. 궁정에서 쓰는 말은 내가 배워야지.","key"],
+    ["","식탁 끝의 촛농이 길게 흘렀다. 노트를 들고 온 세바스찬은 일부러 빈칸을 남기고 첫 줄을 썼다.","gloves"],
+    ["시엘","그쪽도 비워 두게?","gloves"],
+    ["세바스찬","‘묻는다’와 ‘확인했다’를 다른 쪽에 적으려고 합니다.","gloves"],
+    ["시엘","칸을 그렇게 잡으면 왼쪽만 가득 찰 텐데.","gloves"],
+    ["세바스찬","지금은 그렇습니다.","gloves"],
+    ["시엘","그럼 얇은 종이를 써. 넘겨서 반대편을 보면 어느 쪽이 비었는지 보일 거야.","gloves"],
+    ["","세바스찬이 첫 장을 들었다. 아직 젖은 글자의 획이 종이 너머로 비쳤다.","gloves"],
+    ["시엘","내일 저 사람한테 물을 때는 내가 먼저 말할게. 네가 답까지 만들어 두지 말고.","gloves"],
+    ["","다음 날에도 수리공은 어제 입었던 외투를 입고 왔다. 모자챙에서 마른 흙이 떨어졌다.","butler"],
+    ["수리공","제가 물이 샌 곳을 고치긴 했습니다. 한데 비 온 날 보셨습니까?","butler"],
+    ["시엘","맑을 때 올라가 봤어요.","butler"],
+    ["수리공","그럼 다 고쳤다고 쓰지 마세요. 비가 와야 저도 아는 겁니다.","butler"],
+    ["세바스찬","첫 장 여백이 점점 좁아지는군요.","butler"],
+    ["시엘","오히려 한 줄이면 돼. 다음 비에 다시 확인할 것.","butler"],
+    ["수리공","비가 오면 저도 같이 올라가겠습니다.","butler"],
+    ["시엘","그렇게 서명해 주세요. 서명은 평소 하시던 식으로 하시면 됩니다.","butler"],
+    ["","오후 우편마차가 담장 너머로 지나갔다. 어제였다면 왕실로 돌아갈 서류가 실려 있었을 시각이었다.","carriage"],
+    ["세바스찬","오늘 날짜로 다시 넣어 두셔도 됩니다. 마부가 아직 뒷문에 있습니다.","carriage"],
+    ["시엘","아니. 이번엔 맨 끝 장부터 완성한 다음 보내.","carriage"],
+    ["세바스찬","기다리는 시간이 길어집니다.","carriage"],
+    ["시엘","저쪽에서 아무 말 없이 기다리게 하는 것처럼 우리도 기다리게 해 볼까?","carriage"],
+    ["세바스찬","담당자에게는 아직 도련님이 무엇을 준비하시는지도 알려지지 않았습니다만.","carriage"],
+    ["시엘","……그러네. 그럼 사유를 묻는 편지만 보내. 답장에 이름도 부탁하고.","carriage"],
+    ["","세바스찬이 작은 봉투 하나를 들고 뒷문으로 나갔다. 묵직한 문서함은 그대로 남았다.","carriage"],
+    ["","나흘 뒤 밤에 비가 왔다. 시엘은 지붕 밑에 놓아 둔 대야 바닥을 손가락으로 훑었다.","gloves"],
+    ["시엘","말랐어.","gloves"],
+    ["세바스찬","그럼 오른쪽에 한 줄 써도 되겠습니까?","gloves"],
+    ["시엘","조금 더 기다려. 저쪽 처마도 봐야지.","gloves"],
+    ["","둘이 양쪽을 돌아보는 동안 바닥에는 장화 자국이 늘었고 대야에는 물방울 하나 떨어지지 않았다.","gloves"],
+    ["시엘","이제 써. 확인한 사람 둘.","gloves"],
+    ["세바스찬","서명란에 제가 먼저 쓸까요?","gloves"],
+    ["시엘","아니. 내 이름을 먼저 쓰겠어.","gloves"],
+    ["","심의 날짜가 비어 있는 동안 첫 장에는 비가 온 날이 적혔다. 그 아래에 집주인과 집사와 수리공의 서명이 차례로 남았다.","defer"]
+  ]}
+};
+
+let endingReplay=null;
+function hasEndingRecord(id){
+  return Object.hasOwn(endingScenes,id)&&(Object.hasOwn(saves.gallery||{},id)||
+    [state,saves.auto,saves[1],saves[2],saves[3]].some(run=>run?.phase==="ending"&&run.ending===id));
+}
+function endingThumb(id){
+  return '<button type="button" class="ending-thumb" data-action="ending-art:'+id+'"><img loading="lazy" src="assets/endings/'+id+'.webp" alt=""><span>'+endingLabels[id][0]+'</span></button>';
+}
+function showEndingScene(host){
+  const replay=tab==="endingMemory"?endingReplay:null;
+  const live=tab==="plan"&&state.phase==="ending"&&Number.isInteger(state.endingBeat);
+  if(!replay&&!live)return false;
+  const id=replay?replay.id:state.ending,scene=endingScenes[id];
+  if(!scene)return false;
+  const end=scene.lines.length-1,at=Math.min(end,Math.max(0,replay?replay.at:state.endingBeat));
+  const [who,line,picture=id]=scene.lines[at],last=at===end;
+  clearTimeout(recruitTimer);if(last)stopRecruitAuto();
+  const arrow='<button type="button" class="line-next" data-read="'+(last?'finish':'next')+'" aria-label="'+(last?'장면 마치기':'다음 대사')+'">▼</button>';
+  host.hidden=false;host.dataset.review="false";
+  const existing=host.querySelector(".ending-cg");
+  const art=existing?.dataset.ending===id?existing:document.createElement("img");
+  if(art!==existing){
+    art.className="ending-cg";art.dataset.ending=id;
+  }
+  if(art.dataset.picture!==picture){
+    art.dataset.picture=picture;art.src="assets/endings/"+picture+".webp";art.alt=endingArtDescriptions[picture]||scene.alt;
+  }
+  host.replaceChildren(art);
+  host.insertAdjacentHTML("beforeend",sceneLine(who,line,arrow,'data-book="ending-'+id+'" aria-live="polite" aria-atomic="true"')+readerControls(at,last,recruitAuto));
+  bindSceneReader(host,at,end,line,to=>{
+    if(replay)replay.at=to;else {state.endingBeat=to;persist();}
+    showEndingScene(host);host.querySelector(".line-next").focus({preventScroll:true});
+  },()=>{
+    stopRecruitAuto();
+    if(replay){endingReplay=null;tab=replay.origin;}
+    else {delete state.endingBeat;persist();}
+    render(true);
+  });
+  return true;
 }

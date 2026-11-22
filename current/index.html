@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Earl Phantomhive Maker · 팬텀하이브 메이커</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="css/base.css?v=d1a35b3ecad4"><link rel="stylesheet" href="css/edition.css?v=79a1b1b79323"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=036f0189f508"><link rel="stylesheet" href="css/prologue.css?v=b19cb104c39a"><style>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Earl Phantomhive Maker · 팬텀하이브 메이커</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="css/base.css?v=d5c5498f2621"><link rel="stylesheet" href="css/edition.css?v=9b6efb2e6eb0"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=96f581c02ee6"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><style>
 .home-standing,.cast[alt="시엘"],.performer img { filter:url(#ciel-tailoring) drop-shadow(1px 3px 2px #17264344); }
 .review-room,.stage-room,.property-map[aria-label] .map-base,.property-map .map-fitting,
 .property-map .delivery-cart { filter:url(#estate-ink); }
@@ -31,7 +31,7 @@
 <main class="game-frame"><div class="scene-mount"><div class="iris-surround" aria-hidden="true"><span lang="en">Phantomhive</span></div><div class="scene" id="scene" aria-label="시엘과 팬텀하이브 저택">
 <button type="button" id="ciel-greet" data-action="greet-ciel" aria-label="시엘에게 말 걸기"></button>
 <img class="home-standing" id="home-standing" src="assets/ciel.png" alt="남색 예복을 입은 시엘 팬텀하이브">
-<div class="scene-date"><button type="button" id="scene-book" data-action="tab:record">가문 장부</button><div class="plaque" id="date"></div></div>
+<div class="plaque" id="date"></div>
 <div class="plaque" id="money"></div>
 <nav id="nav" class="command-dock" aria-label="게임 메뉴"></nav>
 <p id="ciel-aside" role="status" aria-live="polite"></p>
@@ -39,7 +39,6 @@
   <div class="opening-still" id="opening-picture"></div>
   <div class="opening-mat">
     <header class="opening-top">
-      <button type="button" id="opening-toggle" data-action="dialogue-toggle" aria-controls="opening-dialogue" aria-pressed="false">대화창 숨기기</button>
       <button type="button" id="opening-prev" data-action="opening-prev">이전</button>
       <button type="button" id="opening-auto" data-action="opening-auto" aria-pressed="false">자동 재생</button>
       <button type="button" data-action="opening-skip" id="opening-skip">건너뛰기</button>
@@ -52,7 +51,8 @@
   </div>
   <button type="button" id="opening-read" tabindex="-1" aria-hidden="true" data-action="opening-next"></button>
 </section>
-<section id="playback" aria-label="일정 장면" hidden></section><section id="conversation" aria-label="대화" hidden></section>
+<section id="playback" aria-label="일정 장면" hidden></section><button type="button" id="dialogue-visibility" aria-pressed="false">대화창 숨기기</button>
+<section id="conversation" aria-label="대화" hidden></section>
 <section id="calendar" aria-label="월간 일정" tabindex="-1" hidden></section>
 <section id="sheet" class="sheet" aria-labelledby="sheet-title" hidden>
 <header class="sheet-head"><h2 id="sheet-title" tabindex="-1"></h2><button type="button" class="close return-control" data-action="back"><span class="return-label">뒤로</span></button></header>
@@ -60,34 +60,30 @@
 </section>
 </div>
 </div><nav class="system-rail" aria-label="가문 수첩">
-<button hidden type="button" id="mobile-menu" data-action="open-menu">메뉴</button><span class="imprint" lang="en"><span>EARL</span> <span>PHANTOMHIVE</span> <span>MAKER</span></span><button type="button" id="rail-music" data-action="music" aria-label="배경음악">BGM</button><button type="button" data-action="open-guide" aria-controls="guide-replay">조작 안내</button><button id="rail-book" data-action="tab:record">가문 장부</button><button id="system-save" data-action="tab:save"><i></i>수첩 · 저장</button><button id="system-back" class="return-control" data-action="system-back" aria-keyshortcuts="Escape"><i aria-hidden="true"></i><span>뒤로</span> <kbd>Esc</kbd></button>
+<button hidden type="button" id="mobile-menu" data-action="open-menu">메뉴</button><span class="imprint" lang="en"><span>EARL</span> <span>PHANTOMHIVE</span> <span>MAKER</span></span><button type="button" id="rail-music" data-action="music" aria-label="배경음악">BGM</button><button type="button" data-action="open-guide" aria-controls="guide-replay">조작 안내</button><button id="system-book" data-action="tab:record"><i></i>가문 장부</button><button id="system-save" data-action="tab:save"><i></i>수첩 · 저장</button><button id="system-back" class="return-control" data-action="system-back" aria-keyshortcuts="Escape"><i aria-hidden="true"></i><span>뒤로</span> <kbd>Esc</kbd></button>
 </nav></main>
 </div>
 <div id="tour-ring" aria-hidden="true" hidden></div>
 <aside id="guide-replay" aria-labelledby="guide-replay-title" hidden>
-  <nav class="tour-chapters" aria-label="안내 주제"><button type="button" data-tour-chapter="0">일정표</button><button type="button" data-tour-chapter="1">저택·팬텀사</button><button type="button" data-tour-chapter="2">생활·기록</button></nav>
-  <div class="tour-speech" aria-live="polite" aria-atomic="true">
-    <div class="tour-portrait" aria-hidden="true"></div>
-    <div><div class="tour-byline"><span>세바스찬</span><span id="tour-count"></span></div>
-    <h2 id="guide-replay-title"></h2><p id="tour-hint"></p></div>
-  </div>
+  <header><span>세바스찬의 조작 안내</span><span id="tour-count"></span></header>
+  <div aria-live="polite" aria-atomic="true"><h2 id="guide-replay-title"></h2><p id="tour-hint"></p></div>
   <footer><button type="button" data-action="guide-close">안내 종료</button><button type="button" data-action="guide-prev">이전</button><button type="button" data-action="guide-forward">다음</button></footer>
 </aside>
 <dialog id="picker" aria-labelledby="picker-title"></dialog>
 <div id="fx-layer" class="fx-layer" popover="manual" aria-hidden="true"></div><div id="flash" class="flash" role="status"></div>
-<script src="js/tour.js?v=83e12cdc0011"></script>
-<script src="js/content.js?v=73aaa839cdcd"></script>
-<script src="js/prince.js?v=e8a735fc28a4"></script><script src="js/snake.js?v=7a9fd704c372"></script>
-<script src="js/story.js?v=981a0b3e570e"></script>
-<script src="js/scenes.js?v=4ec35ea4bca0"></script>
-<script src="js/audio.js?v=80fcded4306a"></script>
-<script src="js/reports.js?v=84cb6be2ffee"></script>
-<script src="js/prologue.js?v=43a40c4047b2"></script>
-<script src="js/chapters.js?v=f1216d541a9d"></script>
+<script src="js/tour.js?v=e380777efa81"></script>
+<script src="js/content.js?v=d769419af08b"></script>
+<link rel="stylesheet" href="css/recruit.css?v=b0fcf649ce20">
+<script src="js/prince.js?v=e8a735fc28a4"></script><script src="js/recruit.js?v=5ac9fa46403b"></script>
+<script src="js/story.js?v=34de2fcd8bbd"></script>
+<script src="js/scenes.js?v=7b5e2f2f3753"></script>
+<script src="js/audio.js?v=a2c2b562bba2"></script>
+<script src="js/reports.js?v=4f9c37d3604c"></script>
+<script src="js/prologue.js?v=9bdb9de8c466"></script>
+<script src="js/chapters.js?v=ad542ea111ab"></script>
 <script src="js/staffing.js?v=580e246534c9"></script>
-<script src="js/lessons.js?v=4faf4cc340e4"></script>
-<script src="js/endings.js?v=56f3abfa75e6"></script>
+<script src="js/term-events.js?v=88ff00703568"></script>
 <script src="js/visitors.js?v=128e1fbff437"></script>
 <script src="js/festivals.js?v=228cda8d104c"></script>
-<script src="js/almanac.js?v=6e56bb603cfb"></script>
-<script src="js/game.js?v=bed540a2d84c"></script></body></html>
+<script src="js/almanac.js?v=812c44fe099d"></script>
+<script src="js/game.js?v=8843513aa38b"></script></body></html>

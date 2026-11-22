@@ -3,7 +3,7 @@
 // Scene names also identify the replaceable background and sprite files.
 const stageNames = {
   library:"저택 서재", ballroom:"대연회장", office:"팬텀사 제작소", archive:"가문 문서고",
-  field:"승마장", gym:"저택 체조실", garden:"장미 정원", music:"음악실", bedroom:"도련님의 침실", street:"런던 상점가"
+  gym:"저택 체조실", field:"승마장", garden:"장미 정원", music:"음악실", bedroom:"도련님의 침실", street:"런던 상점가"
 };
 const sceneArt = {
   "library": "assets/room-library.webp",
@@ -40,36 +40,40 @@ const actors = {
   "waltz2": "assets/ciel-waltz2.png"
 };
 
+// A common four-frame cycle keeps the props and silhouette unique to each activity.
+const illustratedActivities=["dance","accounts","inquiry","letters","language","social","negotiate","exercise","practicum","developToy","supplier","estateWork","reception","casework","reading","recovery","outing"];
+function activityFrames(activity){
+  const ids=[1,2,3,4].map(frame=>activity+frame);
+  for(const id of ids)actors[id]="assets/lessons/"+id+".png";
+  return ids.join(" ");
+}
+
 // Room, acting sequence, blocking, prop animation, and scene direction are authored per activity.
 const choreography = {
   study:["library","read turn","read","page","책갈피가 꽂힌 곳을 펴고, 어제 푼 문제의 다음 줄을 읽습니다."],
   etiquette:["ballroom","greet bow","bow","glint","발끝을 모으고 손을 가슴에 얹습니다. 이번 인사는 정확히 세 박자입니다."],
-  accounts:["office","accounts-0 accounts-1 accounts-2 accounts-3","write","coin","원장 왼쪽의 매입가를 짚고 오른쪽에 남은 금액을 적습니다."],
-  inquiry:["archive","inquiry-0 inquiry-1 inquiry-2 inquiry-3","search","lens","장부를 등불에 비춥니다. 종이를 긁어 고친 흔적이 보입니다."],
+  accounts:["office",activityFrames("accounts"),"write","coin","주판알을 한 줄씩 밀어 매입가를 더합니다. 마지막 줄에서 검산을 시작합니다."],
+  inquiry:["archive",activityFrames("inquiry"),"search","lens","장부를 등불에 비춥니다. 종이를 긁어 고친 흔적이 보입니다."],
   riding:["field","trot1 trot2 trot3 trot4","ride","dust","고삐를 짧게 쥐고 울타리를 따라 한 바퀴 돕니다."],
-  letters:["library","letters-0 letters-1 letters-2 letters-3","write","letter","청첩장을 접고 봉인 위에 가문의 인장을 누릅니다."],
+  letters:["library",activityFrames("letters"),"write","letter","편지의 두 귀를 맞춰 접고 붉은 밀랍 위에 가문의 인장을 누릅니다."],
   rest:["bedroom","cupUp cupDown","rest","steam","찻잔을 내려놓고 벽난로의 장작이 타는 소리를 듣습니다."],
   walk:["garden","step1 step2","walk","leaf","정원 길을 천천히 걷습니다. 온실 앞에서 보폭이 한결 느려집니다."],
-  language:["library","language-0 language-1 language-2 language-3","recite","speech","라틴어 편지 한 줄을 소리 내어 읽고, 강세를 고쳐 다시 읽습니다."],
+  language:["library",activityFrames("language"),"recite","speech","라틴어 편지 한 줄을 소리 내어 읽고, 강세를 고쳐 다시 읽습니다."],
   music:["music","bowOut bowIn","play","notes","활을 현 위에 얹습니다. 네 마디를 끊지 않고 이어 봅니다."],
-  dance:["ballroom","waltz1 waltz2","waltz","beat","마룻바닥의 무늬를 따라 세 걸음, 반 바퀴 돌아 제자리로 옵니다."],
-  social:["ballroom","social-0 social-1 social-2 social-3","meet","speech","손님에게 먼저 인사를 건네고 대답이 끝날 때까지 기다립니다."],
-  negotiate:["office","negotiate-0 negotiate-1 negotiate-2 negotiate-3","meet","contract","견적서를 밀어 둡니다. 상대가 먼저 가격을 부를 차례입니다."],
-  exercise:["gym","exercise-0 exercise-1 exercise-2 exercise-3","stretch","beat","팔을 양옆으로 편 뒤, 호흡에 맞춰 무릎을 들어 올리고 균형을 잡습니다."],
-  practicum:["office","practicum-0 practicum-1 practicum-2 practicum-3","count","coin","제작실에서 넘어온 영수증을 집어 들고 금액과 잔돈을 대조합니다."],
-  developToy:["office","developToy-0 developToy-1 developToy-2 developToy-3","search","toy","장난감 기차를 작업대에 올리고 앞바퀴가 축에 맞물리는지 확인합니다."],
-  supplier:["street","supplier-0 supplier-1 supplier-2 supplier-3","inspect","delivery","진열창 앞에 멈춰 견본의 마감과 납기표를 대조합니다."],
-  estateWork:["archive","estateWork-0 estateWork-1 estateWork-2 estateWork-3","write","stamp","수선 요청서를 먼저 읽고 결재가 끝난 문서를 왼편에 쌓습니다."],
-  reception:["ballroom","reception-0 reception-1 reception-2 reception-3","toast","glint","잔을 들어 손님들에게 인사하고, 건배가 끝날 때까지 기다립니다."],
-  casework:["street","casework-0 casework-1 casework-2 casework-3","search","lens","골목의 발자국을 살핀 뒤 수첩에 현장 약도를 그립니다."],
-  reading:["bedroom","reading-0 reading-1 reading-2 reading-3","read","page","오늘은 교본 대신 추리소설을 무릎 위에 올려 둡니다."],
-  recovery:["bedroom","recovery-0 recovery-1 recovery-2 recovery-3","rest","sun","약속을 미룬 오후입니다. 해가 기울 때까지 안락의자에서 쉽니다."],
-  outing:["street","outing-0 outing-1 outing-2 outing-3","browse","leaf","마차에서 내려 쇼윈도를 구경합니다. 약속한 시각 전에 돌아갑니다."]
+  dance:["ballroom",activityFrames("dance"),"waltz","beat","마룻바닥의 무늬를 따라 세 걸음, 반 바퀴 돌아 제자리로 옵니다."],
+  social:["ballroom",activityFrames("social"),"meet","speech","손님에게 먼저 인사를 건네고 대답이 끝날 때까지 기다립니다."],
+  negotiate:["office",activityFrames("negotiate"),"meet","contract","견적서를 밀어 둡니다. 상대가 먼저 가격을 부를 차례입니다."],
+  exercise:["gym",activityFrames("exercise"),"calisthenics","beat","체조실 거울 앞에 섭니다. 두 팔을 펴고 무릎을 번갈아 올리며 네 박자마다 숨을 고릅니다."],
+  practicum:["office",activityFrames("practicum"),"count","coin","영수증 한 장에 동전 한 닢이 모자랍니다. 맞춰 본 전표를 오른쪽 함에 넣습니다."],
+  developToy:["office",activityFrames("developToy"),"search","toy","목제 견본의 바퀴를 굴려 보고 도면의 축 길이를 고칩니다."],
+  supplier:["street",activityFrames("supplier"),"meet","delivery","진열창 앞에 멈춰 견본의 마감과 납기표를 대조합니다."],
+  estateWork:["archive",activityFrames("estateWork"),"write","stamp","수선 요청서를 먼저 읽고 결재가 끝난 문서를 왼편에 쌓습니다."],
+  reception:["ballroom",activityFrames("reception"),"meet","glint","잔을 들어 건배하고, 맞은편 손님에게 차례로 인사를 건넵니다."],
+  casework:["street",activityFrames("casework"),"search","lens","골목의 발자국을 살핀 뒤 수첩에 현장 약도를 그립니다."],
+  reading:["bedroom",activityFrames("reading"),"read","page","오늘은 교본 대신 추리소설을 무릎 위에 올려 둡니다."],
+  recovery:["bedroom",activityFrames("recovery"),"rest","sun","약속을 미룬 오후입니다. 해가 기울 때까지 안락의자에서 쉽니다."],
+  outing:["street",activityFrames("outing"),"walk","leaf","마차에서 내려 쇼윈도를 구경합니다. 약속한 시각 전에 돌아갑니다."]
 };
-const actionFrames=["social","negotiate","exercise","practicum","casework","reading","recovery","outing","accounts","inquiry","letters","language","developToy","supplier","estateWork","reception"];
-for(const activity of actionFrames){
-  for(let frame=0;frame<4;frame++)actors[activity+"-"+frame]="assets/sprites/"+activity+"-"+frame+".png";
-}
 const extraActivities = {
   language:["라틴어",23,{지성:8,매력:6},10],music:["바이올린",25,{기품:8,의지:5},8],
   dance:["무도 수업",25,{기품:8,체력:5},10],social:["사교 수업",20,{매력:10,기품:4},9],
@@ -88,7 +92,8 @@ const categories = [
 const servants = {
   tanaka:{name:"타나카",home:"library",job:"library"}, finny:{name:"피니안",home:"garden",job:"garden"},
   mey:{name:"메이린",home:"quarters",job:"parlor"}, bard:{name:"바르도",home:"kitchen",job:"kitchen"},
-  snake:{name:"스네이크",home:"quarters",job:"guard"}, soma:{name:"소마",home:"townhouse",job:null}
+  snake:{name:"스네이크",role:"풋맨",home:"quarters",job:"guard"}, soma:{name:"소마",home:"townhouse",job:null},
+  agni:{name:"아그니",home:"townhouse",job:null}
 };
 const annex = {
   bedroom:{name:"침실",cost:75,desc:"개수마다 휴식·요양의 건강 회복 +5"},
@@ -108,6 +113,14 @@ const visiting = {
 };
 function calendarDate(turn,day=1){return new Date(Date.UTC(1886,turn-1,day));}
 function monthText(turn){const d=calendarDate(turn);return d.getUTCFullYear()+"년 "+(d.getUTCMonth()+1)+"월";}
+function campaignAge(run){
+  let day=1;
+  if(run.sequence)day=(run.sequence.index??0)*10+(run.phase==="scene"?1:9);
+  else if(["event","result","vow","investiture","ending"].includes(run.phase)&&!["estate","plan"].includes(run.recruitReturn))day=28;
+  return ageAt(run.month,day);
+}
+function currentCielAge(){return tourSession?.age??campaignAge(state);}
+function cielArt(age){return age>=12?"assets/ciel-12.webp":age===11?"assets/ciel-11.webp":"assets/ciel.png";}
 function ageAt(turn,day=1){const d=calendarDate(turn,day);return d.getUTCFullYear()-1875-(d.getUTCMonth()<11||d.getUTCDate()<14?1:0);}
 function peopleInHouse(){return Object.keys(servants).filter(k=>state.people[k]);}
 function talkTrust(id,n=1,other=1){
@@ -136,7 +149,8 @@ function trainHousehold(run){
   if(changes.length)run.log.push("사용인 실무 숙련도 · "+changes.join(" / "));
 }
 function shiftAssigned(room){return Object.entries(state.jobs).some(([p,r])=>r===room&&servants[p].job===room);}
-function rank(n){return n>=9?"속을 터놓음":n>=5?"의지함":n>=3?"익숙함":"살피는 중";}
+function trustTier(n){return n>=9?3:n>=5?2:n>=3?1:0;}
+function rank(n){return ["살피는 중","익숙함","의지함","속을 터놓음"][trustTier(n)];}
 
 const stats = ["지성","기품","매력","경영","통찰","의지","체력"];
 const abilityMax = 500;
@@ -153,7 +167,6 @@ const actions = {
 };
 for (const [id,[name,cost,gains,stress,health=0]] of Object.entries(extraActivities))
   actions[id]={name,cost,gains,stress,health};
-const courseIds=categories.slice(0,2).flatMap(([,ids])=>ids);
 const trainingRooms={study:"library",inquiry:"library",language:"library",etiquette:"parlor",dance:"parlor",social:"parlor"};
 const facilities = {
   library:{name:"서재",cost:90,desc:"개수마다 서재 수업·기록 조사·라틴어의 각 성장치 +4 (피로 보정 전)"},
@@ -169,3 +182,75 @@ const products = {
   hamper:{name:"기념 선물 세트",research:125,unit:14,demand:[7,10,11,9,13,16],price:26}
 };
 const visits=Object.fromEntries(Object.entries(visiting).map(([id,[label]])=>[id,label]));
+
+const productBuyers={
+  toys:"런던 완구상회",plush:"리버티 완구점",game:"체스 클럽",sweets:"빅토리아 다실",candy:"역전 매점",hamper:"지역 호텔 조합"
+};
+function productHistory(run,id){
+  return run.productHistory?.[id]||{reputation:0,units:0,orders:0};
+}
+function recentRetail(run,id){
+  return run.salesBook.filter(r=>r.product===id&&r.month>=run.month-3&&r.month<run.month)
+    .reduce((sum,r)=>sum+r.sold,0);
+}
+function customerOffer(run,id){
+  const line=productHistory(run,id);
+  if(run.order||run.month>=run.duration||line.reputation<3||!run.unlocked.includes(id))return null;
+  const qty=Math.min(13,6+Math.floor(line.reputation/3)+line.orders);
+  return {id,qty,due:run.month+1,shortFee:run.flags.checkedReceipt?1:2,rate:products[id].price+1+Math.min(3,line.orders)+(run.flags.sharedReceipt?1:0)};
+}
+function businessTerms(run,id){
+  const p=products[id], note=run.productNotes?.[id];
+  const material=note?.material==="select";
+  return {cost:material?2:0,premium:material?2:0,
+    skill:note?.lead==="maker"?1:0, reach:note?.lead==="sales"?2:0,
+    pressure:Math.min(Math.ceil(p.demand[(run.month-1)%6]*0.60),Math.floor(recentRetail(run,id)/4))};
+}
+function operatingCost(shop){
+  return Object.values(shop).reduce((n,level)=>n+5*(level-1),0);
+}
+function supplyPlan(run,shop,demand,unit,receipt){
+  const id=run.product,order=run.order?.due===run.month?run.order:null;
+  const stock={...run.stock},fine={...run.fineStock};
+  stock[id]+=run.qty;
+  if(run.quality==="fine")fine[id]=(fine[id]||0)+run.qty;
+  // Wholesale buyers accept both grades. Ship standard stock first.
+  const shipped=order?Math.min(stock[order.id],order.qty):0;
+  if(order){
+    stock[order.id]-=shipped;
+    fine[order.id]=Math.min(fine[order.id]||0,stock[order.id]);
+  }
+  const available=run.quality==="fine"?(fine[id]||0):stock[id]-(fine[id]||0);
+  const sold=Math.min(demand,available);
+  stock[id]-=sold;
+  if(run.quality==="fine")fine[id]-=sold;
+  const holding=Math.ceil(Math.max(0,Object.values(stock).reduce((n,v)=>n+v,0)-8)*0.75);
+  const short=order?order.qty-shipped:0;
+  const trade={holding,operation:operatingCost(shop),penalty:short*(order?.shortFee??2),wholesale:order?shipped*order.rate:0,shipped,short,order,stock,fine};
+  const revenue=sold*receipt+trade.wholesale,cost=run.qty*unit,expenses=holding+trade.penalty+trade.operation;
+  return {unit,demand,receipt,sold,available,cost,revenue,expenses,margin:revenue-cost-expenses,trade};
+}
+function recordTrading(run,id,sold,trade){
+  function add(key,units,reputation,orders=0){
+    const old=productHistory(run,key);
+    run.productHistory[key]={units:old.units+units,reputation:cap(old.reputation+reputation,20),orders:old.orders+orders};
+  }
+  const quality=run.quality==="fine"||run.productNotes?.[id]?.material==="select";
+  add(id,sold,sold>=6?(quality?2:1):0);
+  if(trade.order){
+    add(trade.order.id,trade.shipped,trade.short?-2:2,trade.short?0:1);
+    run.order=null;
+  }
+  run.stock=trade.stock;run.fineStock=trade.fine;
+}
+function restoreTrading(run){
+  if(!run.productHistory){
+    run.productHistory={};
+    for(const row of run.salesBook){
+      if(!products[row.product])continue;
+      const line=productHistory(run,row.product);
+      run.productHistory[row.product]={...line,units:line.units+row.sold,reputation:Math.min(20,line.reputation+(row.sold>=6?1:0))};
+    }
+  }
+  if(!run.fineStock)run.fineStock=run.quality==="fine"?{[run.product]:run.stock[run.product]}:{};
+}

@@ -1,6 +1,11 @@
 "use strict";
 
 const musicTracks = {
+  illness:{title:"Illness",file:"assets/audio/illness.mp3"},
+  harvest:{title:"Harvest Festival",file:"assets/audio/harvest.mp3"},
+  newYear:{title:"New Year’s Garden Party",file:"assets/audio/new-year.mp3"},
+  titleApproval:{title:"작위 승인",file:"assets/audio/title-approval.mp3",once:true},
+  goodEnding:{title:"굿엔딩",file:"assets/audio/good-ending.mp3"},
   dance:{title:"Studying of Dance",file:"assets/audio/dance.mp3"},
   violin:{title:"Studying of Music",file:"assets/audio/violin.mp3"},
   etiquette:{title:"Well Behaved",file:"assets/audio/etiquette.mp3"},
@@ -35,20 +40,41 @@ const mixer={
 };
 
 const eventTracks={
-  discipline:"gloomy",circus:"gloomy",snakeArrival:"gloomy",match:"gloomy",chapel:"gloomy",birthday:"gloomy",
-  homecoming:"cheerful",gardener:"cheerful",jubilee:"cheerful",expo:"cheerful",greenhouseKey:"cheerful",rose:"cheerful",
-  unasked:"romantic",teaPrivilege:"romantic"
+  discipline:"gloomy",match:"gloomy",chapel:"gloomy",postalReply:"gloomy",birthday:"gloomy",
+  audience:"etiquette",agniTray:"etiquette",room:"etiquette",bargainManners:"etiquette",
+  gloves:"etiquette",salute:"etiquette",chair:"etiquette",
+  jubilee:"cheerful",expo:"cheerful",birthday2:"cheerful",rose:"cheerful",finnyRoseLabel:"cheerful",
+  greenhouseKey:"romantic",unasked:"romantic",teaPrivilege:"romantic",snakeReturn:"romantic",
+  trade:"daily",linenMarks:"daily",bardSupper:"daily",supplierReply:"daily"
 };
 function eventTrack(id){
-  if(id?.startsWith("season-"))return "cheerful";
-  return eventTracks[id]||"daily";
+  if(Object.hasOwn(eventTracks,id))return eventTracks[id];
+  if(id?.startsWith("season-")){
+    const month=(Number(id.slice(7))-1)%12+1;
+    return month===1?"newYear":month===9?"harvest":"cheerful";
+  }
+  return "daily";
 }
 
+function recruitTrack(id,at){
+  const scene=recruitScenes[id].lines[at].scene;
+  return scene.music || (Object.hasOwn(eventTracks,id)?eventTracks[id]:id==="maid"?"gloomy":"daily");
+}
+
+const endingTracks={
+  vowTitle:"goodEnding",title:"goodEnding",business:"business",releaseTitle:"gloomy",releaseNoTitle:"gloomy",
+  ill:"gloomy",broke:"gloomy",defer:"manor",vowNoTitle:"manor"
+};
 function trackForView(){
   if(tourSession||(tab==="plan"&&state.phase==="guide"))return "tutorial";
-  const finale=endingId();
-  if(finale)return endings[finale].track;
   if(inOpening())return "prologue";
+  if(tab==="plan"&&state.phase==="investiture")return "titleApproval";
+  if((tab==="plan"&&state.phase==="ending")||(tab==="endingMemory"&&endingReplay)){
+    const id=tab==="endingMemory"?endingReplay.id:state.ending;
+    return endingTracks[id]||"manor";
+  }
+  if(state.ill && !["staffMemory","recollection","endingMemory","title"].includes(tab))return "illness";
+  if(tab==="staffMemory"&&recruitMemory)return recruitTrack(recruitMemory.id,recruitMemory.at);
   if(tab==="market")return "market";
   if(tab==="company"||tab==="estate"||tab==="staffing"||tab==="townhouse")return "business";
   if(tab==="chat")return "daily";
@@ -56,18 +82,20 @@ function trackForView(){
     if(state.phase==="visit")return eventTrack(state.sequence?.visitEvent);
     if(state.phase==="event"||state.phase==="slotEvent"){
       const event=pendingEvent();
-      return event?.exam?"test":eventTrack(event?.id);
+      if(event && Object.hasOwn(recruitScenes,event.id))return recruitTrack(event.id,recruitPage(event.id));
+      if(event?.id==="birthday"&&state.termOutcome?.id==="birthday")return "romantic";
+      return event?.track||(event?.exam&&!Object.hasOwn(eventTracks,event.id)?"test":eventTrack(event?.id));
     }
   }
   if(tab==="plan"&&["scene","slotEvent","review"].includes(state.phase)&&state.sequence){
-    const id=sequenceActivity();
+    const id=state.plan[state.sequence.index];
     if(id==="etiquette"||id==="dance")return id;
     if(id==="music")return "violin";
     if(categories[2][1].includes(id))return "business";
     if(categories[3][1].includes(id))return "manor";
     return "study";
   }
-  if(tab==="save"||tab==="record"||tab==="status")return musicPlayer.backgroundTrack;
+  if(tab==="save"||tab==="record"||tab==="status")return musicPlayer.backgroundTrack==="illness"?"manor":musicPlayer.backgroundTrack;
   return "manor";
 }
 
@@ -103,7 +131,7 @@ const musicPlayer=(()=>{
   }
   function sync(key=selected,retry=false){
     if(key!=="tutorial")backgroundTrack=key==="prologue"?"manor":key;
-    if((key==="prologue"||key==="tutorial")&&selected!==key&&tracks.has(key))tracks.get(key).el.currentTime=0;
+    if(["prologue","tutorial","titleApproval","goodEnding"].includes(key)&&selected!==key&&tracks.has(key))tracks.get(key).el.currentTime=0;
     selected=key;
     if(!musicTracks[key].file){
       stop();
@@ -113,10 +141,10 @@ const musicPlayer=(()=>{
     if(failed===key&&!retry)return;
     let entry=tracks.get(key);
     if(!entry){
-      const el=new Audio(musicTracks[key].file);el.loop=true;el.volume=0;
+      const el=new Audio(musicTracks[key].file);el.loop=!musicTracks[key].once;el.volume=0;
       entry={el,pending:false};tracks.set(key,entry);
     }
-    if(entry.pending)return;
+    if(entry.pending||(musicTracks[key].once&&entry.el.ended))return;
     if(!entry.el.paused){fadeTo(key);return;}
     failed=null;entry.pending=true;
     entry.el.play().then(()=>{
