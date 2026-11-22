@@ -69,6 +69,7 @@ function snakeArrivalEvent(){
     source:"노아의 방주 서커스 · 스코틀랜드 야드 체포 이후의 IF",
     text:"단원들의 짐에 남은 편지를 들고 스네이크가 런던의 타운하우스를 찾았다. 소마와 아그니가 내준 마차를 타고 찾아간 본저택에서, 그는 시엘의 손을 잡았다.",
     sees:canReceiveSnake,
+    sceneLengths:scenes.map(scene=>scene.lines.length),
     lines:scenes.flatMap(({room,cast,lines})=>lines.map(([who,line])=>[who,line,{room,cast}])),
     prompt:["연출","사용인 명부의 빈 줄에 스네이크가 제 이름을 썼다. 오스카는 잉크가 마를 때까지 그 옆에 턱을 괴고 있었다.",{room:"library",cast:["스네이크","세바스찬"]}],
     choices:[choice("근무표에 이름을 올린다","스네이크 합류 · 저택 경비 담당",()=>recruit("snake"))]

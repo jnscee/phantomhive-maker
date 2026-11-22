@@ -40,8 +40,7 @@ const eventTracks={
   unasked:"romantic",teaPrivilege:"romantic"
 };
 function eventTrack(id){
-  if(id?.startsWith("season-"))return "cheerful";
-  return eventTracks[id]||"daily";
+  return (Object.hasOwn(eventTracks,id)?eventTracks[id]:null) || (id?.startsWith("season-")?"cheerful":"daily");
 }
 
 function trackForView(){
@@ -56,7 +55,7 @@ function trackForView(){
     if(state.phase==="visit")return eventTrack(state.sequence?.visitEvent);
     if(state.phase==="event"||state.phase==="slotEvent"){
       const event=pendingEvent();
-      return event?.exam?"test":eventTrack(event?.id);
+      return event?.track || (event?.exam && !Object.hasOwn(eventTracks,event.id) ? "test" : eventTrack(event?.id));
     }
   }
   if(tab==="plan"&&["scene","slotEvent","review"].includes(state.phase)&&state.sequence){

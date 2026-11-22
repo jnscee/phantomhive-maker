@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 import shutil
 import zipfile
@@ -34,12 +35,26 @@ def build(output):
             target = output / path
             target.parent.mkdir(exist_ok=True, parents=True)
             target.write_bytes(images.read(name))
+    # Individual media files from the editor override the archived originals.
+    for asset in (source / "assets").rglob("*"):
+        if asset.is_file():
+            target = output / asset.relative_to(source)
+            target.parent.mkdir(exist_ok=True, parents=True)
+            shutil.copyfile(asset, target)
     for extension in ("js", "css"):
         folder = output / extension
         folder.mkdir(exist_ok=True)
         for path in source.glob(f"*.{extension}"):
             shutil.copyfile(path, folder / path.name)
-    shutil.copyfile(source / "index.html", output / "index.html")
+    html = (source / "index.html").read_text(encoding="utf-8")
+    # Rebuilding game files must also invalidate URLs stored by browsers.
+    def version_script(match):
+        path = match[1]
+        digest = hashlib.sha256((output / path).read_bytes()).hexdigest()[:12]
+        return f'src="{path}?v={digest}"'
+
+    html = re.sub(r'src="(js/[\w-]+\.js)(?:\?v=[^"]+)?"', version_script, html)
+    (output / "index.html").write_text(html, encoding="utf-8")
 
 
 if __name__ == "__main__":

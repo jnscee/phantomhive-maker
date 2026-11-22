@@ -16,3 +16,7 @@ py -m http.server 8000 --bind 127.0.0.1 --directory playable
 ```
 
 브라우저에서 [게임 시작 화면](http://127.0.0.1:8000/)을 여세요. 처음 만드는 `playable` 폴더에는 게임 전체가 들어가므로 이후에는 두 번째 명령만 실행하면 됩니다. 서버를 종료하려면 Ctrl+C를 누르세요.
+
+## 콘텐츠 편집기
+
+대사·이벤트·BGM·CG·화면 효과 수정과 게임 ZIP 내보내기는 [콘텐츠 편집기 사용법](../tools/content-editor/README.md)을 참고하세요.

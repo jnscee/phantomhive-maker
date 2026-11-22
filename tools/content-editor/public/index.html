@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>팬텀하이브 콘텐츠 편집기</title>
+  <link rel="stylesheet" href="/editor.css">
+  <script src="/editor.js" defer></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand"><span class="seal" aria-hidden="true">P</span><div><span class="imprint">EARL PHANTOMHIVE MAKER</span><h1>콘텐츠 편집기</h1></div></div>
+    <div class="toolbar">
+      <button id="undo" disabled>마지막 적용 되돌리기</button>
+      <a id="export" class="button" href="/export.zip">게임 ZIP 받기</a>
+      <button class="primary" id="save" disabled>게임 파일에 적용</button>
+    </div>
+  </header>
+  <main class="workspace">
+    <aside class="catalog" aria-label="콘텐츠 목록">
+      <label class="search">콘텐츠 검색<input id="search" type="search" placeholder="이름, 대사, 이벤트 ID" autocomplete="off"></label>
+      <nav id="sections" aria-label="콘텐츠 종류"></nav>
+      <div class="list-head"><h2 id="list-title">스토리</h2><button id="new-event" type="button" hidden>＋ 이벤트</button></div>
+      <div class="list" id="list" aria-labelledby="list-title"></div>
+    </aside>
+    <section class="desk" aria-labelledby="entry-title">
+      <header class="entry-head">
+        <div><p id="entry-detail" class="eyebrow"></p><h2 id="entry-title">게임 파일을 읽는 중</h2></div>
+        <button id="preview" disabled>게임에서 미리보기 ↗</button>
+      </header>
+      <div class="fields" id="fields"></div>
+    </section>
+  </main>
+  <footer class="statusbar">
+    <p id="status" role="status">게임 파일을 읽는 중입니다.</p>
+    <div><button id="discard" disabled>수정 취소</button><span id="pending">변경 0건</span></div>
+  </footer>
+  <dialog id="game-dialog">
+    <header><h2>게임 미리보기</h2><form method="dialog"><button>닫기</button></form></header>
+    <iframe title="팬텀하이브 백작 메이커 테스트 플레이" sandbox="allow-scripts"></iframe>
+  </dialog>
+</body>
+</html>

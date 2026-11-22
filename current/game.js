@@ -108,7 +108,7 @@ function flagEvent(id,effect){
   state.flags[id]=true;
   effect();
 }
-const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),masteryEvents());
+const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),masteryEvents(),authoredStoryEvents());
 
 function pendingEvent(){
   return events.find(event=>event.id===state.pending);
@@ -153,7 +153,8 @@ function settleMonth(){
   const candidates=events.filter(e=>!e.scheduled&&!e.slot&&!e.activitySet&&!e.season&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
   const event=state.duration===35?(candidates.find(e=>birthdayScenes[e.id]&&[12,24].includes(state.month))||candidates.find(e=>e.chapter)||candidates[0]):candidates.find(e=>!e.chapter);
   const seasonal=state.duration===35?events.find(e=>e.season&&e.sees(state)&&!state.flags[e.id]):null;
-  state.eventQueue=[event,seasonal].filter(Boolean).map(e=>e.id);
+  const authored=events.filter(e=>e.authored&&!state.flags[e.id]&&e.sees(state));
+  state.eventQueue=[event,seasonal,...authored].filter(Boolean).map(e=>e.id);
   queueSnakeArrival(state);
   state.pending=state.eventQueue.shift()||null;
   state.phase=state.pending?"event":"result";
@@ -485,8 +486,9 @@ function normalizeSave(run){
   });
   // Both London hosts appeared in the prince chapter, including its older second choice.
   if(copy.people.soma&&copy.flags.visitPrince)copy.flags.agni=true;
-  if(copy.eventQueue)copy.eventQueue=copy.eventQueue.filter(id=>id!=="circus");
-  if(copy.phase==="event"&&copy.pending==="circus"){
+  const unavailable=id=>id==="circus"||(typeof id==="string"&&id.startsWith("custom-")&&!events.some(event=>event.id===id));
+  if(copy.eventQueue)copy.eventQueue=copy.eventQueue.filter(id=>!unavailable(id));
+  if(copy.phase==="event"&&unavailable(copy.pending)){
     copy.pending=copy.eventQueue?.shift()||null;
     copy.phase=copy.pending?"event":"result";
     delete copy.eventPage;

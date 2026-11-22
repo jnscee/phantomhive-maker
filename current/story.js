@@ -18,6 +18,17 @@ function effectChoice(row){
     }
   },gate,hint);
 }
+// Additional one-time events authored in the content editor.
+const authoredEvents=[];
+function authoredStoryEvents(){
+  return authoredEvents.map(({id,month,title,room,track,lines,label,result})=>({
+    id, title, track, authored:true, scheduled:true, text:lines[0][1],
+    sees:run=>run.duration===35&&run.month===month,
+    lines:lines.map(([speaker,text])=>[speaker,text,{room}]),
+    prompt:["연출",result,{room}],
+    choices:[choice(label,title,()=>{})]
+  }));
+}
 function scriptedEvents(){
   const timed=[
     [5,"expo","박람회의 유리 진열장","전시 책임자가 완구 하나만 골라 달라고 합니다. 태엽 인형 곁에는 아이가 직접 굴릴 수 있는 작은 수레가 있습니다.",
