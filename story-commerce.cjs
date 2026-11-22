@@ -3,7 +3,7 @@ const mem=new Map(),elements=new Map();
 function element(){return {isConnected:true,dataset:{},style:{setProperty(){}},addEventListener(){},setAttribute(){},focus(){},querySelector(){return this},querySelectorAll(){return []},classList:{contains(){return false},toggle(){}}}}
 const doc={hidden:false,getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id)},querySelectorAll(){return []},addEventListener(){}};
 const ctx=vm.createContext({console,structuredClone,document:doc,ResizeObserver:class {observe(){}},localStorage:{getItem:k=>mem.get(k)||null,setItem:(k,v)=>mem.set(k,v)},setTimeout,clearTimeout,clearInterval,window:{getSelection(){return null},addEventListener(){}},URLSearchParams});
-for(const name of ['content','recruit','story','scenes','audio','reports','prologue','chapters','staffing','game']){
+for(const name of ['content','recruit','story','scenes','audio','reports','prologue','chapters','staffing','term-events','game']){
  let s=fs.readFileSync(require('node:path').join(process.argv[2]||'site','js',name+'.js'),'utf8');if(name==='game')s=s.slice(0,s.indexOf('\nrender();\nif(state.phase'));
  vm.runInContext(s,ctx,{filename:name+'.js'});
 }
@@ -77,3 +77,76 @@ const result=vm.runInContext(`(()=>{
  return {patterns:all.size,latest:last};
 })()`,ctx,{timeout:12000});
 console.log('4096 seeds',JSON.stringify(result));
+
+// A complete campaign from the starting estate, including tuition, trade, fatigue and both birthdays.
+ctx.campaignSchedule=[
+  ["accounts", "dance", "inquiry", 14, 15],
+  ["walk", "etiquette", "dance", 14, 13],
+  ["etiquette", "walk", "accounts", 13, 12],
+  ["music", "casework", "music", 13, 11],
+  ["walk", "inquiry", "music", 14, 16],
+  ["developToy", "casework", "recovery", 15, 15],
+  ["casework", "recovery", "inquiry", 13, 13],
+  ["dance", "recovery", "casework", 14, 14],
+  ["etiquette", "recovery", "study", 13, 14],
+  ["accounts", "recovery", "study", 15, 17],
+  ["inquiry", "recovery", "etiquette", 14, 18],
+  ["recovery", "dance", "negotiate", 15, 19],
+  ["practicum", "negotiate", "practicum", 14, 15],
+  ["recovery", "accounts", "practicum", 13, 16],
+  ["recovery", "negotiate", "letters", 13, 17],
+  ["recovery", "exercise", "exercise", 13, 18],
+  ["exercise", "walk", "riding", 14, 20],
+  ["exercise", "recovery", "reading", 15, 21],
+  ["language", "reading", "reading", 13, 17],
+  ["study", "language", "developToy", 14, 18],
+  ["walk", "letters", "walk", 14, 17],
+  ["letters", "social", "reception", 15, 21],
+  ["social", "social", "recovery", 15, 19],
+  ["developToy", "language", "reception", 15, 21],
+  ["music", "music", "music", 14, 19],
+  ["reading", "reading", "reading", 13, 18],
+  ["reception", "letters", "letters", 14, 17],
+  ["practicum", "practicum", "accounts", 14, 17],
+  ["developToy", "developToy", "developToy", 15, 19],
+  ["recovery", "recovery", "developToy", 15, 19],
+  ["recovery", "walk", "walk", 13, 15],
+  ["rest", "rest", "rest", 14, 19],
+  ["rest", "rest", "rest", 14, 17],
+  ["rest", "rest", "rest", 15, 21],
+  ["rest", "rest", "rest", 15, 19]
+];
+const fullRun=vm.runInContext(`(()=>{
+  state=initial();state.owlSeed=0;state.phase="plan";tab="plan";
+  for(const [a,b,c,price,qty] of campaignSchedule){
+    if(state.phase!=="plan")throw Error("Could not enter calendar at "+state.month);
+    state.plan=[a,b,c];state.visit="town";state.price=price;state.qty=qty;
+    execute();
+    if(state.phase!=="scene")throw Error("Infeasible budget at "+state.month);
+    for(let steps=0;steps<180;steps++){
+      if(state.phase==="scene")finishScene();
+      else if(state.phase==="review")continueSequence();
+      else if(state.phase==="event"||state.phase==="slotEvent"){
+        const event=pendingEvent();
+        if(state.termOutcome){
+          state=normalizeSave(saves.auto);handleAction("term-close");
+        }else if(termPages(event)&&(state.termPage||0)<termPages(event).length-1){
+          handleAction("term-next:"+(state.termPage||0));
+        }else{
+          if(recruitScenes[event.id])state.recruitPage={id:event.id,at:recruitScenes[event.id].lines.length-1,version:2};
+          choose(event.choices.findIndex(ch=>!ch.when||ch.when(state)));
+        }
+      }else if(state.phase==="visit"){
+        if(state.sequence.visitEvent)chooseVisitEvent(0);
+        else if(state.sequence.visitBefore)finishVisit();else visitDone(true);
+      }else if(state.phase==="result")advance();
+      else break;
+    }
+  }
+  return {finished:state.phase==="ending"||state.phase==="investiture",stats:Object.values(state.stats),
+    birthdays:state.events.filter(e=>birthdayDialogue[e.id]).map(e=>e.month),exams:state.events.filter(e=>e.id.startsWith("portfolio-")).length};
+})()`,ctx,{timeout:8000});
+assert.ok(fullRun.finished);assert.equal(fullRun.exams,14);
+assert.deepEqual(Array.from(fullRun.stats),Array(7).fill(500));
+assert.deepEqual(Array.from(fullRun.birthdays),[12,24]);
+console.log('PASS 35 months from the initial estate, 7 x 500, 14 portfolio exams and both birthdays.');

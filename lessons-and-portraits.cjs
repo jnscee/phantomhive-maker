@@ -3,7 +3,7 @@ const {chromium,firefox}=require('playwright');
 const assert=require('node:assert/strict');
 const base='http://127.0.0.1:4173/';
 async function check(browserType){
-  const browser=await browserType.launch({headless:true});
+  const browser=await browserType.launch({headless:true,...(browserType===chromium&&process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
   try{
     for(const viewport of [{width:1280,height:800},{width:390,height:844}]){
       const page=await browser.newPage({viewport,reducedMotion:'reduce'});
@@ -47,13 +47,13 @@ async function check(browserType){
       assert.ok(await page.locator('#sheet').isVisible());
       assert.ok((await page.locator('#sheet').evaluate(e=>+getComputedStyle(e).zIndex))>(await page.locator('#date').evaluate(e=>+getComputedStyle(e).zIndex)));
       await page.evaluate(()=>{tab='market';render();});
-      assert.equal(await page.locator('.goods-ticket').count(),7);
+      assert.equal(await page.locator('.goods-ticket').count(),13);
       await page.locator('[data-action="goods:weights"]').click();
       await page.locator('[data-action="buy:weights"]').click();
       assert.ok(await page.locator('[data-action="buy:weights"]').isDisabled());
       await page.evaluate(()=>{tab='plan';state.plan=['exercise','study','walk'];state.visit='none';execute();});
       await page.locator('.performer img').evaluate(im=>im.decode());
-      assert.equal(await page.locator('.lesson-plane').getAttribute('data-room'),'ballroom');
+      assert.equal(await page.locator('.lesson-plane').getAttribute('data-room'),'gym');
       assert.ok(await page.locator('.performer').evaluate(e=>e.getBoundingClientRect().height>10&&getComputedStyle(e).animationName!=='none'));
       assert.ok(await page.evaluate(()=>!state.lessonKit.exercise));
       const first=await page.locator('.performer img').getAttribute('src');
@@ -62,6 +62,43 @@ async function check(browserType){
       await page.locator('[data-action="motion:reduced"]').click();
       await page.reload();
       assert.equal(await page.locator('html').getAttribute('data-game-motion'),'reduced');
+      // Enter the normal last month at either side of the will boundary and with either royal verdict.
+      for(const [will,approved,id] of [[349,true,'releaseTitle'],[350,true,'vowTitle'],[349,false,'releaseNoTitle'],[350,false,'vowNoTitle']]){
+        await page.evaluate(({will,approved})=>{
+          state=initial();state.month=state.planMonth=35;state.phase='result';tab='plan';
+          for(const person of ['finny','mey','bard','tanaka','snake'])recruit(person);
+          Object.assign(state.stats,Object.fromEntries(stats.map(s=>[s,500])));state.stats.의지=will;
+          state.flags.deed=approved;state.hp=90;state.fund=2500;state.royal=15;state.renown=70;
+          Object.assign(state.level,{parlor:3,library:3});state.shop.works=3;
+          advance();
+        },{will,approved});
+        if(approved)await page.locator('[data-action="read-verdict"]').click();
+        assert.equal(await page.locator('.ending-cg').getAttribute('data-ending'),id);
+        await page.locator('.ending-cg').evaluate(im=>im.decode());
+        await page.locator('#conversation [data-read="next"]').click();
+        const line=await page.locator('#conversation .dialogue p').textContent();
+        await page.reload();assert.equal(await page.locator('#conversation .dialogue p').textContent(),line);
+        await page.locator('#dialogue-visibility').click();assert.equal(await page.locator('#conversation .dialogue').isVisible(),false);
+        await page.locator('#dialogue-visibility').click();
+        await page.locator('#conversation [data-read="skip"]').click();
+        await page.locator('#conversation [data-read="finish"]').click();assert.ok(await page.locator('#sheet').isVisible());
+      }
+      await page.evaluate(()=>{
+        state=initial();state.phase='plan';tab='record';saves.gallery={ill:'건강 악화로 종료'};
+        saves[1]={...initial(),phase:'ending',ending:'broke'};delete saves.auto;delete saves[2];delete saves[3];render();
+      });
+      assert.equal(await page.locator('.ending-thumb').count(),2);
+      await page.locator('[data-action="ending-art:ill"]').click();
+      await page.locator('.ending-cg').evaluate(im=>im.decode());await page.locator('#system-back').click();
+      assert.equal(await page.evaluate(()=>tab),'record');
+      await page.evaluate(async()=>{
+        if(Object.keys(endingScenes).length!==9)throw Error('Ending catalog mismatch');
+        const unique=new Set(Object.values(choreography).map(row=>row[1]));
+        if(unique.size!==Object.keys(actions).length)throw Error('Reused activity loop');
+        await Promise.all([...Object.keys(endingScenes).map(id=>'assets/endings/'+id+'.webp'),...Object.values(actors)].map(src=>{
+          const im=new Image();im.src=src;return im.decode();
+        }));
+      });
       await page.goto(base+'recruit-preview.html#bard');
       const dialogue=page.locator('#conversation .dialogue');
       const words=await dialogue.innerText();
@@ -69,8 +106,8 @@ async function check(browserType){
       await actor.evaluate(im=>im.decode());
       const before=await actor.boundingBox();
       await page.locator('#dialogue-visibility').click();
-      assert.equal(await dialogue.isVisible(),false);
-      assert.deepEqual(await actor.boundingBox(),before);
+      assert.equal(await dialogue.isVisible(),false,JSON.stringify(await page.evaluate(()=>({state:document.getElementById('scene').dataset.artOnly,pressed:document.getElementById('dialogue-visibility').getAttribute('aria-pressed'),vis:getComputedStyle(document.querySelector('#conversation .dialogue')).visibility}))));
+      const restored=await actor.boundingBox(); for(const k of ['x','y','width','height'])assert.ok(Math.abs(restored[k]-before[k])<1,'CG viewing shifted the portrait on '+k);
       await page.keyboard.press('h');
       assert.equal(await dialogue.innerText(),words);
       assert.deepEqual(errors,[]);

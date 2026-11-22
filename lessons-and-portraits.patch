@@ -22,7 +22,7 @@
  .press-mark{position:absolute;pointer-events:none;display:block;width:0;height:0;--press-color:#a3c5e5;--press-shadow:#30486e}
 --- a/css/recruit.css
 +++ b/css/recruit.css
-@@ -7,3 +7,76 @@
+@@ -7,3 +7,106 @@
  #conversation .review-room.night{filter:grayscale(.4) sepia(.18) hue-rotate(174deg) brightness(.45)}
  #conversation .review-room.night::after{content:"";position:absolute;top:8%;left:44%;width:clamp(28px,6vw,68px);aspect-ratio:1;border-radius:50%;background:#e4e4cf;box-shadow:0 0 26px #cbd5de77}
  .recruit-tea{position:absolute;top:22%;left:44%;width:12%;max-width:92px;height:auto;pointer-events:none;filter:drop-shadow(0 4px 5px #24202d99)}
@@ -30,10 +30,10 @@
 +/* A shared camera crops each cutout at the bottom. Wide sleeves and full-length art
 +   can no longer move an actor's eyes or change the apparent size of their face. */
 +#scene {
-+  --cast-unit:calc(var(--portrait-height) * var(--standing-zoom));
++  --cast-unit:calc(var(--portrait-height) * var(--standing-zoom) * var(--cast-camera,1));
 +}
 +#scene .standing-window {
-+  --window-height:min(calc(var(--cast-unit) * (var(--cast-base) + var(--figure-rise))),calc(var(--portrait-scene-height) * .965));
++  --window-height:calc(var(--cast-unit) * var(--figure-height));
 +  height:var(--window-height);
 +  display:block;overflow:hidden;pointer-events:none;scale:none;
 +}
@@ -99,8 +99,45 @@
 +}
 +
 +#overture .opening-mat[hidden] {display:none!important}
++
++#scene #conversation .ending-cg {
++  position:absolute;inset:0;z-index:0;width:100%;height:100%;
++  object-fit:cover;object-position:50% 42%;pointer-events:none;background:#11131c;
++}
++#conversation:has(.ending-cg) .dialogue {z-index:2}
++#scene[data-art-only=true] #conversation .ending-cg {object-fit:contain}
++.ending-album {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(135px,100%),1fr));gap:8px}
++.ending-thumb {display:grid;gap:5px;max-width:24rem;text-align:left;padding:5px;color:inherit;background:transparent;font:inherit;cursor:pointer}
++.ending-thumb img {width:100%;aspect-ratio:16/9;object-fit:cover}
++@media(max-width:540px),(max-width:960px) and (orientation:portrait){
++  #scene #conversation .ending-cg {object-fit:contain;object-position:center 30%}
++  #scene[data-art-only=true] #conversation .ending-cg {object-position:center}
++}
++
++#scene #conversation .cast[alt="시엘"] {
++  scale:calc(var(--ciel-scale) * var(--standing-zoom) * var(--cast-camera,1));
++}
++.lesson-plane[data-room=gym] {--foot-x:56%;--foot-y:82%}
++#scene[data-mode=market] .goods-list {
++  max-height:clamp(126px,37vh,330px);overflow-y:auto;overscroll-behavior:contain;
++  scrollbar-gutter:stable;padding:2px;
++}
++#scene[data-mode=market] .goods-ticket:focus-visible {outline:2px solid #735327;outline-offset:-3px}
++/* An intentional tap still has a small response with OS motion reduction.
++   The game's explicit reduced setting keeps the pose still. */
++html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
++  animation:ciel-small-hop 300ms ease-out 1!important;
++}
++@keyframes ciel-small-hop {0%,100%{transform:none}45%{transform:translateY(-4px)}}
 --- a/index.html
 +++ b/index.html
+@@ -1,5 +1,5 @@
+ <!doctype html>
+-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Earl Phantomhive Maker · 팬텀하이브 메이커</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="css/base.css"><link rel="stylesheet" href="css/edition.css"><link rel="stylesheet" href="css/folio.css"><link rel="stylesheet" href="css/iris.css"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><style>
++<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Earl Phantomhive Maker · 팬텀하이브 메이커</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="css/base.css?v=d5c5498f2621"><link rel="stylesheet" href="css/edition.css?v=9b6efb2e6eb0"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=90dbc336659a"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><style>
+ .home-standing,.cast[alt="시엘"],.performer img { filter:url(#ciel-tailoring) drop-shadow(1px 3px 2px #17264344); }
+ .review-room,.stage-room,.property-map[aria-label] .map-base,.property-map .map-fitting,
+ .property-map .delivery-cart { filter:url(#estate-ink); }
 @@ -51,7 +51,8 @@
    </div>
    <button type="button" id="opening-read" tabindex="-1" aria-hidden="true" data-action="opening-next"></button>
@@ -111,15 +148,48 @@
  <section id="calendar" aria-label="월간 일정" tabindex="-1" hidden></section>
  <section id="sheet" class="sheet" aria-labelledby="sheet-title" hidden>
  <header class="sheet-head"><h2 id="sheet-title" tabindex="-1"></h2><button type="button" class="close return-control" data-action="back"><span class="return-label">뒤로</span></button></header>
-@@ -72,7 +73,7 @@
+@@ -70,15 +71,16 @@
+ </aside>
+ <dialog id="picker" aria-labelledby="picker-title"></dialog>
  <div id="fx-layer" class="fx-layer" popover="manual" aria-hidden="true"></div><div id="flash" class="flash" role="status"></div>
- <script src="js/tour.js"></script>
- <script src="js/content.js?v=ff1d1c3b14cd"></script>
+-<script src="js/tour.js"></script>
+-<script src="js/content.js?v=ff1d1c3b14cd"></script>
 -<link rel="stylesheet" href="css/recruit.css?v=d8ddc41fce62">
-+<link rel="stylesheet" href="css/recruit.css?v=5e636c70d9da">
- <script src="js/recruit.js?v=27041d4d6af2"></script>
- <script src="js/story.js?v=5f6d9339a3ae"></script>
- <script src="js/scenes.js?v=638b2e5f7292"></script>
+-<script src="js/recruit.js?v=27041d4d6af2"></script>
+-<script src="js/story.js?v=5f6d9339a3ae"></script>
+-<script src="js/scenes.js?v=638b2e5f7292"></script>
+-<script src="js/audio.js"></script>
+-<script src="js/reports.js"></script>
+-<script src="js/prologue.js"></script>
+-<script src="js/chapters.js?v=5a5076c319bb"></script>
++<script src="js/tour.js?v=e380777efa81"></script>
++<script src="js/content.js?v=c749cfd13dbd"></script>
++<link rel="stylesheet" href="css/recruit.css?v=2e60433b95c4">
++<script src="js/recruit.js?v=3d6d34c47f95"></script>
++<script src="js/story.js?v=67ad4d7098cb"></script>
++<script src="js/scenes.js?v=984605a2b05e"></script>
++<script src="js/audio.js?v=0c4fad4e8349"></script>
++<script src="js/reports.js?v=5035d3c15d3a"></script>
++<script src="js/prologue.js?v=9bdb9de8c466"></script>
++<script src="js/chapters.js?v=0ca709d25835"></script>
+ <script src="js/staffing.js?v=00ba2d2a1ea6"></script>
+-<script src="js/game.js?v=11b0f98b15d2"></script></body></html>
++<script src="js/term-events.js?v=316b7ab01c96"></script>
++<script src="js/game.js?v=0f0e9a59bd8f"></script></body></html>
+--- a/js/audio.js
++++ b/js/audio.js
+@@ -50,7 +50,10 @@
+   if(tourSession||(tab==="plan"&&state.phase==="guide"))return "tutorial";
+   if(inOpening())return "prologue";
+   if(tab==="plan"&&state.phase==="investiture")return "titleApproval";
+-  if(tab==="plan"&&state.phase==="ending"&&isApprovedEnding(state.ending))return "goodEnding";
++  if((tab==="plan"&&state.phase==="ending")||(tab==="endingMemory"&&endingReplay)){
++    const id=tab==="endingMemory"?endingReplay.id:state.ending;
++    return ({vowTitle:"goodEnding",title:"goodEnding",business:"business",releaseTitle:"gloomy",releaseNoTitle:"gloomy",ill:"gloomy",broke:"gloomy",defer:"manor",vowNoTitle:"manor"})[id]||"manor";
++  }
+   if(tab==="market")return "market";
+   if(tab==="company"||tab==="estate"||tab==="staffing")return "business";
+   if(tab==="chat")return "daily";
 --- a/js/chapters.js
 +++ b/js/chapters.js
 @@ -1,12 +1,12 @@
@@ -147,12 +217,21 @@
   ["자유행동","‘자유행동’은 도련님의 외출을 위해 비워 둔 칸입니다. 한 달에 한 곳을 정하실 수 있습니다. 누구와 무슨 이야기를 나누실지는 도착한 뒤에 정하셔도 됩니다."],
   ["팬텀사","‘관리 · 경영’에서 ‘팬텀 사(社)’를 여십시오. 개발실에서는 상품을, 제작실에서는 수량을, 판매점에서는 값을 정하시면 됩니다. 수업료가 모자라겠다면 이번 생산량을 조금 줄이는 편이 좋겠습니다."],
   ["저택","‘관리 · 경영’의 지도에서 방을 짚으시면 시설과 근무지를 살필 수 있습니다. 개수를 명하시기 전에 비용과 이달의 관리 상태를 보십시오. 간식이 필요하시면 저택 메뉴의 ‘상점’으로 모시겠습니다."],
+@@ -136,7 +136,7 @@
+ function chapterView(){
+  if(tab!=="plan")return "";
+  if(state.phase==="guide"){const i=state.guidePage||0;return staged("세바스찬",guide[i][0],guideMenu(i)+guide[i][1],btn(i===guide.length-1?"저택으로":"다음 안내","guide-next")+btn("안내 마치기","guide-end"),"조작 안내 "+(i+1)+" / "+guide.length);}
+- if(state.phase==="investiture")return staged("세바스찬","","도련님, 왕실에서 서신이 왔습니다. 오늘부터 팬텀하이브 백작의 작위는 다시 도련님의 것입니다.",btn("서신을 접는다","read-verdict"),"","library");
++ if(state.phase==="investiture")return staged("세바스찬","","도련님, 왕실에서 서신이 왔습니다. 봉랍을 확인했습니다. 도련님 앞으로 온 친서입니다.",btn("서신을 펼친다","read-verdict"),"","library");
+  if(state.phase==="visit")return visitScene();
+  return "";
+ }
 @@ -160,11 +160,13 @@
   ["dance","기품","무도 실기","반주가 한 박자 멎었습니다. 상대의 발끝이 아직 떠 있군요.","체중이 옮겨질 때까지 기다린다","발의 위치를 다시 맞춘다"],
   ["social","매력","다과회 실기","초면인 손님 둘이 같은 은쟁반을 집었습니다. 도련님이라면요?","둘의 공통 관심사를 꺼낸다","잔을 새로 내온다"],
   ["negotiate","경영","협상 실기","납품가는 같고 도착일이 다릅니다. 어느 조건부터 물으시겠습니까?","지연 때의 부담을 확인한다","견적을 다시 읽는다"],
 - ["exercise","체력","보폭 시험","마지막 바퀴입니다. 남은 거리에 호흡을 맞춰 보시겠습니까?","일정한 보폭으로 완주한다","잠시 호흡을 고른다"]
-+ ["exercise","체력","보폭 시험","마지막 왕복입니다. 연회장 문턱까지 보폭을 흐트러뜨리지 않고 가 보시겠습니까?","일정한 보폭으로 완주한다","잠시 호흡을 고른다"]
++ ["exercise","체력","보폭 시험","마지막 왕복입니다. 체조실 문턱까지 보폭을 흐트러뜨리지 않고 가 보시겠습니까?","일정한 보폭으로 완주한다","잠시 호흡을 고른다"]
  ];
 +const examPartners={study:"통찰",etiquette:"매력",accounts:"지성",inquiry:"의지",language:"매력",music:"의지",dance:"체력",social:"기품",negotiate:"통찰",exercise:"의지"};
  function examEvents(){return exams.map(([slot,stat,title,text,a,b])=>({id:"exam-"+slot,slot,title,text,speaker:"세바스찬",exam:true,
@@ -164,7 +243,7 @@
  function calendarEvents(){
   const out=[];
   for(let m=1;m<=35;m++){
-@@ -229,3 +231,20 @@
+@@ -229,3 +231,262 @@
   return '<div class="annex-line"><div><b>'+f.name+' · '+n+'단계</b><small>'+f.desc+'</small></div><div>월 £'+cost+'<br>상태 '+condition+'</div></div>';
   }).join("")+'<p>공통 관리비 £36에 시설비를 합하고 경비 절감액을 반영합니다.</p></details>';
  }
@@ -185,18 +264,325 @@
 +      changeStat(primary,30);changeStat(secondary,18);
 +    }))}));
 +}
++
++const endingArtDescriptions={"letter": "은쟁반 위에 놓인 왕실 서신", "dress": "거울 앞에서 알현복을 갖춰 입는 시엘", "court": "왕실에서 작위를 돌려받는 시엘", "command": "시엘의 명을 받아 무릎을 꿇는 세바스찬", "carriage": "겨울 역 앞에 세워 둔 검은 마차", "gloves": "서재 책상에 남겨진 흰 장갑", "key": "저택 열쇠를 건네는 시엘", "butler": "긴 복도에 서서 시엘의 대답을 기다리는 세바스찬", "departure": "달리는 마차 안에서 약도를 접는 시엘과 대답을 기다리는 세바스찬"};
++const endingScenes={
++  vowTitle:{alt:"왕실의 의뢰서를 펼치는 시엘 뒤로 세바스찬이 외투를 들고 서 있다.",lines:[
++    ["세바스찬", "왕실에서 온 편지입니다. 이쪽 쟁반의 것은 직접 뜯으시지요.", "letter"],
++    ["시엘", "……봉랍이 달라.", "letter"],
++    ["세바스찬", "오늘은 비서관의 인장이 찍혀 있지 않습니다.", "letter"],
++    ["", "시엘은 칼 대신 엄지손톱으로 봉랍을 눌렀다. 금이 가는 소리가 났다.", "letter"],
++    ["왕실 서신", "시엘 팬텀하이브 경. 왕실에 귀속되어 있던 영지와 작위를 그대에게 돌려드립니다.", "letter"],
++    ["왕실 서신", "서임식은 궁에서 거행합니다. 그대가 다시 우리 앞에 설 날을 기다리겠습니다.", "letter"],
++    ["시엘", "내 앞으로 온 편지가 맞군.", "letter"],
++    ["세바스찬", "예. 봉투에도 그렇게 적혀 있습니다.", "letter"],
++    ["", "거울 앞에는 예복과 장갑, 깃털이 달린 모자가 놓여 있었다. 재단사가 떠난 뒤 세바스찬이 옷깃을 여몄다.", "dress"],
++    ["세바스찬", "왼쪽 어깨를 조금만 들어 주십시오.", "dress"],
++    ["시엘", "……됐다. 더 당기면 자국이 눌려.", "dress"],
++    ["세바스찬", "아직 통증이 있습니까?", "dress"],
++    ["시엘", "그 정도는 지났어.", "dress"],
++    ["", "세바스찬의 손이 한 번 멎었다. 시엘은 거울에서 눈을 떼지 않았다.", "dress"],
++    ["시엘", "가끔은 잊어. 그러다 저걸 보면 누가 해 놓은 일인지 다시 생각나지.", "dress"],
++    ["세바스찬", "그럼 오늘은 여기까지만 채우겠습니다.", "dress"],
++    ["시엘", "끝까지 채워. 내내 만질 수도 없잖아.", "dress"],
++    ["세바스찬", "좋습니다. 이제 잘 어울리십니다.", "dress"],
++    ["시엘", "그런 말도 제법 자연스럽군.", "dress"],
++    ["세바스찬", "세 해 동안 매일 연습한 일이니까요.", "dress"],
++    ["시엘", "마차를 대. 늦겠어.", "dress"],
++    ["", "궁의 문이 열렸다. 시엘이 걸음을 옮길 때마다 발소리가 높은 천장 아래 남았다.", "court"],
++    ["객석", "선대의 아들이라지. 저 아이 혼자 저 앞까지 간다고?", "court"],
++    ["", "시엘은 단 아래에서 멈췄다. 배운 대로 고개를 숙이고, 호명이 끝날 때까지 기다렸다.", "court"],
++    ["빅토리아", "고개를 들어요, 팬텀하이브 경. 얼굴을 잘 보아 두고 싶군요.", "court"],
++    ["시엘", "폐하.", "court"],
++    ["빅토리아", "오래 비워 두었던 자리예요. 돌아온 것을 환영합니다, 팬텀하이브 백작.", "court"],
++    ["", "견장 위로 새 장식의 무게가 얹혔다. 한 박자 늦게 객석에서 박수가 터졌다.", "court"],
++    ["손님", "저기서는 도련님 얼굴이 안 보일 텐데요. 가족 곁 자리를 청해 보지 그러셨어요?", "court"],
++    ["세바스찬", "이 자리면 충분합니다. 백작께서 나오실 때 외투를 드려야 하거든요.", "court"],
++    ["세바스찬 · 독백", "보이지 않는 얼굴을 굳이 볼 필요도 없었다. 저 아이가 지금 웃고 있을 리는 없었으므로.", "court"],
++    ["", "문이 닫히자 박수 소리가 끊겼다. 창을 세 개 지나고 나서 세바스찬이 먼저 입을 열었다.", "butler"],
++    ["세바스찬", "이제 장부의 첫 줄을 고쳐도 되겠군요. 영지와 작위가 모두 도련님 앞으로 돌아왔습니다.", "butler"],
++    ["시엘", "그래.", "butler"],
++    ["세바스찬", "저택에는 저녁을 기다리는 사람들이 있고, 내일 초대장을 보내도 기꺼이 올 손님들이 있습니다.", "butler"],
++    ["시엘", "그런데.", "butler"],
++    ["세바스찬", "이쯤에서 그만두고 그걸 누리는 데 써 보시겠습니까? 앞으로 남은 시간 말입니다.", "butler"],
++    ["", "세 번째 창의 빛이 시엘의 등에서 멎었다.", "butler"],
++    ["시엘", "……그렇게 살아도 잘 살 수 있겠지.", "butler"],
++    ["세바스찬", "예. 이제는 그러실 수 있습니다.", "butler"],
++    ["시엘", "그래서 지금 대답하는 거야. 누구도 내게 계속하라고 할 수 없는 때에.", "butler"],
++    ["시엘", "내가 돌아온 이유는 처음부터 하나였어. 누가 이 집을 태웠는지 알아내고, 내가 그 끝을 내는 것.", "butler"],
++    ["시엘", "폐하께 받은 이름으로 그 문 앞에 설 거다. 오늘 받은 것 전부를 써서라도.", "butler"],
++    ["", "시엘이 망토를 뒤로 넘겼다. 아직 빛이 드는 창을 등지고 한 걸음 내디뎠다.", "butler"],
++    ["세바스찬 · 독백", "마침내 혼자서도 돌아설 수 있는 자리에 세워 놓았더니, 저 발로 다시 어둠을 고른다.", "butler"],
++    ["세바스찬 · 독백", "그 대답까지 기다린 보람은 있었군.", "butler"],
++    ["시엘", "명령이다, 세바스찬.", "butler"],
++    ["시엘", "내가 그자들 앞에 설 때까지 나를 지켜. 길을 막는 건 네가 치워.", "butler"],
++    ["시엘", "그리고 내가 이기게 해.", "butler"],
++    ["", "세바스찬의 무릎이 대리석에 닿았다. 복도에 남은 기척은 그 소리 하나뿐이었다.", "command"],
++    ["세바스찬", "예스, 마이 로드.", "command"],
++    ["", "왕실 장부에는 그가 돌아온 날만 적혔다. 그날 밤 누가 다시 출발했는지는, 현관에서 외투를 건넨 집사만 알았다.", "vowTitle"]]},
++  vowNoTitle:{alt:"비에 젖은 골목에서 시엘이 문장 없는 마차에 발을 올린다.",lines:[
++    ["세바스찬", "왕실에서 회신이 왔습니다. 배달인은 회신을 기다리지 않고 떠났습니다.", "letter"],
++    ["시엘", "그 편지, 탁자에 둬.", "letter"],
++    ["왕실 서신", "작위의 환부는 차기 심의까지 보류합니다. 제출된 서류는 왕실에서 보관하겠습니다.", "letter"],
++    ["시엘", "차기 심의가 언제라고 적혀 있지?", "letter"],
++    ["세바스찬", "날짜를 적는 자리가 비었습니다.", "letter"],
++    ["시엘", "……거기부터 봤어야 했는데.", "letter"],
++    ["", "시엘은 편지를 구기지 않았다. 첫 장부 맨 뒤에 반듯하게 접어 넣었다.", "letter"],
++    ["세바스찬", "장부는 여기 두시겠습니까?", "letter"],
++    ["시엘", "그래. 들고 갈 건 따로 있어.", "letter"],
++    ["", "책상 위 지도에는 항구, 여관 두 곳, 폐쇄된 역의 옛 이름이 적혀 있었다.", "gloves"],
++    ["세바스찬", "이 기록은 왕실의 열람 허가를 받아야 이어 볼 수 있습니다.", "gloves"],
++    ["시엘", "그렇다면 기록을 쓴 사람에게 묻지.", "gloves"],
++    ["세바스찬", "그 사람은 피신 중입니다.", "gloves"],
++    ["시엘", "그러니까 세 군데나 표시했잖아.", "gloves"],
++    ["세바스찬", "마지막 장소에 닿을 즈음이면 해가 지겠습니다.", "gloves"],
++    ["시엘", "해가 질 때까지 밖에 있으면 되는 일이야. 등도 준비해.", "gloves"],
++    ["세바스찬 · 독백", "어린 주인이 지도를 접는 법을 배운 건 첫겨울이었다. 이제는 등불 한 자루까지 셈에 넣는다.", "gloves"],
++    ["", "마차 바퀴가 안뜰의 살얼음을 갈랐다. 시엘은 문간에서 저택의 창을 한 번 셌다.", "vowNoTitle"],
++    ["세바스찬", "돌아오실 날은 사용인들에게 어떻게 전할까요?", "vowNoTitle"],
++    ["시엘", "저녁은 늘 먹던 시간에 먹으라고 해. 내 자리까지 비워 둘 필요 없어.", "vowNoTitle"],
++    ["세바스찬", "도련님 몫은 어디에 준비할까요?", "vowNoTitle"],
++    ["시엘", "마차에서 먹겠어. 손에 묻지 않는 걸로.", "vowNoTitle"],
++    ["", "등불이 켜졌다. 길 건너 여관 간판의 마지막 글자가 간신히 읽혔다.", "vowNoTitle"],
++    ["시엘", "궁에서 준 게 없으니 도로 돌려줄 것도 없겠군.", "vowNoTitle"],
++    ["세바스찬", "가지실 수 있는 물건이라면 여기 있습니다. 지도와 수첩, 그리고 가문의 반지입니다.", "vowNoTitle"],
++    ["시엘", "반지는 내가 들지.", "butler"],
++    ["세바스찬", "그럼 이 마차는 어느 이름으로 예약해 둘까요?", "butler"],
++    ["시엘", "시엘 팬텀하이브. 그동안 부르던 그대로.", "butler"],
++    ["세바스찬", "알겠습니다.", "butler"],
++    ["시엘", "내가 찾아서, 내가 끝낸다. 그 얘기는 한 글자도 바뀌지 않아.", "butler"],
++    ["세바스찬", "첫 번째 장소에는 마차가 들어가지 못합니다.", "butler"],
++    ["시엘", "그럼 내려서 걸어. 네가 먼저 길을 봐.", "butler"],
++    ["", "세바스찬이 발판을 접었다. 닫힌 문 너머에서 시엘이 무릎 위에 지도를 폈다.", "butler"],
++    ["세바스찬", "예스, 마이 로드.", "butler"],
++    ["", "마차 문이 닫혔다. 시엘이 무릎 위에 접어 둔 약도를 다시 폈다.", "departure"],
++    ["시엘", "첫 번째 모퉁이에서 세워. 거기부터는 걸어가겠다.", "departure"],
++    ["", "공문에 비어 있던 다음 심의 날짜는 결국 채워지지 않았다. 시엘의 지도에는 그날부터 방문한 장소가 하나씩 늘었다.", "departure"]]},
++  releaseTitle:{alt:"작위 문서 곁에서 시엘이 마지막 명령을 내리고 세바스찬이 장갑을 벗는다.",lines:[
++    ["", "돌아온 마차에 타기 전, 시엘은 가슴의 장식을 한 번 바로 달았다.", "court"],
++    ["세바스찬", "모두 보셨습니다. 다시 달지 않으셔도 됩니다.", "court"],
++    ["시엘", "기울었잖아. 네가 아까 잡아 줬을 때는 멀쩡했는데.", "court"],
++    ["세바스찬", "박수가 시작될 때 도련님께서 만지셨거든요.", "court"],
++    ["시엘", "그랬나.", "court"],
++    ["", "마차 문이 닫혔다. 마주 앉은 세바스찬은 끝내 손을 뻗지 않았다.", "court"],
++    ["시엘", "저택에 가면 서재로 와. 둘이 있을 때 할 얘기가 있어.", "court"],
++    ["", "서재에는 도장이 찍힌 서류와 며칠 전 들여온 수사 기록이 나란히 놓여 있었다.", "gloves"],
++    ["세바스찬", "어느 쪽부터 정리할까요?", "gloves"],
++    ["시엘", "수사 기록은 저 상자에 넣어. 열쇠는 내 손에 줘.", "gloves"],
++    ["세바스찬", "내일 찾으실 수 있게 위에 올려 두겠습니다.", "gloves"],
++    ["시엘", "내일 찾지 않아.", "gloves"],
++    ["", "잉크병 뚜껑을 닫고 난 뒤에도 시엘은 손을 책상 위에 얹어 두었다.", "gloves"],
++    ["시엘", "내가 부탁한 복수는 여기까지다. 누가 했는지 알게 되더라도 내 손으로 끝내는 일은 없을 거야.", "gloves"],
++    ["세바스찬", "그 이름을 알게 되는 날에도요?", "gloves"],
++    ["시엘", "그래. 기억은 내 몫으로 남겨. 나머지는 내가 정리하겠어.", "gloves"],
++    ["세바스찬", "지금 하신 말씀은 명령입니까?", "butler"],
++    ["시엘", "내가 결정한 일이야. 그러니 사냥할 상대가 없다는 건 너도 받아들여.", "butler"],
++    ["", "세바스찬은 장갑의 단추를 하나 풀었다. 천이 손등을 지나 책상 위에 떨어졌다.", "butler"],
++    ["세바스찬", "그렇다면 계약의 마지막 날도 오지 않겠군요.", "butler"],
++    ["시엘", "그날을 기다렸나?", "butler"],
++    ["세바스찬", "정성을 들인 일의 끝은 대개 기다리게 됩니다.", "butler"],
++    ["시엘", "그래. 나도 그럴 줄 알았어.", "butler"],
++    ["세바스찬 · 독백", "편지에 적힌 것보다 훨씬 작은 목소리였다. 저택에서는 그 정도면 충분했다.", "butler"],
++    ["시엘", "나가기 전에 현관 등 하나만 켜 줘. 타나카가 저녁 약을 가지러 내려와.", "gloves"],
++    ["세바스찬", "소등은 누가 합니까?", "gloves"],
++    ["시엘", "내가.", "gloves"],
++    ["", "문이 닫힌 뒤 시엘은 한동안 장갑을 보았다. 그러고는 서랍을 열어 서임장을 넣었다.", "gloves"],
++    ["", "아래층에 불이 하나 들어왔다. 서재에는 발걸음이 돌아오지 않았다.", "gloves"],
++    ["시엘", "……내일은 작위가 돌아왔다는 편지부터 써야겠군.", "gloves"],
++    ["", "시엘은 자기 손으로 펜에 잉크를 묻혔다.", "gloves"],
++    ["", "그 집의 현관 등은 그날 이후에도 같은 시각에 켜졌다. 마지막으로 계단을 내려가 불을 끄는 사람은 백작이었다.", "releaseTitle"]]},
++  releaseNoTitle:{alt:"인장이 찍히지 않은 종이와 꺼진 촛불을 사이에 두고 둘이 마주한다.",lines:[
++    ["세바스찬", "재가를 청하는 서류를 다시 꾸릴 수는 있습니다. 반년 뒤에 심의가 열립니다.", "letter"],
++    ["시엘", "이번에도 봉투를 돌려보냈어?", "letter"],
++    ["세바스찬", "가문을 증명하는 종이는 돌려보냈습니다. 답신은 한 줄입니다.", "letter"],
++    ["시엘", "읽어 봐.", "letter"],
++    ["세바스찬", "‘현 상황에서 재가하기 어렵습니다.’", "letter"],
++    ["", "시엘은 편지 끝의 날짜를 읽었다. 날짜만 두 번 읽었다.", "letter"],
++    ["시엘", "반년 뒤에 쓸 종이값은 남겨 둬. 다른 데 쓸 일이 있겠지.", "letter"],
++    ["", "저녁 종이 울리기 전에 시엘은 주방으로 내려왔다. 은쟁반보다 먼저 낡은 열쇠가 식탁에 놓였다.", "key"],
++    ["세바스찬", "서쪽 문 열쇠입니다. 그 문턱은 오늘 손봤습니다.", "key"],
++    ["시엘", "아침에 열어 봤어. 잘 열리더라.", "key"],
++    ["세바스찬", "그럼 돌려주시는 이유를 여쭤도 되겠습니까?", "key"],
++    ["시엘", "문을 잘 고쳤다는 건 기억해 둘 거야. 그 문으로 누구를 찾으러 나가는 일은 이제 없겠어.", "key"],
++    ["세바스찬", "수색을 중단하실 때는 전에도 있었습니다.", "key"],
++    ["시엘", "이번에는 돌아와서 다시 시작할 생각이 없어.", "key"],
++    ["", "난로의 재가 가라앉았다. 물이 끓는 소리만 남았다.", "key"],
++    ["세바스찬", "저들이 다시 모습을 드러내면, 도련님은 어떻게 하시겠습니까?", "butler"],
++    ["시엘", "그날 내가 지켜야 할 사람이 있으면 그 사람부터 챙기겠지.", "butler"],
++    ["세바스찬", "셈한 순서가 바뀌었군요.", "butler"],
++    ["시엘", "그래. 그러니까 네가 기다리는 건 앞으로 없을 일이야.", "butler"],
++    ["세바스찬", "……알아들었습니다.", "butler"],
++    ["세바스찬 · 독백", "이 집에서는 저 아이의 말을 몇 번이나 받아 적었다. 오늘 것은 종이를 꺼낼 필요가 없었다.", "butler"],
++    ["시엘", "내일 몫의 아침도 생각해 놨어?", "butler"],
++    ["세바스찬", "식빵은 찬장 위 칸, 잼은 아래 칸에 두었습니다.", "butler"],
++    ["시엘", "열쇠는 가져가. 네가 처음 손본 문이잖아.", "key"],
++    ["세바스찬", "그 문을 잠그는 법은 알고 계시지요?", "key"],
++    ["시엘", "안에서 빗장을 지르면 돼.", "key"],
++    ["세바스찬", "그렇습니다.", "key"],
++    ["", "세바스찬은 열쇠를 집었다. 손바닥을 덮으니 금속 빛이 보이지 않았다.", "key"],
++    ["시엘", "이제 가도 돼, 세바스찬.", "key"],
++    ["", "문이 열리고 찬 공기가 들어왔다. 시엘은 자리에서 일어나 남아 있던 두 번째 잔을 씻었다.", "key"],
++    ["", "빗장은 그날 밤에도 한 번만 울렸다.", "key"],
++    ["", "현관의 명패에는 오래전의 흠집이 남았다. 다음 봄, 시엘은 먼저 경첩부터 갈았다.", "releaseNoTitle"]]},
++  ill:{alt:"빈 의자에 책과 리본이 놓여 있고 세바스찬이 침실의 커튼을 연다.",lines:[
++    ["","찻물이 끓는 데는 평소와 같이 삼 분이 걸렸다. 나는 찻잔 하나를 데워 침실로 올라갔다."],
++    ["세바스찬","도련님. 커튼을 열겠습니다."],
++    ["","전 같으면 눈이 부시다고 이불을 끌어 올리셨을 것이다. 오늘은 커튼 고리가 미끄러지는 소리만 났다."],
++    ["","의자에는 읽다 만 책이 엎어져 있었다. 등을 다치게 놓았다가 어제 내게 한 소리 들으신 책이다."],
++    ["세바스찬","책갈피는 여기 꽂아 두지요."],
++    ["","침상에서는 다음 숨이 들리지 않았다. 잠깐 귀를 기울여 보았지만 마찬가지였다."],
++    ["","나는 책장을 덮고 쟁반을 들었다. 계단을 내려갈 때 찻잔은 올라갈 때만큼 무거웠다."]]},
++  broke:{alt:"빈 완구점 진열대에서 시엘과 세바스찬이 마지막 열쇠를 내려놓는다.",lines:[
++    ["","철수 전표의 합계는 세 차례 더해도 같았다. 나는 계산자를 접고 마지막 진열장의 유리를 열었다."],
++    ["시엘","저 토끼는 왜 남았지?"],
++    ["세바스찬","한쪽 귀가 짧아 검수에서 빠진 첫 견본입니다. 재고표에는 오르지 않았습니다."],
++    ["시엘","그래서 셀 때마다 하나씩 남았군. 그건 내가 들고 갈게."],
++    ["","도련님은 짧은 귀를 손바닥으로 펴 주었다. 점포를 인계받으러 온 사람이 문가에서 모자를 벗었다."],
++    ["세바스찬","앞문 열쇠와 금고 열쇠입니다. 뒤쪽 창은 안에서 걸어 두었습니다."],
++    ["","주머니에서 놋쇠의 무게가 사라졌다. 거리로 나서자 유리창 안쪽에, 진열품이 볕을 가렸던 자리만 환하게 남아 있었다."]]},
++  title:{alt:"응접실 창가에서 시엘이 붉은 인장이 달린 왕실 문서를 읽는다.",lines:[
++    ["","사자는 문서를 내어 주면서 도련님이 아니라 백작님이라고 불렀다. 그제야 응접실에 잠깐 정적이 생겼다."],
++    ["시엘","내가 여기 서명하면 되나?"],
++    ["세바스찬","예. 압지가 마를 때까지 손목을 조금 들어 주십시오."],
++    ["","시엘 팬텀하이브. 어제 장부에 적으셨던 것과 같은 필체였다. 사자가 그 종이를 두 손으로 받아 들었다."],
++    ["시엘","집에 온 손님인데 차 한 잔은 드려야지, 세바스찬."],
++    ["세바스찬","벌써 잔을 하나 더 데워 두었습니다, 백작님."],
++    ["","그 호칭에는 아직 익숙지 않으신 모양이었다. 돌아서는 쪽 귀가 조금 붉어졌다."]]},
++  business:{alt:"팬텀사 작업대에서 시엘이 새 목제 기관차의 바퀴를 점검한다.",lines:[
++    ["","왕실 서신을 서랍에 넣기도 전에 제작실에서 새 견본이 올라왔다. 파란 기관차 하나와 주문서 열두 장이었다."],
++    ["시엘","잠깐. 왼쪽 바퀴가 책상에 안 닿아."],
++    ["세바스찬","검사대에서는 잘 굴러갔다고 합니다."],
++    ["시엘","아이들이 죄다 검사대에서 놀 리는 없잖아. 양탄자에서도 굴려 봐."],
++    ["","바퀴 축을 조금 늦추자 기관차가 양탄자의 이음매를 넘었다. 도련님이 그제야 주문서에 동그라미를 쳤다."],
++    ["시엘","다음 달 분부터 이렇게 만들어. 상자는 내가 오후에 볼게."],
++    ["","런던에서 가장 늦게 불을 끈 곳은 그날도 팬텀사의 제작실이었다."]]},
++  defer:{alt:"닫힌 심의실 문을 등지고 시엘이 외투를 챙기러 돌아선다.",lines:[
++    ["","대기실 시계가 두 번 울리는 동안 서기는 같은 문을 세 번 드나들었다. 네 번째에는 얇은 봉투를 들고 나왔다."],
++    ["시엘","다음 심의까지 보류. 이 한 줄 쓰는 데 반나절이군."],
++    ["세바스찬","마차를 정문으로 다시 부를까요?"],
++    ["시엘","옆문이 더 가깝잖아. 기다리느라 놓친 약속이 둘이야."],
++    ["","외투를 걸쳐 드리자 도련님은 봉투를 반듯하게 펴서 안주머니에 넣었다."],
++    ["시엘","다음번엔 책을 가져와. 저 시계 소리를 또 듣기는 싫어."],
++    ["","나는 수첩 귀퉁이에 책 한 권이라고 적었다. 심의실 문은 우리가 복도를 다 건널 때까지 열리지 않았다."]]}
++};
++
++let endingReplay=null;
++function hasEndingRecord(id){
++  return Object.hasOwn(endingScenes,id)&&(Object.hasOwn(saves.gallery||{},id)||
++    [state,saves.auto,saves[1],saves[2],saves[3]].some(run=>run?.phase==="ending"&&run.ending===id));
++}
++function endingThumb(id){
++  return '<button type="button" class="ending-thumb" data-action="ending-art:'+id+'"><img loading="lazy" src="assets/endings/'+id+'.webp" alt=""><span>'+endingLabels[id][0]+'</span></button>';
++}
++function showEndingScene(host){
++  const replay=tab==="endingMemory"?endingReplay:null;
++  const live=tab==="plan"&&state.phase==="ending"&&Number.isInteger(state.endingBeat);
++  if(!replay&&!live)return false;
++  const id=replay?replay.id:state.ending,scene=endingScenes[id];
++  if(!scene)return false;
++  const end=scene.lines.length-1,at=Math.min(end,Math.max(0,replay?replay.at:state.endingBeat));
++  const [who,line,picture=id]=scene.lines[at],last=at===end;
++  clearTimeout(recruitTimer);if(last)stopRecruitAuto();
++  const arrow='<button type="button" class="line-next" data-read="'+(last?'finish':'next')+'" aria-label="'+(last?'장면 마치기':'다음 대사')+'">▼</button>';
++  host.hidden=false;host.dataset.review="false";
++  const existing=host.querySelector(".ending-cg");
++  const art=existing?.dataset.ending===id?existing:document.createElement("img");
++  if(art!==existing){
++    art.className="ending-cg";art.dataset.ending=id;
++  }
++  if(art.dataset.picture!==picture){
++    art.dataset.picture=picture;art.src="assets/endings/"+picture+".webp";art.alt=endingArtDescriptions[picture]||scene.alt;
++  }
++  host.replaceChildren(art);
++  host.insertAdjacentHTML("beforeend",sceneLine(who,line,arrow,'data-book="ending-'+id+'" aria-live="polite" aria-atomic="true"')+readerControls(at,last,recruitAuto));
++  bindSceneReader(host,at,end,line,to=>{
++    if(replay)replay.at=to;else {state.endingBeat=to;persist();}
++    showEndingScene(host);host.querySelector(".line-next").focus({preventScroll:true});
++  },()=>{
++    stopRecruitAuto();
++    if(replay){endingReplay=null;tab=replay.origin;}
++    else {delete state.endingBeat;persist();}
++    render(true);
++  });
++  return true;
++}
 --- a/js/content.js
 +++ b/js/content.js
-@@ -54,7 +54,7 @@
-   dance:["ballroom","waltz1 waltz2","waltz","beat","마룻바닥의 무늬를 따라 세 걸음, 반 바퀴 돌아 제자리로 옵니다."],
-   social:["ballroom","greet bow","meet","speech","손님에게 먼저 인사를 건네고 대답이 끝날 때까지 기다립니다."],
-   negotiate:["office","inspect greet","meet","contract","견적서를 밀어 둡니다. 상대가 먼저 가격을 부를 차례입니다."],
+@@ -3,7 +3,7 @@
+ // Scene names also identify the replaceable background and sprite files.
+ const stageNames = {
+   library:"저택 서재", ballroom:"대연회장", office:"팬텀사 제작소", archive:"가문 문서고",
+-  field:"승마장", garden:"장미 정원", music:"음악실", bedroom:"도련님의 침실", street:"런던 상점가"
++  gym:"저택 체조실", field:"승마장", garden:"장미 정원", music:"음악실", bedroom:"도련님의 침실", street:"런던 상점가"
+ };
+ const sceneArt = {
+   "library": "assets/room-library.webp",
+@@ -11,6 +11,7 @@
+   "office": "assets/room-office.webp",
+   "archive": "assets/room-archive.webp",
+   "field": "assets/room-field.webp",
++  gym:"assets/room-gym.webp",
+   "garden": "assets/room-garden.webp",
+   "music": "assets/room-music.webp",
+   "bedroom": "assets/room-bedroom.webp",
+@@ -39,31 +40,39 @@
+   "waltz2": "assets/ciel-waltz2.png"
+ };
+ 
++// A common four-frame cycle keeps the props and silhouette unique to each activity.
++const illustratedActivities=["dance","accounts","inquiry","letters","language","social","negotiate","exercise","practicum","developToy","supplier","estateWork","reception","casework","reading","recovery","outing"];
++function activityFrames(activity){
++  const ids=[1,2,3,4].map(frame=>activity+frame);
++  for(const id of ids)actors[id]="assets/lessons/"+id+".png";
++  return ids.join(" ");
++}
++
+ // Room, acting sequence, blocking, prop animation, and scene direction are authored per activity.
+ const choreography = {
+   study:["library","read turn","read","page","책갈피가 꽂힌 곳을 펴고, 어제 푼 문제의 다음 줄을 읽습니다."],
+   etiquette:["ballroom","greet bow","bow","glint","발끝을 모으고 손을 가슴에 얹습니다. 이번 인사는 정확히 세 박자입니다."],
+-  accounts:["office","penUp penDown","write","coin","원장 왼쪽의 매입가를 짚고 오른쪽에 남은 금액을 적습니다."],
+-  inquiry:["archive","inspect write","search","lens","장부를 등불에 비춥니다. 종이를 긁어 고친 흔적이 보입니다."],
++  accounts:["office",activityFrames("accounts"),"write","coin","원장 왼쪽의 매입가를 짚고 오른쪽에 남은 금액을 적습니다."],
++  inquiry:["archive",activityFrames("inquiry"),"search","lens","장부를 등불에 비춥니다. 종이를 긁어 고친 흔적이 보입니다."],
+   riding:["field","trot1 trot2 trot3 trot4","ride","dust","고삐를 짧게 쥐고 울타리를 따라 한 바퀴 돕니다."],
+-  letters:["library","write greet","write","letter","청첩장을 접고 봉인 위에 가문의 인장을 누릅니다."],
++  letters:["library",activityFrames("letters"),"write","letter","편지의 두 귀를 맞춰 접고 붉은 밀랍 위에 가문의 인장을 누릅니다."],
+   rest:["bedroom","cupUp cupDown","rest","steam","찻잔을 내려놓고 벽난로의 장작이 타는 소리를 듣습니다."],
+   walk:["garden","step1 step2","walk","leaf","정원 길을 천천히 걷습니다. 온실 앞에서 보폭이 한결 느려집니다."],
+-  language:["library","greet read","recite","speech","라틴어 편지 한 줄을 소리 내어 읽고, 강세를 고쳐 다시 읽습니다."],
++  language:["library",activityFrames("language"),"recite","speech","라틴어 편지 한 줄을 소리 내어 읽고, 강세를 고쳐 다시 읽습니다."],
+   music:["music","bowOut bowIn","play","notes","활을 현 위에 얹습니다. 네 마디를 끊지 않고 이어 봅니다."],
+-  dance:["ballroom","waltz1 waltz2","waltz","beat","마룻바닥의 무늬를 따라 세 걸음, 반 바퀴 돌아 제자리로 옵니다."],
+-  social:["ballroom","greet bow","meet","speech","손님에게 먼저 인사를 건네고 대답이 끝날 때까지 기다립니다."],
+-  negotiate:["office","inspect greet","meet","contract","견적서를 밀어 둡니다. 상대가 먼저 가격을 부를 차례입니다."],
 -  exercise:["field","step1 step2","jog","dust","모래길의 표식 사이를 뛰고, 숨을 고른 뒤 다시 출발합니다."],
-+  exercise:["ballroom","step1 step2","walk","beat","의자를 벽으로 밀어 둔 대연회장입니다. 마룻결을 따라 발을 바꾸고, 네 걸음마다 숨을 고릅니다."],
-   practicum:["office","penUp penDown inspect","count","coin","제작실에서 넘어온 영수증을 금액순으로 정리합니다."],
-   developToy:["office","inspect write","search","toy","목제 견본의 바퀴를 굴려 보고 도면의 축 길이를 고칩니다."],
-   supplier:["street","step1 step2 greet","walk","delivery","진열창 앞에 멈춰 견본의 마감과 납기표를 대조합니다."],
-@@ -104,6 +104,14 @@
+-  practicum:["office","penUp penDown inspect","count","coin","제작실에서 넘어온 영수증을 금액순으로 정리합니다."],
+-  developToy:["office","inspect write","search","toy","목제 견본의 바퀴를 굴려 보고 도면의 축 길이를 고칩니다."],
+-  supplier:["street","step1 step2 greet","walk","delivery","진열창 앞에 멈춰 견본의 마감과 납기표를 대조합니다."],
+-  estateWork:["archive","penUp penDown","write","stamp","수선 요청서를 먼저 읽고 결재가 끝난 문서를 왼편에 쌓습니다."],
+-  reception:["ballroom","bow waltz1 waltz2 greet","waltz","glint","객석 사이를 돌며 손님과 차례로 인사를 나눕니다."],
+-  casework:["street","inspect step1 inspect","search","lens","골목의 발자국을 살핀 뒤 수첩에 현장 약도를 그립니다."],
+-  reading:["bedroom","read turn","read","page","오늘은 교본 대신 추리소설을 무릎 위에 올려 둡니다."],
+-  recovery:["bedroom","cupUp cupDown","rest","sun","약속을 미룬 오후입니다. 해가 기울 때까지 안락의자에서 쉽니다."],
+-  outing:["street","step2 step1","walk","leaf","마차에서 내려 쇼윈도를 구경합니다. 약속한 시각 전에 돌아갑니다."]
++  dance:["ballroom",activityFrames("dance"),"waltz","beat","마룻바닥의 무늬를 따라 세 걸음, 반 바퀴 돌아 제자리로 옵니다."],
++  social:["ballroom",activityFrames("social"),"meet","speech","손님에게 먼저 인사를 건네고 대답이 끝날 때까지 기다립니다."],
++  negotiate:["office",activityFrames("negotiate"),"meet","contract","견적서를 밀어 둡니다. 상대가 먼저 가격을 부를 차례입니다."],
++  exercise:["gym",activityFrames("exercise"),"calisthenics","beat","체조실 거울 앞에 섭니다. 두 팔을 펴고 무릎을 번갈아 올리며 네 박자마다 숨을 고릅니다."],
++  practicum:["office",activityFrames("practicum"),"count","coin","제작실에서 넘어온 영수증을 금액순으로 정리합니다."],
++  developToy:["office",activityFrames("developToy"),"search","toy","목제 견본의 바퀴를 굴려 보고 도면의 축 길이를 고칩니다."],
++  supplier:["street",activityFrames("supplier"),"meet","delivery","진열창 앞에 멈춰 견본의 마감과 납기표를 대조합니다."],
++  estateWork:["archive",activityFrames("estateWork"),"write","stamp","수선 요청서를 먼저 읽고 결재가 끝난 문서를 왼편에 쌓습니다."],
++  reception:["ballroom",activityFrames("reception"),"meet","glint","잔을 들어 건배하고, 맞은편 손님에게 차례로 인사를 건넵니다."],
++  casework:["street",activityFrames("casework"),"search","lens","골목의 발자국을 살핀 뒤 수첩에 현장 약도를 그립니다."],
++  reading:["bedroom",activityFrames("reading"),"read","page","오늘은 교본 대신 추리소설을 무릎 위에 올려 둡니다."],
++  recovery:["bedroom",activityFrames("recovery"),"rest","sun","약속을 미룬 오후입니다. 해가 기울 때까지 안락의자에서 쉽니다."],
++  outing:["street",activityFrames("outing"),"walk","leaf","마차에서 내려 쇼윈도를 구경합니다. 약속한 시각 전에 돌아갑니다."]
+ };
+ const extraActivities = {
+   language:["라틴어",23,{지성:8,매력:6},10],music:["바이올린",25,{기품:8,의지:5},8],
+@@ -104,6 +113,14 @@
  };
  function calendarDate(turn,day=1){return new Date(Date.UTC(1886,turn-1,day));}
  function monthText(turn){const d=calendarDate(turn);return d.getUTCFullYear()+"년 "+(d.getUTCMonth()+1)+"월";}
@@ -236,15 +622,28 @@
    effect();
  }
 -const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),followupEvents());
-+const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),followupEvents(),appliedExams());
++const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),followupEvents(),appliedExams(),portfolioEvents());
  
  function pendingEvent(){
    return events.find(event=>event.id===state.pending);
-@@ -223,10 +224,19 @@
+@@ -185,8 +186,8 @@
+   state.log.push("저택 유지·채무 상환 "+money(bills));
+   if(trade?.order)state.log.push(productBuyers[trade.order.id]+" 납품 "+trade.shipped+"/"+trade.order.qty+"개 · "+money(trade.wholesale)+(trade.short?" · 미납 부담금 "+money(trade.penalty):""));
+   if(state.flags.market&&state.marketMonth!==state.month){state.flags.market=false;state.renown+=1;}
+-  const candidates=events.filter(e=>!e.slot&&!e.season&&!e.household&&!e.visitOnly&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
+-  const event=state.duration===35?(candidates.find(e=>e.chapter)||candidates[0]):candidates.find(e=>!e.chapter);
++  const candidates=events.filter(e=>!e.slot&&!e.subjects&&!e.season&&!e.household&&!e.visitOnly&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
++  const event=state.duration===35?(candidates.find(e=>birthdayDialogue[e.id]&&[12,24].includes(state.month))||candidates.find(e=>e.chapter)||candidates[0]):candidates.find(e=>!e.chapter);
+   const seasonal=state.duration===35?events.find(e=>e.season&&e.sees(state)&&!state.flags[e.id]):null;
+   const queue=[event?.id,seasonal?.id].filter(Boolean);
+   for(const e of events){
+@@ -223,10 +224,29 @@
    if(!["event","slotEvent"].includes(state.phase)||!choice||(choice.when&&!choice.when(state)))return;
    const isRecruit=Object.hasOwn(recruitScenes,event.id);
    if(isRecruit&&recruitPage(event.id)!==recruitScenes[event.id].lines.length-1)return;
-+  const examBefore=event.exam?snapStats(state):null;
++  const pages=termPages(event);
++  if(state.termOutcome||(pages&&(state.termPage||0)<pages.length-1))return;
++  const examBefore=event.exam||pages?snapStats(state):null;
    flagEvent(event.id,choice.effect);
 +  let examNote="";
 +  if(examBefore){
@@ -259,10 +658,59 @@
 -  state.log.push(choice.result);
 +  state.events.push({id:event.id,index,month:state.month,...(examNote?{examNote}:{}),...(isRecruit?{edition:"canonical",age:currentCielAge()}:{})});
 +  state.log.push(examNote||choice.result);
++  if(pages){
++    state.termOutcome={id:event.id,index,note:examNote};
++    state.termPage=0;persist();render(true);return;
++  }
++  finishEventChoice(event);
++}
++function finishEventChoice(event){
++  delete state.termPage;delete state.termOutcome;
    state.pending=null;
    if(event.id==="visitPrince"&&state.recruitReturn==="estate"){
      delete state.recruitReturn;state.phase="plan";tab="estate";persist();render(true);return;
-@@ -286,8 +296,24 @@
+@@ -234,7 +254,11 @@
+   if(event.id==="gardener"&&state.recruitReturn==="plan"){
+     delete state.recruitReturn;state.phase="plan";tab="home";persist();render(true);return;
+   }
+-  if(state.phase==="slotEvent"){openReview();return;}
++  if(state.phase==="slotEvent"){
++    const next=state.sequence.slotQueue?.shift();
++    if(next){state.pending=next;persist();render(true);}else openReview();
++    return;
++  }
+   state.pending=state.eventQueue?.shift()||null;
+   if(!state.pending)state.pending=overdueArrival(state);
+   if(!state.pending&&tanakaReturns(state))state.pending="homecoming";
+@@ -247,12 +271,17 @@
+   return titleRequirements().every(Boolean);
+ }
+ function finish(id){
+-  state.ending=id;state.phase="ending";
++  state.ending=id;state.endingBeat=0;state.phase="ending";
+   saves.gallery??={};
+   saves.gallery[id]=endingLabels[id][0];
+   persist();render(true);
+ }
+ function isApprovedEnding(id){return ["title","vowTitle","releaseTitle"].includes(id);}
++// Above the title review's own will minimum so both approved endings are reachable.
++function cielEndingId(will,approved){
++  if(will>=350)return approved?"vowTitle":"vowNoTitle";
++  return approved?"releaseTitle":"releaseNoTitle";
++}
+ function beginFinale(id){
+   if(!isApprovedEnding(id)){finish(id);return;}
+   state.ending=id;state.phase="investiture";persist();render(true);
+@@ -276,7 +305,7 @@
+   state.arrears=state.fund<0?state.arrears+1:0;
+   if(state.unwell>=2){finish("ill");return;}
+   if(state.arrears>=2){finish("broke");return;}
+-  if(state.month===35&&state.duration===35){state.phase="vow";persist();render(true);return;}
++  if(state.month===35&&state.duration===35){beginFinale(cielEndingId(state.stats.의지,qualifies()));return;}
+   if(state.month===6&&state.duration===6){beginFinale(qualifies()?"title":state.fund>=260&&state.stats.경영>=31?"business":"defer");return;}
+   if(state.prototype?.approved){
+     const p=state.prototype;if(!state.unlocked.includes(p.product))state.unlocked.push(p.product);state.productNotes??={};state.productNotes[p.product]=p;delete state.prototype;
+@@ -286,8 +315,24 @@
  function fatigueThreshold(stamina){
    return 65+Math.floor(cap(stamina,abilityMax)*10/abilityMax);
  }
@@ -288,16 +736,20 @@
    const tolerance=fatigueThreshold(run.stats.체력);
    const tired=(run.hp<40||run.stress>=tolerance||run.motivation<35)&&a.stress>0;
    const room=trainingRooms[id];
-@@ -301,7 +327,7 @@
+@@ -299,9 +344,11 @@
+   run.hp=cap(run.hp+(a.health||0)-fieldPenalty+restBonus-(run.stress>=75?6:0));
+   if(id==="walk")run.stress=cap(run.stress-(run.annex.garden-1)*5-(shiftAssigned("garden")?2:0));
    run.motivation=cap(run.motivation+(a.stress<0?8:tired?-7:-2));
++  const primary=Object.keys(a.gains)[0];
    const changes=Object.entries(a.gains).map(([name,value])=>{
      const before=run.stats[name];
 -    const gain=lessonGain(name,before,(value+(room?(run.level[room]-1)*4:0))*(tired?.55:1)*(run.neglect>=2?.85:1),run.month);
-+    const gain=lessonGain(name,before,(value+(room?(run.level[room]-1)*4:0))*(grade?lessonGrades[grade].factor:1)*(run.neglect>=2?.85:1),run.month);
++    const secondary=name!==primary;
++    const gain=grade==="poor"&&secondary?-1:lessonGain(name,before,(value+(room?(run.level[room]-1)*4:0))*(grade?lessonGrades[grade].factor:1)*(run.neglect>=2?.85:1),run.month);
      run.stats[name]=cap(before+gain,statMax(name));
      return name+" "+signed(run.stats[name]-before);
    });
-@@ -318,8 +344,12 @@
+@@ -318,8 +365,12 @@
    }
  }
  function projectTraining(){
@@ -312,7 +764,30 @@
    applyEstateTraining(run);
    return run;
  }
-@@ -473,7 +503,7 @@
+@@ -358,7 +409,7 @@
+   broke:["자금 부족으로 종료","월말 자금 부족이 두 달 연속 발생했습니다."]
+ };
+ const slotNames=["상순","중순","하순"];
+-const phaseNames={contract:"계약",guide:"첫 안내",visit:"자유행동",review:"세바스찬의 강평",scene:"일정 진행",slotEvent:"일정 사건",vow:"마지막 선택",investiture:"왕실 서신",plan:"편성 중",event:"월말 사건",result:"월간 결산",ending:"회차 종료"};
++const phaseNames={contract:"계약",guide:"첫 안내",visit:"자유행동",review:"세바스찬의 강평",scene:"일정 진행",slotEvent:"일정 사건",vow:"마지막 심의",investiture:"왕실 서신",plan:"편성 중",event:"월말 사건",result:"월간 결산",ending:"회차 종료"};
+ const escapeHTML=value=>String(value).replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+ function frame(title,body,tag=""){
+   return '<div class="panel-head"><h2 tabindex="-1">'+title+'</h2>'+(tag?'<span class="small">'+tag+'</span>':"")+
+@@ -450,12 +501,9 @@
+     }).join("")+'</div>');
+   }
+   if(state.phase==="result")return monthlyResults();
+-  if(state.phase==="vow"){
+-    return frame("마지막 명령",'<p class="muted">심의가 끝났습니다. 이제 가문이 정해 줄 수 없는 답이 하나 남았습니다.</p><p>“세바스찬. 내가 어떤 명령을 내려도, 알아듣겠지.”</p>'+btn("계약을 지키고 복수를 계속한다","vow:keep")+btn("여기서 복수를 내려놓는다","vow:release"));
+-  }
+   if(state.phase==="ending"){
+     const [title,description]=endingLabels[state.ending];
+-    return frame(title,'<p class="muted">'+description+'</p><div class="summary-grid">'+tile("보유 자금",money(state.fund))+
++    return frame(title,endingThumb(state.ending)+'<p class="muted">'+description+'</p><div class="summary-grid">'+tile("보유 자금",money(state.fund))+
+       tile("경영",state.stats.경영)+tile("완료 사건",state.events.length)+'</div>'+
+       '<p>'+epilogue()+'</p><div class="inline">'+btn("장부 보기","tab:record")+btn("새 회차","reset",false,"primary")+'</div>','회차 종료');
+   }
+@@ -473,7 +521,7 @@
  }
  const legacyEventIds={"비어 있는 천막":"circus","타운하우스의 손님":"visitPrince","돌아온 집사":"homecoming","불을 지키는 사람":"cook","서재의 열쇠":"return","새벽의 일정표":"discipline","비어 있는 장부":"proof","여왕의 초청장":"audience","상점 진열장":"trade","손님이 돌아간 뒤":"room"};
  function updateMoney(){
@@ -321,7 +796,16 @@
  }
  function relationBook(){
    return '<h3>인물 관계</h3>'+peopleInHouse().map(id=>{const r=state.people[id];return '<div class="work-ledger"><b>'+servants[id].name+'</b><span>상대 → 시엘　'+rank(r.toward)+'</span></div>';}).join("");
-@@ -619,10 +649,27 @@
+@@ -485,7 +533,7 @@
+   const allies=peopleInHouse().filter(k=>state.people[k].toward>=5).map(k=>servants[k].name);
+   const top=Object.keys(state.stats).sort((a,b)=>state.stats[b]/statMax(b)-state.stats[a]/statMax(a))[0];
+   const route=state.ending==="vowNoTitle"?((state.stats.경영>=140&&state.fund>=260)?"런던의 사업가로 자리 잡았습니다. ":state.stats.통찰>=140?"정보상의 연락망을 얻었습니다. ":"마차를 타고 옛 흔적을 좇습니다. "):"";
+-  return route+(allies.length?allies.join("·")+"은 다음 겨울에도 도련님의 지시를 따르겠다고 전했습니다. ":"")+"가장 단련된 능력은 "+top+"이었습니다. 팬텀사의 개발품은 "+state.unlocked.length+"종, 저택에 합류한 고용인은 "+peopleInHouse().filter(id=>servants[id].job).length+"명입니다.";
++  return route+(allies.length&&!["releaseTitle","releaseNoTitle","ill","broke"].includes(state.ending)?allies.join("·")+"은 다음 겨울에도 도련님의 지시를 따르겠다고 전했습니다. ":"")+"가장 단련된 능력은 "+top+"이었습니다. 팬텀사의 개발품은 "+state.unlocked.length+"종, 저택에 합류한 고용인은 "+peopleInHouse().filter(id=>servants[id].job).length+"명입니다.";
+ }
+ function canBuyTownhouse(){return state.phase==="plan" && !state.flags.townhouse && state.fund>=250;}
+ function townhouseGuestsDue(run){
+@@ -619,10 +667,27 @@
        return '<details><summary>'+monthText(record.month||state.month)+' · '+event.title+'</summary><p>'+note+'</p>'+btn('영입 장면 다시 보기','recruit-memory:'+event.id)+'</details>';
      }
      const choice=event.choices[record.index];
@@ -329,7 +813,8 @@
 +    return '<details><summary>'+(record.month?monthText(record.month)+' · ':'')+(choice?choice.label:castName(event))+'</summary>'+(sourceNote(event)?'<small>'+sourceNote(event)+'</small>':'')+'<p>'+storyLine(event)+'</p><p class="small muted">'+(choice?choice.label+" · "+(record.examNote||choice.result):"처리 완료")+'</p></details>';
    }).join("");
    return frame("가문 장부",'<h3>궁정의 기류</h3><p>'+courtImpression()+'</p><div class="step-grid">'+
-     tile("남은 채무",money(state.debt))+'</div>'+relationBook()+'<h3>엔딩 도감</h3><p class="small muted">'+(Object.values(saves.gallery||{}).join(" · ")||"기록 없음")+'</p><h3>사건 기록</h3>'+(history||'<p class="small muted">기록 없음</p>'));
+-    tile("남은 채무",money(state.debt))+'</div>'+relationBook()+'<h3>엔딩 도감</h3><p class="small muted">'+(Object.values(saves.gallery||{}).join(" · ")||"기록 없음")+'</p><h3>사건 기록</h3>'+(history||'<p class="small muted">기록 없음</p>'));
++    tile("남은 채무",money(state.debt))+'</div>'+portfolioGuide()+relationBook()+'<h3>엔딩 도감</h3><div class="ending-album">'+(Object.keys(endingScenes).filter(hasEndingRecord).map(endingThumb).join("")||'<p class="small muted">기록 없음</p>')+'</div><h3>사건 기록</h3>'+(history||'<p class="small muted">기록 없음</p>'));
 +}
 +const motionLabels={auto:"기기 설정 따르기",full:"항상 재생",reduced:"동작 줄이기"};
 +const motionKey="earl-phantomhive-motion";
@@ -342,7 +827,7 @@
 +  return motionMode==="reduced"||(motionMode==="auto"&&matchMedia("(prefers-reduced-motion: reduce)").matches);
 +}
 +function syncMotion(){
-+  document.documentElement.dataset.gameMotion=motionReduced()?"reduced":"full";
++  document.documentElement.dataset.gameMotion=motionMode==="reduced"?"reduced":motionReduced()?"gentle":"full";
 +}
 +function motionControls(){
 +  return '<section class="mixer"><h3>동작 설정</h3><p>시엘의 인사와 일정 애니메이션</p><div class="opts">'+
@@ -350,7 +835,7 @@
  }
  function savePanel(){
    const rows=["auto","1","2","3"].map((id,index)=>{
-@@ -631,7 +678,7 @@
+@@ -631,7 +696,7 @@
        (record?monthText(record.month)+" · "+phaseNames[record.phase]:"빈 슬롯")+'</span></div><div class="opts">'+
        (index?btn("저장","store:"+id,false,"slot-write"):"")+btn("불러오기","load:"+id,!record,"slot-read")+'</div></div>';
    }).join("");
@@ -359,10 +844,16 @@
      '<div class="notebook-actions">'+(state.phase!=="contract"?btn("프롤로그 다시 보기","recollect"):"")+btn("새 회차","reset")+btn("표지로","tab:title")+'</div>');
  }
  function statusPanel(){
-@@ -811,6 +858,11 @@
+@@ -811,6 +876,17 @@
  }
  
  const marketGoods={
++  cocoa:{name:"핫초콜릿",cost:22,stat:"motivation",amount:12,label:"의욕",line:"카카오를 진하게 풀었어. 숟가락을 세워 볼 생각이라면 조금 더 식혀야겠지만."},
++  broth:{name:"따뜻한 콘소메",cost:24,stat:"hp",amount:13,label:"건강",line:"기름은 걷어 냈어. 입맛이 없는 날에는 한 컵만 마셔도 괜찮지."},
++  lavender:{name:"라벤더 향주머니",cost:20,stat:"stress",amount:-12,label:"스트레스",line:"서랍에 넣어 두면 장부를 펼칠 때마다 향이 날 거야."},
++  tart:{name:"체리 타르트",cost:14,stat:"motivation",amount:6,label:"의욕",line:"가장자리가 조금 깨진 건 내가 먹었어. 이건 마차로 가져가도 멀쩡할걸."},
++  ginger:{name:"생강 당과",cost:10,stat:"hp",amount:4,label:"건강",line:"설탕을 두 번 입혔지. 그래도 마지막엔 생강 맛이 남아."},
++  biscuit:{name:"버터 비스킷 한 봉",cost:8,stat:"stress",amount:-3,label:"스트레스",line:"깨지기 전에 하나 집어. 봉투는 책갈피로 써도 돼."},
 +  novel:{name:"주머니판 모험소설",icon:"reading",cost:17,stat:"motivation",amount:8,label:"의욕",line:"책갈피가 붙어 있네. 집사가 부르면 거기까지만 읽으면 되겠지."},
 +  abacus:{name:"휴대용 주판 대여",icon:"accounts",cost:19,lesson:"accounts",line:"외상 전표를 계산할 때 써 봐. 회계 수업 한 번 치 대여료야."},
 +  lens:{name:"손돋보기 대여",icon:"casework",cost:20,lesson:"inquiry",line:"종이에 남은 눌린 자국까지 보일걸. 기록 조사 때 가져가."},
@@ -371,7 +862,7 @@
    tea:{name:"홍차 한 잔",cost:12,stat:"stress",amount:-5,label:"스트레스",line:"마침 차가 잘 우러났어. 한 잔 하겠어?"},
    scone:{name:"버터 스콘",cost:15,stat:"hp",amount:6,label:"건강",line:"스콘은 따뜻할 때 반으로 갈라야 버터가 스며들지."}
  };
-@@ -818,17 +870,18 @@
+@@ -818,17 +894,18 @@
  function marketPanel(){
    const cards=Object.entries(marketGoods).map(([id,g])=>
      '<button type="button" class="goods-ticket" data-action="goods:'+id+'" aria-pressed="'+(selectedGood===id)+'">'+
@@ -398,7 +889,7 @@
      btn(money(g.cost)+" 구매","buy:"+selectedGood,Boolean(reason),"shop-buy")+'</div>'+
      (reason?'<small>'+reason+'</small>':'')+'</section></div>';
  }
-@@ -848,43 +901,39 @@
+@@ -848,43 +925,40 @@
  const homeRemarks=["무슨 일이지?","차가 식기 전에 마저 마시겠어.","오늘 일정은 확인했나?","잠깐이라면 들어주지."];
  let remarkIndex=0;
  let remarkTimeout;
@@ -432,6 +923,7 @@
 -  clearTimeout(remarkTimeout);
 -  $("ciel-aside").textContent="";
 -  cielHop?.cancel();
++  if(state.phase==="vow"&&tab==="plan"){beginFinale(cielEndingId(state.stats.의지,qualifies()));return;}
 +  if($("scene").dataset.artOnly==="true")setArtOnly($("scene"),false);
 +  if(tab!=="home"){
 +    clearTimeout(remarkTimeout);
@@ -459,8 +951,36 @@
    musicPlayer.sync(trackForView());
    stopPlayback();
    $("system-back").disabled=tab==="home";
-@@ -1127,6 +1176,10 @@
+@@ -1115,6 +1189,21 @@
+ }
+ function handleAction(key,rect,confirmed=false){
+   const [action,id,value]=key.split(":");
++  if(tab==="plan"&&["slotEvent","event"].includes(state.phase)&&["term-close","term-next"].includes(action)){
++    const event=pendingEvent();
++    if(!event||!termPages(event))return;
++    if(action==="term-close"&&state.termOutcome?.id===event.id)finishEventChoice(event);
++    else if(action==="term-next"&&Number(id)===(state.termPage||0)){
++      state.termPage=Number(id)+1;persist();render(true);
++    }
++    return;
++  }
++  if(action==="ending-art"&&(tab==="record"||(tab==="plan"&&state.phase==="ending"))&&hasEndingRecord(id)){
++    stopRecruitAuto();endingReplay={id,at:0,origin:tab};tab="endingMemory";render(true);return;
++  }
++  if(tab==="endingMemory"&&["back","system-back"].includes(action)){
++    stopRecruitAuto();tab=endingReplay?.origin||"record";endingReplay=null;render(true);return;
++  }
+   if(action==="recruit-memory"&&tab==="record"&&state.events.some(e=>e.id===id)){openRecruitMemory(id);return;}
+   if(tab==="staffMemory"&&["system-back","back"].includes(action)){closeRecruitMemory();return;}
+   const fund=state.fund;
+@@ -1123,10 +1212,15 @@
+   if(action==="open-guide"){showGuidePage(0);return;}
+   if(action==="goods"&&tab==="market"&&Object.hasOwn(marketGoods,id)){
+     selectedGood=id;
+-    const panel=$("panel"),scroll=panel.scrollTop;
++    const panel=$("panel"),scroll=panel.scrollTop,itemsScroll=panel.querySelector(".goods-list").scrollTop;
      panel.innerHTML=marketPanel();
++    panel.querySelector(".goods-list").scrollTop=itemsScroll;
      panel.scrollTop=scroll;
      focusAction(key);respond("choose",rect);return;
 +  }
@@ -470,7 +990,15 @@
    }
    if(action==="greet-ciel"){greetCiel();return;}
    if(action==="open-menu"){
-@@ -1321,11 +1374,18 @@
+@@ -1177,7 +1271,6 @@
+   if(action==="read-verdict"&&state.phase==="investiture"){
+     tab="plan";finish(state.ending);return;
+   }
+-  if(action==="vow"&&state.phase==="vow"){beginFinale(id==="keep"?(qualifies()?"vowTitle":"vowNoTitle"):(qualifies()?"releaseTitle":"releaseNoTitle"));respond("decision",rect,".sheet-head");return;}
+   if(action==="annex"||action==="townhouse"){
+     if(action==="annex"&&state.phase!=="plan")return;
+     if(action==="townhouse"){
+@@ -1321,11 +1414,18 @@
      if(action==="buy"){
        const g=marketGoods[id];
        if(tab!=="market"||!Object.hasOwn(marketGoods,id)||state.fund<g.cost)return;
@@ -494,7 +1022,7 @@
      }else if(action==="activity"){
        pattern="schedule";state.plan[Number(id)]=value;
        message=slotNames[Number(id)]+" · "+actions[value].name;
-@@ -1405,7 +1465,7 @@
+@@ -1405,7 +1505,7 @@
        const key=button.dataset.action;
        handleAction(key,rect);
        const pressed=button.isConnected?button:document.querySelector('button[data-action="'+key+'"]:not(:disabled)');
@@ -503,7 +1031,7 @@
          pressed.animate([{scale:".98"},{scale:"1"}],{duration:140,easing:"ease-out"});
        }
      }
-@@ -1418,5 +1478,7 @@
+@@ -1418,5 +1518,7 @@
  });
  render();
  if(state.phase==="guide"&&tab==="plan")showGuidePage(0);
@@ -524,7 +1052,7 @@
    if(i+step>=openingLines.length){finishOpening();return;}
 --- a/js/recruit.js
 +++ b/js/recruit.js
-@@ -158,10 +158,68 @@
+@@ -158,16 +158,93 @@
      stage.style.setProperty("--portrait-scene-width",entry.contentRect.width+"px");
    });
    observer.observe(stage);
@@ -559,6 +1087,10 @@
 +  stage.dataset.artOnly=String(hidden);
 +  const openingMat=stage.querySelector(".opening-mat");
 +  if(openingMat)openingMat.hidden=hidden;
++  for(const overlay of stage.querySelectorAll("#conversation .dialogue,#conversation .answers,#conversation .opening-top,#conversation .review-bubble,#conversation .review-slip")){
++    overlay.style.visibility=hidden?"hidden":"";
++    overlay.inert=hidden;
++  }
 +  toggle.setAttribute("aria-pressed",String(hidden));
 +  toggle.textContent=hidden?"대화창 표시":"대화창 숨기기";
  }
@@ -572,19 +1104,28 @@
 +  "소마":[171,60,44], "타나카":[166,64,44], "라우":[178,62,42],
 +  "엘리자베스11":[144,88,37], "엘리자베스12":[150,43,22], "엘리자베스13":[156,89,46]
 +};
++const cielMeasures=[[140,86,46],[146,79,45],[152,62,46]];
++function standingFit(profile,age){
++  const [referenceHeight,referenceEye,referenceChin]=cielMeasures[age-10];
++  const referenceScale=Number(cielPortraitScale(age));
++  const [height,eye,chin]=standingMeasures[profile];
++  const eyeLevel=referenceScale*(1-referenceEye/400)+(height-referenceHeight)/300;
++  const faceRatio=profile.startsWith("엘리자베스")?1:1.08;
++  const scale=Math.max(referenceScale*referenceChin*faceRatio/chin,eyeLevel/(1-eye/400));
++  return {scale,window:eyeLevel+scale*eye/400};
++}
 +function setPortraitAge(stage,age){
-+  const scale=Number(cielPortraitScale(age));
-+  const index=Math.max(0,Math.min(2,age-10));
-+  stage.style.setProperty("--ciel-scale",String(scale));
-+  // The Ciel reference image stays in its established framing at each age.
-+  const eyeFromFloor=scale*(1-[86,79,62][index]/400);
-+  stage.style.setProperty("--cast-base",String(eyeFromFloor-(140+6*index)/300));
++  const ageIndex=Math.max(10,Math.min(12,age));
++  stage.dataset.castAge=String(ageIndex);
++  stage.style.setProperty("--ciel-scale",cielPortraitScale(ageIndex));
++  // Fit the tallest illustration once. Clipping each head separately flattens differences in height.
++  const tallest=Math.max(...Object.keys(standingMeasures).map(profile=>standingFit(profile,ageIndex).window));
++  stage.style.setProperty("--cast-camera",String(Math.min(1,.91/tallest)));
 +}
 +function framedStanding(name,src,classes,profile=name){
-+  const [height,eye,chin]=standingMeasures[profile];
-+  const imageScale=Math.max(.101*400/chin,(.185+height/300)/(1-eye/400));
-+  const rise=height/300+imageScale*eye/400;
-+  return '<span class="standing-window '+classes+'" style="--figure-scale:'+imageScale+';--figure-rise:'+rise+'"><img src="'+src+'" alt="'+name+'"></span>';
++  const age=Number(document.getElementById("scene").dataset.castAge)||10;
++  const fit=standingFit(profile,age);
++  return '<span class="standing-window '+classes+'" style="--figure-scale:'+fit.scale+';--figure-height:'+fit.window+'"><img src="'+src+'" alt="'+name+'"></span>';
 +}
 +function sceneStanding(name,side,src,age){
 +  if(name!=="시엘"){
@@ -595,7 +1136,56 @@
  }
  function sceneLine(speaker,text,next,attributes="",heading=""){
    return '<article class="dialogue" '+attributes+'>'+(speaker?'<small>'+speaker+'</small>':'')+heading+
-@@ -235,21 +293,21 @@
+     '<p>'+text+' '+next+'</p></article>';
+ }
+ const recruitNames={ciel:"시엘",seb:"세바스찬",finny:"피니안",mey:"메이린",bard:"바르도",tanaka:"타나카",snake:"스네이크",soma:"소마",agni:"아그니"};
++function readerControls(at,last,auto){
++  return '<div class="opening-top recruit-controls" role="group" aria-label="대사 재생">'+
++    '<button type="button" data-read="previous" '+(at===0?'disabled':'')+'>이전</button>'+
++    '<button type="button" data-read="auto" aria-pressed="'+auto+'" '+(last?'disabled':'')+'>'+(auto?'자동 멈춤':'자동 재생')+'</button>'+
++    '<button type="button" data-read="skip" '+(last?'disabled':'')+'>건너뛰기</button></div>';
++}
+ function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers=""){
+   const book=recruitScenes[id],{scene,speaker,text}=book.lines[at];
+   const art=recruitArt[scene.art],bg=file(art.bg),last=at===book.lines.length-1;
+@@ -181,10 +258,7 @@
+   }).join("");
+   const label=last?(readOnly?"회상 마치기":"영입 확정"):"다음 대사";
+   const arrow=answers?'':'<button type="button" class="line-next" data-read="'+(last?'finish':'next')+'" aria-label="'+label+'">▼</button>';
+-  const controls='<div class="opening-top recruit-controls" role="group" aria-label="대사 재생">'+
+-    '<button type="button" data-read="previous" '+(at===0?'disabled':'')+'>이전</button>'+
+-    '<button type="button" data-read="auto" aria-pressed="'+auto+'" '+(last?'disabled':'')+'>'+(auto?'자동 멈춤':'자동 재생')+'</button>'+
+-    '<button type="button" data-read="skip" '+(last?'disabled':'')+'>건너뛰기</button></div>';
++  const controls=readerControls(at,last,auto);
+   const props=scene.prop?'<img class="recruit-tea" alt="닐기리 홍차" src="'+file(recruitProps[scene.prop])+'">':'';
+   return backdrop+actors+props+sceneLine(speaker==="장면"?"":speaker,text,arrow,
+     'data-book="'+id+'" data-leaf="'+at+'" aria-live="polite" aria-atomic="true"')+answers+controls;
+@@ -195,11 +269,14 @@
+   const end=recruitScenes[id].lines.length-1;
+   clearTimeout(recruitTimer);if(at===end)stopRecruitAuto();
+   host.innerHTML=recruitMarkup(id,at,file,readOnly,recruitAuto,answers);
++  bindSceneReader(host,at,end,recruitScenes[id].lines[at].text,onPage,answers?null:onFinish);
++}
++function bindSceneReader(host,at,end,text,onPage,onFinish){
+   const line=host.querySelector(".dialogue"),bar=host.querySelector(".recruit-controls");
+   function step(to){if(line.isConnected)onPage(to);}
+   function arm(){
+     if(!recruitAuto||at===end)return;
+-    const delay=Math.min(6200,1700+recruitScenes[id].lines[at].text.length*90);
++    const delay=Math.min(6200,1700+text.length*90);
+     recruitTimer=setTimeout(()=>{if(line.isConnected&&!document.hidden)step(at+1);else stopRecruitAuto();},delay);
+   }
+   function click(e){
+@@ -215,7 +292,7 @@
+     if(read==="previous"&&at>0)step(at-1);
+     if(read==="next"&&at<end)step(at+1);
+     if(read==="skip"&&at<end)step(end);
+-    if(read==="finish"&&at===end&&!answers)onFinish();
++    if(read==="finish"&&at===end)onFinish?.();
+   }
+   function keydown(e){
+     if(e.altKey||e.ctrlKey||e.metaKey||e.repeat||!["ArrowLeft","ArrowRight"].includes(e.key))return;
+@@ -235,21 +312,21 @@
    const hasChoices=at===recruitScenes[id].lines.length-1&&event.choices.length>1;
    const answers=hasChoices?'<div class="answers" role="group" aria-label="대화 선택지">'+
      event.choices.map((c,i)=>btn(c.label,"choose:"+i,Boolean(c.when&&!c.when(state)),"vn-choice")).join("")+'</div>':"";
@@ -622,7 +1212,7 @@
  }
  function closeRecruitMemory(){
    stopRecruitAuto();const id=recruitMemory?.id;recruitMemory=null;tab="record";render();
-@@ -257,9 +315,9 @@
+@@ -257,9 +334,9 @@
    if(button){button.closest("details").open=true;button.focus({preventScroll:true});}
  }
  function showRecruitMemory(host){
@@ -678,7 +1268,7 @@
 +  dance:["제가 박자를 바꿨는데도 발을 밟지 않으셨습니다.","회전은 좋습니다. 마지막 발만 모아 주십시오.","다음 곡도 같은 속도로 청하겠습니다.","제 구두는 괜찮습니다. 왼발부터 다시 하시지요.","음악보다 한 걸음 앞서셨습니다. 잠시 멈추지요."],
 +  social:["말없이 앉아 있던 손님까지 웃게 하셨군요.","날씨 이야기는 무사히 끝났습니다. 다음 화제는요?","성함을 모두 기억하셨습니다. 오늘은 그걸로 충분합니다.","그분은 아직 소개를 받지 못하셨습니다.","작별 인사를 건네기엔 손님의 찻잔이 가득합니다."],
 +  negotiate:["값을 그대로 두고 운임까지 받아 내셨군요.","가격은 정했습니다. 납기는 아직 빈칸입니다.","서로 서명할 수 있는 데까지는 왔습니다.","상대가 부른 값이 우리 원가보다 낮습니다.","그 조건대로라면 우리가 운임을 두 번 냅니다."],
-+  exercise:["창가까지 같은 걸음이었습니다. 제 시계를 보실 필요도 없군요.","연회장을 한 번 왕복하셨습니다. 다음엔 숨을 더 길게 내쉬십시오.","오늘은 창문 셋째 칸까지입니다. 거리가 조금씩 늘고 있군요.","걸음이 자꾸 짧아집니다. 의자는 제가 가져오겠습니다.","숨을 참으셨군요. 발판을 치우고 창가에서 쉬시지요."],
++  exercise:["창가까지 같은 걸음이었습니다. 제 시계를 보실 필요도 없군요.","체조실을 한 번 왕복하셨습니다. 다음엔 숨을 더 길게 내쉬십시오.","오늘은 창문 셋째 칸까지입니다. 거리가 조금씩 늘고 있군요.","걸음이 자꾸 짧아집니다. 의자는 제가 가져오겠습니다.","숨을 참으셨군요. 발판을 치우고 창가에서 쉬시지요."],
 +  practicum:["원장에 없는 영수증부터 골라내셨습니다.","날짜는 맞습니다. 거래처별로 한 번 더 나누지요.","미결 전표 한 장은 내일까지 두겠습니다.","합계에 같은 영수증이 두 번 들어갔습니다.","수금 전표가 지출 쪽에 있습니다. 색실을 끼워 둘까요?"],
 +  developToy:["수레가 턱을 넘었습니다. 이번 축은 견본으로 남기지요.","바퀴는 굴러갑니다. 손잡이는 조금 더 다듬지요.","첫 견본으로 충분합니다. 아이가 쥘 자리를 표시해 두겠습니다.","바퀴를 끼우니 뚜껑이 열리지 않는군요.","왼쪽으로만 도는 수레입니다. 자를 다시 대 보십시오."],
 +  supplier:["뒷면의 흠까지 보셨군요. 좋은 견본을 고르셨습니다.","견본은 받았습니다. 납품일은 서신으로 확인하지요.","두 집의 가격을 받아 적으셨군요. 돌아가서 대조하겠습니다.","문을 닫았군요. 다음번엔 영업시간부터 묻지요.","그 견본은 다른 상회의 것입니다. 표찰을 보십시오."],
@@ -702,7 +1292,7 @@
 +}
 --- a/js/scenes.js
 +++ b/js/scenes.js
-@@ -11,12 +11,14 @@
+@@ -11,20 +11,25 @@
  function playMarkup(){
    const seq=state.sequence, part=seq.index, id=state.plan[part], [room,frames,movement,prop,line]=choreography[id];
    const pose=frames.split(" ");
@@ -719,27 +1309,31 @@
  }
  function startPlayback(resumeAt=0){
    stopPlayback();
-@@ -24,7 +26,7 @@
+   const seq=state.sequence, index=seq.index, turn=state.month;
    const firstDay=index*10+1,lastDay=index===2?new Date(Date.UTC(1886,turn,0)).getUTCDate():firstDay+9;
    const actor=$("playback").querySelector(".performer"),poses=actor.dataset.frames.split(" ");
++  const custom=illustratedActivities.includes(state.plan[index]);
++  const frameMs=custom?(state.plan[index]==="exercise"?260:state.plan[index]==="recovery"?950:460):
++    poses[0]==="trot1"?180:poses.includes("step1")?280:poses[0]==="bowOut"?390:800;
    const sprite=actor.querySelector("img"), fields=[...$("playback").querySelectorAll("[data-stat]")];
 -  const quiet=matchMedia("(prefers-reduced-motion:reduce)").matches;
 +  for(const pose of new Set(poses)){const image=new Image();image.src=actors[pose];}
    playbackElapsed=resumeAt;
    let then=performance.now();
    function paint(){
-@@ -35,8 +37,8 @@
+@@ -35,8 +40,9 @@
      then=now;
      const pct=Math.min(1,elapsed/6200);
      $("date").innerHTML=dayPlate(turn,firstDay+Math.floor((lastDay-firstDay)*Math.min(1,pct*1.16)));
 -    const frame=quiet?poses[0]:poses[Math.floor(elapsed/(poses[0]==="trot1"?180:poses.includes("step1")?280:poses[0]==="bowOut"?390:800))%poses.length];
 -    if(sprite.dataset.pose!==frame){sprite.src=actors[frame];sprite.dataset.pose=frame;}
-+    const frame=motionReduced()?poses[0]:poses[Math.floor(elapsed/(poses[0]==="trot1"?180:poses.includes("step1")?280:poses[0]==="bowOut"?390:800))%poses.length];
++    const poseInterval=motionReduced()?Math.max(800,frameMs):frameMs;
++    const frame=motionMode==="reduced"?poses[0]:poses[Math.floor(elapsed/poseInterval)%poses.length];
 +    if(sprite.dataset.pose!==frame){const src=actors[frame];if(sprite.getAttribute("src")!==src)sprite.src=src;sprite.dataset.pose=frame;}
      for(const field of fields){
        const key=field.dataset.stat,v=Math.round(seq.before[key]+(seq.after[key]-seq.before[key])*Math.min(1,pct*1.35));
        field.textContent=v;field.nextElementSibling.firstElementChild.style.width=Math.min(100,v/statMax(key)*100)+"%";
-@@ -49,10 +51,13 @@
+@@ -49,10 +55,13 @@
    const seq=state.sequence,id=state.plan[seq.index],a=actions[id];
    seq.before=snapStats(state);
    state.fund-=a.cost;
@@ -755,6 +1349,33 @@
    state.phase="scene";tab="plan";persist();render(true);
  }
  function hasPendingVisit(){
+@@ -67,12 +76,15 @@
+   if(state.phase!=="scene")return;
+   stopPlayback();
+   const id=state.plan[state.sequence.index];
+-  const event=state.duration===35&&events.find(e=>e.slot===id&&!state.flags[e.id]&&e.sees(state));
+-  if(event){state.phase="slotEvent";state.pending=event.id;persist();render(true);}
++  const eligible=state.duration===35?events.filter(e=>(e.slot===id||e.subjects?.includes(id))&&!state.flags[e.id]&&e.sees(state)):[];
++  if(eligible.length){
++    state.sequence.slotQueue=eligible.map(e=>e.id);
++    state.pending=state.sequence.slotQueue.shift();state.phase="slotEvent";persist();render(true);}
+   else openReview();
+ }
+ function faceDialogue(){
+   const con=$("conversation"),event=["slotEvent","event"].includes(state.phase)&&tab==="plan"?pendingEvent():null;
++  if(showEndingScene(con))return true;
+   if(tab==="staffMemory"&&recruitMemory){showRecruitMemory(con);return true;}
+   if(event&&Object.hasOwn(recruitScenes,event.id)){con.dataset.review="false";showMonthlyRecruit(con,event);return true;}
+   const review=state.phase==="review"&&tab==="plan";
+@@ -83,7 +95,7 @@
+   con.hidden=false;
+   if(event){
+     const buttons=event.choices.map((c,i)=>btn(c.label+(c.when&&!c.when(state)?' · '+c.hint:""),"choose:"+i,Boolean(c.when&&!c.when(state)),"vn-choice")).join("");
+-    con.innerHTML=staged(castName(event),"",storyLine(event),buttons,"",event.slot?choreography[event.slot][0]:event.id.startsWith("season-")&&event.speaker==="엘리자베스"?"garden":"ballroom");return true;
++    con.innerHTML=termDialogue(event,buttons)||staged(castName(event),"",storyLine(event),buttons,"",event.slot?choreography[event.slot][0]:event.id.startsWith("season-")&&event.speaker==="엘리자베스"?"garden":"ballroom");return true;
+   }
+   const c=chatDialogue();
+   con.innerHTML=dialogueCast("세바스찬")+'<article class="dialogue"><small>'+c.caption+'</small><p>'+c.line+'</p>'+(c.effects?'<small>'+escapeHTML(c.effects)+'</small>':'')+'<div class="answers">'+c.buttons+'</div></article>';
 --- a/js/story.js
 +++ b/js/story.js
 @@ -66,7 +66,7 @@
@@ -766,6 +1387,110 @@
      ["practicum",2,"copy","먹지 두 장","장부 사본에 원본과 다른 숫자가 하나 남아 있습니다.","영수증을 찾는다","경영",6,"전표의 글씨를 본다","통찰",5],
      ["developToy",2,"axle","삐걱거리는 축","장난감 마차를 세 번 굴리자 한쪽 바퀴만 멎습니다.","축을 바꿔 본다","경영",6,"바닥을 바꿔 굴린다","통찰",6],
      ["supplier",2,"bolt","천의 뒷면","상인은 늘 견본의 앞면만 보여 줍니다. 시엘이 안감을 살짝 접습니다.","봉제 상태를 지적한다","경영",6,"다른 염색 천을 청한다","매력",4],
+--- /dev/null
++++ b/js/term-events.js
+@@ -0,0 +1,101 @@
++"use strict";
++
++// These records belong to the live campaign. A reader may leave and return between any two lines.
++const birthdayDialogue = {
++  birthday: {
++    room:"ballroom",
++    lines:[
++      ["","접시 가장자리에 흰 설탕이 조금 묻어 있었다. 시엘은 검지로 그것을 닦다가 촛불을 보았다."],
++      ["시엘","열하나. ……제대로 셌네."],
++      ["세바스찬","작년에 쓰시던 촛대에는 열 개밖에 들어가지 않아서요. 하나는 케이크에 바로 꽂았습니다."],
++      ["시엘","그래서 한 개만 기울었군."],
++      ["","마지막 초가 흘린 밀랍이 크림에 닿기 직전이었다. 시엘이 접시를 제 쪽으로 당겼다."],
++      ["시엘","그건 내가 끌게. 너는 칼을 데워 와. 찬 걸로 자르면 단면이 망가져."],
++      ["세바스찬","예, 도련님. 첫 조각은 어느 접시에 덜어 드릴까요?"]
++    ],
++    replies:[
++      [["","홍차를 따르는 사이, 시엘이 케이크의 모서리를 반듯하게 잘라 냈다."],["시엘","올해는 이 정도면 돼. 차는…… 한 잔 더 줘."]],
++      [["","시엘은 잠시 빈 접시를 내려다보다가 자기 앞으로 가져왔다."],["시엘","여기에. 내 생일인데 자꾸 네가 먼저 정하게 둘 순 없잖아."]]
++    ]
++  },
++  birthday2: {
++    room:"ballroom",
++    lines:[
++      ["","올해는 열두 개가 다 촛대에 들어갔다. 초 사이의 설탕 체스 말만 하나 비스듬했다."],
++      ["시엘","이거 어제 두던 판이잖아. 내 나이트가 거기가 아니었을 텐데."],
++      ["세바스찬","주방에서 오는 동안 한 칸 미끄러진 모양입니다. 제 킹에는 뜻밖의 행운이었지요."],
++      ["","시엘이 케이크 받침을 사분의 일 바퀴 돌렸다. 검은 왕 뒤에 흰 비숍이 숨어 있었다."],
++      ["시엘","잘도 미끄러졌군. 그렇게 둬 봐. 두 수면 끝나."],
++      ["세바스찬","초가 녹기 전까지 제게 두 수나 허락해 주시겠습니까?"],
++      ["시엘","오늘은 내 시계로 재. 먼저 둘지 말지는 네가 정해."]
++    ],
++    replies:[
++      [["","세바스찬이 폰을 밀자 시엘은 기다렸다는 듯 설탕 비숍을 집었다."],["시엘","체크메이트. 네 몫은 네가 지킨 폰으로 해."]],
++      [["","시엘은 말을 집는 대신 접시를 저택 식구 수만큼 꺼내 놓았다."],["시엘","식으면 다 같은 설탕이지. 사람들 먼저 불러. 초는 같이 끌 거야."]]
++    ]
++  }
++};
++
++const examDialogue = {
++  study:["세 통의 봉투가 책상에 놓였다. 세바스찬이 날짜를 가린 뒤 모래시계를 뒤집었다.","날짜까지 덮으면 필적도 단서가 되겠지.","연대를 정하셨으니 틀린 날짜가 적힌 사본도 골라내시겠군요.","필체를 옮긴 두 줄을 인장 옆에 놓으십시오. 같은 해인지 보이십니까?"],
++  etiquette:["세바스찬은 문 앞으로 나가 장갑을 벗고, 뒤늦은 손님처럼 노크했다.","내가 문까지 나가면 먼저 온 손님이 혼자가 되는군.","양쪽 손님이 모두 자리에 앉았습니다. 차도 식지 않았고요.","좌석표에 한 칸을 남겨 두지요. 손님이 늘 때마다 주인이 일어설 수는 없습니다."],
++  accounts:["바퀴 달린 말 열 개를 세운 집사가 동전 아홉 닢을 내려놓았다.","한 닢을 어디 감췄는지만 물으면 시험이 안 되겠지.","전표 날짜까지 맞습니다. 내일 들어올 한 닢도 마감할 수 있겠군요.","물건 수는 맞았습니다. 이번엔 외상 장부의 마지막 줄을 보시지요."],
++  inquiry:["봉랍 두 덩이가 촛불 가까이에서 서로 다른 냄새를 냈다.","인장은 하나인데 밀랍을 두 종류나 썼다고?","금이 간 자국까지 겹칩니다. 봉한 사람과 보낸 사람을 나눠 볼 수 있겠군요.","무게는 같습니다. 손톱으로 누른 자리도 같을까요?"],
++  language:["세바스찬이 책을 닫고 같은 문장을 두 번 읽었다. 두 번째에는 한 음절이 달랐다.","마지막 동사가 달랐어. 누가 말하는지 바꿨군.","예. 이제 다른 사람이 한 말을 그대로 옮겨도 주인이 바뀌지 않겠습니다.","표를 보셔도 됩니다. 대신 이번 문장은 도련님 자신의 말로 읽으시지요."],
++  music:["활이 현에서 떨어지자 집사가 악보를 뒤집었다. 끝나지 않은 음 하나가 방에 남았다.","적어도 어디서 끊을지는 먼저 말해 주지 그래.","다음 악구로 넘어가는 숨까지 이어졌습니다. 악보를 돌려 드리지요.","첫 박자를 잡으셨군요. 이제 그 박자를 간직한 채 셋째 마디부터."],
++  dance:["축음기가 회전하는데 반주가 한 박자 비었다. 집사의 발끝이 아직 바닥에 닿지 않았다.","이대로 돌면 네 발을 밟겠어.","상대가 디딜 자리를 남겨 두셨습니다. 다음 곡도 이 속도로 하지요.","마룻결을 기준으로 두 발을 다시 놓으십시오. 제가 먼저 체중을 옮기겠습니다."],
++  social:["세바스찬이 빈 의자 둘을 놓고 은쟁반 하나를 그 사이에 밀었다.","손님이 둘인데 네 역할도 둘이야? 꽤 바쁘겠군.","쟁반은 테이블에 남고 손님끼리 이야기를 시작했습니다. 훌륭한 주최시군요.","잔은 충분합니다. 이제 어느 쪽 손님께 먼저 말을 거시겠습니까?"],
++  negotiate:["가격이 같은 견적서 두 장. 세바스찬이 달력 위에 반씩 겹쳐 놓았다.","하나는 박람회가 끝난 뒤에 오잖아.","연착 책임을 넣으니 싼 쪽이 바뀌었습니다. 이 조건으로 서명하시지요.","합계 아래의 작은 글씨도 보십시오. 마차가 늦으면 누가 비용을 냅니까?"],
++  exercise:["체조실 바닥에 분필선이 세 줄 그어져 있었다. 세바스찬이 회중시계의 뚜껑을 열었다.","끝에 가서 뛰면 금방인 거리인데.","마지막 선에서도 보폭이 같았습니다. 기록보다 호흡을 먼저 보셨군요.","천천히 내쉬십시오. 시계는 제가 멈췄으니 도련님이 준비되면 다시 시작하지요."]
++};
++
++const portfolios = [
++  ["지성","번역자의 여백",["study","language","reading"],"동화 초판과 라틴어 원서에서 같은 문단을 찾아 한 줄로 주석을 단다."],
++  ["기품","박자가 멎은 무도회",["etiquette","dance","music"],"반주가 멎은 사이에 파트너와 늦게 온 손님을 함께 자리로 이끈다."],
++  ["매력","답장이 오는 초대장",["letters","social","reception"],"지난 다과회에 말수가 적었던 손님 앞으로 그가 이야기를 끝내지 못한 주제를 적어 보낸다."],
++  ["경영","원장의 마지막 한 닢",["accounts","negotiate","practicum"],"납품가와 외상 전표를 맞춰 회계 실습에서 남았던 한 닢의 행방을 밝힌다."],
++  ["통찰","뒤집힌 차륜",["inquiry","casework","developToy"],"수레가 쓰러진 자리의 약도를 시제품 설계도와 포개고 뒤집힌 축을 짚는다."],
++  ["의지","미완성 악보",["inquiry","casework","music"],"어제 놓친 마디와 미결 사건에 책갈피를 끼워 두고 그 자리에서부터 끝을 낸다."],
++  ["체력","마지막 한 바퀴",["exercise","walk","dance"],"체조실의 호흡을 잃지 않고 정원을 한 바퀴 돈 뒤 마지막 무도의 회전을 마친다."]
++];
++const portfolioRanks=[
++  {minimum:1,threshold:120,reward:75,name:"응용 실기"},
++  {minimum:3,threshold:375,reward:125,name:"최종 실기"}
++];
++function portfolioEvents(){
++  return portfolios.flatMap(([stat,title,subjects,assignment],i)=>portfolioRanks.map(({minimum,threshold,reward,name},rank)=>({
++    id:"portfolio-"+i+"-"+rank,subjects,exam:true,speaker:"세바스찬",title:title+" · "+name,
++    text:assignment+" 세바스찬이 채점표를 내밀었다. “도련님의 풀이로 마치시겠습니까?”",
++    sees:run=>run.stats[stat]>=threshold && subjects.every(id=>(run.counts[id]||0)>=minimum) && (!rank||(run.month>=25&&run.flags["portfolio-"+i+"-0"])),
++    choices:[
++      choice("끝까지 직접 해 보인다",name+" 통과",()=>changeStat(stat,reward)),
++      choice("어려운 부분만 다시 짚는다",name+" 보충",()=>{changeStat(stat,Math.ceil(reward*.7));shift("stress",-15);})
++    ]
++  })));
++}
++function portfolioGuide(){
++  const rows=portfolios.map(([stat,title,subjects],i)=>{
++    const rank=state.flags["portfolio-"+i+"-0"]?1:0,goal=portfolioRanks[rank];
++    const progress=subjects.map(id=>actions[id].name+" "+Math.min(state.counts[id]||0,goal.minimum)+"/"+goal.minimum).join(" · ");
++    return '<p><b>'+stat+' · '+title+'</b><br>'+(state.flags["portfolio-"+i+"-1"]?"최종 실기 수료":goal.name+" · "+state.stats[stat]+"/"+goal.threshold+"<br>"+progress)+'</p>';
++  }).join("");
++  return '<details><summary>세바스찬의 실기 수첩</summary><p>세 과목을 엮어 배우고 관련 일정을 마치면 실기가 열립니다. 응용은 능력 120과 각 1회, 최종은 3년 차부터 능력 375와 각 3회가 필요합니다. 끝까지 직접 보이면 각각 최대 +75, +125입니다.</p>'+rows+'</details>';
++}
++function termPages(event){
++  const birthday=birthdayDialogue[event.id];
++  if(birthday)return birthday.lines;
++  const script=event.slot&&examDialogue[event.slot];
++  return event.exam&&script?[["",script[0]],["시엘",script[1]],["세바스찬",event.text]]:null;
++}
++function termDialogue(event,buttons){
++  const pages=termPages(event);
++  if(!pages)return "";
++  const outcome=state.termOutcome;
++  const script=outcome?.id===event.id?(birthdayDialogue[event.id]?.replies[outcome.index]||[["세바스찬",examDialogue[event.slot][2+outcome.index]]]):pages;
++  const at=Math.min(state.termPage||0,script.length-1),[who,line]=script[at];
++  const end=at===script.length-1,actions=end?(outcome?btn("기록을 덮는다","term-close"):buttons):btn("다음 ▸","term-next:"+at);
++  const room=birthdayDialogue[event.id]?.room||choreography[event.slot][0];
++  return '<div class="review-room" style="background-image:url(&quot;'+sceneArt[room]+'&quot;)"></div>'+dialogueCast("세바스찬")+
++    '<article class="dialogue"><small>'+escapeHTML(who||event.title)+'</small><p>'+escapeHTML(line)+'</p>'+
++    (outcome&&end?'<small>'+escapeHTML(outcome.note)+'</small>':'')+'<div class="answers">'+actions+'</div></article>';
++}
 --- a/js/tour.js
 +++ b/js/tour.js
 @@ -35,7 +35,7 @@
@@ -790,11 +1515,11 @@
 +++ b/recruit-preview.html
 @@ -1,4 +1,4 @@
 -<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>팬텀하이브 · 영입 회상</title><link rel="stylesheet" href="css/base.css?v=d1a35b3ecad4"><link rel="stylesheet" href="css/edition.css?v=79a1b1b79323"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=90dbc336659a"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><link rel="stylesheet" href="css/recruit.css?v=d8ddc41fce62"><style>
-+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>팬텀하이브 · 영입 회상</title><link rel="stylesheet" href="css/base.css?v=d5c5498f2621"><link rel="stylesheet" href="css/edition.css?v=9b6efb2e6eb0"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=90dbc336659a"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><link rel="stylesheet" href="css/recruit.css?v=5e636c70d9da"><style>
++<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>팬텀하이브 · 영입 회상</title><link rel="stylesheet" href="css/base.css?v=d5c5498f2621"><link rel="stylesheet" href="css/edition.css?v=9b6efb2e6eb0"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=90dbc336659a"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><link rel="stylesheet" href="css/recruit.css?v=2e60433b95c4"><style>
  .home-standing,.cast[alt="시엘"],.performer img { filter:url(#ciel-tailoring) drop-shadow(1px 3px 2px #17264344); }
  .review-room,.stage-room,.property-map[aria-label] .map-base,.property-map .map-fitting,
  .property-map .delivery-cart { filter:url(#estate-ink); }
-@@ -22,6 +22,7 @@
+@@ -22,19 +22,21 @@
  <main class="game-frame"><div class="scene-mount">
  <div class="iris-surround" aria-hidden="true"><span lang="en">Phantomhive</span></div>
  <div class="scene" id="scene" data-mode="plan" data-story="true" data-prologue="false" aria-label="영입 장면">
@@ -802,7 +1527,10 @@
  <section id="conversation" aria-label="대화" data-review="false"></section>
  </div></div>
  <nav class="system-rail" aria-label="영입 회상"><span class="imprint" lang="en"><span>EARL</span> <span>PHANTOMHIVE</span> <span>MAKER</span></span>
-@@ -31,10 +32,11 @@
+ <button type="button" data-id="gardener">피니안</button><button type="button" data-id="maid">메이린</button><button type="button" data-id="cook">바르도</button><button type="button" data-id="homecoming">타나카</button><button type="button" data-id="circus">스네이크</button><button type="button" data-id="visitPrince">소마·아그니</button>
+ </nav></main></div>
+-<script src="js/recruit.js?v=27041d4d6af2"></script><script>const previewAsset=k=>k;
++<script src="js/recruit.js?v=3d6d34c47f95"></script><script>const previewAsset=k=>k;
  const host=document.getElementById("conversation"),stage=document.getElementById("scene");
  observePortraitStage(stage);
  function openBook(id){
