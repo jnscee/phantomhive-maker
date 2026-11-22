@@ -53,9 +53,16 @@ for(const [person,place,month] of [["tanaka","library",1],["finny","garden",1],[
 setup('tab="plan";state.phase="event";state.pending="circus"');
 const snakeLines=run('recruitScenes.circus.lines.map(p=>[p.scene.title,p.speaker,p.text])');
 assert.ok(snakeLines.every(row=>!row.join(" ").includes("스마일")));
-for(const text of [...snakeLines.filter(row=>row[1]==="스네이크").map(row=>row[2]),...run('trustedGreetings.snake')]){
-  assert.match(text,/에밀리|오스카|키츠|와일드/);
+const snakeDialogue=snakeLines.filter(row=>row[1]==="스네이크").map(row=>row[2]);
+const returnGreeting=run('events.find(e=>e.id==="snakeReturn").text');
+for(const text of [...snakeDialogue,...run('trustedGreetings.snake'),returnGreeting]){
+  assert.match(text,/⋯라고 (?:에밀리|오스카|키츠|와일드)가 말했어\.$/u);
 }
+const jokerQuestion=snakeLines.findIndex(([,speaker,text])=>speaker==="시엘" && text.includes("조커"));
+assert.ok(jokerQuestion>0);
+assert.match(snakeLines[jokerQuestion][2],/조커가 누구지\?/u);
+assert.equal(snakeLines[jokerQuestion+1][1],"스네이크");
+assert.match(snakeLines[jokerQuestion+1][2],/단장 대리/u);
 for(const [index,[title]] of snakeLines.entries()){
   ctx.at=index;
   const score={"봉투에 적힌 이름":"gloomy","런던의 번지":"gloomy","타운하우스의 문간":"daily","손으로 전할 편지":"daily","마차를 빌리다":"daily","온실 앞":"daily","백작에게 묻다":"gloomy","열어 둘 문":"romantic","신임 경비원의 침구":"romantic"};
