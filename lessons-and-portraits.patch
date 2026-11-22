@@ -2067,7 +2067,7 @@
 +<script src="js/recruit.js?v=039c19f27586"></script><script src="js/audio.js?v=4904e09712a1"></script><script>
 +const tourSession=false;
 +document.getElementById("rail-music").addEventListener("click",()=>toggleChannel("bgm"));
-+for(const type of ["click","keydown"])document.addEventListener(type,e=>{if(e.isTrusted)musicPlayer.unlock();},{once:true});
++for(const type of ["click","keydown"])document.addEventListener(type,e=>{if(e.isTrusted)musicPlayer.unlock();},{capture:true,once:true});
 +const previewAsset=k=>k;
  const host=document.getElementById("conversation"),stage=document.getElementById("scene");
  observePortraitStage(stage);

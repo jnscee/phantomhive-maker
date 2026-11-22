@@ -99,7 +99,26 @@ async function check(browserType){
           const im=new Image();im.src=src;return im.decode();
         }));
       });
-      await page.goto(base+'recruit-preview.html#bard');
+      await page.addInitScript(()=>{
+        window.playedMusic=[];
+        window.Audio=new Proxy(window.Audio,{construct(Audio,args){
+          const el=new Audio(...args);
+          el.addEventListener('playing',()=>window.playedMusic.push(new URL(el.currentSrc).pathname.split('/').pop()));
+          return el;
+        }});
+      });
+      const hears=name=>page.waitForFunction(name=>window.playedMusic.includes(name+'.mp3'),name,{timeout:12000});
+      await page.goto(base+'recruit-preview.html#snake');
+      const nextLine=page.getByRole('button',{name:'다음 대사'});
+      await nextLine.click();await hears('gloomy');
+      for(let i=0;i<3;i++)await nextLine.click();
+      await hears('daily');
+      await page.getByRole('button',{name:'건너뛰기'}).click();await hears('romantic');
+      await page.getByRole('button',{name:'소마·아그니'}).click();
+      await page.getByRole('button',{name:'건너뛰기'}).click();await hears('cheerful');
+      await page.getByRole('button',{name:'바르도'}).click();
+      await page.getByRole('button',{name:'건너뛰기'}).click();await hears('etiquette');
+      await page.getByRole('button',{name:'바르도'}).click();
       const dialogue=page.locator('#conversation .dialogue');
       const words=await dialogue.innerText();
       const actor=page.locator('.standing-window img').first();
