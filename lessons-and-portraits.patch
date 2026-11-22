@@ -167,7 +167,7 @@
 +<script src="js/tour.js?v=e380777efa81"></script>
 +<script src="js/content.js?v=a51a55a6c9b6"></script>
 +<link rel="stylesheet" href="css/recruit.css?v=b0fcf649ce20">
-+<script src="js/recruit.js?v=3d6d34c47f95"></script>
++<script src="js/recruit.js?v=125b4e4b514c"></script>
 +<script src="js/story.js?v=67ad4d7098cb"></script>
 +<script src="js/scenes.js?v=984605a2b05e"></script>
 +<script src="js/audio.js?v=0c4fad4e8349"></script>
@@ -1054,7 +1054,7 @@
    if(i+step>=openingLines.length){finishOpening();return;}
 --- a/js/recruit.js
 +++ b/js/recruit.js
-@@ -158,16 +158,93 @@
+@@ -158,16 +158,102 @@
      stage.style.setProperty("--portrait-scene-width",entry.contentRect.width+"px");
    });
    observer.observe(stage);
@@ -1085,6 +1085,15 @@
 +    for(const auto of stage.querySelectorAll("#opening-auto,[data-read=auto]")){
 +      auto.setAttribute("aria-pressed","false");auto.textContent="자동 재생";
 +    }
++  }
++  const conversation=stage.querySelector("#conversation");
++  if(conversation){
++    if(hidden && getComputedStyle(conversation).display==="grid"){
++      const rows=getComputedStyle(conversation).gridTemplateRows.split(" ");
++      if(rows.length>1 && rows.every(row=>row.endsWith("px"))){
++        conversation.style.gridTemplateRows=["minmax(0,1fr)",...rows.slice(1)].join(" ");
++      }
++    } else if(!hidden) conversation.style.removeProperty("grid-template-rows");
 +  }
 +  stage.dataset.artOnly=String(hidden);
 +  const openingMat=stage.querySelector(".opening-mat");
@@ -1150,7 +1159,7 @@
  function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers=""){
    const book=recruitScenes[id],{scene,speaker,text}=book.lines[at];
    const art=recruitArt[scene.art],bg=file(art.bg),last=at===book.lines.length-1;
-@@ -181,10 +258,7 @@
+@@ -181,10 +267,7 @@
    }).join("");
    const label=last?(readOnly?"회상 마치기":"영입 확정"):"다음 대사";
    const arrow=answers?'':'<button type="button" class="line-next" data-read="'+(last?'finish':'next')+'" aria-label="'+label+'">▼</button>';
@@ -1162,7 +1171,7 @@
    const props=scene.prop?'<img class="recruit-tea" alt="닐기리 홍차" src="'+file(recruitProps[scene.prop])+'">':'';
    return backdrop+actors+props+sceneLine(speaker==="장면"?"":speaker,text,arrow,
      'data-book="'+id+'" data-leaf="'+at+'" aria-live="polite" aria-atomic="true"')+answers+controls;
-@@ -195,11 +269,14 @@
+@@ -195,11 +278,14 @@
    const end=recruitScenes[id].lines.length-1;
    clearTimeout(recruitTimer);if(at===end)stopRecruitAuto();
    host.innerHTML=recruitMarkup(id,at,file,readOnly,recruitAuto,answers);
@@ -1178,7 +1187,7 @@
      recruitTimer=setTimeout(()=>{if(line.isConnected&&!document.hidden)step(at+1);else stopRecruitAuto();},delay);
    }
    function click(e){
-@@ -215,7 +292,7 @@
+@@ -215,7 +301,7 @@
      if(read==="previous"&&at>0)step(at-1);
      if(read==="next"&&at<end)step(at+1);
      if(read==="skip"&&at<end)step(end);
@@ -1187,7 +1196,7 @@
    }
    function keydown(e){
      if(e.altKey||e.ctrlKey||e.metaKey||e.repeat||!["ArrowLeft","ArrowRight"].includes(e.key))return;
-@@ -235,21 +312,21 @@
+@@ -235,21 +321,21 @@
    const hasChoices=at===recruitScenes[id].lines.length-1&&event.choices.length>1;
    const answers=hasChoices?'<div class="answers" role="group" aria-label="대화 선택지">'+
      event.choices.map((c,i)=>btn(c.label,"choose:"+i,Boolean(c.when&&!c.when(state)),"vn-choice")).join("")+'</div>':"";
@@ -1214,7 +1223,7 @@
  }
  function closeRecruitMemory(){
    stopRecruitAuto();const id=recruitMemory?.id;recruitMemory=null;tab="record";render();
-@@ -257,9 +334,9 @@
+@@ -257,9 +343,9 @@
    if(button){button.closest("details").open=true;button.focus({preventScroll:true});}
  }
  function showRecruitMemory(host){
@@ -1532,7 +1541,7 @@
  <button type="button" data-id="gardener">피니안</button><button type="button" data-id="maid">메이린</button><button type="button" data-id="cook">바르도</button><button type="button" data-id="homecoming">타나카</button><button type="button" data-id="circus">스네이크</button><button type="button" data-id="visitPrince">소마·아그니</button>
  </nav></main></div>
 -<script src="js/recruit.js?v=27041d4d6af2"></script><script>const previewAsset=k=>k;
-+<script src="js/recruit.js?v=3d6d34c47f95"></script><script>const previewAsset=k=>k;
++<script src="js/recruit.js?v=125b4e4b514c"></script><script>const previewAsset=k=>k;
  const host=document.getElementById("conversation"),stage=document.getElementById("scene");
  observePortraitStage(stage);
  function openBook(id){
