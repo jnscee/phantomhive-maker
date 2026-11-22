@@ -12,8 +12,7 @@ function plannedTuition(){
   const trial={...state,stats:{...state.stats}};
   return state.plan.reduce((sum,id)=>{
     if(!actions[id])return sum;
-    if(trial.illness||trial.stress>=illnessThreshold(trial))return sum+applyActivity(trial,id).cost;
-    return sum+actions[id].cost;
+    return sum+applyActivity(trial,id).cost;
   },0);
 }
 function initial(){
@@ -41,6 +40,8 @@ new ResizeObserver(([entry])=>{
   portraitScene.style.setProperty("--portrait-scene-width",entry.contentRect.width+"px");
 }).observe(portraitScene);
 function persist(){
+  if(state.hp<=30||state.stress>=illnessThreshold(state))state.illness=true;
+  tryRecover(state);
   if(tourSession)return;
   saves.auto=structuredClone(state);
   try{localStorage.setItem(storageKey,JSON.stringify(saves));}catch{storageOk=false;}
@@ -75,7 +76,7 @@ function forecast(shop=state.shop){
   const unit=Math.max(2,p.unit+(quality?3:0)-(shop.works-1)*2-Math.floor(state.stats.경영/19));
   const design=state.productNotes?.[state.product];
   const appeal=design?((design.brief==="gift"&&season>=9)?4:1)+(design.reworked?2:0):0;
-  const demand=Math.max(0,baseline+appeal+londonPlan(state).power.salon+businessTailwind(state.product).bonus+(state.month===5?1:0)+(state.month===18?3:0)+(state.month===31&&state.product==="toys"?-3:0)+(shop.store-1)*3+Math.floor(state.stats.경영/9)
+  const demand=Math.max(0,baseline+appeal+londonPlan(state).power.salon+fairDemand(state,state.product)+businessTailwind(state.product).bonus+(state.month===5?1:0)+(state.month===18?3:0)+(state.month===31&&state.product==="toys"?-3:0)+(shop.store-1)*3+Math.floor(state.stats.경영/9)
      +(state.visit==="town"?3:0)+(quality?5:0)-Math.round((state.price-p.price)*1.65));
   const receipt=state.price+(shop.design-1)*(quality?2:1)+(shop.store-1);
   const sold=Math.min(demand,state.stock[state.product]+state.qty);
@@ -108,7 +109,7 @@ function flagEvent(id,effect){
   state.flags[id]=true;
   effect();
 }
-const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),masteryEvents());
+const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),masteryEvents(),visitorEvents());
 
 function pendingEvent(){
   return events.find(event=>event.id===state.pending);
@@ -130,6 +131,7 @@ function settleMonth(){
   settleLondon(state);
   trainHousehold(state);
   applyEstateTraining(state);
+  settleFestival(state);
   const assessment=houseValues();
   if(state.houseCare==="clean"&&assessment.청결>=70)state.hp=cap(state.hp+2);
   if(state.houseCare==="repair")state.neglect=Math.max(0,state.neglect-1);
@@ -150,7 +152,7 @@ function settleMonth(){
   state.log.push(products[product].name+" "+sold+"개 판매 · 매출 "+money(income)+" / 생산비 "+money(cost)+" / 재고 "+state.stock[product]+"개");
   state.log.push("저택 유지·채무 상환 "+money(bills));
   if(state.flags.market&&state.marketMonth!==state.month){state.flags.market=false;state.renown+=1;}
-  const candidates=events.filter(e=>!e.scheduled&&!e.slot&&!e.activitySet&&!e.season&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
+  const candidates=events.filter(e=>!e.visitOnly&&!e.scheduled&&!e.slot&&!e.activitySet&&!e.season&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
   const event=state.duration===35?(candidates.find(e=>birthdayScenes[e.id]&&[12,24].includes(state.month))||candidates.find(e=>e.chapter)||candidates[0]):candidates.find(e=>!e.chapter);
   const seasonal=state.duration===35?events.find(e=>e.season&&e.sees(state)&&!state.flags[e.id]):null;
   state.eventQueue=[event,seasonal].filter(Boolean).map(e=>e.id);
@@ -219,8 +221,8 @@ function illnessThreshold(run){
 }
 function conditionWarning(run){
   const threshold=illnessThreshold(run);
-  if(run.illness||run.stress>=threshold)return "과로로 요양 중입니다. 건강 40 이상, 스트레스 20 이하에서 복귀합니다.";
-  if(run.stress>=threshold-16)return "과로 주의 · 수업 성과 감소, 활동 시 건강 손실";
+  if(run.illness||run.hp<=30||run.stress>=threshold)return "병환으로 요양 중입니다. 건강 40 이상, 스트레스 20 이하에서 복귀합니다.";
+  if(run.hp<=42||run.stress>=threshold-16)return "과로 주의 · 수업 성과 감소, 활동 시 건강 손실";
   return "";
 }
 function tryRecover(run){
@@ -228,7 +230,7 @@ function tryRecover(run){
 }
 function applyActivity(run,planned){
   const stress=run.stress,hp=run.hp,motivation=run.motivation;
-  if(run.stress>=illnessThreshold(run))run.illness=true;
+  if(run.hp<=30||run.stress>=illnessThreshold(run))run.illness=true;
   const bedridden=Boolean(run.illness);
   const forced=bedridden&&planned!=="rest"&&planned!=="recovery";
   const id=forced?"recovery":planned;
@@ -250,7 +252,7 @@ function applyActivity(run,planned){
     run.stats[name]=cap(before+gain,statMax(name));
     return name+" "+signed(run.stats[name]-before);
   });
-  const fallenIll=!bedridden&&run.stress>=illnessThreshold(run);
+  const fallenIll=!bedridden&&(run.hp<=30||run.stress>=illnessThreshold(run));
   if(fallenIll){run.illness=true;run.hp=cap(run.hp-10);run.motivation=cap(run.motivation-8);}
   tryRecover(run);
   changes.push("스트레스 "+signed(run.stress-stress));
@@ -375,7 +377,7 @@ function plannerContents() {
       '<div class="calendar-periods" role="group" aria-label="편집할 기간">'+periods.join('')+'</div>'+
       '<div class="calendar-settle">'+plannerCosts(estimate)+
       '<div class="plan-balance"><span>예상 월말 자금</span><strong>'+money(estimate.balance)+'</strong></div>'+
-      btn('이달 일정 실행','execute',!planReady()||estimate.blocked,'calendar-run')+'</div>'+
+      btn('이달 일정 실행','execute',!planReady()||estimate.blocked,'calendar-run')+'</div>'+festivalNotice()+
       (estimate.blocked?'<p class="calendar-warning">준비비가 부족합니다. 활동이나 생산량을 조정하세요.</p>':'')+'</div>';
 }
 
@@ -527,17 +529,14 @@ function normalizeSave(run){
   return copy;
 }
 function recordPanel(){
-  const review=inspectTitle().map(([label,ok,hint])=>'<li class="'+(ok?"":"open")+'"><div class="inline"><b>'+label+
-    '</b><span class="'+(ok?"good":"gold")+'">'+(ok?"충족":"미충족")+'</span></div>'+(!ok?'<p class="small muted">'+hint+'</p>':"")+'</li>').join("");
-  const history=state.events.map(record=>{
+  const history=state.events.slice().reverse().map(record=>{
     const event=events.find(e=>e.id===record.id);
     if(!event)return "";
     const choice=event.choices[record.index];
-    return '<details><summary>'+(record.month?monthText(record.month)+' · ':'')+(choice?choice.label:castName(event))+'</summary>'+(sourceNote(event)?'<small>'+sourceNote(event)+'</small>':'')+'<p>'+event.text+'</p><p class="small muted">'+(choice?choice.label+" · "+escapeHTML(record.result??choice.result):"처리 완료")+'</p></details>';
+    return '<details><summary>'+(record.month?monthText(record.month)+' · ':'')+escapeHTML(event.title)+'</summary>'+(sourceNote(event)?'<small>'+sourceNote(event)+'</small>':'')+'<p>'+event.text+'</p><p class="small muted">'+(choice?choice.label+" · "+escapeHTML(record.result??choice.result):"처리 완료")+'</p></details>';
   }).join("");
-  return frame("가문 장부",'<div class="inline"><h3>작위 심의</h3><b class="gold">'+(qualifies()?"신청 기준 충족":"신청 기준 미충족")+'</b></div>'+
-    '<ul class="ledger">'+review+'</ul><div class="step-grid">'+
-    tile("남은 채무",money(state.debt))+'</div>'+relationBook()+masteryGuide()+'<h3>엔딩 도감</h3><p class="small muted">'+(Object.entries(saves.gallery||{}).filter(([id])=>endings[id]).map(([id,label])=>btn(escapeHTML(label)+" 감상","replay-ending:"+id)).join(" ")||"기록 없음")+'</p><h3>사건 기록</h3>'+(history||'<p class="small muted">기록 없음</p>'));
+  const album=Object.entries(saves.gallery||{}).filter(([id])=>endings[id]).map(([id,label])=>btn(escapeHTML(label)+" 감상","replay-ending:"+id)).join(" ")||"아직 기록된 엔딩이 없습니다.";
+  return frame("가문 장부",familyFolio(inspectTitle(),history,album,masteryGuide()));
 }
 function savePanel(){
   const rows=["auto","1","2","3"].map((id,index)=>{
@@ -563,7 +562,7 @@ function statusPanel(){
   }).join("");
   return frame("시엘 상태",'<div class="inline"><b>시엘 팬텀하이브</b><span class="small muted">'+
     (state.phase==="plan"?"월말 예상 변동":"이번 달 변동")+'</span></div><div class="hud-group">'+meters+
-    '<p class="condition-detail"><b>발병 기준 '+illnessThreshold(state)+'</b> · 체력과 의욕이 높을수록 올라갑니다.</p>'+
+    '<p class="condition-detail"><b>발병 기준 건강 30 이하 또는 스트레스 '+illnessThreshold(state)+' 이상</b> · 체력과 의욕이 높을수록 올라갑니다.</p>'+
     (conditionWarning(state)?'<p class="danger condition-detail">'+conditionWarning(state)+'</p>':"")+
     '</div><div class="hud-group"><div class="attributes"><div class="attribute attr-label muted"><span>능력치</span><b>현재</b><em>변동</em></div>'+
     stats.map(name=>{
@@ -747,6 +746,7 @@ function marketPanel(){
 }
 const panels={market:marketPanel,title:titlePanel,plan:planPanel,status:statusPanel,estate:managementPanel,townhouse:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
 state=normalizeSave(state);
+if(state.hp<=30||state.stress>=illnessThreshold(state))state.illness=true;
 if(state.phase==="event")tab="plan";
 function sheetTitle(){
   if(tab==="plan"){
@@ -1026,6 +1026,8 @@ function askConfirmation(key,title,description,label,rect,extra=""){
 }
 function handleAction(key,rect,confirmed=false){
   const [action,id,value]=key.split(":");
+  if(action==="fair-entry"){selectFestival(id);return;}
+  if(encounterAction(action,id))return;
   const fund=state.fund;
   if(action==="dialogue-toggle"){toggleDialogue();return;}
   if(endingAction(action,id)||openingAction(action,id,confirmed,rect))return;

@@ -107,7 +107,7 @@ function monthlyResults(){
   const words=(growth>0?"이번 달에는 "+best+"에서 가장 진전이 컸습니다. "+before[best]+"에서 "+after[best]+"까지 올리셨군요. ":"이번 달 능력에는 큰 변동이 없었습니다. ")+(state.report?"팬텀사에서는 "+state.report.sold+"개를 판매했습니다. ":"")+"도련님께서 다음 달에 쓰실 수 있는 돈은 "+money(state.fund)+"입니다.";
   return '<div class="month-report"><div class="butler-account"><img src="assets/sebastian.webp" alt="세바스찬"><p><b>세바스찬의 월말 보고</b><br>'+words+'</p></div><div class="report-date">'+monthText(state.month)+' 결산</div><div class="report-columns">'+
     '<section class="stat-folio"><h3>시엘의 성장 기록</h3><div class="delta-head"><span>항목</span><span>이전</span><span>현재</span><span>변화 그래프</span><span>증감</span></div>'+
-    group("능력 · 500점",stats)+group("컨디션 · 100점",["건강","스트레스","의욕"])+'</section>'+actualBudget()+'</div>'+sampleReview()+
+    group("능력 · 500점",stats)+group("컨디션 · 100점",["건강","스트레스","의욕"])+'</section>'+actualBudget()+'</div>'+thisMonthFairReport()+sampleReview()+
     (warning?'<p class="danger">'+warning+'</p>':'')+
     '<details class="month-log"><summary>이달 일정·사건 기록</summary>'+monthlyTimeline(state.log)+'</details>'+
     '<div class="report-end">'+btn(state.month===state.duration?"작위 심의 확인":"다음 달로","advance",Boolean(sampleReview()),"primary")+'</div></div>';

@@ -3,7 +3,7 @@ const mem=new Map(),elements=new Map();
 function element(){return {isConnected:true,dataset:{},style:{setProperty(){}},addEventListener(){},setAttribute(){},focus(){},querySelector(){return this},querySelectorAll(){return []},classList:{contains(){return false},toggle(){}}}}
 const doc={hidden:false,getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id)},querySelectorAll(){return []},addEventListener(){}};
 const ctx=vm.createContext({console,structuredClone,document:doc,ResizeObserver:class {observe(){}},localStorage:{getItem:k=>mem.get(k)||null,setItem:(k,v)=>mem.set(k,v)},setTimeout,clearTimeout,clearInterval,window:{getSelection(){return null},addEventListener(){}},URLSearchParams});
-for(const name of ['content','prince','recruit','story','scenes','audio','reports','prologue','chapters','staffing','term-events','game']){
+for(const name of ['content','prince','recruit','story','scenes','audio','reports','prologue','chapters','staffing','term-events','visitors','festivals','almanac','game']){
  let s=fs.readFileSync(require('node:path').join(process.argv[2]||'site','js',name+'.js'),'utf8');if(name==='game')s=s.slice(0,s.indexOf('\nrender();\nif(state.phase'));
  vm.runInContext(s,ctx,{filename:name+'.js'});
 }
@@ -247,7 +247,9 @@ const fullRun=vm.runInContext(`(()=>{
           choose(event.choices.findIndex(ch=>!ch.when||ch.when(state)));
         }
       }else if(state.phase==="visit"){
-        if(state.sequence.visitEvent)chooseVisitEvent(0);
+        const visitor=visitEncounterCards.find(e=>e.id===state.sequence.visitEvent);
+        if(visitor && (state.sequence.encounterPage||0)<visitor.lines.length-1)handleAction("encounter-next:"+(state.sequence.encounterPage||0));
+        else if(state.sequence.visitEvent)chooseVisitEvent(0);
         else if(state.sequence.visitBefore)finishVisit();else visitDone(true);
       }else if(state.phase==="result")advance();
       else break;
@@ -260,3 +262,40 @@ assert.ok(fullRun.finished);assert.equal(fullRun.exams,14);
 assert.deepEqual(Array.from(fullRun.stats),Array(7).fill(500));
 assert.deepEqual(Array.from(fullRun.birthdays),[12,24]);
 console.log('PASS 35 months from the initial estate, 7 x 500, 14 portfolio exams and both birthdays.');
+
+for(const condition of ["state.hp=30","state.stress=100"]){
+  setup(condition+';state.plan=["exercise","rest","rest"];state.visit="library";state.qty=0;execute()');
+  assertOk('state.phase==="scene" && state.sequence.activity==="recovery" && state.sequence.onSickLeave');
+  assertOk('state.sequence.trainingPaid===0 && state.fund===state.sequence.opening.fund && !state.counts.exercise');
+}
+setup('state.hp=20;state.stress=100;state.visit="library";persist()');
+assertOk('state.ill && !hasPendingVisit()');
+run('state.hp=57;state.stress=51;persist()');
+assertOk('!state.ill && hasPendingVisit()');
+
+for(const [index,outcome] of [[0,"success"],[1,"practice"],[1,"absent"]]){
+  Object.assign(ctx,{fairIndex:index,fairOutcome:outcome});
+  setup('state.month=4;selectFestival(fairIndex);persist();state=normalizeSave(saves.auto);state.month=5;');
+  run('if(fairOutcome==="success")state.counts.developToy=1;if(fairOutcome==="absent")state.ill=true;settleFestival(state)');
+  assertOk('state.fairBook.kensington1886.outcome===fairOutcome');
+  const renown=run('state.renown');run('settleFestival(state)');assert.equal(run('state.renown'),renown);
+  run('state.month=6');
+  assert.equal(run('fairDemand(state,londonFestivals[0].options[fairIndex].product)'),outcome==="success"?4:outcome==="practice"?2:0);
+  run('state.month=7');assertOk('fairDemand(state,londonFestivals[0].options[fairIndex].product)===0');
+}
+setup('state.month=4;selectFestival(0);selectFestival("cancel");state.month=5;settleFestival(state)');
+assertOk('!state.fairBook?.kensington1886');
+for(const index of [0,1]){
+  ctx.replyIndex=index;
+  setup('recruit("tanaka");state.people.tanaka.from=9;state.counts.inquiry=1;state.visit="library";state.flags.proof=true;state.phase="visit";state.sequence={index:2};visitDone(true)');
+  assertOk('state.sequence.visitEvent==="visitLibrarySeal"');
+  run('handleAction("encounter-next:0");state=normalizeSave(saves.auto)');
+  assertOk('state.sequence.encounterPage===1 && !Object.hasOwn(state.people.tanaka,"from")');
+  run('chooseVisitEvent(replyIndex)');assertOk('!state.flags.visitLibrarySeal');
+  run('handleAction("encounter-next:1");handleAction("encounter-next:2");chooseVisitEvent(replyIndex);chooseVisitEvent(replyIndex)');
+  assertOk('state.events.filter(e=>e.id==="visitLibrarySeal").length===1 && state.sequence.encounterReply');
+  run('state.month++;state.sequence={index:2};visitDone(true)');
+  assertOk('state.sequence.visitEvent===(replyIndex===0?"visitLibraryWax":"visitLibraryCarbon")');
+}
+assertOk('Object.keys(endingScenes).length===9 && Object.values(endingScenes).every(scene=>scene.lines.length>=48)');
+console.log('PASS illness, free sick leave, recovery, optional fair outcomes and demand, both library follow-ups after loading, one-way trust, and all nine ending scripts.');

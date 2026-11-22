@@ -1,7 +1,7 @@
 "use strict";
 function portraitAge(){const run=tourSession?.state??state;return ageAt(run.month,portraitDay(run));}
 function portraitDay(run){return ["event","result","vow","ending"].includes(run.phase)?calendarDate(run.month+1,0).getUTCDate():run.phase==="slotEvent"||run.phase==="review"?Math.min(28,10*((run.sequence?.index??0)+1)):1;}
-const portraits={세바스찬:"assets/sebastian.webp",타나카:"assets/npc-tanaka.webp",피니안:"assets/npc-finny.webp",메이린:"assets/npc-mey.webp",바르도:"assets/npc-bard.webp",스네이크:"assets/npc-snake.webp",소마:"assets/npc-soma.webp",아그니:"assets/npc-agni.webp",get 엘리자베스(){const age=elizabethAge();return age===13?"assets/npc-lizzy.webp":"assets/npc-lizzy-"+age+(age===12?"-portrait":"")+".webp";},get 시엘(){const age=portraitAge();return age<11?"assets/ciel.png":"assets/ciel-"+Math.min(age,12)+".webp";}};
+const portraits={라우:"assets/npc-lau.webp",세바스찬:"assets/sebastian.webp",타나카:"assets/npc-tanaka.webp",피니안:"assets/npc-finny.webp",메이린:"assets/npc-mey.webp",바르도:"assets/npc-bard.webp",스네이크:"assets/npc-snake.webp",소마:"assets/npc-soma.webp",아그니:"assets/npc-agni.webp",get 엘리자베스(){const age=elizabethAge();return age===13?"assets/npc-lizzy.webp":"assets/npc-lizzy-"+age+(age===12?"-portrait":"")+".webp";},get 시엘(){const age=portraitAge();return age<11?"assets/ciel.png":"assets/ciel-"+Math.min(age,12)+".webp";}};
 const castByEvent={gardener:"피니안",maid:"메이린",cook:"바르도",circus:"스네이크",visitPrince:"소마",jubilee:"세바스찬",agniTray:"아그니",greenhouseKey:"피니안"};
 function castName(e){return castByEvent[e.id]||((e.speaker in portraits)?e.speaker:"세바스찬");}
 function elizabethAge(){return Math.max(11,Math.min(13,portraitAge()+1));}
@@ -12,8 +12,8 @@ function dialogueCast(speaker,cast=[speaker==="시엘"?"세바스찬":speaker,"�
     (name==="시엘"?"var(--ciel-height)":(name==="엘리자베스"?[145,151,157][elizabethAge()-11]:castHeights[name]||177)/189)+
     '" src="'+portraits[name]+'">').join("");
 }
-function staged(who,title,line,buttons,caption="",room="library"){
-  return '<div class="review-room" style="background-image:url(&quot;'+sceneArt[room]+'&quot;)"></div>'+dialogueCast(who)+'<article class="dialogue"><small>'+(caption?caption+'　·　':'')+who+'</small>'+(title?'<h2>'+title+'</h2>':'')+'<p>'+line+(buttons?'</p><div class="answers">'+buttons+'</div>':' <button type="button" class="line-next" aria-label="다음 대사" data-action="intro-next">▼</button></p>')+'</article>';
+function staged(who,title,line,buttons,caption="",room="library",partner=who){
+  return '<div class="review-room" style="background-image:url(&quot;'+sceneArt[room]+'&quot;)"></div>'+dialogueCast(partner)+'<article class="dialogue"><small>'+(caption?caption+'　·　':'')+who+'</small>'+(title?'<h2>'+title+'</h2>':'')+'<p>'+line+(buttons?'</p><div class="answers">'+buttons+'</div>':' <button type="button" class="line-next" aria-label="다음 대사" data-action="intro-next">▼</button></p>')+'</article>';
 }
 const guide=[
  ["날짜판과 명패","오늘 날짜는 왼쪽 위 달력을 보십시오. 연도 옆에는 서른다섯 달 중 몇 달째인지 적어 두었습니다. 저택의 오른쪽 위 명패에는 도련님의 나이와 가문의 잔금이 있습니다."],
@@ -75,11 +75,17 @@ function visitScene(){
  const id=state.visit,[room,plain,spoken,label]=visitsVN[id];
  const seq=state.sequence;
  if(seq.visitEvent){
+   const page=encounterPage(seq,room);
+   if(page)return page;
    const event=events.find(e=>e.id===seq.visitEvent);
    const buttons=event.choices.map((c,i)=>btn(c.label+(c.when&&!c.when(state)?" · "+c.hint:""),"visit-choice:"+i,Boolean(c.when&&!c.when(state)))).join("");
    return staged(castName(event),"",event.text,buttons,"",room);
  }
  if(seq.visitBefore){
+   if(seq.encounterReply){
+     const [speaker,line]=seq.encounterReply;
+     return staged(speaker,"",line,btn(seq.index===0?"상순으로":"월말 결산으로","visit-finish"),"방문 기록",room,seq.encounterPartner);
+   }
    const changes=visitChanges();
    return staged(visitName(visitPerson(id)),"",changes.join(" · ")||"더 변한 수치는 없습니다.",
      btn(seq.index===0?"상순으로":"월말 결산으로","visit-finish"),visits[id]+" · 자유행동 결과",room);
@@ -126,10 +132,14 @@ function visitChanges(){
 }
 function chooseVisitEvent(index){
  const seq=state.sequence,event=events.find(e=>e.id===seq.visitEvent),choice=event?.choices[index];
+ const card=visitEncounterCards.find(item=>item.id===event?.id);
+ if(card && (seq.encounterPage||0)<card.lines.length-1)return;
  if(!choice||(choice.when&&!choice.when(state)))return;
  flagEvent(event.id,choice.effect);
  state.events.push({id:event.id,index,month:state.month});
  state.log.push(choice.result);
+ if(card){seq.encounterReply=card.choices[index].reply;seq.encounterPartner=card.npc;}
+ delete seq.encounterPage;
  delete seq.visitEvent;
  persist();render(true);
 }
@@ -138,7 +148,7 @@ function finishVisit(){
  if(state.phase!=="visit"||!seq.visitBefore||seq.visitEvent)return;
  const changes=visitChanges();
  if(changes.length)state.log.push("자유행동 성과 · "+changes.join(" · "));
- delete seq.visitBefore;
+ delete seq.visitBefore;delete seq.encounterReply;delete seq.encounterPartner;
  delete seq.visitPerson;
  if(seq.index===0)enterSlot();else settleMonth();
 }
