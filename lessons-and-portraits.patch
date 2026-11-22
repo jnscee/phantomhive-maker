@@ -1,0 +1,813 @@
+--- a/css/base.css
++++ b/css/base.css
+@@ -5,7 +5,7 @@
+ .facility,.tile,.slot-save{background:var(--well);border:1px solid #38455b;border-radius:4px;padding:10px;display:grid;gap:8px}.facility strong{font-size:15px}.pips{display:flex;gap:4px}.pips i{display:block;width:20px;height:6px;border-radius:1px;background:#283141}.pips .on{background:#83a9d0}.opts{display:flex;gap:6px;flex-wrap:wrap}.option{text-align:left;min-height:37px}.step-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stepper{display:grid;grid-template-columns:38px minmax(38px,1fr) 38px;align-items:stretch;gap:4px}.stepper button{padding:0;font-size:22px}.stepper input{width:100%;text-align:center;padding:0 4px;color:var(--gold);border:1px solid #3f4e65;border-radius:3px;background:#0d1017;font-weight:800;font-size:20px;appearance:textfield}.stepper input::-webkit-inner-spin-button{appearance:none}.ledger{padding:0;margin:0;list-style:none;display:grid;gap:4px}.ledger li{background:#12161f;border-left:2px solid #50688a;padding:7px 9px;font-size:14px}.ledger .open{border-color:var(--gold)}.report-grid{display:grid;gap:6px}details{border:1px solid #344257;border-radius:3px;background:#121720;padding:7px 9px}summary{cursor:pointer;font-weight:650}details p{padding-top:5px}.slot-save{display:flex;justify-content:space-between;align-items:center;gap:7px;flex-wrap:wrap}
+ dialog{max-width:min(640px,calc(100% - 26px));width:100%;max-height:calc(100dvh - 28px);background:#161b25;color:var(--text);border:1px solid #6890be;border-radius:5px;padding:0;box-shadow:0 12px 65px #000b}dialog[open]{animation:arrive .2s ease-out}dialog::backdrop{background:#080a0fb8}.picker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.picker-grid button{display:grid;gap:4px;text-align:left}.close{min-width:38px;min-height:34px;padding:3px 7px}.flash{position:fixed;right:22px;bottom:22px;max-width:calc(100vw - 44px);pointer-events:none;z-index:5;background:#1b212d;border:1px solid #83a9d0;box-shadow:0 5px 20px #0009;border-radius:4px;padding:9px 15px}.fx-layer{position:fixed;inset:0;pointer-events:none;z-index:6;overflow:hidden}.flash:empty{display:none}.impact,.particle,.number-pop{position:absolute;pointer-events:none;z-index:6}.impact{width:38px;height:38px;margin:-19px 0 0 -19px;border:2px solid #a9c9e7;border-radius:99px;animation:impact .42s ease-out forwards}.particle{width:5px;height:5px;background:#a9c9e7;box-shadow:0 0 5px #6594ca;animation:particle .46s ease-out forwards}.number-pop{font-weight:800;color:var(--green);background:#121823;border:1px solid #5c779b;padding:2px 7px;border-radius:3px;white-space:nowrap;animation:number .9s ease-out forwards}.number-pop.loss{color:var(--red);border-color:#55759e}.pulse{animation:pulse .42s ease-out}
+ @keyframes impact{from{transform:scale(.35);opacity:1}to{transform:scale(1.8);opacity:0}}@keyframes particle{to{transform:translate(var(--x),var(--y)) rotate(110deg);opacity:0}}@keyframes number{0%{transform:translateY(0);opacity:1}70%{opacity:1}100%{transform:translateY(-29px);opacity:0}}@keyframes pulse{40%{box-shadow:inset 0 0 0 2px #91b8df,0 0 12px #7fabd855}}@keyframes arrive{from{opacity:.63;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+-@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}.impact,.particle,.number-pop{display:none}}
++@media(prefers-reduced-motion:reduce){html:not([data-game-motion=full]) *,html:not([data-game-motion=full]) *::before,html:not([data-game-motion=full]) *::after{animation-duration:.01ms!important;transition-duration:.01ms!important}.impact,.particle,.number-pop{display:none}}
+ :root{
+   color-scheme:dark;--base:#10141b;--plate:#191f2b;--well:#121720;--edge:#5878a1;--gold:#94bbe0;--text:#e6ecf0;
+   --muted:#afc2d4;--green:#b3c7d9;--red:#f1b0a9;--blue:#afc7dd;--serif:Georgia,'Noto Serif CJK KR',Batang,serif
+--- a/css/edition.css
++++ b/css/edition.css
+@@ -92,7 +92,7 @@
+  .dialogue{left:3%;right:3%;bottom:3%;max-height:46%;overflow:auto}.dialogue p{font-size:14px}.answers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.answers button{font-size:12px;padding:5px}
+ }
+ @media(max-height:550px) and (orientation:landscape){.shell{width:min(100vw,calc(100svh*1.77778))}.shortcuts{display:flex;position:absolute;bottom:0;right:0;background:#12161eef;padding:0 6px;height:22px;z-index:6}.shortcuts .imprint,.keyhelp{display:none}.shortcuts button{font-size:10px;min-height:20px}.scene,.scene[data-calendar=true],.scene[data-sheet=true]{min-height:0;height:auto;aspect-ratio:16/9}.lesson{min-height:33px}.lesson .activity-icon{display:none}.calendar-head{padding:4px 0}.index-tab{min-height:22px}.calendar-foot{margin-bottom:6px}.stage-top{padding:3px 7px}.stage-record{min-width:148px;bottom:22%}}
+-@media(prefers-reduced-motion:reduce){.performer,.motion-object{animation:none!important}.motion-object{opacity:.65}}
++@media(prefers-reduced-motion:reduce){html:not([data-game-motion=full]) :is(.performer,.motion-object){animation:none!important}.motion-object{opacity:.65}}
+ 
+ /* Brass press marks and ink-like edges use the same small palette as the command plates. */
+ .press-mark{position:absolute;pointer-events:none;display:block;width:0;height:0;--press-color:#a3c5e5;--press-shadow:#30486e}
+--- a/css/recruit.css
++++ b/css/recruit.css
+@@ -7,3 +7,74 @@
+ #conversation .review-room.night{filter:grayscale(.4) sepia(.18) hue-rotate(174deg) brightness(.45)}
+ #conversation .review-room.night::after{content:"";position:absolute;top:8%;left:44%;width:clamp(28px,6vw,68px);aspect-ratio:1;border-radius:50%;background:#e4e4cf;box-shadow:0 0 26px #cbd5de77}
+ .recruit-tea{position:absolute;top:22%;left:44%;width:12%;max-width:92px;height:auto;pointer-events:none;filter:drop-shadow(0 4px 5px #24202d99)}
++
++/* A shared camera crops each cutout at the bottom. Wide sleeves and full-length art
++   can no longer move an actor's eyes or change the apparent size of their face. */
++#scene {
++  --cast-unit:calc(var(--portrait-height) * var(--standing-zoom));
++}
++#scene .standing-window {
++  --window-height:min(calc(var(--cast-unit) * (var(--cast-base) + var(--figure-rise))),calc(var(--portrait-scene-height) * .965));
++  height:var(--window-height);
++  display:block;overflow:hidden;pointer-events:none;scale:none;
++}
++#scene .standing-window > img {
++  position:absolute;top:0;left:50%;translate:-50% 0;
++  width:auto;max-width:none;height:calc(var(--cast-unit) * var(--figure-scale));
++}
++#scene #conversation:not([data-review=true]) > .standing-window {
++  position:absolute;bottom:1%;width:44%;max-width:none;translate:-50% 0;margin:0;
++}
++#scene #conversation > .standing-window.cast-left {left:33%;right:auto}
++#scene #conversation > .standing-window.cast-right {left:67%;right:auto}
++#scene #conversation .standing-window.review-butler, #scene .standing-window.lau-standing {
++  height:var(--window-height);scale:none;
++}
++#scene #conversation .standing-window.review-butler {bottom:0}
++@media (max-width:960px) and (orientation:portrait), (max-width:540px) {
++  #scene #conversation:not([data-review=true]) > .standing-window {
++    position:relative;inset:auto;grid-area:1/1;align-self:end;min-height:0;
++    width:47%;margin-inline:2%;translate:none;
++  }
++}
++
++/* The open record takes input above both the schedule and the date plaque. */
++#scene[data-mode="record"] #sheet {z-index:8}
++#scene[data-mode="record"] #date {pointer-events:none}
++
++#dialogue-visibility {display:none}
++#scene[data-story=true] #dialogue-visibility {
++  display:block;position:absolute;z-index:10;right:3%;top:2%;
++  color:#f3f5fa;background:#182536db;border:1px solid #a3b4c4;border-radius:5px;
++  font:inherit;font-size:clamp(12px,1.4cqw,15px);padding:6px 12px;cursor:pointer;
++}
++#scene[data-art-only=true] :is(#date,#money,.opening-mat,#opening-read,
++  #conversation .dialogue,#conversation .answers,#conversation .opening-top,
++  #conversation .review-bubble,#conversation .review-slip) {
++  visibility:hidden;pointer-events:none;
++}
++body.guiding #scene #dialogue-visibility {display:none}
++@media(pointer:coarse){#scene[data-story=true] #dialogue-visibility {min-height:44px}}
++
++/* The native greeting button contains the visible, age-specific portrait. */
++#scene[data-mode=home] #ciel-greet {
++  left:50%;right:auto;margin:0;translate:-50% 0;max-width:100%;
++  overflow:visible;touch-action:manipulation;
++}
++#scene[data-mode=home] #ciel-greet > #home-standing {
++  position:static;display:block;width:100%;height:100%;scale:none;
++  object-fit:contain;object-position:center bottom;pointer-events:none;
++}
++#ciel-greet > .greeting-hop {animation:ciel-greeting-hop 540ms ease-out}
++@keyframes ciel-greeting-hop {
++  0%,100% {transform:translateY(0)}
++  15% {transform:scale(1.05,.95)}
++  43% {transform:translateY(-6%) scale(.99,1.02)}
++  68% {transform:scale(1.04,.96)}
++  82% {transform:translateY(-1.4%)}
++}
++html[data-game-motion=reduced] :is(#ciel-greet > .greeting-hop,.performer,.motion-object) {animation:none!important}
++#playback .lesson-plane {
++  width:100%;
++  width:max(var(--portrait-scene-width),calc(var(--portrait-scene-height) * 1.5));
++}
+--- a/index.html
++++ b/index.html
+@@ -51,7 +51,8 @@
+   </div>
+   <button type="button" id="opening-read" tabindex="-1" aria-hidden="true" data-action="opening-next"></button>
+ </section>
+-<section id="playback" aria-label="일정 장면" hidden></section><section id="conversation" aria-label="대화" hidden></section>
++<section id="playback" aria-label="일정 장면" hidden></section><button type="button" id="dialogue-visibility" aria-pressed="false">대화창 숨기기</button>
++<section id="conversation" aria-label="대화" hidden></section>
+ <section id="calendar" aria-label="월간 일정" tabindex="-1" hidden></section>
+ <section id="sheet" class="sheet" aria-labelledby="sheet-title" hidden>
+ <header class="sheet-head"><h2 id="sheet-title" tabindex="-1"></h2><button type="button" class="close return-control" data-action="back"><span class="return-label">뒤로</span></button></header>
+@@ -72,7 +73,7 @@
+ <div id="fx-layer" class="fx-layer" popover="manual" aria-hidden="true"></div><div id="flash" class="flash" role="status"></div>
+ <script src="js/tour.js"></script>
+ <script src="js/content.js?v=ff1d1c3b14cd"></script>
+-<link rel="stylesheet" href="css/recruit.css?v=d8ddc41fce62">
++<link rel="stylesheet" href="css/recruit.css?v=5e636c70d9da">
+ <script src="js/recruit.js?v=27041d4d6af2"></script>
+ <script src="js/story.js?v=5f6d9339a3ae"></script>
+ <script src="js/scenes.js?v=638b2e5f7292"></script>
+--- a/js/chapters.js
++++ b/js/chapters.js
+@@ -1,12 +1,12 @@
+ "use strict";
+-const portraits={세바스찬:"assets/sebastian.webp",타나카:"assets/npc-tanaka.webp",피니안:"assets/npc-finny.webp",메이린:"assets/npc-mey.webp",바르도:"assets/npc-bard.webp",스네이크:"assets/npc-snake.webp",소마:"assets/npc-soma.webp",아그니:"assets/npc-agni.webp",get 엘리자베스(){const age=elizabethAge();return age===13?"assets/npc-lizzy.webp":"assets/npc-lizzy-"+age+".webp";},get 시엘(){const age=ageAt(state.month);return age<11?"assets/ciel.png":"assets/ciel-"+Math.min(age,12)+".webp";}};
++const portraits={세바스찬:"assets/sebastian.webp",타나카:"assets/npc-tanaka.webp",피니안:"assets/npc-finny.webp",메이린:"assets/npc-mey.webp",바르도:"assets/npc-bard.webp",스네이크:"assets/npc-snake.webp",소마:"assets/npc-soma.webp",아그니:"assets/npc-agni.webp",get 엘리자베스(){const age=elizabethAge();return age===13?"assets/npc-lizzy.webp":"assets/npc-lizzy-"+age+".webp";},get 시엘(){return cielArt(currentCielAge());}};
+ const castByEvent={gardener:"피니안",maid:"메이린",cook:"바르도",circus:"스네이크",visitPrince:"소마",jubilee:"세바스찬",agniTray:"아그니",greenhouseKey:"피니안"};
+ function castName(e){return castByEvent[e.id]||((e.speaker in portraits)?e.speaker:"세바스찬");}
+-function elizabethAge(){return Math.max(11,Math.min(13,ageAt(state.month)+1));}
++function elizabethAge(){return Math.max(11,Math.min(13,currentCielAge()+1));}
+ function dialogueCast(speaker){
+   const left=speaker==="시엘"?"세바스찬":speaker;
+   return [left,"시엘"].map((name,index)=>
+-    sceneStanding(name,index?"right":"left",portraits[name],name==="엘리자베스"?'data-lizzy-age="'+elizabethAge()+'" ':"")).join("");
++    sceneStanding(name,index?"right":"left",portraits[name],name==="엘리자베스"?elizabethAge():undefined)).join("");
+ }
+ function staged(who,title,line,buttons,caption="",room="library"){
+   const start='<div class="review-room" style="background-image:url(&quot;'+sceneArt[room]+'&quot;)"></div>'+dialogueCast(who);
+@@ -16,7 +16,7 @@
+ }
+ const guide=[
+  ["날짜판과 명패","오늘 날짜는 왼쪽 위 달력을 보십시오. 연도 옆에는 서른다섯 달 중 몇 달째인지 적어 두었습니다. 저택의 오른쪽 위 명패에는 도련님의 나이와 가문의 잔금이 있습니다."],
+- ["일정표","왼쪽 아래 ‘일정표’에 상순·중순·하순 세 칸을 마련했습니다. 어느 때를 비워 두시겠습니까? 바꾸실 칸을 먼저 짚고 활동을 고르시면 제가 적겠습니다. £ 옆의 숫자가 그 비용입니다."],
++ ["일정표","왼쪽 아래 ‘일정표’에 상순·중순·하순 세 칸을 마련했습니다. 쉬고 나면 다음 수업에 집중하기 쉽습니다. 배운 과목이 쌓이면 제가 서로 다른 과목을 묶어 시험을 내지요. 바꾸실 칸을 먼저 짚고 활동을 고르시면 제가 적겠습니다. £ 옆의 숫자가 그 비용입니다."],
+  ["자유행동","‘자유행동’은 도련님의 외출을 위해 비워 둔 칸입니다. 한 달에 한 곳을 정하실 수 있습니다. 누구와 무슨 이야기를 나누실지는 도착한 뒤에 정하셔도 됩니다."],
+  ["팬텀사","‘관리 · 경영’에서 ‘팬텀 사(社)’를 여십시오. 개발실에서는 상품을, 제작실에서는 수량을, 판매점에서는 값을 정하시면 됩니다. 수업료가 모자라겠다면 이번 생산량을 조금 줄이는 편이 좋겠습니다."],
+  ["저택","‘관리 · 경영’의 지도에서 방을 짚으시면 시설과 근무지를 살필 수 있습니다. 개수를 명하시기 전에 비용과 이달의 관리 상태를 보십시오. 간식이 필요하시면 저택 메뉴의 ‘상점’으로 모시겠습니다."],
+@@ -160,11 +160,13 @@
+  ["dance","기품","무도 실기","반주가 한 박자 멎었습니다. 상대의 발끝이 아직 떠 있군요.","체중이 옮겨질 때까지 기다린다","발의 위치를 다시 맞춘다"],
+  ["social","매력","다과회 실기","초면인 손님 둘이 같은 은쟁반을 집었습니다. 도련님이라면요?","둘의 공통 관심사를 꺼낸다","잔을 새로 내온다"],
+  ["negotiate","경영","협상 실기","납품가는 같고 도착일이 다릅니다. 어느 조건부터 물으시겠습니까?","지연 때의 부담을 확인한다","견적을 다시 읽는다"],
+- ["exercise","체력","보폭 시험","마지막 바퀴입니다. 남은 거리에 호흡을 맞춰 보시겠습니까?","일정한 보폭으로 완주한다","잠시 호흡을 고른다"]
++ ["exercise","체력","보폭 시험","마지막 왕복입니다. 연회장 문턱까지 보폭을 흐트러뜨리지 않고 가 보시겠습니까?","일정한 보폭으로 완주한다","잠시 호흡을 고른다"]
+ ];
++const examPartners={study:"통찰",etiquette:"매력",accounts:"지성",inquiry:"의지",language:"매력",music:"의지",dance:"체력",social:"기품",negotiate:"통찰",exercise:"의지"};
+ function examEvents(){return exams.map(([slot,stat,title,text,a,b])=>({id:"exam-"+slot,slot,title,text,speaker:"세바스찬",exam:true,
+- sees:s=>s.counts[slot]>=2&&s.stats[stat]>=Math.round(18*statMax(stat)/abilityMax)&&s.sequence.after[stat]>s.sequence.before[stat],
+- choices:[choice(a,"실기 통과 · "+stat+" +"+Math.round(4*statMax(stat)/abilityMax),()=>changeStat(stat,Math.round(4*statMax(stat)/abilityMax))),choice(b,"보충 지도 · 의욕 +3",()=>shift("motivation",3))]}));}
++ sees:s=>s.counts[slot]>=2&&s.stats[stat]>=Math.round(18*statMax(stat)/abilityMax),
++ choices:[choice(a,"실기 통과",()=>{changeStat(stat,14);changeStat(examPartners[slot],8);}),
++          choice(b,"보충 지도",()=>{changeStat(stat,8);changeStat(examPartners[slot],4);shift("motivation",5);})]}));}
+ function calendarEvents(){
+  const out=[];
+  for(let m=1;m<=35;m++){
+@@ -229,3 +231,20 @@
+  return '<div class="annex-line"><div><b>'+f.name+' · '+n+'단계</b><small>'+f.desc+'</small></div><div>월 £'+cost+'<br>상태 '+condition+'</div></div>';
+  }).join("")+'<p>공통 관리비 £36에 시설비를 합하고 경비 절감액을 반영합니다.</p></details>';
+ }
++
++// Later assignments combine subjects that the player actually practised.
++function appliedExams(){
++  const cases=[
++    ["guestBook",3,"오늘 응접실에 손님이 한 분 더 오십니다. 좌석표에도, 식사 장부에도 자리가 없습니다. 어느 쪽을 먼저 손보시겠습니까?",
++      [["두 손님의 대화를 잇는다","매력","기품"],["남은 식사 비용을 계산한다","경영","지성"],["식당까지 직접 동선을 살핀다","체력","통찰"]]],
++    ["lateDispatch",6,"마지막 우편 마차가 곧 떠납니다. 납품서와 거래처의 답장이 서로 다르군요. 제게 어떤 지시를 내리시겠습니까?",
++      [["답장을 대조해 정정본을 쓴다","통찰","지성"],["마차까지 직접 가서 인계한다","체력","의지"],["상대를 만나 납기를 바꾼다","경영","매력"]]],
++    ["hostAlone",8,"오늘 만찬은 제가 문밖에서 기다리겠습니다. 손님들은 벌써 도착하셨는데, 도련님은 어느 자리를 맡으시겠습니까?",
++      [["현관에서 한 사람씩 맞는다","기품","매력"],["모든 방을 돌며 진행을 지휘한다","의지","체력"],["식탁과 장부를 함께 점검한다","지성","경영"]]]
++  ];
++  return cases.map(([id,count,text,options])=>({id,chapter:true,title:"종합 실기",speaker:"세바스찬",text,
++    sees:s=>exams.filter(([slot])=>s.flags["exam-"+slot]).length>=count,
++    choices:options.map(([label,primary,secondary])=>choice(label,primary+" +30 · "+secondary+" +18",()=>{
++      changeStat(primary,30);changeStat(secondary,18);
++    }))}));
++}
+--- a/js/content.js
++++ b/js/content.js
+@@ -54,7 +54,7 @@
+   dance:["ballroom","waltz1 waltz2","waltz","beat","마룻바닥의 무늬를 따라 세 걸음, 반 바퀴 돌아 제자리로 옵니다."],
+   social:["ballroom","greet bow","meet","speech","손님에게 먼저 인사를 건네고 대답이 끝날 때까지 기다립니다."],
+   negotiate:["office","inspect greet","meet","contract","견적서를 밀어 둡니다. 상대가 먼저 가격을 부를 차례입니다."],
+-  exercise:["field","step1 step2","jog","dust","모래길의 표식 사이를 뛰고, 숨을 고른 뒤 다시 출발합니다."],
++  exercise:["ballroom","step1 step2","walk","beat","의자를 벽으로 밀어 둔 대연회장입니다. 마룻결을 따라 발을 바꾸고, 네 걸음마다 숨을 고릅니다."],
+   practicum:["office","penUp penDown inspect","count","coin","제작실에서 넘어온 영수증을 금액순으로 정리합니다."],
+   developToy:["office","inspect write","search","toy","목제 견본의 바퀴를 굴려 보고 도면의 축 길이를 고칩니다."],
+   supplier:["street","step1 step2 greet","walk","delivery","진열창 앞에 멈춰 견본의 마감과 납기표를 대조합니다."],
+@@ -104,6 +104,14 @@
+ };
+ function calendarDate(turn,day=1){return new Date(Date.UTC(1886,turn-1,day));}
+ function monthText(turn){const d=calendarDate(turn);return d.getUTCFullYear()+"년 "+(d.getUTCMonth()+1)+"월";}
++function campaignAge(run){
++  let day=1;
++  if(run.sequence)day=(run.sequence.index??0)*10+(run.phase==="scene"?1:9);
++  else if(["event","result","vow","investiture","ending"].includes(run.phase)&&!["estate","plan"].includes(run.recruitReturn))day=28;
++  return ageAt(run.month,day);
++}
++function currentCielAge(){return tourSession?.age??campaignAge(state);}
++function cielArt(age){return age>=12?"assets/ciel-12.webp":age===11?"assets/ciel-11.webp":"assets/ciel.png";}
+ function ageAt(turn,day=1){const d=calendarDate(turn,day);return d.getUTCFullYear()-1875-(d.getUTCMonth()<11||d.getUTCDate()<14?1:0);}
+ function peopleInHouse(){return Object.keys(servants).filter(k=>state.people[k]);}
+ function talkTrust(id,n=1,other=1){
+--- a/js/game.js
++++ b/js/game.js
+@@ -43,14 +43,15 @@
+ function lessonGain(key,current,base,month){
+   const rate=1.1+(month-1)*0.065;
+   const max=statMax(key);
+-  return Math.min(max-current,Math.round(base*rate*max/abilityMax));
++  const mastery=Math.max(.24,1-Math.max(0,current-300)/210);
++  return Math.min(max-current,Math.round(base*rate*mastery*max/abilityMax));
+ }
+ function scheduleNote(id){
+   const a=actions[id];
+   const effects=Object.entries(a.gains).map(([k,v])=>k+" "+signed(lessonGain(k,state.stats[k],v,state.month)));
+   if(a.health)effects.push("건강 "+signed(a.health));
+   effects.push("스트레스 "+signed(a.stress));
+-  return effects.join(" · ");
++  return (a.stress>0?"그럭저럭 기준 · ":"")+effects.join(" · ");
+ }
+ function forecast(shop=state.shop){
+   const p=products[state.product];
+@@ -97,7 +98,7 @@
+   state.flags[id]=true;
+   effect();
+ }
+-const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),followupEvents());
++const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),followupEvents(),appliedExams());
+ 
+ function pendingEvent(){
+   return events.find(event=>event.id===state.pending);
+@@ -223,10 +224,19 @@
+   if(!["event","slotEvent"].includes(state.phase)||!choice||(choice.when&&!choice.when(state)))return;
+   const isRecruit=Object.hasOwn(recruitScenes,event.id);
+   if(isRecruit&&recruitPage(event.id)!==recruitScenes[event.id].lines.length-1)return;
++  const examBefore=event.exam?snapStats(state):null;
+   flagEvent(event.id,choice.effect);
++  let examNote="";
++  if(examBefore){
++    const after=snapStats(state);
++    const changes=Object.keys(after).filter(k=>examBefore[k]!==after[k])
++      .map(k=>k+" "+signed(after[k]-examBefore[k]));
++    examNote=choice.result+" · "+(changes.join(" / ")||"이미 상한에 도달했습니다.");
++    if(state.sequence)state.sequence.examNote=examNote;
++  }
+   if(isRecruit)delete state.recruitPage;
+-  state.events.push({id:event.id,index,month:state.month,...(isRecruit?{edition:"canonical"}:{})});
+-  state.log.push(choice.result);
++  state.events.push({id:event.id,index,month:state.month,...(examNote?{examNote}:{}),...(isRecruit?{edition:"canonical",age:currentCielAge()}:{})});
++  state.log.push(examNote||choice.result);
+   state.pending=null;
+   if(event.id==="visitPrince"&&state.recruitReturn==="estate"){
+     delete state.recruitReturn;state.phase="plan";tab="estate";persist();render(true);return;
+@@ -286,8 +296,24 @@
+ function fatigueThreshold(stamina){
+   return 65+Math.floor(cap(stamina,abilityMax)*10/abilityMax);
+ }
+-function applyActivity(run,id){
++const lessonGrades={
++  great:{label:"대성공",factor:1.65}, steady:{label:"그럭저럭",factor:1}, poor:{label:"별로",factor:.55}
++};
++function lessonResult(run,id,slot){
++  if(actions[id].stress<=0)return null;
++  const practice=Math.min(3,run.counts[id]||0);
++  const previous=slot>0?run.plan[slot-1]:run.past.findLast(row=>row.month<run.month)?.plan[2];
++  const preparation=actions[previous]?.stress<0?8:previous===id?-9:0;
++  const room=trainingRooms[id];
++  const salt=(Object.keys(actions).indexOf(id)+1)*101+(slot+1)*7907;
++  const luck=monthlyDraw(run,salt)*26-13;
++  const score=53+(run.hp-60)*.27+(run.motivation-55)*.33-(run.stress-28)*.42
++    +practice*3+preparation+(run.lessonKit?.[id]?14:0)+(room?(run.level[room]-1)*3:0)+luck;
++  return score>=65?"great":score>=38?"steady":"poor";
++}
++function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0)){
+   const a=actions[id];
++  if(run.lessonKit?.[id])delete run.lessonKit[id];
+   const tolerance=fatigueThreshold(run.stats.체력);
+   const tired=(run.hp<40||run.stress>=tolerance||run.motivation<35)&&a.stress>0;
+   const room=trainingRooms[id];
+@@ -301,7 +327,7 @@
+   run.motivation=cap(run.motivation+(a.stress<0?8:tired?-7:-2));
+   const changes=Object.entries(a.gains).map(([name,value])=>{
+     const before=run.stats[name];
+-    const gain=lessonGain(name,before,(value+(room?(run.level[room]-1)*4:0))*(tired?.55:1)*(run.neglect>=2?.85:1),run.month);
++    const gain=lessonGain(name,before,(value+(room?(run.level[room]-1)*4:0))*(grade?lessonGrades[grade].factor:1)*(run.neglect>=2?.85:1),run.month);
+     run.stats[name]=cap(before+gain,statMax(name));
+     return name+" "+signed(run.stats[name]-before);
+   });
+@@ -318,8 +344,12 @@
+   }
+ }
+ function projectTraining(){
+-  const run={...state,stats:{...state.stats}};
+-  for(const id of run.plan)if(actions[id])applyActivity(run,id);
++  const run={...state,stats:{...state.stats},counts:{...state.counts},lessonKit:{...state.lessonKit}};
++  for(const [slot,id] of run.plan.entries()){
++    if(!actions[id])continue;
++    applyActivity(run,id,lessonResult(run,id,slot));
++    run.counts[id]=(run.counts[id]||0)+1;
++  }
+   applyEstateTraining(run);
+   return run;
+ }
+@@ -473,7 +503,7 @@
+ }
+ const legacyEventIds={"비어 있는 천막":"circus","타운하우스의 손님":"visitPrince","돌아온 집사":"homecoming","불을 지키는 사람":"cook","서재의 열쇠":"return","새벽의 일정표":"discipline","비어 있는 장부":"proof","여왕의 초청장":"audience","상점 진열장":"trade","손님이 돌아간 뒤":"room"};
+ function updateMoney(){
+-  $("money").innerHTML='<div class="nameplate"><small>CIEL</small><b>PHANTOMHIVE</b></div><div class="id-details"><span>'+ageAt(state.month)+'세</span><span>12.14</span><span class="sign-mark" aria-label="사수자리"></span></div><strong class="wealth">'+money(state.fund)+'</strong>';
++  $("money").innerHTML='<div class="nameplate"><small>CIEL</small><b>PHANTOMHIVE</b></div><div class="id-details"><span>'+currentCielAge()+'세</span><span>12.14</span><span class="sign-mark" aria-label="사수자리"></span></div><strong class="wealth">'+money(state.fund)+'</strong>';
+ }
+ function relationBook(){
+   return '<h3>인물 관계</h3>'+peopleInHouse().map(id=>{const r=state.people[id];return '<div class="work-ledger"><b>'+servants[id].name+'</b><span>상대 → 시엘　'+rank(r.toward)+'</span></div>';}).join("");
+@@ -619,10 +649,27 @@
+       return '<details><summary>'+monthText(record.month||state.month)+' · '+event.title+'</summary><p>'+note+'</p>'+btn('영입 장면 다시 보기','recruit-memory:'+event.id)+'</details>';
+     }
+     const choice=event.choices[record.index];
+-    return '<details><summary>'+(record.month?monthText(record.month)+' · ':'')+(choice?choice.label:castName(event))+'</summary>'+(sourceNote(event)?'<small>'+sourceNote(event)+'</small>':'')+'<p>'+storyLine(event)+'</p><p class="small muted">'+(choice?choice.label+" · "+choice.result:"처리 완료")+'</p></details>';
++    return '<details><summary>'+(record.month?monthText(record.month)+' · ':'')+(choice?choice.label:castName(event))+'</summary>'+(sourceNote(event)?'<small>'+sourceNote(event)+'</small>':'')+'<p>'+storyLine(event)+'</p><p class="small muted">'+(choice?choice.label+" · "+(record.examNote||choice.result):"처리 완료")+'</p></details>';
+   }).join("");
+   return frame("가문 장부",'<h3>궁정의 기류</h3><p>'+courtImpression()+'</p><div class="step-grid">'+
+     tile("남은 채무",money(state.debt))+'</div>'+relationBook()+'<h3>엔딩 도감</h3><p class="small muted">'+(Object.values(saves.gallery||{}).join(" · ")||"기록 없음")+'</p><h3>사건 기록</h3>'+(history||'<p class="small muted">기록 없음</p>'));
++}
++const motionLabels={auto:"기기 설정 따르기",full:"항상 재생",reduced:"동작 줄이기"};
++const motionKey="earl-phantomhive-motion";
++let motionMode="auto";
++try{
++  const stored=localStorage.getItem(motionKey);
++  if(Object.hasOwn(motionLabels,stored))motionMode=stored;
++}catch{}
++function motionReduced(){
++  return motionMode==="reduced"||(motionMode==="auto"&&matchMedia("(prefers-reduced-motion: reduce)").matches);
++}
++function syncMotion(){
++  document.documentElement.dataset.gameMotion=motionReduced()?"reduced":"full";
++}
++function motionControls(){
++  return '<section class="mixer"><h3>동작 설정</h3><p>시엘의 인사와 일정 애니메이션</p><div class="opts">'+
++    Object.entries(motionLabels).map(([key,name])=>option(name,"motion:"+key,motionMode===key,false)).join("")+'</div></section>';
+ }
+ function savePanel(){
+   const rows=["auto","1","2","3"].map((id,index)=>{
+@@ -631,7 +678,7 @@
+       (record?monthText(record.month)+" · "+phaseNames[record.phase]:"빈 슬롯")+'</span></div><div class="opts">'+
+       (index?btn("저장","store:"+id,false,"slot-write"):"")+btn("불러오기","load:"+id,!record,"slot-read")+'</div></div>';
+   }).join("");
+-  return frame("설정",audioControls()+instructionBook()+'<section class="notebook-slots"><h3>저장 슬롯</h3>'+rows+'</section>'+(!storageOk?'<p class="small danger">브라우저 저장소를 사용할 수 없습니다. 이 탭을 닫으면 진행 내용이 사라집니다.</p>':"")+
++  return frame("설정",audioControls()+motionControls()+instructionBook()+'<section class="notebook-slots"><h3>저장 슬롯</h3>'+rows+'</section>'+(!storageOk?'<p class="small danger">브라우저 저장소를 사용할 수 없습니다. 이 탭을 닫으면 진행 내용이 사라집니다.</p>':"")+
+     '<div class="notebook-actions">'+(state.phase!=="contract"?btn("프롤로그 다시 보기","recollect"):"")+btn("새 회차","reset")+btn("표지로","tab:title")+'</div>');
+ }
+ function statusPanel(){
+@@ -811,6 +858,11 @@
+ }
+ 
+ const marketGoods={
++  novel:{name:"주머니판 모험소설",icon:"reading",cost:17,stat:"motivation",amount:8,label:"의욕",line:"책갈피가 붙어 있네. 집사가 부르면 거기까지만 읽으면 되겠지."},
++  abacus:{name:"휴대용 주판 대여",icon:"accounts",cost:19,lesson:"accounts",line:"외상 전표를 계산할 때 써 봐. 회계 수업 한 번 치 대여료야."},
++  lens:{name:"손돋보기 대여",icon:"casework",cost:20,lesson:"inquiry",line:"종이에 남은 눌린 자국까지 보일걸. 기록 조사 때 가져가."},
++  shoes:{name:"무도화 조정권",icon:"dance",cost:22,lesson:"dance",line:"뒤축을 발에 맞춰 주지. 다음 무도 수업 전에 들르면 돼."},
++  weights:{name:"손아령 대여",icon:"exercise",cost:16,lesson:"exercise",line:"한 쌍이야. 다음 체력 단련이 끝나면 저택으로 사람을 보낼게."},
+   tea:{name:"홍차 한 잔",cost:12,stat:"stress",amount:-5,label:"스트레스",line:"마침 차가 잘 우러났어. 한 잔 하겠어?"},
+   scone:{name:"버터 스콘",cost:15,stat:"hp",amount:6,label:"건강",line:"스콘은 따뜻할 때 반으로 갈라야 버터가 스며들지."}
+ };
+@@ -818,17 +870,18 @@
+ function marketPanel(){
+   const cards=Object.entries(marketGoods).map(([id,g])=>
+     '<button type="button" class="goods-ticket" data-action="goods:'+id+'" aria-pressed="'+(selectedGood===id)+'">'+
+-    '<b>'+g.name+'</b><img src="assets/goods-'+id+'.webp" alt=""><strong>'+money(g.cost)+'</strong></button>').join("");
+-  const g=marketGoods[selectedGood],before=state[g.stat],after=cap(before+g.amount);
+-  const reason=state.phase!=="plan"?"일정 편성 중에 구매할 수 있습니다.":state.fund<g.cost?"보유금이 부족합니다.":after===before?g.label+" 수치가 이미 한도에 도달했습니다.":"";
+-  return '<div class="lau-counter"><img class="lau-standing" src="assets/npc-lau.webp" alt="상점 주인 라우">'+
++    '<b>'+g.name+'</b><img src="'+(g.icon?"assets/planner-icons/"+g.icon+".png":"assets/goods-"+id+".webp")+'" alt=""><strong>'+money(g.cost)+'</strong></button>').join("");
++  const g=marketGoods[selectedGood],before=state[g.stat],after=g.lesson?null:cap(before+g.amount);
++  const reason=state.phase!=="plan"?"일정 편성 중에 구매할 수 있습니다.":state.fund<g.cost?"보유금이 부족합니다.":
++    g.lesson?(state.lessonKit?.[g.lesson]?"이미 준비했습니다.":""):after===before?g.label+" 수치가 이미 한도에 도달했습니다.":"";
++  const preview=g.lesson?'<div class="stat-preview">'+actions[g.lesson].name+' · 다음 한 번의 수업 성과 판정에 가산</div>':
++    '<div class="stat-preview"><div class="stat-values"><span>'+g.label+'</span><b>'+before+' → '+after+'</b><strong>'+signed(after-before)+'</strong></div>'+
++    '<div class="stat-track" aria-hidden="true"><i style="width:'+Math.min(before,after)+'%"></i><i class="stat-change" style="width:'+Math.abs(after-before)+'%"></i></div></div>';
++  return '<div class="lau-counter">'+framedStanding("라우","assets/npc-lau.webp","lau-standing")+
+     '<div class="shop-stock"><div class="shop-purse"><span>보유금</span><strong>'+money(state.fund)+'</strong></div>'+
+     '<div class="goods-list" role="group" aria-label="판매 상품">'+cards+'</div></div>'+
+     '<section class="shop-talk" aria-label="상품 설명"><h3>라우</h3><p>'+g.line+'</p>'+
+-    '<div class="shop-trade"><div class="stat-preview"><div class="stat-values"><span>'+g.label+'</span>'+
+-    '<b>'+before+' → '+after+'</b><strong>'+(after>before?'+':'')+(after-before)+'</strong></div>'+
+-    '<div class="stat-track" aria-hidden="true"><i style="width:'+Math.min(before,after)+'%"></i>'+
+-    '<i class="stat-change" style="width:'+Math.abs(after-before)+'%"></i></div></div>'+
++    '<div class="shop-trade">'+preview+
+     btn(money(g.cost)+" 구매","buy:"+selectedGood,Boolean(reason),"shop-buy")+'</div>'+
+     (reason?'<small>'+reason+'</small>':'')+'</section></div>';
+ }
+@@ -848,43 +901,39 @@
+ const homeRemarks=["무슨 일이지?","차가 식기 전에 마저 마시겠어.","오늘 일정은 확인했나?","잠깐이라면 들어주지."];
+ let remarkIndex=0;
+ let remarkTimeout;
+-let cielHop;
++
+ function greetCiel(){
+   if(tab!=="home")return;
+   const bubble=$("ciel-aside");
+   clearTimeout(remarkTimeout);
+-  cielHop?.cancel();
+-  if(!matchMedia("(prefers-reduced-motion: reduce)").matches){
+-    cielHop=$("home-standing").animate([
+-      {transform:"none",offset:0},
+-      {transform:"scale(1.06,.94)",offset:.15,easing:"cubic-bezier(.18,.78,.32,1)"},
+-      {transform:"translateY(-5.6%) scale(.98,1.035)",offset:.43,easing:"ease-in"},
+-      {transform:"scale(1.055,.95)",offset:.68,easing:"ease-out"},
+-      {transform:"translateY(-1.35%) scale(.99,1.015)",offset:.81,easing:"ease-in"},
+-      {transform:"scale(1.014,.989)",offset:.93},
+-      {transform:"none",offset:1}
+-    ],{duration:540,easing:"linear"});
+-  }
++  const sprite=$("home-standing");
++  sprite.classList.remove("greeting-hop");
++  void sprite.offsetWidth;
++  sprite.classList.add("greeting-hop");
+   bubble.textContent=homeRemarks[remarkIndex];
+   remarkIndex=(remarkIndex+1)%homeRemarks.length;
+   remarkTimeout=setTimeout(()=>{bubble.textContent="";},3000);
+ }
+ function render(focus=false,playbackOffset=0){
+-  clearTimeout(remarkTimeout);
+-  $("ciel-aside").textContent="";
+-  cielHop?.cancel();
++  if($("scene").dataset.artOnly==="true")setArtOnly($("scene"),false);
++  if(tab!=="home"){
++    clearTimeout(remarkTimeout);
++    $("ciel-aside").textContent="";
++    $("home-standing").classList.remove("greeting-hop");
++  }
+   const panel=$("panel");
+   const sameDesk=(tab==="estate"||tab==="company"||tab==="staffing") && $("scene").dataset.mode===tab && !$("sheet").hidden;
+   const deskScroll=sameDesk?panel.scrollTop:0;
+   const openSections=new Set(sameDesk
+     ? Array.from(panel.querySelectorAll("details[open] > summary"),summary=>summary.textContent)
+     : []);
+-  const standing=$("home-standing");
++  const standing=$("home-standing"),greetButton=$("ciel-greet");
++  if(tab==="home"&&standing.parentElement!==greetButton)greetButton.append(standing);
++  if(tab!=="home"&&standing.parentElement===greetButton)greetButton.after(standing);
+   if(standing.getAttribute("src")!==portraits.시엘)standing.src=portraits.시엘;
+-  let visibleAge=ageAt(state.month);
+-  if(tab==="staffMemory"&&recruitMemory)visibleAge=recruitAge(recruitMemory.id,recruitMemory.month);
+-  else if(tab==="plan"&&["slotEvent","event"].includes(state.phase)&&Object.hasOwn(recruitScenes,state.pending))visibleAge=recruitAge(state.pending,state.month);
+-  $("scene").style.setProperty("--ciel-scale",cielPortraitScale(visibleAge));
++  const visibleAge=tab==="staffMemory"&&recruitMemory?recruitMemory.age:currentCielAge();
++  setPortraitAge($("scene"),visibleAge);
++  greetButton.style.aspectRatio=["403 / 1000","1024 / 1530","910 / 1530"][visibleAge-10];
+   musicPlayer.sync(trackForView());
+   stopPlayback();
+   $("system-back").disabled=tab==="home";
+@@ -1127,6 +1176,10 @@
+     panel.innerHTML=marketPanel();
+     panel.scrollTop=scroll;
+     focusAction(key);respond("choose",rect);return;
++  }
++  if(action==="motion"&&tab==="save"&&Object.hasOwn(motionLabels,id)){
++    motionMode=id;try{localStorage.setItem(motionKey,id);}catch{}
++    syncMotion();render();focusAction("motion:"+id);return;
+   }
+   if(action==="greet-ciel"){greetCiel();return;}
+   if(action==="open-menu"){
+@@ -1321,11 +1374,18 @@
+     if(action==="buy"){
+       const g=marketGoods[id];
+       if(tab!=="market"||!Object.hasOwn(marketGoods,id)||state.fund<g.cost)return;
+-      const after=cap(state[g.stat]+g.amount);
+-      if(after===state[g.stat])return;
+-      const delta=after-state[g.stat];
+-      state.fund-=g.cost;state[g.stat]=after;
+-      message=g.name+" · "+g.label+" "+signed(delta);
++      if(g.lesson){
++        state.lessonKit??={};
++        if(state.lessonKit[g.lesson])return;
++        state.lessonKit[g.lesson]=true;
++        message=g.name+" · 다음 "+actions[g.lesson].name+"에 사용합니다.";
++      }else{
++        const after=cap(state[g.stat]+g.amount);
++        if(after===state[g.stat])return;
++        message=g.name+" · "+g.label+" "+signed(after-state[g.stat]);
++        state[g.stat]=after;
++      }
++      state.fund-=g.cost;
+     }else if(action==="activity"){
+       pattern="schedule";state.plan[Number(id)]=value;
+       message=slotNames[Number(id)]+" · "+actions[value].name;
+@@ -1405,7 +1465,7 @@
+       const key=button.dataset.action;
+       handleAction(key,rect);
+       const pressed=button.isConnected?button:document.querySelector('button[data-action="'+key+'"]:not(:disabled)');
+-      if(pressed?.animate&&!matchMedia("(prefers-reduced-motion: reduce)").matches){
++      if(key!=="greet-ciel"&&pressed?.animate&&!matchMedia("(prefers-reduced-motion: reduce)").matches){
+         pressed.animate([{scale:".98"},{scale:"1"}],{duration:140,easing:"ease-out"});
+       }
+     }
+@@ -1418,5 +1478,7 @@
+ });
+ render();
+ if(state.phase==="guide"&&tab==="plan")showGuidePage(0);
++syncMotion();
++matchMedia("(prefers-reduced-motion: reduce)").addEventListener?.("change",syncMotion);
+ $("launch-help").hidden=true;
+ $("mobile-menu").hidden=false;
+--- a/js/prologue.js
++++ b/js/prologue.js
+@@ -152,7 +152,7 @@
+   state.openingLine=openingLines.length;persist();drawOpening(true);
+ }
+ function stepOpening(step){
+-  if(!inOpening()||$("picker").open)return;
++  if(!inOpening()||$("picker").open||$("scene").dataset.artOnly==="true")return;
+   if($("overture").dataset.pause&&step>0){drawOpening(true);return;}
+   const i=openingIndex();
+   if(i+step>=openingLines.length){finishOpening();return;}
+--- a/js/recruit.js
++++ b/js/recruit.js
+@@ -158,10 +158,66 @@
+     stage.style.setProperty("--portrait-scene-width",entry.contentRect.width+"px");
+   });
+   observer.observe(stage);
++  const toggle=document.getElementById("dialogue-visibility");
++  toggle.addEventListener("click",event=>{
++    event.stopPropagation();
++    setArtOnly(stage,stage.dataset.artOnly!=="true");
++  });
++  document.addEventListener("keydown",event=>{
++    if(event.repeat||event.altKey||event.ctrlKey||event.metaKey||event.isComposing||
++       event.target?.closest?.("input,textarea,select,[contenteditable=true]")||
++       !toggle.getClientRects().length||document.querySelector("dialog[open]"))return;
++    const hidden=stage.dataset.artOnly==="true";
++    if(event.code==="KeyH"||(hidden&&event.key==="Escape")){
++      event.preventDefault();event.stopImmediatePropagation();
++      setArtOnly(stage,!hidden);toggle.focus({preventScroll:true});
++    }
++  },true);
++}
++function setArtOnly(stage,hidden){
++  const toggle=document.getElementById("dialogue-visibility");
++  if(hidden){
++    stopRecruitAuto();
++    if(typeof stopOpeningAuto==="function"){
++      stopOpeningAuto();
++      if(stage.dataset.prologue==="true"&&document.getElementById("overture").dataset.pause)drawOpening();
++    }
++    for(const auto of stage.querySelectorAll("#opening-auto,[data-read=auto]")){
++      auto.setAttribute("aria-pressed","false");auto.textContent="자동 재생";
++    }
++  }
++  stage.dataset.artOnly=String(hidden);
++  toggle.setAttribute("aria-pressed",String(hidden));
++  toggle.textContent=hidden?"대화창 표시":"대화창 숨기기";
+ }
+ function cielPortraitScale(age){return String(Math.min(152,140+6*(age-10))/186);}
+-function sceneStanding(name,side,src,extra=""){
+-  return '<img class="butler cast cast-'+side+'" alt="'+name+'" '+extra+'src="'+src+'">';
++// Eye positions and eye-to-chin lengths were measured on each illustration at 400 px high.
++const standingMeasures={
++  "세바스찬":[189,67,43], "아그니":[193,47,43], "바르도":[181,52,46],
++  "피니안":[163,67,42], "메이린":[165,94,46], "스네이크":[177,64,46],
++  "소마":[171,60,44], "타나카":[166,64,44], "라우":[178,62,42],
++  "엘리자베스11":[144,88,37], "엘리자베스12":[150,43,22], "엘리자베스13":[156,89,46]
++};
++function setPortraitAge(stage,age){
++  const scale=Number(cielPortraitScale(age));
++  const index=Math.max(0,Math.min(2,age-10));
++  stage.style.setProperty("--ciel-scale",String(scale));
++  // The Ciel reference image stays in its established framing at each age.
++  const eyeFromFloor=scale*(1-[86,79,62][index]/400);
++  stage.style.setProperty("--cast-base",String(eyeFromFloor-(140+6*index)/300));
++}
++function framedStanding(name,src,classes,profile=name){
++  const [height,eye,chin]=standingMeasures[profile];
++  const imageScale=Math.max(.101*400/chin,(.185+height/300)/(1-eye/400));
++  const rise=height/300+imageScale*eye/400;
++  return '<span class="standing-window '+classes+'" style="--figure-scale:'+imageScale+';--figure-rise:'+rise+'"><img src="'+src+'" alt="'+name+'"></span>';
++}
++function sceneStanding(name,side,src,age){
++  if(name!=="시엘"){
++    const profile=name==="엘리자베스"?name+(age||13):name;
++    return framedStanding(name,src,"cast cast-"+side,profile);
++  }
++  return '<img class="butler cast cast-'+side+'" alt="'+name+'" src="'+src+'">';
+ }
+ function sceneLine(speaker,text,next,attributes="",heading=""){
+   return '<article class="dialogue" '+attributes+'>'+(speaker?'<small>'+speaker+'</small>':'')+heading+
+@@ -235,21 +291,21 @@
+   const hasChoices=at===recruitScenes[id].lines.length-1&&event.choices.length>1;
+   const answers=hasChoices?'<div class="answers" role="group" aria-label="대화 선택지">'+
+     event.choices.map((c,i)=>btn(c.label,"choose:"+i,Boolean(c.when&&!c.when(state)),"vn-choice")).join("")+'</div>':"";
+-  host.hidden=false;drawRecruitReader(host,id,at,recruitArtwork(id,state.month),false,to=>{
++  host.hidden=false;drawRecruitReader(host,id,at,recruitArtwork(currentCielAge()),false,to=>{
+     if(!current())return;state.recruitPage={id,at:to,...(["maid","cook","circus","visitPrince"].includes(id)?{version:2}:{})};persist();render();
+     host.querySelector(".line-next, .answers button")?.focus({preventScroll:true});
+   },()=>{if(current())choose(0)},answers);
+ }
+ function recruitAge(id,month){return id==="gardener"?10:ageAt(month,28);}
+-function recruitArtwork(id,month){
+-  const age=recruitAge(id,month);
++function recruitArtwork(age){
+   return path=>path===recruitCast.ciel&&age>=11?(age>=12?recruitCast.ciel12:recruitCast.ciel11):path;
+ }
+ let recruitMemory=null;
+ function openRecruitMemory(id){
+   if(!Object.hasOwn(recruitScenes,id))return;stopRecruitAuto();
+-  const month=state.events.find(entry=>entry.id===id)?.month||state.month;
+-  recruitMemory={id,at:0,month};tab="staffMemory";render(true);
++  const entry=state.events.find(entry=>entry.id===id);
++  const month=entry?.month||state.month;
++  recruitMemory={id,at:0,month,age:entry?.age||recruitAge(id,month)};tab="staffMemory";render(true);
+ }
+ function closeRecruitMemory(){
+   stopRecruitAuto();const id=recruitMemory?.id;recruitMemory=null;tab="record";render();
+@@ -257,9 +313,9 @@
+   if(button){button.closest("details").open=true;button.focus({preventScroll:true});}
+ }
+ function showRecruitMemory(host){
+-  const memory=recruitMemory,{id,at,month}=memory;
++  const memory=recruitMemory,{id,at,age}=memory;
+   host.hidden=false;host.dataset.review="false";
+-  drawRecruitReader(host,id,at,recruitArtwork(id,month),true,to=>{
++  drawRecruitReader(host,id,at,recruitArtwork(age),true,to=>{
+     if(tab!=="staffMemory"||memory!==recruitMemory)return;
+     memory.at=to;render();host.querySelector(".line-next")?.focus({preventScroll:true});
+   },closeRecruitMemory);
+--- a/js/reports.js
++++ b/js/reports.js
+@@ -128,7 +128,7 @@
+   dance:"이번에는 악사 쪽을 보지 않고도 박자를 맞추셨군요.",
+   social:"손님이 먼저 다음 약속을 청하시더군요. 초대장은 제가 준비하겠습니다.",
+   negotiate:"상대가 먼저 납기를 앞당겼습니다. 그 조건을 계약서에 옮겨 두지요.",
+-  exercise:"오늘 달리신 거리를 기록해 두었습니다. 물부터 한 잔 드시지요.",
++  exercise:"처음부터 끝까지 같은 너비로 디디셨습니다. 마룻바닥의 표시를 지워도 되겠군요.",
+   practicum:"마지막 영수증까지 제자리에 있습니다. 내일은 이 원장부터 펴겠습니다.",
+   developToy:"도련님이 표시하신 축을 고치니 바퀴가 끝까지 돌아갑니다.",
+   supplier:"견본과 납품표에 같은 표시를 남기셨군요. 다음 주문 때 대조하기 좋겠습니다.",
+@@ -151,14 +151,51 @@
+   const preferred=Object.keys(a.gains).filter(k=>after[k]>seq.before[k]).sort((a,b)=>(after[b]-seq.before[b])-(after[a]-seq.before[a]));
+   const tired=a.stress>0&&(seq.before.건강<40||seq.before.스트레스>=fatigueThreshold(seq.before.체력)||seq.before.의욕<35);
+   let line=reviewLines[id];
+-  if(tired)line="끝까지 자리를 지키셨군요. 다음 순에는 차를 일찍 올리겠습니다. 오늘은 평소보다 피로가 짙으셨습니다.";
++  if(seq.grade)line=lessonFeedback(id,seq.grade,seq.remark);
++  else if(tired)line="끝까지 자리를 지키셨군요. 다음 순에는 차를 일찍 올리겠습니다. 오늘은 평소보다 피로가 짙으셨습니다.";
+   const lead=preferred[0]||(["건강","스트레스","의욕"].find(k=>after[k]!==seq.before[k]));
+-  if(!changed.length)line="오늘 기록은 지난 순과 같군요. 다음에는 다른 과목을 편성해 보시겠습니까, 도련님?";
++  if(!changed.length&&!seq.grade)line="오늘 기록은 지난 순과 같군요. 다음에는 다른 과목을 편성해 보시겠습니까, 도련님?";
+   const note=lead?lead+' '+seq.before[lead]+' → '+after[lead]+' ('+signed(after[lead]-seq.before[lead])+')':"이번 순에는 수치 변화가 없습니다.";
+   const rows=changed.map(k=>deltaRow(k,seq.before[k],after[k])).join('');
+   const next=seq.index===2?(hasPendingVisit()?"자유행동으로":"월말로"):slotNames[seq.index+1]+"으로";
+   return '<div class="review-room" style="background-image:url(&quot;'+sceneArt[choreography[id][0]]+'&quot;)"></div>'+
+-    '<img class="review-butler" src="assets/sebastian.webp" alt="세바스찬"><article class="review-bubble"><small>세바스찬</small><h2>'+a.name+' · 강평</h2><p>'+line+'</p><b>'+note+'</b></article>'+
++    framedStanding("세바스찬","assets/sebastian.webp","review-butler")+'<article class="review-bubble"><small>세바스찬</small><h2>'+a.name+' · '+(lessonGrades[seq.grade]?.label||'강평')+'</h2><p>'+line+'</p><b>'+note+'</b>'+(seq.examNote?'<p>'+seq.examNote+'</p>':'')+'</article>'+
+     '<section class="review-slip"><h3>'+slotNames[seq.index]+' 성과 <small>'+a.name+'</small></h3>'+rows+
+     '<div>'+btn(next+'　›','next-turn:'+state.month+':'+seq.index,false,'primary')+'</div></section>';
+ }
++
++// Each subject has another excellent result, two ordinary attempts and two setbacks.
++const lessonRemarks={
++  study:["각주에서 제가 일부러 틀린 연도를 찾으셨군요.","답은 맞습니다. 어떤 구절이 근거인지 짚어 보시겠습니까?","오늘은 목차까지만 정리해 두지요. 다음 장은 이어집니다.","같은 줄을 세 번 읽으셨습니다. 제가 소리 내어 읽어 드리지요.","연도 두 개가 뒤바뀌었습니다. 연표에 표시해 두겠습니다."],
++  etiquette:["손님이 장갑을 떨어뜨린 사이에도 소개가 끊기지 않았습니다.","먼저 오신 분의 성함부터 부르시면 됩니다.","인사 각도는 좋았습니다. 이번엔 문 쪽을 보십시오.","아직 손님이 앉기 전입니다. 의자를 다시 당기지요.","두 분께 같은 자리를 권하셨습니다. 좌석표를 다시 드릴까요?"],
++  accounts:["반품 한 건까지 찾아내시다니. 경리에게도 보여 줘야겠습니다.","합계는 맞습니다. 외상 건은 다음 칸입니다.","영수증 한 장만 남았습니다. 내일 이 줄에서 시작하지요.","파운드와 실링이 한 칸에 들어갔습니다. 선을 다시 긋지요.","반품도 매출에 넣으셨군요. 이 영수증은 빼겠습니다."],
++  inquiry:["도장보다 먼저 종이의 접힌 자리를 보셨군요.","봉인 둘은 갈라 두셨습니다. 발신인 칸은 비워 두지요.","같은 필체라는 데까지는 저도 동의합니다.","등잔을 돌리니 긁힌 자리가 보이는군요. 다시 보시겠습니까?","그건 어제 제가 붙인 표찰입니다. 단서는 그 아래입니다."],
++  riding:["제가 손을 떼었는데도 말이 같은 걸음으로 돌아왔습니다.","한 바퀴면 충분합니다. 오늘은 평보로 끝내지요.","고삐는 좋습니다. 어깨만 조금 내리십시오.","말이 먼저 멈췄군요. 오늘은 제가 내려 드리겠습니다.","발이 등자에서 두 번 빠졌습니다. 안장부터 다시 보지요."],
++  letters:["한 문장으로 승낙과 사양을 다 쓰셨군요. 그대로 봉하겠습니다.","봉하기 전에 날짜만 다시 적으시면 됩니다.","첫 문장을 덜어내면 훨씬 자연스럽겠습니다.","이 봉투에는 다른 댁의 문장이 찍혔습니다.","오늘이 목요일인데 수요일에 가시겠다고 쓰셨습니다."],
++  language:["원문에 없는 농담까지 알아들으셨군요.","뜻은 통했습니다. 마지막 어미를 한 번 더 읽어 보시지요.","세 문장 중 두 번째만 사전을 펴면 되겠습니다.","그 어미라면 초대한 사람이 도련님이 됩니다.","동사가 빠졌습니다. 편지는 잠시 제게 주십시오."],
++  music:["줄 하나가 풀렸는데도 끝 음을 잡으셨군요.","네 마디는 잘 이어졌습니다. 다음은 쉼표입니다.","박자는 맞습니다. 활 끝까지 쓰셔도 됩니다.","제가 피아노를 멈춰도 활은 계속 가는군요.","오늘은 활을 내려놓고 리듬만 짚어 보지요."],
++  dance:["제가 박자를 바꿨는데도 발을 밟지 않으셨습니다.","회전은 좋습니다. 마지막 발만 모아 주십시오.","다음 곡도 같은 속도로 청하겠습니다.","제 구두는 괜찮습니다. 왼발부터 다시 하시지요.","음악보다 한 걸음 앞서셨습니다. 잠시 멈추지요."],
++  social:["말없이 앉아 있던 손님까지 웃게 하셨군요.","날씨 이야기는 무사히 끝났습니다. 다음 화제는요?","성함을 모두 기억하셨습니다. 오늘은 그걸로 충분합니다.","그분은 아직 소개를 받지 못하셨습니다.","작별 인사를 건네기엔 손님의 찻잔이 가득합니다."],
++  negotiate:["값을 그대로 두고 운임까지 받아 내셨군요.","가격은 정했습니다. 납기는 아직 빈칸입니다.","서로 서명할 수 있는 데까지는 왔습니다.","상대가 부른 값이 우리 원가보다 낮습니다.","그 조건대로라면 우리가 운임을 두 번 냅니다."],
++  exercise:["창가까지 같은 걸음이었습니다. 제 시계를 보실 필요도 없군요.","연회장을 한 번 왕복하셨습니다. 다음엔 숨을 더 길게 내쉬십시오.","오늘은 창문 셋째 칸까지입니다. 거리가 조금씩 늘고 있군요.","걸음이 자꾸 짧아집니다. 의자는 제가 가져오겠습니다.","숨을 참으셨군요. 발판을 치우고 창가에서 쉬시지요."],
++  practicum:["원장에 없는 영수증부터 골라내셨습니다.","날짜는 맞습니다. 거래처별로 한 번 더 나누지요.","미결 전표 한 장은 내일까지 두겠습니다.","합계에 같은 영수증이 두 번 들어갔습니다.","수금 전표가 지출 쪽에 있습니다. 색실을 끼워 둘까요?"],
++  developToy:["수레가 턱을 넘었습니다. 이번 축은 견본으로 남기지요.","바퀴는 굴러갑니다. 손잡이는 조금 더 다듬지요.","첫 견본으로 충분합니다. 아이가 쥘 자리를 표시해 두겠습니다.","바퀴를 끼우니 뚜껑이 열리지 않는군요.","왼쪽으로만 도는 수레입니다. 자를 다시 대 보십시오."],
++  supplier:["뒷면의 흠까지 보셨군요. 좋은 견본을 고르셨습니다.","견본은 받았습니다. 납품일은 서신으로 확인하지요.","두 집의 가격을 받아 적으셨군요. 돌아가서 대조하겠습니다.","문을 닫았군요. 다음번엔 영업시간부터 묻지요.","그 견본은 다른 상회의 것입니다. 표찰을 보십시오."],
++  estateWork:["비가 오기 전에 지붕 수선이 끝나겠습니다.","서명이 한 장 남았습니다. 이쪽입니다.","오늘 올라온 요청은 날짜대로 묶어 두셨군요.","주방 요청서에 정원사의 이름이 적혀 있습니다.","같은 수선에 견적이 두 장 나갔군요. 하나는 회수하지요."],
++  reception:["손님이 먼저 도련님 곁자리를 청하셨습니다.","첫 인사는 마쳤습니다. 창가에 한 분 더 계십니다.","오늘 들은 성함을 마차 안에서 적어 두시지요.","등 뒤에서 두 번이나 부르셨습니다. 이쪽입니다.","그 잔은 아까 인사를 나눈 분의 것입니다."],
++  casework:["증언 한 줄로 약도의 빈자리가 메워졌군요.","골목의 길이는 쟀습니다. 시간은 더 확인해야겠습니다.","목격자를 한 사람 만났습니다. 원문대로 적어 두지요.","길모퉁이 둘이 같은 모양입니다. 방향을 다시 표시하지요.","방금 적으신 시각은 종소리보다 앞섭니다."]
++};
++function lessonFeedback(id,grade,variant=0){
++  const lines=lessonRemarks[id];
++  if(!lines)return reviewLines[id];
++  if(grade==="great")return variant?lines[0]:reviewLines[id];
++  return lines[(grade==="steady"?1:3)+Number(Boolean(variant))];
++}
++const pupilReplies={
++  great:["“다음 것도 내놔. 아직 시간이 남았잖아.”","“방금 건 내 방식대로 했어. 그래도 맞지?”"],
++  steady:["“여기까진 알겠어. 그다음은?”","“잠깐. 한 번만 더 해 보고.”"],
++  poor:["“그 부분에서 또 걸렸군. 어디서부터 틀렸지?”","“……보고만 있지 말고, 처음 것부터 다시 줘.”"]
++};
++function lessonPlayback(id,grade,variant){
++  return choreography[id][4]+" "+pupilReplies[grade][Number(Boolean(variant))];
++}
+--- a/js/scenes.js
++++ b/js/scenes.js
+@@ -11,12 +11,14 @@
+ function playMarkup(){
+   const seq=state.sequence, part=seq.index, id=state.plan[part], [room,frames,movement,prop,line]=choreography[id];
+   const pose=frames.split(" ");
++  const outcome=lessonGrades[seq.grade]?.label;
++  const stageText=outcome?lessonPlayback(id,seq.grade,seq.remark):line;
+   const all=Object.keys(seq.after).filter(k=>seq.before[k]!==seq.after[k]);
+   let rows=all.map(k=>'<div class="stage-stat"><span>'+k+'</span><em data-stat="'+k+'">'+seq.before[k]+'</em><i><b></b></i><small>'+signed(seq.after[k]-seq.before[k])+'</small></div>').join("");
+   return '<div class="lesson-art"><div class="lesson-plane" data-room="'+room+'"><div class="stage-room" style="background-image:url(&quot;'+sceneArt[room]+'&quot;)"></div>'+
+     '<div class="performer '+movement+'" data-frames="'+pose.join(" ")+'"><img src="'+actors[pose[0]]+'" alt="'+actions[id].name+' 중인 시엘"><span class="motion-object '+prop+'" aria-hidden="true">'+motionObjects[prop]+'</span></div></div></div>'+
+-    '<div class="stage-top"><b>'+stageNames[room]+'</b><span>'+slotNames[part]+' · '+actions[id].name+'</span></div>'+
+-    '<div class="stage-record">'+rows+'</div><div class="stage-foot"><p>'+line+'</p><div><button data-action="speed">재생 ×'+speed+'</button><button data-action="skip">이 순 마치기 ›</button></div></div>';
++    '<div class="stage-top"><b>'+stageNames[room]+'</b><span>'+slotNames[part]+' · '+actions[id].name+(outcome?' · '+outcome:'')+'</span></div>'+
++    '<div class="stage-record">'+rows+'</div><div class="stage-foot"><p>'+stageText+'</p><div><button data-action="speed">재생 ×'+speed+'</button><button data-action="skip">이 순 마치기 ›</button></div></div>';
+ }
+ function startPlayback(resumeAt=0){
+   stopPlayback();
+@@ -24,7 +26,7 @@
+   const firstDay=index*10+1,lastDay=index===2?new Date(Date.UTC(1886,turn,0)).getUTCDate():firstDay+9;
+   const actor=$("playback").querySelector(".performer"),poses=actor.dataset.frames.split(" ");
+   const sprite=actor.querySelector("img"), fields=[...$("playback").querySelectorAll("[data-stat]")];
+-  const quiet=matchMedia("(prefers-reduced-motion:reduce)").matches;
++  for(const pose of new Set(poses)){const image=new Image();image.src=actors[pose];}
+   playbackElapsed=resumeAt;
+   let then=performance.now();
+   function paint(){
+@@ -35,8 +37,8 @@
+     then=now;
+     const pct=Math.min(1,elapsed/6200);
+     $("date").innerHTML=dayPlate(turn,firstDay+Math.floor((lastDay-firstDay)*Math.min(1,pct*1.16)));
+-    const frame=quiet?poses[0]:poses[Math.floor(elapsed/(poses[0]==="trot1"?180:poses.includes("step1")?280:poses[0]==="bowOut"?390:800))%poses.length];
+-    if(sprite.dataset.pose!==frame){sprite.src=actors[frame];sprite.dataset.pose=frame;}
++    const frame=motionReduced()?poses[0]:poses[Math.floor(elapsed/(poses[0]==="trot1"?180:poses.includes("step1")?280:poses[0]==="bowOut"?390:800))%poses.length];
++    if(sprite.dataset.pose!==frame){const src=actors[frame];if(sprite.getAttribute("src")!==src)sprite.src=src;sprite.dataset.pose=frame;}
+     for(const field of fields){
+       const key=field.dataset.stat,v=Math.round(seq.before[key]+(seq.after[key]-seq.before[key])*Math.min(1,pct*1.35));
+       field.textContent=v;field.nextElementSibling.firstElementChild.style.width=Math.min(100,v/statMax(key)*100)+"%";
+@@ -49,10 +51,13 @@
+   const seq=state.sequence,id=state.plan[seq.index],a=actions[id];
+   seq.before=snapStats(state);
+   state.fund-=a.cost;
+-  const changes=applyActivity(state,id);
++  seq.grade=lessonResult(state,id,seq.index);
++  seq.remark=(state.counts[id]||0)%2;
++  delete seq.examNote;
++  const changes=applyActivity(state,id,seq.grade);
+   state.counts[id]=(state.counts[id]||0)+1;
+   seq.after=snapStats(state);
+-  state.log.push(slotNames[seq.index]+" · "+a.name+" · "+changes.join(" / "));
++  state.log.push(slotNames[seq.index]+" · "+a.name+" · "+(seq.grade?lessonGrades[seq.grade].label+" · ":"")+changes.join(" / "));
+   state.phase="scene";tab="plan";persist();render(true);
+ }
+ function hasPendingVisit(){
+--- a/js/story.js
++++ b/js/story.js
+@@ -66,7 +66,7 @@
+     ["dance",2,"turn","왈츠의 셋째 박","시엘의 구두가 같은 자리를 두 번 밟습니다. 반주를 한 박 늦춥니다.","발밑부터 다시 본다","체력",5,"손을 잡아 박을 맞춘다","기품",5],
+     ["social",2,"calling","남겨진 명함","손님의 명함 가장자리가 접혀 있습니다. 오늘 방문의 뜻이 거기에 있습니다.","답방을 약속한다","매력",5,"가문의 관습을 찾아본다","지성",5],
+     ["negotiate",2,"quote","빈 가격란","견적서의 마지막 줄은 비었습니다. 액수를 먼저 쓰는 쪽이 값을 정하게 됩니다.","납기부터 확인한다","경영",6,"상대의 표정을 읽는다","통찰",5],
+-    ["exercise",2,"breath","오르막 끝에서","호흡이 길어집니다. 저택으로 돌아가는 가까운 길이 보입니다.","걸어서 마친다","hp",6,"휴식 뒤 이어 간다","의지",5],
++    ["exercise",2,"breath","창가에서 한 호흡","창가에 닿자 숨이 찹니다. 세바스찬이 다음 발판에서 기다립니다.","걸어서 마친다","hp",6,"휴식 뒤 이어 간다","의지",5],
+     ["practicum",2,"copy","먹지 두 장","장부 사본에 원본과 다른 숫자가 하나 남아 있습니다.","영수증을 찾는다","경영",6,"전표의 글씨를 본다","통찰",5],
+     ["developToy",2,"axle","삐걱거리는 축","장난감 마차를 세 번 굴리자 한쪽 바퀴만 멎습니다.","축을 바꿔 본다","경영",6,"바닥을 바꿔 굴린다","통찰",6],
+     ["supplier",2,"bolt","천의 뒷면","상인은 늘 견본의 앞면만 보여 줍니다. 시엘이 안감을 살짝 접습니다.","봉제 상태를 지적한다","경영",6,"다른 염색 천을 청한다","매력",4],
+--- a/js/tour.js
++++ b/js/tour.js
+@@ -35,7 +35,7 @@
+ function beginGuide(){
+   const panel=$("panel");
+   tourSession={
+-    state,saves,tab,selectedSlot,editingVisit,lessonPage,selectedRoom,selectedDepartment,
++    age:campaignAge(state),state,saves,tab,selectedSlot,editingVisit,lessonPage,selectedRoom,selectedDepartment,
+     selectedEmployee,pendingConfirmation,playbackElapsed,focus:document.activeElement,
+     panelTop:panel.scrollTop,calendarTop:$("calendar").scrollTop,
+     pageX:window.scrollX,pageY:window.scrollY,
+@@ -88,7 +88,7 @@
+   unlockPractice();
+   tourPage=page;
+   const [view,action,title,hint]=tourSteps[page];
+-  state=initial();state.phase="plan";state.people.mey={toward:2};state.jobs.mey="parlor";
++  state=initial();state.month=state.planMonth=tourSession.state.month;state.phase="plan";state.people.mey={toward:2};state.jobs.mey="parlor";
+   tab=view==="confirm"?"plan":view;
+   selectedSlot=page>=5?2:page>=3?1:0; lessonPage=0; editingVisit=page===7;
+   if(page>=2)state.plan[0]="study";
+--- a/recruit-preview.html
++++ b/recruit-preview.html
+@@ -1,4 +1,4 @@
+-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>팬텀하이브 · 영입 회상</title><link rel="stylesheet" href="css/base.css?v=d1a35b3ecad4"><link rel="stylesheet" href="css/edition.css?v=79a1b1b79323"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=90dbc336659a"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><link rel="stylesheet" href="css/recruit.css?v=d8ddc41fce62"><style>
++<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>팬텀하이브 · 영입 회상</title><link rel="stylesheet" href="css/base.css?v=d5c5498f2621"><link rel="stylesheet" href="css/edition.css?v=9b6efb2e6eb0"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=90dbc336659a"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><link rel="stylesheet" href="css/recruit.css?v=5e636c70d9da"><style>
+ .home-standing,.cast[alt="시엘"],.performer img { filter:url(#ciel-tailoring) drop-shadow(1px 3px 2px #17264344); }
+ .review-room,.stage-room,.property-map[aria-label] .map-base,.property-map .map-fitting,
+ .property-map .delivery-cart { filter:url(#estate-ink); }
+@@ -22,6 +22,7 @@
+ <main class="game-frame"><div class="scene-mount">
+ <div class="iris-surround" aria-hidden="true"><span lang="en">Phantomhive</span></div>
+ <div class="scene" id="scene" data-mode="plan" data-story="true" data-prologue="false" aria-label="영입 장면">
++<button type="button" id="dialogue-visibility" aria-pressed="false">대화창 숨기기</button>
+ <section id="conversation" aria-label="대화" data-review="false"></section>
+ </div></div>
+ <nav class="system-rail" aria-label="영입 회상"><span class="imprint" lang="en"><span>EARL</span> <span>PHANTOMHIVE</span> <span>MAKER</span></span>
+@@ -31,10 +32,11 @@
+ const host=document.getElementById("conversation"),stage=document.getElementById("scene");
+ observePortraitStage(stage);
+ function openBook(id){
++  if(stage.dataset.artOnly==="true")setArtOnly(stage,false);
+   stopRecruitAuto();
+   document.querySelectorAll("[data-id]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.id===id)));
+   const age=({cook:11,homecoming:11,circus:12})[id]||10;
+-  stage.style.setProperty("--ciel-scale",cielPortraitScale(age));
++  setPortraitAge(stage,age);
+   function asset(k){const ciel=[recruitCast.ciel,recruitCast.ciel11,recruitCast.ciel12][age-10];return previewAsset(k===recruitCast.ciel?ciel:k);}
+   function finish(){
+     stopRecruitAuto();
