@@ -1,0 +1,123 @@
+--- a/js/game.js
++++ b/js/game.js
+@@ -218,6 +218,11 @@
+   saves.gallery[id]=endingLabels[id][0];
+   persist();render(true);
+ }
++function isApprovedEnding(id){return ["title","vowTitle","releaseTitle"].includes(id);}
++function beginFinale(id){
++  if(!isApprovedEnding(id)){finish(id);return;}
++  state.ending=id;state.phase="investiture";persist();render(true);
++}
+ function finnyMissing(run){
+   return run.duration===35&&!run.people.finny&&!run.flags.gardener;
+ }
+@@ -236,7 +241,7 @@
+   if(state.unwell>=2){finish("ill");return;}
+   if(state.arrears>=2){finish("broke");return;}
+   if(state.month===35&&state.duration===35){state.phase="vow";persist();render(true);return;}
+-  if(state.month===6&&state.duration===6){finish(qualifies()?"title":state.fund>=260&&state.stats.경영>=31?"business":"defer");return;}
++  if(state.month===6&&state.duration===6){beginFinale(qualifies()?"title":state.fund>=260&&state.stats.경영>=31?"business":"defer");return;}
+   if(state.prototype?.approved){
+     const p=state.prototype;state.unlocked.push(p.product);state.productNotes??={};state.productNotes[p.product]=p;delete state.prototype;
+   }
+@@ -317,7 +322,7 @@
+   broke:["자금 부족으로 종료","월말 자금 부족이 두 달 연속 발생했습니다."]
+ };
+ const slotNames=["상순","중순","하순"];
+-const phaseNames={contract:"계약",guide:"첫 안내",visit:"자유행동",review:"세바스찬의 강평",scene:"일정 진행",slotEvent:"일정 사건",vow:"마지막 선택",plan:"편성 중",event:"월말 사건",result:"월간 결산",ending:"회차 종료"};
++const phaseNames={contract:"계약",guide:"첫 안내",visit:"자유행동",review:"세바스찬의 강평",scene:"일정 진행",slotEvent:"일정 사건",vow:"마지막 선택",investiture:"왕실 서신",plan:"편성 중",event:"월말 사건",result:"월간 결산",ending:"회차 종료"};
+ const escapeHTML=value=>String(value).replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+ function frame(title,body,tag=""){
+   return '<div class="panel-head"><h2 tabindex="-1">'+title+'</h2>'+(tag?'<span class="small">'+tag+'</span>':"")+
+@@ -522,7 +527,7 @@
+   });
+   copy.log=copy.log.map(line=>oldResults.get(line)||line);
+   if(copy.accounts?.month!==copy.month){
+-    const closed=["result","event","vow","ending"].includes(copy.phase);
++    const closed=["result","event","vow","investiture","ending"].includes(copy.phase);
+     const opening=copy.sequence?.opening||(closed&&copy.report?.before)||copy;
+     startAccounts(copy,opening,true);
+   }
+@@ -735,7 +740,7 @@
+   const header='<div class="property-head">'+nav+'<div><span>'+monthText(state.month)+'</span><b>'+money(state.fund)+'</b></div></div>';
+   if(tab==="staffing")return header+staffBoard();
+   const actual=state.salesBook.at(-1);
+-  const settled=["event","result","vow","ending"].includes(state.phase);
++  const settled=["event","result","vow","investiture","ending"].includes(state.phase);
+   const remaining=state.sequence?state.plan.slice(state.sequence.index+1).reduce((n,id)=>n+actions[id].cost,0):0;
+   const live=state.sequence?'<section class="budget-book"><h3>확정된 이달 예산</h3>'+amountRow("남은 교육·활동비",remaining)+amountRow("저택 운영",overhead()-Math.min(24,state.debt))+amountRow("팬텀사 운영",state.qty*state.sequence.unit)+(state.debt?amountRow("채무 상환",Math.min(24,state.debt)):"")+'</section>':"";
+   const budget=active?'<div id="live-budget">'+budgetTable()+'</div>':settled&&state.report?actualBudget():live;
+@@ -880,7 +885,7 @@
+   }
+   $("calendar").innerHTML="";
+   if(home){
+-    const runLabel={contract:"계약 계속",guide:"안내 계속",visit:"방문 계속",review:"강평 보기",plan:"실행",scene:"일정 재개",slotEvent:"사건 확인",vow:"심의 확인",event:"사건 확인",result:"결산 확인",ending:"결과 확인"}[state.phase];
++    const runLabel={contract:"계약 계속",guide:"안내 계속",visit:"방문 계속",review:"강평 보기",plan:"실행",scene:"일정 재개",slotEvent:"사건 확인",vow:"심의 확인",investiture:"왕실 서신",event:"사건 확인",result:"결산 확인",ending:"결과 확인"}[state.phase];
+     const opening=["contract","guide"].includes(state.phase);
+     const menu=opening?[["run",runLabel],["tab:save","수첩 · 저장"]]:commands;
+     $("nav").innerHTML='<div class="command-grid">'+menu.map(([action,label],index)=>
+@@ -1091,7 +1096,10 @@
+   if(action==="speed"){speed=speed===1?3:1;const b=$("playback").querySelector('[data-action="speed"]');if(b)b.textContent="재생 ×"+speed;respond("step",rect);return;}
+   if(action==="category"){lessonPage=Number(id);render();focusAction(key);respond("tap",rect,".lesson-index");return;}
+   if(action==="chatline"){speak(id);respond("decision",rect,".dialogue");return;}
+-  if(action==="vow"&&state.phase==="vow"){finish(id==="keep"?(qualifies()?"vowTitle":"vowNoTitle"):(qualifies()?"releaseTitle":"releaseNoTitle"));respond("decision",rect,".sheet-head");return;}
++  if(action==="read-verdict"&&state.phase==="investiture"){
++    tab="plan";finish(state.ending);return;
++  }
++  if(action==="vow"&&state.phase==="vow"){beginFinale(id==="keep"?(qualifies()?"vowTitle":"vowNoTitle"):(qualifies()?"releaseTitle":"releaseNoTitle"));respond("decision",rect,".sheet-head");return;}
+   if(action==="annex"||action==="townhouse"){
+     if(action==="annex"&&state.phase!=="plan")return;
+     if(action==="townhouse"){
+--- a/js/audio.js
++++ b/js/audio.js
+@@ -1,6 +1,8 @@
+ "use strict";
+ 
+ const musicTracks = {
++  titleApproval:{title:"작위 승인",file:"assets/audio/title-approval.mp3",once:true},
++  goodEnding:{title:"굿엔딩",file:"assets/audio/good-ending.mp3"},
+   dance:{title:"Studying of Dance",file:"assets/audio/dance.mp3"},
+   violin:{title:"Studying of Music",file:"assets/audio/violin.mp3"},
+   etiquette:{title:"Well Behaved",file:"assets/audio/etiquette.mp3"},
+@@ -47,6 +49,8 @@
+ function trackForView(){
+   if(tourSession||(tab==="plan"&&state.phase==="guide"))return "tutorial";
+   if(inOpening())return "prologue";
++  if(tab==="plan"&&state.phase==="investiture")return "titleApproval";
++  if(tab==="plan"&&state.phase==="ending"&&isApprovedEnding(state.ending))return "goodEnding";
+   if(tab==="market")return "market";
+   if(tab==="company"||tab==="estate"||tab==="staffing")return "business";
+   if(tab==="chat")return "daily";
+@@ -103,7 +107,7 @@
+   }
+   function sync(key=selected,retry=false){
+     if(key!=="tutorial")backgroundTrack=key==="prologue"?"manor":key;
+-    if((key==="prologue"||key==="tutorial")&&selected!==key&&tracks.has(key))tracks.get(key).el.currentTime=0;
++    if(["prologue","tutorial","titleApproval","goodEnding"].includes(key)&&selected!==key&&tracks.has(key))tracks.get(key).el.currentTime=0;
+     selected=key;
+     if(!musicTracks[key].file){
+       stop();
+@@ -113,10 +117,10 @@
+     if(failed===key&&!retry)return;
+     let entry=tracks.get(key);
+     if(!entry){
+-      const el=new Audio(musicTracks[key].file);el.loop=true;el.volume=0;
++      const el=new Audio(musicTracks[key].file);el.loop=!musicTracks[key].once;el.volume=0;
+       entry={el,pending:false};tracks.set(key,entry);
+     }
+-    if(entry.pending)return;
++    if(entry.pending||(musicTracks[key].once&&entry.el.ended))return;
+     if(!entry.el.paused){fadeTo(key);return;}
+     failed=null;entry.pending=true;
+     entry.el.play().then(()=>{
+--- a/js/chapters.js
++++ b/js/chapters.js
+@@ -131,6 +131,7 @@
+ function chapterView(){
+  if(tab!=="plan")return "";
+  if(state.phase==="guide"){const i=state.guidePage||0;return staged("세바스찬",guide[i][0],guideMenu(i)+guide[i][1],btn(i===guide.length-1?"저택으로":"다음 안내","guide-next")+btn("안내 마치기","guide-end"),"조작 안내 "+(i+1)+" / "+guide.length);}
++ if(state.phase==="investiture")return staged("세바스찬","","도련님, 왕실에서 서신이 왔습니다. 오늘부터 팬텀하이브 백작의 작위는 다시 도련님의 것입니다.",btn("서신을 접는다","read-verdict"),"","library");
+  if(state.phase==="visit")return visitScene();
+  return "";
+ }
