@@ -1,0 +1,150 @@
+--- a/js/game.js
++++ b/js/game.js
+@@ -8,2 +8,5 @@
+ const signed=value=>value>0?"+"+value:String(value);
++function emptyPlan(){return [null,null,null];}
++function planReady(){return state.plan.length===3 && state.plan.every(id=>Object.hasOwn(actions,id));}
++function plannedTuition(){return state.plan.reduce((sum,id)=>sum+(actions[id]?.cost??0),0);}
+ function initial(){
+@@ -11,3 +14,3 @@
+     stats:{지성:18,기품:14,매력:8,경영:5,통찰:30,의지:125,체력:50},
+-    plan:["study","etiquette","rest"],visit:"none",level:{library:1,parlor:1,kitchen:1},staff:null,
++    planMonth:1,plan:emptyPlan(),visit:null,level:{library:1,parlor:1,kitchen:1},staff:null,
+     shop:{design:1,works:1,store:1},salesBook:[],
+@@ -77,3 +80,3 @@
+ function cashNeeded(){
+-  return state.plan.reduce((sum,id)=>sum+actions[id].cost,0)+state.qty*forecast().unit;
++  return plannedTuition()+state.qty*forecast().unit;
+ }
+@@ -96,3 +99,3 @@
+ function execute(){
+-  if(state.phase!=="plan")return;
++  if(state.phase!=="plan"||!planReady())return;
+   if(cashNeeded()>Math.max(0,state.fund)){flash("일정 비용과 생산비를 마련해 주세요.");return;}
+@@ -136,3 +139,3 @@
+   state.salesBook.push({month:state.month,product,sold,revenue:income,cost,advance:visitAdvance,investment});
+-  state.report={income,cost,advance:visitAdvance,bills,debtPayment,sold,before,investment,training:state.plan.reduce((sum,id)=>sum+actions[id].cost,0)};
++  state.report={income,cost,advance:visitAdvance,bills,debtPayment,sold,before,investment,training:plannedTuition()};
+   if(sold>=14&&income>cost+25)state.renown+=1;
+@@ -218,3 +221,3 @@
+   }
+-  state.month++;startAccounts(state);state.phase="plan";state.visit="none";selectedSlot=0;startFinnyAtTurn(state);tab=state.phase==="event"?"plan":"home";persist();render(true);
++  state.month++;state.planMonth=state.month;state.plan=emptyPlan();editingVisit=false;lessonPage=0;startAccounts(state);state.phase="plan";state.visit=null;selectedSlot=0;startFinnyAtTurn(state);tab=state.phase==="event"?"plan":"home";persist();render(true);
+ }
+@@ -256,3 +259,3 @@
+   const run={...state,stats:{...state.stats}};
+-  for(const id of run.plan)applyActivity(run,id);
++  for(const id of run.plan)if(actions[id])applyActivity(run,id);
+   applyEstateTraining(run);
+@@ -314,3 +317,3 @@
+     ["팬텀사", estimate.unit*state.qty],
+-    ["교육·활동", state.plan.reduce((sum,id)=>sum+actions[id].cost,0)]
++    ["교육·활동", plannedTuition()]
+   ];
+@@ -327,2 +330,3 @@
+ function plannerNote(id){
++  if(!editingVisit&&!actions[id])return slotNames[selectedSlot]+" 활동을 선택하세요.";
+   return editingVisit?visitPreview(id):actions[id].name+' · '+scheduleNote(id);
+@@ -355,4 +359,4 @@
+   const periods = state.plan.map((id,index) =>
+-    calendarSlot(slotNames[index], actions[id].name, 'pick:'+index, !editingVisit && selectedSlot===index));
+-  periods.push(calendarSlot("자유행동", visits[state.visit], "pick-visit", editingVisit));
++    calendarSlot(slotNames[index], actions[id]?.name??'', 'pick:'+index, !editingVisit && selectedSlot===index));
++  periods.push(calendarSlot("자유행동", visits[state.visit]??"", "pick-visit", editingVisit));
+   const estimate = marketStats();
+@@ -368,3 +372,3 @@
+       '<div class="plan-balance"><span>예상 월말 자금</span><strong>'+money(estimate.balance)+'</strong></div>'+
+-      btn('이달 일정 실행','execute',estimate.blocked,'calendar-run')+'</div>'+
++      btn('이달 일정 실행','execute',!planReady()||estimate.blocked,'calendar-run')+'</div>'+
+       (estimate.blocked?'<p class="calendar-warning">준비비가 부족합니다. 활동이나 생산량을 조정하세요.</p>':'')+'</div>';
+@@ -429,2 +433,9 @@
+   const copy=structuredClone(run);
++  if(copy.planMonth!==copy.month){
++    if(["contract","guide","plan"].includes(copy.phase)){
++      copy.plan=emptyPlan();
++      copy.visit=null;
++    }
++    copy.planMonth=copy.month;
++  }
+   if(!copy.unifiedAbilityCaps){
+@@ -1029,3 +1040,3 @@
+   if(action==="care"&&state.phase==="plan"&&["clean","guard","routine","repair","defer"].includes(id)){state.houseCare=id;persist();render();focusAction(key);respond("choose",rect);return;}
+-  if(action==="inspect"&&$("picker").open){pendingConfirmation=null;$("picker").close();tab=id==="estate"?"estate":"company";render(true);return;}
++  if(action==="inspect"&&$("picker").open){pendingConfirmation=null;$("picker").close();tab=id==="estate"?"estate":"company";state.managementTab=tab;persist();render(true);return;}
+ 
+@@ -1091,3 +1102,9 @@
+     if(id==="staffing"){selectedEmployee=null;estateReturnScroll=$("panel").scrollTop;}
+-    lastMenu=(id==="company"||id==="staffing")?"tab:estate":key;tab=id;render(true);respond("tap",rect);return;
++    const openManagement=tab==="home"&&id==="estate";
++    lastMenu=(id==="company"||id==="staffing")?"tab:estate":key;
++    tab=openManagement&&state.managementTab==="company"?"company":id;
++    if((tab==="estate"||tab==="company")&&state.managementTab!==tab){
++      state.managementTab=tab;persist();
++    }
++    render(true);respond("tap",rect);return;
+   }
+@@ -1103,3 +1120,3 @@
+   if(action==="run"){
+-    if(state.phase==="plan"&&cashNeeded()<=Math.max(0,state.fund))handleAction("execute",rect);
++    if(state.phase==="plan"&&planReady()&&cashNeeded()<=Math.max(0,state.fund))handleAction("execute",rect);
+     else{tab="plan";render(true);respond("tap",rect);}
+@@ -1110,3 +1127,4 @@
+     render();
+-    focusAction("visit:"+state.visit);
++    if(state.visit)focusAction("visit:"+state.visit);
++    else focusAction("pick-visit");
+     respond("tap",rect);return;
+@@ -1135,2 +1153,6 @@
+   }
++  if(action==="execute"&&state.phase==="plan"&&!planReady()){
++    tab="plan";editingVisit=false;selectedSlot=state.plan.findIndex(id=>!actions[id]);
++    render(true);return;
++  }
+   if(action==="execute"&&!confirmed&&state.phase==="plan"){
+--- a/js/chapters.js
++++ b/js/chapters.js
+@@ -55,2 +55,3 @@
+ function visitPreview(id){
++ if(!id)return "방문지를 선택하세요.";
+  if(id==="none")return "방문 생략";
+--- a/js/content.js
++++ b/js/content.js
+@@ -113,2 +113,3 @@
+ function canVisit(id){
++  if(!Object.hasOwn(visits,id))return false;
+   if(id==="townhouse")return Boolean(state.flags.townhouse);
+--- a/js/reports.js
++++ b/js/reports.js
+@@ -16,3 +16,3 @@
+   const est=marketStats(),debt=Math.min(24,state.debt);
+-  const tuition=state.plan.reduce((total,id)=>total+actions[id].cost,0);
++  const tuition=plannedTuition();
+   const company=est.unit*state.qty, estate=overhead()-debt;
+--- a/js/tour.js
++++ b/js/tour.js
+@@ -3,5 +3,8 @@
+   ["home","tab:plan","저택 → 일정표","도련님, 이달 일정표를 가져왔습니다. 날짜는 위쪽 달력에, 잔금은 명패에 적어 두었습니다. 아래의 ‘일정표’를 여시면 제가 설명드리겠습니다."],
+-  ["plan","pick:1","일정표 → 중순","상순과 하순은 두고, ‘중순’ 칸부터 채워 보겠습니다."],
++  ["plan","activity:0:study","일정표 → 상순","먼저 상순에 서재 수업을 적어 보겠습니다."],
++  ["plan","pick:1","일정표 → 중순","이제 ‘중순’ 칸을 열어 보시겠습니까?"],
+   ["plan","activity:1:study","중순 → 서재 수업","중순에는 ‘서재 수업’이 어떻습니까? 제가 맡은 수업입니다. £ 옆에 수업료도 적혀 있습니다."],
+-  ["plan","pick-visit","일정표 → 자유행동","이제 중순 칸에 수업이 보이는군요. 다음은 ‘자유행동’입니다."],
++  ["plan","pick:2","일정표 → 하순","하순 일정도 도련님께서 정하십니다. ‘하순’을 열어 주십시오."],
++  ["plan","activity:2:etiquette","하순 → 귀족 예법","하순에는 귀족 예법을 넣겠습니다."],
++  ["plan","pick-visit","일정표 → 자유행동","세 칸을 모두 채우셨군요. 다음은 ‘자유행동’입니다."],
+   ["plan","visit:library","자유행동 → 서재","평소에는 도련님께서 방문지를 정하십니다. 오늘은 연습이니 서재를 골라 보겠습니다. 방문은 하순 일정을 마친 뒤입니다."],
+@@ -89,7 +92,9 @@
+   tab=view==="confirm"?"plan":view;
+-  selectedSlot=page>=2?1:0; lessonPage=0; editingVisit=page===4;
+-  if(page>=3)state.plan[1]="study";
+-  if(page>=5)state.visit="library";
+-  selectedRoom=page>=10?"kitchen":"library";
+-  selectedDepartment=page===13?"design":"works";
++  selectedSlot=page>=5?2:page>=3?1:0; lessonPage=0; editingVisit=page===7;
++  if(page>=2)state.plan[0]="study";
++  if(page>=4)state.plan[1]="study";
++  if(page>=6)state.plan[2]="etiquette";
++  if(page>=8)state.visit="library";
++  selectedRoom=page>=13?"kitchen":"library";
++  selectedDepartment=page===16?"design":"works";
+   selectedEmployee=null;
