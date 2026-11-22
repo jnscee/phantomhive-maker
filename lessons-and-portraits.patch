@@ -22,7 +22,7 @@
  .press-mark{position:absolute;pointer-events:none;display:block;width:0;height:0;--press-color:#a3c5e5;--press-shadow:#30486e}
 --- a/css/recruit.css
 +++ b/css/recruit.css
-@@ -7,3 +7,106 @@
+@@ -7,3 +7,108 @@
  #conversation .review-room.night{filter:grayscale(.4) sepia(.18) hue-rotate(174deg) brightness(.45)}
  #conversation .review-room.night::after{content:"";position:absolute;top:8%;left:44%;width:clamp(28px,6vw,68px);aspect-ratio:1;border-radius:50%;background:#e4e4cf;box-shadow:0 0 26px #cbd5de77}
  .recruit-tea{position:absolute;top:22%;left:44%;width:12%;max-width:92px;height:auto;pointer-events:none;filter:drop-shadow(0 4px 5px #24202d99)}
@@ -129,6 +129,8 @@
 +  animation:ciel-small-hop 300ms ease-out 1!important;
 +}
 +@keyframes ciel-small-hop {0%,100%{transform:none}45%{transform:translateY(-4px)}}
++
++#scene[data-art-only=true] #conversation :is(.dialogue,.answers,.opening-top,.review-bubble,.review-slip){display:none!important}
 --- a/index.html
 +++ b/index.html
 @@ -1,5 +1,5 @@
@@ -163,8 +165,8 @@
 -<script src="js/prologue.js"></script>
 -<script src="js/chapters.js?v=5a5076c319bb"></script>
 +<script src="js/tour.js?v=e380777efa81"></script>
-+<script src="js/content.js?v=c749cfd13dbd"></script>
-+<link rel="stylesheet" href="css/recruit.css?v=2e60433b95c4">
++<script src="js/content.js?v=a51a55a6c9b6"></script>
++<link rel="stylesheet" href="css/recruit.css?v=b0fcf649ce20">
 +<script src="js/recruit.js?v=3d6d34c47f95"></script>
 +<script src="js/story.js?v=67ad4d7098cb"></script>
 +<script src="js/scenes.js?v=984605a2b05e"></script>
@@ -543,7 +545,7 @@
    etiquette:["ballroom","greet bow","bow","glint","발끝을 모으고 손을 가슴에 얹습니다. 이번 인사는 정확히 세 박자입니다."],
 -  accounts:["office","penUp penDown","write","coin","원장 왼쪽의 매입가를 짚고 오른쪽에 남은 금액을 적습니다."],
 -  inquiry:["archive","inspect write","search","lens","장부를 등불에 비춥니다. 종이를 긁어 고친 흔적이 보입니다."],
-+  accounts:["office",activityFrames("accounts"),"write","coin","원장 왼쪽의 매입가를 짚고 오른쪽에 남은 금액을 적습니다."],
++  accounts:["office",activityFrames("accounts"),"write","coin","주판알을 한 줄씩 밀어 매입가를 더합니다. 마지막 줄에서 검산을 시작합니다."],
 +  inquiry:["archive",activityFrames("inquiry"),"search","lens","장부를 등불에 비춥니다. 종이를 긁어 고친 흔적이 보입니다."],
    riding:["field","trot1 trot2 trot3 trot4","ride","dust","고삐를 짧게 쥐고 울타리를 따라 한 바퀴 돕니다."],
 -  letters:["library","write greet","write","letter","청첩장을 접고 봉인 위에 가문의 인장을 누릅니다."],
@@ -570,7 +572,7 @@
 +  social:["ballroom",activityFrames("social"),"meet","speech","손님에게 먼저 인사를 건네고 대답이 끝날 때까지 기다립니다."],
 +  negotiate:["office",activityFrames("negotiate"),"meet","contract","견적서를 밀어 둡니다. 상대가 먼저 가격을 부를 차례입니다."],
 +  exercise:["gym",activityFrames("exercise"),"calisthenics","beat","체조실 거울 앞에 섭니다. 두 팔을 펴고 무릎을 번갈아 올리며 네 박자마다 숨을 고릅니다."],
-+  practicum:["office",activityFrames("practicum"),"count","coin","제작실에서 넘어온 영수증을 금액순으로 정리합니다."],
++  practicum:["office",activityFrames("practicum"),"count","coin","영수증 한 장에 동전 한 닢이 모자랍니다. 맞춰 본 전표를 오른쪽 함에 넣습니다."],
 +  developToy:["office",activityFrames("developToy"),"search","toy","목제 견본의 바퀴를 굴려 보고 도면의 축 길이를 고칩니다."],
 +  supplier:["street",activityFrames("supplier"),"meet","delivery","진열창 앞에 멈춰 견본의 마감과 납기표를 대조합니다."],
 +  estateWork:["archive",activityFrames("estateWork"),"write","stamp","수선 요청서를 먼저 읽고 결재가 끝난 문서를 왼편에 쌓습니다."],
@@ -1515,7 +1517,7 @@
 +++ b/recruit-preview.html
 @@ -1,4 +1,4 @@
 -<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>팬텀하이브 · 영입 회상</title><link rel="stylesheet" href="css/base.css?v=d1a35b3ecad4"><link rel="stylesheet" href="css/edition.css?v=79a1b1b79323"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=90dbc336659a"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><link rel="stylesheet" href="css/recruit.css?v=d8ddc41fce62"><style>
-+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>팬텀하이브 · 영입 회상</title><link rel="stylesheet" href="css/base.css?v=d5c5498f2621"><link rel="stylesheet" href="css/edition.css?v=9b6efb2e6eb0"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=90dbc336659a"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><link rel="stylesheet" href="css/recruit.css?v=2e60433b95c4"><style>
++<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>팬텀하이브 · 영입 회상</title><link rel="stylesheet" href="css/base.css?v=d5c5498f2621"><link rel="stylesheet" href="css/edition.css?v=9b6efb2e6eb0"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=90dbc336659a"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><link rel="stylesheet" href="css/recruit.css?v=b0fcf649ce20"><style>
  .home-standing,.cast[alt="시엘"],.performer img { filter:url(#ciel-tailoring) drop-shadow(1px 3px 2px #17264344); }
  .review-room,.stage-room,.property-map[aria-label] .map-base,.property-map .map-fitting,
  .property-map .delivery-cart { filter:url(#estate-ink); }

@@ -78,7 +78,7 @@ async function check(browserType){
         await page.locator('#conversation [data-read="next"]').click();
         const line=await page.locator('#conversation .dialogue p').textContent();
         await page.reload();assert.equal(await page.locator('#conversation .dialogue p').textContent(),line);
-        await page.locator('#dialogue-visibility').click();assert.equal(await page.locator('#conversation .dialogue').isVisible(),false);
+        await page.locator('#dialogue-visibility').click();await page.locator('#conversation .dialogue').waitFor({state:'hidden'});
         await page.locator('#dialogue-visibility').click();
         await page.locator('#conversation [data-read="skip"]').click();
         await page.locator('#conversation [data-read="finish"]').click();assert.ok(await page.locator('#sheet').isVisible());
