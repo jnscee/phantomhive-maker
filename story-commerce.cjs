@@ -49,6 +49,23 @@ for(const [person,place,month] of [["tanaka","library",1],["finny","garden",1],[
     assertOk('visitScene().includes(trustedGreetings[person][tier]) && relationBook().includes("상대 → 시엘 신뢰　"+rank(trust))');
   }
 }
+// Recruitment, the ledger replay and the public reader share the same authored scene cues.
+setup('tab="plan";state.phase="event";state.pending="circus"');
+const snakeLines=run('recruitScenes.circus.lines.map(p=>[p.scene.title,p.speaker,p.text])');
+assert.ok(snakeLines.every(row=>!row.join(" ").includes("스마일")));
+for(const text of [...snakeLines.filter(row=>row[1]==="스네이크").map(row=>row[2]),...run('trustedGreetings.snake')]){
+  assert.match(text,/에밀리|오스카|키츠|와일드/);
+}
+for(const [index,[title]] of snakeLines.entries()){
+  ctx.at=index;
+  const score={"봉투에 적힌 이름":"gloomy","런던의 번지":"gloomy","타운하우스의 문간":"daily","손으로 전할 편지":"daily","마차를 빌리다":"daily","온실 앞":"daily","백작에게 묻다":"gloomy","열어 둘 문":"romantic","신임 경비원의 침구":"romantic"};
+  assert.equal(run('tab="plan";state.recruitPage={id:"circus",at,version:3};trackForView()'),score[title]);
+  assert.equal(run('tab="staffMemory";recruitMemory={id:"circus",at};trackForView()'),score[title]);
+}
+setup('tab="plan";state.phase="event";state.ill=true;state.pending="circus"');assert.equal(run('trackForView()'),'illness');
+for(const [event,track] of [["audience","etiquette"],["linenMarks","daily"],["finnyRoseLabel","cheerful"],["teaPrivilege","romantic"],["postalReply","gloomy"]]){
+  ctx.eventId=event;assert.equal(run('eventTrack(eventId)'),track);
+}
 for(const [tier,value] of [45,100,225,350].entries()){
   Object.assign(ctx,{tier,value});
   for(const topic of ["health","business","tea"]){
