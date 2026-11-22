@@ -1,0 +1,94 @@
+--- a/js/game.js
++++ b/js/game.js
+@@ -210,7 +210,7 @@
+   state.phase=state.pending?"event":"result";persist();render(true);
+ }
+ function qualifies(){
+-  return inspectTitle().every(([,met])=>met);
++  return titleRequirements().every(Boolean);
+ }
+ function finish(id){
+   state.ending=id;state.phase="ending";
+@@ -282,33 +282,37 @@
+   applyEstateTraining(run);
+   return run;
+ }
+-function inspectTitle(){
++function titleRequirements(){
+   const full=state.duration===35;
+   const {지성,기품,매력,경영,통찰,의지}=state.stats;
+-  const reserve=full?1200:120, health=full?60:30;
+   return [
+     ...(full?[
+-      ["귀족 교육",지성>=420&&기품>=440,"지성 420 · 기품 440"],
+-      ["사교와 판단",매력>=300&&통찰>=340,"매력 300 · 통찰 340"],
+-      ["가주 역량",경영>=320&&의지>=300,"경영 320 · 의지 300"],
+-      ["저택 재건",Object.values(state.level).filter(n=>n>=2).length>=2,"서재·응접실·주방 중 두 곳을 2단계 이상으로 개수"],
+-      ["팬텀사 기반",Math.max(...Object.values(state.shop))>=2,"팬텀사 부서 한 곳을 2단계 이상으로 확장"]
++      지성>=420&&기품>=440, 매력>=300&&통찰>=340, 경영>=320&&의지>=300,
++      Object.values(state.level).filter(n=>n>=2).length>=2,
++      Math.max(...Object.values(state.shop))>=2
+     ]:[]),
+-    ["가문 증빙",Boolean(state.flags.deed),"서재 방문 또는 장부 확보"],
+-    ["왕실 평가",state.royal>=(full?6:2),"왕실 요청과 주요 사건에서 가문의 책무 수행"],
+-    ["가문 명성",state.renown>=(full?32:3),"접객 또는 상품 판매로 꾸준히 성과 축적"],
+-    ["재정 상태",state.fund>=reserve&&state.debt===0,"자금 "+money(reserve)+" 이상 · 채무 없음"],
+-    ["건강",state.hp>=health,"건강 "+health+" 이상"]
++    Boolean(state.flags.deed), state.royal>=(full?6:2), state.renown>=(full?32:3),
++    state.fund>=(full?1200:120)&&state.debt===0, state.hp>=(full?60:30)
+   ];
++}
++function courtImpression(){
++  if(["title","vowTitle","releaseTitle"].includes(state.ending))return "왕실에서 작위를 승인했다.";
++  if(["defer","business","vowNoTitle","releaseNoTitle"].includes(state.ending))return "왕실에서 이번 심의를 유보했다.";
++  const conditions=titleRequirements();
++  const standing=conditions.filter(Boolean).length/conditions.length;
++  if(standing>=0.7&&state.royal>0)return "궁정에서 작위 이야기가 오가는 모양이다.";
++  if(state.royal>0)return "왕실이 팬텀하이브가를 눈여겨보고 있다.";
++  if(standing>=0.4||state.renown>0)return "사교계에서 가문의 이름이 다시 들리기 시작했다.";
++  return "지금으로선 작위를 되찾을 가망이 희박해 보인다.";
+ }
+ const endingLabels = {
+   vowTitle:["여왕의 번견","작위가 돌아왔습니다. 시엘은 엷은 봉랍을 깨고 다음 의뢰를 펼칩니다. 계약은 계속됩니다."],
+   vowNoTitle:["문장 없는 마차","왕실의 승인은 미뤄졌습니다. 시엘은 스스로 선택한 이름으로 조사를 이어 갑니다."],
+   releaseTitle:["마지막 명령 · 백작","작위를 돌려받은 날 시엘은 복수를 내려놓았습니다. 마지막 명령을 받은 악마가 장갑을 벗습니다."],
+   releaseNoTitle:["마지막 명령 · 무관의 주인","가문의 문장은 끝내 돌아오지 않았습니다. 복수를 포기한 도련님 앞에서 집사가 계약을 거둡니다."],
+-  title:["작위 승인","왕실 심의 기준을 충족했습니다."],
+-  business:["팬텀사 경영 지속","작위 심의는 유보되었으며, 사업 유지 기준을 충족했습니다."],
+-  defer:["작위 심의 유보","이번 회차에서 작위 심의 기준을 충족하지 못했습니다."],
++  title:["작위 승인","왕실에서 백작 작위를 승인한다는 서신이 도착했습니다."],
++  business:["팬텀사 경영 지속","왕실의 답은 유보였습니다. 팬텀사는 다음 분기의 주문을 받습니다."],
++  defer:["작위 심의 유보","왕실은 이번 심의에서 결정을 미뤘습니다."],
+   ill:["건강 악화로 종료","건강 18 미만이 두 달 연속 발생했습니다."],
+   broke:["자금 부족으로 종료","월말 자금 부족이 두 달 연속 발생했습니다."]
+ };
+@@ -552,8 +556,6 @@
+   return copy;
+ }
+ function recordPanel(){
+-  const review=inspectTitle().map(([label,ok,hint])=>'<li class="'+(ok?"":"open")+'"><div class="inline"><b>'+label+
+-    '</b><span class="'+(ok?"good":"gold")+'">'+(ok?"충족":"미충족")+'</span></div>'+(!ok?'<p class="small muted">'+hint+'</p>':"")+'</li>').join("");
+   const history=state.events.map(record=>{
+     const event=events.find(e=>e.id===record.id);
+     if(!event)return "";
+@@ -569,8 +571,7 @@
+     const choice=event.choices[record.index];
+     return '<details><summary>'+(record.month?monthText(record.month)+' · ':'')+(choice?choice.label:castName(event))+'</summary>'+(sourceNote(event)?'<small>'+sourceNote(event)+'</small>':'')+'<p>'+event.text+'</p><p class="small muted">'+(choice?choice.label+" · "+choice.result:"처리 완료")+'</p></details>';
+   }).join("");
+-  return frame("가문 장부",'<div class="inline"><h3>작위 심의</h3><b class="gold">'+(qualifies()?"신청 기준 충족":"신청 기준 미충족")+'</b></div>'+
+-    '<ul class="ledger">'+review+'</ul><div class="step-grid">'+
++  return frame("가문 장부",'<h3>궁정의 기류</h3><p>'+courtImpression()+'</p><div class="step-grid">'+
+     tile("남은 채무",money(state.debt))+'</div>'+relationBook()+'<h3>엔딩 도감</h3><p class="small muted">'+(Object.values(saves.gallery||{}).join(" · ")||"기록 없음")+'</p><h3>사건 기록</h3>'+(history||'<p class="small muted">기록 없음</p>'));
+ }
+ function savePanel(){
+--- a/js/tour.js
++++ b/js/tour.js
+@@ -24,7 +24,7 @@
+   ["chat","back","대화 → 저택","부르셨습니까, 도련님? 가운데서 화제를 고르시면 됩니다. 급한 용건이 없으시다면 ‘다음에’ 듣겠습니다."],
+   ["home","tab:status","저택 → 상태","이번에는 도련님의 차례입니다. ‘상태’를 여시면 건강과 그간의 성과를 보실 수 있습니다."],
+   ["status","tab:record","상태 → 가문 장부","무리한 일정이었는지는 건강과 스트레스, 의욕에 드러납니다. 이제 아래의 ‘가문 장부’를 함께 보겠습니다."],
+-  ["record","tab:save","가문 장부 → 수첩","사건 기록과 작위 심의 조건은 이 장부에 모아 두었습니다. 마지막으로 보여 드릴 것은 ‘수첩 · 저장’입니다."],
++  ["record","tab:save","가문 장부 → 수첩","가문의 사건을 기록하는 장부입니다. 궁정에 어떤 소문이 도는지도 여기 적어 두겠습니다. 마지막으로 보여 드릴 것은 ‘수첩 · 저장’입니다."],
+   ["save",null,"수첩 · 저장","기록을 남길 칸과 음악·효과음의 크기는 여기서 정하실 수 있습니다. ‘마치기’를 누르시면 연습은 끝입니다. 이달의 첫 명령을 기다리겠습니다, 도련님."]
+ ];
+ // Practice uses the game's renderer with a temporary state. Keep the live run by
