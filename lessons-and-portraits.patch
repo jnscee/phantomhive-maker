@@ -22,7 +22,7 @@
  .press-mark{position:absolute;pointer-events:none;display:block;width:0;height:0;--press-color:#a3c5e5;--press-shadow:#30486e}
 --- a/css/recruit.css
 +++ b/css/recruit.css
-@@ -7,3 +7,74 @@
+@@ -7,3 +7,76 @@
  #conversation .review-room.night{filter:grayscale(.4) sepia(.18) hue-rotate(174deg) brightness(.45)}
  #conversation .review-room.night::after{content:"";position:absolute;top:8%;left:44%;width:clamp(28px,6vw,68px);aspect-ratio:1;border-radius:50%;background:#e4e4cf;box-shadow:0 0 26px #cbd5de77}
  .recruit-tea{position:absolute;top:22%;left:44%;width:12%;max-width:92px;height:auto;pointer-events:none;filter:drop-shadow(0 4px 5px #24202d99)}
@@ -97,6 +97,8 @@
 +  width:100%;
 +  width:max(var(--portrait-scene-width),calc(var(--portrait-scene-height) * 1.5));
 +}
++
++#overture .opening-mat[hidden] {display:none!important}
 --- a/index.html
 +++ b/index.html
 @@ -51,7 +51,8 @@
@@ -522,7 +524,7 @@
    if(i+step>=openingLines.length){finishOpening();return;}
 --- a/js/recruit.js
 +++ b/js/recruit.js
-@@ -158,10 +158,66 @@
+@@ -158,10 +158,68 @@
      stage.style.setProperty("--portrait-scene-width",entry.contentRect.width+"px");
    });
    observer.observe(stage);
@@ -555,6 +557,8 @@
 +    }
 +  }
 +  stage.dataset.artOnly=String(hidden);
++  const openingMat=stage.querySelector(".opening-mat");
++  if(openingMat)openingMat.hidden=hidden;
 +  toggle.setAttribute("aria-pressed",String(hidden));
 +  toggle.textContent=hidden?"대화창 표시":"대화창 숨기기";
  }
@@ -591,7 +595,7 @@
  }
  function sceneLine(speaker,text,next,attributes="",heading=""){
    return '<article class="dialogue" '+attributes+'>'+(speaker?'<small>'+speaker+'</small>':'')+heading+
-@@ -235,21 +291,21 @@
+@@ -235,21 +293,21 @@
    const hasChoices=at===recruitScenes[id].lines.length-1&&event.choices.length>1;
    const answers=hasChoices?'<div class="answers" role="group" aria-label="대화 선택지">'+
      event.choices.map((c,i)=>btn(c.label,"choose:"+i,Boolean(c.when&&!c.when(state)),"vn-choice")).join("")+'</div>':"";
@@ -618,7 +622,7 @@
  }
  function closeRecruitMemory(){
    stopRecruitAuto();const id=recruitMemory?.id;recruitMemory=null;tab="record";render();
-@@ -257,9 +313,9 @@
+@@ -257,9 +315,9 @@
    if(button){button.closest("details").open=true;button.focus({preventScroll:true});}
  }
  function showRecruitMemory(host){

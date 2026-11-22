@@ -7,11 +7,12 @@ async function check(browserType){
   try{
     for(const viewport of [{width:1280,height:800},{width:390,height:844}]){
       const page=await browser.newPage({viewport,reducedMotion:'reduce'});
-      const errors=[];page.on('pageerror',error=>errors.push(error.message));
+      const errors=[];page.on('pageerror',error=>{errors.push(error.message);console.error('Browser error:',error.message);});
+      page.setDefaultTimeout(12000); console.log(browserType.name(),viewport.width);
       await page.goto(base);
       await page.locator('#dialogue-visibility').click();
       const prologue=await page.locator('#opening-line').textContent();
-      assert.equal(await page.locator('#opening-dialogue').isVisible(),false);
+      assert.equal(await page.locator('#opening-dialogue').isVisible(),false,JSON.stringify(await page.evaluate(()=>({state:document.getElementById('scene').dataset.artOnly,pressed:document.getElementById('dialogue-visibility').getAttribute('aria-pressed'),mat:document.querySelector('.opening-mat').hidden,errors:document.getElementById('launch-help').hidden}))));
       await page.locator('#dialogue-visibility').click();
       assert.equal(await page.locator('#opening-line').textContent(),prologue);
       assert.equal(await page.evaluate(()=>openingAuto),false);
