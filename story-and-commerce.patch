@@ -1,0 +1,742 @@
+--- a/js/chapters.js
++++ b/js/chapters.js
+@@ -72,23 +72,26 @@
+  if(seq.visitEvent){
+    const event=events.find(e=>e.id===seq.visitEvent);
+    const buttons=event.choices.map((c,i)=>btn(c.label+(c.when&&!c.when(state)?" · "+c.hint:""),"visit-choice:"+i,Boolean(c.when&&!c.when(state)))).join("");
+-   return staged(castName(event),"",event.text,buttons,"",room);
++   return staged(castName(event),"",storyLine(event),buttons,"",room);
+  }
+  if(seq.visitBefore){
+    const changes=visitChanges();
+-   return staged(visitName(visitPerson(id)),"",changes.join(" · ")||"더 변한 수치는 없습니다.",
++   return staged(seq.visitReply?seq.replySpeaker:visitName(visitPerson(id)),"",seq.visitReply || changes.join(" · ")||"더 변한 수치는 없습니다.",
+      btn(seq.index===0?"상순으로":"월말 결산으로","visit-finish"),visits[id]+" · 자유행동 결과",room);
+  }
+  const person=visitPerson(id);
+  let line=spoken;
+  if(person==="snake")line="오늘 복도는 조용하다고, 에밀리가 말했어.";
+  if(person==="agni")line="소마 님께서는 도련님이 오시기 전에 잔부터 데워 두셨습니다.";
+- if(id==="garden"&&person&&state.flags.greenhouse)line="그날 주신 열쇠예요. 도련님이 먼저 열어 보실래요?";
++ const memory=visitMemory(id,person);
++ if(memory)line=memory.line;
+  return staged(visitName(person),"",person?line:plain,btn(label,"visit-done:engage")+btn("잠시 머물다 돌아간다","visit-done:quiet"),"",room);
+ }
+ function visitDone(engage){
+  if(state.phase!=="visit"||state.sequence.visitBefore||state.visitTurn===state.month)return;
+  const id=state.visit,seq=state.sequence;
++ const memory=visitMemory(id,visitPerson(id));
++ if(memory){state.visitMemories??={};state.visitMemories[memory.id]=true;}
+  seq.visitBefore=snapStats(state);
+  state.visitTurn=state.month;
+  if(engage){
+@@ -116,6 +119,8 @@
+  if(!choice||(choice.when&&!choice.when(state)))return;
+  flagEvent(event.id,choice.effect);
+  state.events.push({id:event.id,index,month:state.month});
++ seq.visitReply=event.responses?.[index]||null;
++ seq.replySpeaker=castName(event);
+  state.log.push(choice.result);
+  delete seq.visitEvent;
+  persist();render(true);
+@@ -177,7 +182,7 @@
+ function foundationEvents(){return [{id:"homecoming",chapter:true,household:true,speaker:"타나카",title:recruitScenes.homecoming.title,text:"서재로 돌아온 타나카가 그날의 일을 이야기하고 세바스찬에게 집사장의 회중시계를 건넨다.",sees:tanakaReturns,choices:[
+  choice("서재 열쇠를 돌려준다","타나카 복귀 · 서재 근무",()=>{recruit("tanaka");state.staff="library";}),
+  choice("먼저 다과를 함께한다","타나카 복귀 · 신뢰 상승",()=>{recruit("tanaka");state.staff="library";talkTrust("tanaka",2);})]},
+- {id:"unasked",speaker:"세바스찬",title:"명령보다 한 박자 먼저",text:"시엘이 손을 내밀자 장갑이 이미 그 위에 놓였다. “아직 부르지 않았는데.” 세바스찬은 반대쪽 장갑의 단추를 풀었다. “다시 벗겨 드릴까요?”",sees:s=>s.month>=4&&(s.flags.attention||0)>=3,choices:[choice("말없이 다음 장갑을 건넨다","둘만의 아침 습관 기록",()=>{state.flags.gloves=true;}),choice("도련님의 대답을 기다린다","의지 +15",()=>changeStat("의지",15))]}];}
++ {id:"unasked",speaker:"세바스찬",title:"명령보다 한 박자 먼저",text:"시엘이 손을 내밀자 장갑이 이미 그 위에 놓였다. “아직 부르지 않았는데.” 세바스찬은 반대쪽 장갑의 단추를 풀었다. “다시 벗겨 드릴까요?”",sees:s=>s.month>=4&&(s.flags.attention||0)>=3,choices:[choice("말없이 다음 장갑을 건넨다","둘만의 아침 습관 기록",()=>{state.flags.morningGloves=true;}),choice("도련님의 대답을 기다린다","의지 +15",()=>changeStat("의지",15))]}];}
+ function sourceNote(e){return e.source||({jubilee:"1887년 6월 빅토리아 여왕 즉위 50주년 · 가문 참여 IF",match:"1888년 런던 성냥공장 파업 · 회사 대응 IF",circus:"타나카 복귀 뒤 · 서커스단의 편지와 풋맨 합류",visitPrince:"런던 타운하우스 취득 후 · 소마와 아그니 동반 입주",gardener:"원작 연구소 탈출 · 첫 만남과 명명 / 게임 달력에 배치",maid:"원작 30권 · 올빼미에게 건넨 고용 제안 / 피니안 합류 뒤 월말 추첨",cook:"원작의 서재 면담 · 메이린 합류 뒤 게임 달력에 배치",homecoming:"원작 회중시계 계승 장면 · 저택 복귀일의 서재로 각색"}[e.id])||"";}
+ function houseValues(){
+  const staff=Object.values(state.jobs),matched=Object.entries(state.jobs).filter(([p,r])=>servants[p]?.job===r).length;
+@@ -203,8 +208,11 @@
+ 
+ function productPlanning(){
+  const project=state.prototype;
+- const picker=["family","gift"].map((k,i)=>option(i?"선물용 · 판매 담당":"가정용 · 제작 담당","brief:"+k,(state.brief||"family")===k,state.phase!=="plan")).join(" ");
+- return '<h4>시제품 기획</h4>'+(project?'<p>'+products[project.product].name+' · '+(project.brief==="gift"?"선물 포장":"튼튼한 몸체")+' · '+(project.approved?"출시 승인":"월말 검수 예정")+'</p>':picker);
++ if(project)return '<h4>시제품 기획</h4><p>'+products[project.product].name+' · '+(project.brief==="gift"?"선물용":"가정용")+' · '+(project.material==="select"?"엄선 재료":"일반 재료")+' · '+(project.lead==="sales"?"판매 담당":"제작 담당")+' · '+(project.approved?"출시 승인":"월말 검수 예정")+'</p>';
++ const pick=(title,action,options,value)=>'<fieldset><legend>'+title+'</legend><div class="work-actions">'+options.map(([id,label])=>option(label,action+":"+id,id===value,state.phase!=="plan")).join("")+'</div></fieldset>';
++ return '<h4>시제품 기획</h4>'+pick("구매 목적","brief",[["family","가정용"],["gift","선물용 · 연말 수요"]],state.brief||"family")+
++  pick("재료","material",[["common","일반 재료"],["select","엄선 재료 · 원가 +£2, 높은 가격 수용"]],state.material||"common")+
++  pick("담당","lead",[["maker","제작 담당 · 원가 최대 £1 절감"],["sales","판매 담당 · 수요 +2개"]],state.lead||"maker");
+ }
+ function sampleReview(){
+  const p=state.prototype;
+--- a/js/content.js
++++ b/js/content.js
+@@ -164,3 +164,75 @@
+   hamper:{name:"기념 선물 세트",research:125,unit:14,demand:[7,10,11,9,13,16],price:26}
+ };
+ const visits=Object.fromEntries(Object.entries(visiting).map(([id,[label]])=>[id,label]));
++
++const productBuyers={
++  toys:"런던 완구상회",plush:"리버티 완구점",game:"체스 클럽",sweets:"빅토리아 다실",candy:"역전 매점",hamper:"지역 호텔 조합"
++};
++function productHistory(run,id){
++  return run.productHistory?.[id]||{reputation:0,units:0,orders:0};
++}
++function recentRetail(run,id){
++  return run.salesBook.filter(r=>r.product===id&&r.month>=run.month-3&&r.month<run.month)
++    .reduce((sum,r)=>sum+r.sold,0);
++}
++function customerOffer(run,id){
++  const line=productHistory(run,id);
++  if(run.order||run.month>=run.duration||line.reputation<3||!run.unlocked.includes(id))return null;
++  const qty=Math.min(13,6+Math.floor(line.reputation/3)+line.orders);
++  return {id,qty,due:run.month+1,shortFee:run.flags.checkedReceipt?1:2,rate:products[id].price+1+Math.min(3,line.orders)+(run.flags.sharedReceipt?1:0)};
++}
++function businessTerms(run,id){
++  const p=products[id], note=run.productNotes?.[id];
++  const material=note?.material==="select";
++  return {cost:material?2:0,premium:material?2:0,
++    skill:note?.lead==="maker"?1:0, reach:note?.lead==="sales"?2:0,
++    pressure:Math.min(Math.ceil(p.demand[(run.month-1)%6]*0.60),Math.floor(recentRetail(run,id)/4))};
++}
++function operatingCost(shop){
++  return Object.values(shop).reduce((n,level)=>n+5*(level-1),0);
++}
++function supplyPlan(run,shop,demand,unit,receipt){
++  const id=run.product,order=run.order?.due===run.month?run.order:null;
++  const stock={...run.stock},fine={...run.fineStock};
++  stock[id]+=run.qty;
++  if(run.quality==="fine")fine[id]=(fine[id]||0)+run.qty;
++  // Wholesale buyers accept both grades. Ship standard stock first.
++  const shipped=order?Math.min(stock[order.id],order.qty):0;
++  if(order){
++    stock[order.id]-=shipped;
++    fine[order.id]=Math.min(fine[order.id]||0,stock[order.id]);
++  }
++  const available=run.quality==="fine"?(fine[id]||0):stock[id]-(fine[id]||0);
++  const sold=Math.min(demand,available);
++  stock[id]-=sold;
++  if(run.quality==="fine")fine[id]-=sold;
++  const holding=Math.ceil(Math.max(0,Object.values(stock).reduce((n,v)=>n+v,0)-8)*0.75);
++  const short=order?order.qty-shipped:0;
++  const trade={holding,operation:operatingCost(shop),penalty:short*(order?.shortFee??2),wholesale:order?shipped*order.rate:0,shipped,short,order,stock,fine};
++  const revenue=sold*receipt+trade.wholesale,cost=run.qty*unit,expenses=holding+trade.penalty+trade.operation;
++  return {unit,demand,receipt,sold,available,cost,revenue,expenses,margin:revenue-cost-expenses,trade};
++}
++function recordTrading(run,id,sold,trade){
++  function add(key,units,reputation,orders=0){
++    const old=productHistory(run,key);
++    run.productHistory[key]={units:old.units+units,reputation:cap(old.reputation+reputation,20),orders:old.orders+orders};
++  }
++  const quality=run.quality==="fine"||run.productNotes?.[id]?.material==="select";
++  add(id,sold,sold>=6?(quality?2:1):0);
++  if(trade.order){
++    add(trade.order.id,trade.shipped,trade.short?-2:2,trade.short?0:1);
++    run.order=null;
++  }
++  run.stock=trade.stock;run.fineStock=trade.fine;
++}
++function restoreTrading(run){
++  if(!run.productHistory){
++    run.productHistory={};
++    for(const row of run.salesBook){
++      if(!products[row.product])continue;
++      const line=productHistory(run,row.product);
++      run.productHistory[row.product]={...line,units:line.units+row.sold,reputation:Math.min(20,line.reputation+(row.sold>=6?1:0))};
++    }
++  }
++  if(!run.fineStock)run.fineStock=run.quality==="fine"?{[run.product]:run.stock[run.product]}:{};
++}
+--- a/js/game.js
++++ b/js/game.js
+@@ -15,7 +15,7 @@
+   return startAccounts({owlSeed:Math.floor(Math.random()*0x100000000),v:1,unifiedAbilityCaps:true,abilityScale:abilityMax,duration:35,people:{},jobs:{},annex:{bedroom:1,garden:1,guard:1,quarters:1},month:1,phase:"contract",openingLine:0,openingEdition:2,fund:500,hp:76,stress:20,motivation:70,
+     stats:{지성:18,기품:14,매력:8,경영:5,통찰:30,의지:125,체력:50},
+     planMonth:1,plan:emptyPlan(),visit:null,level:{library:1,parlor:1,kitchen:1},staff:null,
+-    shop:{design:1,works:1,store:1},salesBook:[],
++    shop:{design:1,works:1,store:1},salesBook:[],productHistory:{},fineStock:{},order:null,
+     product:"toys",unlocked:["toys"],quality:"standard",price:14,qty:15,stock:Object.fromEntries(Object.keys(products).map(id=>[id,0])),
+     trust:1,royal:0,renown:0,flags:{},events:[],past:[],log:[],pending:null,ending:null,
+     debt:0,unwell:0,arrears:0,usedLoan:false,counts:{}});
+@@ -57,15 +57,18 @@
+   const quality=state.quality==="fine";
+   const season=(state.month-1)%12;
+   const baseline=p.demand[season%6]+(season>=9?3:0)+(state.month>6?2:0);
+-  const unit=Math.max(2,p.unit+(quality?3:0)-(shop.works-1)*2-Math.floor(state.stats.경영/19));
++  const terms=businessTerms(state,state.product);
++  const unit=Math.max(Math.ceil(p.unit*.65),p.unit+terms.cost+(quality?3:0)-(shop.works-1)-terms.skill-Math.min(2,Math.floor(state.stats.경영/100)));
+   const design=state.productNotes?.[state.product];
+-  const appeal=design?((design.brief==="gift"&&season>=9)?4:1)+(design.reworked?2:0):0;
+-  const demand=Math.max(0,baseline+appeal+businessTailwind(state.product).bonus+(state.month===5?1:0)+(state.month===18?3:0)+(state.month===31&&state.product==="toys"?-3:0)+(shop.store-1)*3+Math.floor(state.stats.경영/9)
+-     +(state.visit==="town"?3:0)+(quality?5:0)-Math.round((state.price-p.price)*1.65));
+-  const receipt=state.price+(shop.design-1)*(quality?2:1)+(shop.store-1);
+-  const sold=Math.min(demand,state.stock[state.product]+state.qty);
+-  const revenue=sold*receipt, cost=state.qty*unit;
+-  return {unit,demand,receipt,sold,revenue,cost,margin:revenue-cost};
++  const appeal=design?((design.brief==="gift"&&season>=9)?3:1)+(design.reworked?1:0):0;
++  const reputation=Math.floor(productHistory(state,state.product).reputation/5);
++  const premium=terms.premium+(quality?2:0);
++  const demand=Math.max(0,baseline+appeal+terms.reach+reputation-terms.pressure+businessTailwind(state.product).bonus
++    +(state.month===5?1:0)+(state.month===18?3:0)+(state.month===31&&state.product==="toys"?-3:0)
++    +(shop.store-1)*2+Math.min(3,Math.floor(state.stats.경영/80))+(state.visit==="town"?2:0)
++    -Math.round((state.price-p.price-premium)*1.9));
++  const receipt=state.price+(shop.design-1)+(shop.store-1);
++  return supplyPlan(state,shop,demand,unit,receipt);
+ }
+ function investmentEffect(order){
+   const base=forecast({design:1,works:1,store:1});
+@@ -74,7 +77,8 @@
+   const extraSales=(order.sold-base.sold)*state.price;
+   const wrapping=(state.shop.store-1)*order.sold;
+   const design=(order.receipt-state.price)*order.sold-wrapping;
+-  return {production,extraSales,design,wrapping,total:production+extraSales+design+wrapping};
++  const overheadChange=order.expenses-base.expenses;
++  return {production,extraSales,design,wrapping,overheadChange,total:order.margin-base.margin};
+ }
+ function overhead(){
+   return 36+Object.values(state.annex||{}).reduce((v,l)=>v+Math.max(0,l-1)*2,0)-(state.annex.guard-1)*8-(Object.entries(state.jobs).filter(([,r])=>r==="guard").length*2)-(shiftAssigned("guard")?1:0)+Object.values(state.level).reduce((sum,l)=>sum+l*4,0)+Math.min(24,state.debt)-(state.houseCare==="defer"?8:0);
+@@ -93,7 +97,7 @@
+   state.flags[id]=true;
+   effect();
+ }
+-const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents());
++const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),followupEvents());
+ 
+ function pendingEvent(){
+   return events.find(event=>event.id===state.pending);
+@@ -104,7 +108,7 @@
+   state.log=[];
+   state.past.push({month:state.month,plan:[...state.plan]});
+   const order=forecast();
+-  state.sequence={index:0,unit:order.unit,demand:order.demand,receipt:order.receipt,investment:investmentEffect(order),opening:{fund:state.fund,hp:state.hp,stress:state.stress,motivation:state.motivation,stats:{...state.stats}}};
++  state.sequence={index:0,unit:order.unit,demand:order.demand,receipt:order.receipt,trade:order.trade,retailSold:order.sold,investment:investmentEffect(order),opening:{fund:state.fund,hp:state.hp,stress:state.stress,motivation:state.motivation,stats:{...state.stats}}};
+   enterSlot();
+ }
+ // A stable per-campaign draw for each eligible month, including after loading a save.
+@@ -117,20 +121,36 @@
+ }
+ function owlAppears(run){
+   if(run.duration!==35||!run.people.finny||run.people.mey||run.flags.maid)return false;
+-  return monthlyDraw(run)<owlMonthlyChance;
++  return run.month>=22 || monthlyDraw(run)<owlMonthlyChance;
+ }
+ const lastTanakaMonth=24; // December 1887
+ function canTanakaReturn(run){
+-  return run.duration===35 && run.month<=lastTanakaMonth && !run.flags.homecoming &&
++  return run.duration===35 && !run.flags.homecoming &&
+     !run.people.tanaka && !!(run.people.finny&&run.people.mey&&run.people.bard);
+ }
+ function tanakaReturns(run){
+   // Equal chance for each remaining month, including the month Bard moves in.
+-  return canTanakaReturn(run)&&monthlyDraw(run,0x54414e41)<1/(lastTanakaMonth-run.month+1);
++  return canTanakaReturn(run)&&(run.month>=lastTanakaMonth || monthlyDraw(run,0x54414e41)<1/(lastTanakaMonth-run.month+1));
++}
++// Also serves unfinished older saves that have already passed a deadline.
++function overdueArrival(run){
++  if(run.duration!==35)return null;
++  if(run.month>=13&&finnyMissing(run))return "gardener";
++  if(run.month>=22&&owlAppears(run))return "maid";
++  if(run.month>=23&&run.people.finny&&run.people.mey&&!run.people.bard&&!run.flags.cook)return "cook";
++  if(run.month>=24&&canTanakaReturn(run))return "homecoming";
++  if(run.people.tanaka&&!run.people.snake){
++    const returnedThisMonth=run.events.some(e=>e.id==="homecoming"&&e.month===run.month);
++    if(run.month===run.duration || (!returnedThisMonth && run.month>=25)){
++      return run.flags.circus||run.flags.snakeSafe?"snakeReturn":"circus";
++    }
++  }
++  return null;
+ }
+ function settleMonth(){
+   const {unit,demand,receipt=state.price,investment,opening:before}=state.sequence;
+   const visitAdvance=state.sequence.visitAdvance||0;
++  const trade=state.sequence.trade,retailSold=state.sequence.retailSold??state.sequence.sold;
+   delete state.sequence;
+   state.neglect=state.houseCare==="defer"?(state.neglect||0)+1:Math.max(0,(state.neglect||0)-1);
+   if(state.neglect>=2){state.renown=Math.max(0,state.renown-1);state.log.push("관리 지연 · 가문 명성 하락");}
+@@ -142,21 +162,30 @@
+   if(state.houseCare==="guard"&&assessment.보안>=65)state.renown+=state.month%4===0?1:0;
+   if((state.staff==="parlor"||shiftAssigned("parlor"))&&state.plan.includes("etiquette"))state.renown+=1;
+   const product=state.product;
+-  const sold=Math.min(demand,state.stock[product]+state.qty);
+-  state.stock[product]+=state.qty-sold;
+-  const income=sold*receipt;
++  const sold=trade?retailSold:Math.min(demand,state.stock[product]+state.qty);
++  if(trade)recordTrading(state,product,sold,trade);
++  else{
++    // A turn already in progress in an older save keeps its signed estimate.
++    state.stock[product]+=state.qty-sold;
++    state.fineStock[product]=state.quality==="fine"?state.stock[product]:Math.min(state.stock[product],state.fineStock[product]||0);
++    const line=productHistory(state,product);
++    state.productHistory[product]={...line,units:line.units+sold,reputation:Math.min(20,line.reputation+(sold>=6?1:0))};
++  }
++  const expenses=trade?trade.holding+trade.penalty+trade.operation:0;
++  const income=sold*receipt+(trade?.wholesale||0);
+   const cost=unit*state.qty;
+   const debtPayment=Math.min(24,state.debt),bills=overhead();
+   if(state.debt>0)state.debt=Math.max(0,state.debt-24);
+-  state.fund+=income-cost-bills;
++  state.fund+=income-cost-bills-expenses;
+   // Paid sales and supply contracts belong to Funtom. Scheduled work only trains Ciel.
+-  state.salesBook.push({month:state.month,product,sold,revenue:income,cost,advance:visitAdvance,investment});
+-  state.report={income,cost,advance:visitAdvance,bills,debtPayment,sold,before,investment,training:plannedTuition()};
+-  if(sold>=14&&income>cost+25)state.renown+=1;
+-  state.log.push(products[product].name+" "+sold+"개 판매 · 매출 "+money(income)+" / 생산비 "+money(cost)+" / 재고 "+state.stock[product]+"개");
++  state.salesBook.push({month:state.month,product,sold,revenue:income,cost,advance:visitAdvance,investment,expenses,wholesale:trade?.wholesale||0,delivery:trade?.order?{id:trade.order.id,shipped:trade.shipped,qty:trade.order.qty}:null});
++  state.report={income,cost,expenses,storage:trade?.holding||0,operating:trade?.operation||0,penalty:trade?.penalty||0,wholesale:trade?.wholesale||0,advance:visitAdvance,bills,debtPayment,sold,before,investment,training:plannedTuition()};
++  if(sold>=14&&income>cost+expenses+25)state.renown+=1;
++  state.log.push(products[product].name+" "+sold+"개 소매 · 매출 "+money(sold*receipt)+" / 생산비 "+money(cost)+" / 재고 "+state.stock[product]+"개");
+   state.log.push("저택 유지·채무 상환 "+money(bills));
++  if(trade?.order)state.log.push(productBuyers[trade.order.id]+" 납품 "+trade.shipped+"/"+trade.order.qty+"개 · "+money(trade.wholesale)+(trade.short?" · 미납 부담금 "+money(trade.penalty):""));
+   if(state.flags.market&&state.marketMonth!==state.month){state.flags.market=false;state.renown+=1;}
+-  const candidates=events.filter(e=>!e.slot&&!e.season&&!e.household&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
++  const candidates=events.filter(e=>!e.slot&&!e.season&&!e.household&&!e.visitOnly&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
+   const event=state.duration===35?(candidates.find(e=>e.chapter)||candidates[0]):candidates.find(e=>!e.chapter);
+   const seasonal=state.duration===35?events.find(e=>e.season&&e.sees(state)&&!state.flags[e.id]):null;
+   const queue=[event?.id,seasonal?.id].filter(Boolean);
+@@ -164,6 +193,8 @@
+     if(e.household&&(state.duration===35||e.id==="visitPrince")&&!state.flags[e.id]&&e.sees(state))queue.push(e.id);
+   }
+   if(owlAppears(state))queue.push("maid");
++  const overdue=overdueArrival(state);
++  if(overdue&&!queue.includes(overdue))queue.push(overdue);
+   state.pending=queue.shift()||null;
+   state.eventQueue=queue;
+   state.phase=state.pending?"event":"result";
+@@ -205,9 +236,12 @@
+   }
+   if(state.phase==="slotEvent"){openReview();return;}
+   state.pending=state.eventQueue?.shift()||null;
++  if(!state.pending)state.pending=overdueArrival(state);
+   if(!state.pending&&tanakaReturns(state))state.pending="homecoming";
+   if(!state.pending&&townhouseGuestsDue(state))state.pending="visitPrince";
+-  state.phase=state.pending?"event":"result";persist();render(true);
++  state.phase=state.pending?"event":state.recruitReturn==="vow"?"vow":"result";
++  if(!state.pending)delete state.recruitReturn;
++  persist();render(true);
+ }
+ function qualifies(){
+   return titleRequirements().every(Boolean);
+@@ -235,6 +269,8 @@
+ }
+ function advance(){
+   if(state.phase!=="result")return;
++  const late=overdueArrival(state);
++  if(late){state.pending=late;state.phase="event";tab="plan";persist();render(true);return;}
+   if(sampleReview())return;
+   state.unwell=state.hp<18?state.unwell+1:0;
+   state.arrears=state.fund<0?state.arrears+1:0;
+@@ -243,7 +279,7 @@
+   if(state.month===35&&state.duration===35){state.phase="vow";persist();render(true);return;}
+   if(state.month===6&&state.duration===6){beginFinale(qualifies()?"title":state.fund>=260&&state.stats.경영>=31?"business":"defer");return;}
+   if(state.prototype?.approved){
+-    const p=state.prototype;state.unlocked.push(p.product);state.productNotes??={};state.productNotes[p.product]=p;delete state.prototype;
++    const p=state.prototype;if(!state.unlocked.includes(p.product))state.unlocked.push(p.product);state.productNotes??={};state.productNotes[p.product]=p;delete state.prototype;
+   }
+   state.month++;state.planMonth=state.month;state.plan=emptyPlan();editingVisit=false;lessonPage=0;startAccounts(state);state.phase="plan";state.visit=null;selectedSlot=0;startFinnyAtTurn(state);tab=state.phase==="event"?"plan":"home";persist();render(true);
+ }
+@@ -344,7 +380,7 @@
+ function plannerCosts(estimate){
+   const costs=[
+     ["저택", overhead()-Math.min(24,state.debt)],
+-    ["팬텀사", estimate.unit*state.qty],
++    ["팬텀사", estimate.unit*state.qty+estimate.expenses],
+     ["교육·활동", plannedTuition()]
+   ];
+   const total=costs.reduce((sum,[,cost])=>sum+cost,0);
+@@ -407,7 +443,7 @@
+ function planPanel(){
+   if(state.phase==="event"){
+     const event=pendingEvent();
+-    return frame(castName(event),'<p class="muted">'+event.text+'</p><div class="report-grid">'+event.choices.map((choice,index)=>{
++    return frame(castName(event),'<p class="muted">'+storyLine(event)+'</p><div class="report-grid">'+event.choices.map((choice,index)=>{
+       const locked=choice.when&&!choice.when(state);
+       return btn(choice.label+'<br><span class="small '+(locked?"muted":"good")+'">'+(locked?"필요 조건 · "+choice.hint:choice.result)+'</span>',
+         "choose:"+index,Boolean(locked),"option");
+@@ -427,7 +463,7 @@
+ }
+ function marketStats(){
+   const order=forecast(), needed=cashNeeded();
+-  return {...order,balance:state.fund+order.revenue-needed-overhead(),blocked:needed>Math.max(0,state.fund)};
++  return {...order,balance:state.fund+order.revenue-needed-overhead()-order.expenses,blocked:needed>Math.max(0,state.fund)};
+ }
+ function stepper(key,label,min){
+   return '<div class="tile"><label class="small muted" for="'+key+'">'+label+'</label><div class="stepper">'+
+@@ -451,7 +487,7 @@
+   const route=state.ending==="vowNoTitle"?((state.stats.경영>=140&&state.fund>=260)?"런던의 사업가로 자리 잡았습니다. ":state.stats.통찰>=140?"정보상의 연락망을 얻었습니다. ":"마차를 타고 옛 흔적을 좇습니다. "):"";
+   return route+(allies.length?allies.join("·")+"은 다음 겨울에도 도련님의 지시를 따르겠다고 전했습니다. ":"")+"가장 단련된 능력은 "+top+"이었습니다. 팬텀사의 개발품은 "+state.unlocked.length+"종, 저택에 합류한 고용인은 "+peopleInHouse().filter(id=>servants[id].job).length+"명입니다.";
+ }
+-function canBuyTownhouse(){return !state.flags.townhouse && state.fund>=250;}
++function canBuyTownhouse(){return state.phase==="plan" && !state.flags.townhouse && state.fund>=250;}
+ function townhouseGuestsDue(run){
+   return Boolean(run.flags.townhouse&&!run.flags.visitPrince&&!(run.people.soma&&run.people.agni));
+ }
+@@ -517,6 +553,7 @@
+   copy.shop={...defaults.shop,...copy.shop};
+   copy.stock={...defaults.stock,...copy.stock};
+   copy.salesBook=copy.salesBook||[];
++  restoreTrading(copy);
+   const oldResults=new Map();
+   copy.events=copy.events.map(entry=>{
+     if(entry.id)return entry;
+@@ -525,6 +562,10 @@
+     if(entry.result)oldResults.set(entry.result,(definition?.title||"사건")+" · 처리 완료");
+     return {id,index:null};
+   });
++  if(copy.events.some(e=>e.id==="unasked"&&e.index===0)){
++    copy.flags.morningGloves=true;
++    if(!copy.events.some(e=>e.id==="gloves"))delete copy.flags.gloves;
++  }
+   copy.log=copy.log.map(line=>oldResults.get(line)||line);
+   if(copy.accounts?.month!==copy.month){
+     const closed=["result","event","vow","investiture","ending"].includes(copy.phase);
+@@ -553,8 +594,12 @@
+     copy.recruitPage.at=pageAt("cook",copy.recruitPage.at-5);
+     copy.recruitPage.version=2;
+   }
+-  if(copy.phase==="result"&&tanakaReturns(copy)){
+-    copy.pending="homecoming";copy.phase="event";
++  if(["result","vow"].includes(copy.phase)&&!copy.pending){
++    const arrival=overdueArrival(copy)||(tanakaReturns(copy)?"homecoming":null);
++    if(arrival){
++      if(copy.phase==="vow")copy.recruitReturn="vow";
++      copy.pending=arrival;copy.phase="event";
++    }
+   }
+   startFinnyAtTurn(copy);
+   startTownhouseGuests(copy);
+@@ -574,7 +619,7 @@
+       return '<details><summary>'+monthText(record.month||state.month)+' · '+event.title+'</summary><p>'+note+'</p>'+btn('영입 장면 다시 보기','recruit-memory:'+event.id)+'</details>';
+     }
+     const choice=event.choices[record.index];
+-    return '<details><summary>'+(record.month?monthText(record.month)+' · ':'')+(choice?choice.label:castName(event))+'</summary>'+(sourceNote(event)?'<small>'+sourceNote(event)+'</small>':'')+'<p>'+event.text+'</p><p class="small muted">'+(choice?choice.label+" · "+choice.result:"처리 완료")+'</p></details>';
++    return '<details><summary>'+(record.month?monthText(record.month)+' · ':'')+(choice?choice.label:castName(event))+'</summary>'+(sourceNote(event)?'<small>'+sourceNote(event)+'</small>':'')+'<p>'+storyLine(event)+'</p><p class="small muted">'+(choice?choice.label+" · "+choice.result:"처리 완료")+'</p></details>';
+   }).join("");
+   return frame("가문 장부",'<h3>궁정의 기류</h3><p>'+courtImpression()+'</p><div class="step-grid">'+
+     tile("남은 채무",money(state.debt))+'</div>'+relationBook()+'<h3>엔딩 도감</h3><p class="small muted">'+(Object.values(saves.gallery||{}).join(" · ")||"기록 없음")+'</p><h3>사건 기록</h3>'+(history||'<p class="small muted">기록 없음</p>'));
+@@ -611,9 +656,9 @@
+ }
+ const businessArt={"estate": "assets/map-estate.png", "design2": "assets/map-design2.png", "library2": "assets/map-library2.png", "parlor2": "assets/map-parlor2.png", "designer": "assets/map-designer.png", "cart-candy": "assets/map-cart-candy.png", "kitchen3": "assets/map-kitchen3.png", "store2": "assets/map-store2.png", "maker": "assets/map-maker.png", "cart-sweets": "assets/map-cart-sweets.png", "cart-hamper": "assets/map-cart-hamper.png", "parlor3": "assets/map-parlor3.png", "cart-toys": "assets/map-cart-toys.png", "clerk": "assets/map-clerk.png", "works2": "assets/map-works2.png", "store3": "assets/map-store3.png", "kitchen2": "assets/map-kitchen2.png", "library3": "assets/map-library3.png", "cart-plush": "assets/map-cart-plush.png", "design3": "assets/map-design3.png", "works3": "assets/map-works3.png", "company": "assets/map-company.png", "steward": "assets/map-steward.png", "cart-game": "assets/map-cart-game.png"};
+ const departments = {
+-  design:{name:"개발실",cost:65,benefit:"단계마다 표준품 도안 +£1 · 고급품 도안 +£2 및 개발비 할인"},
+-  works:{name:"제작실",cost:75,benefit:"단계마다 개당 생산 원가 £2 절감 · 최저 £2"},
+-  store:{name:"판매점",cost:80,benefit:"단계마다 수요 +3개 · 판매품당 포장 수익 +£1"}
++  design:{name:"개발실",cost:65,benefit:"단계마다 도안 수익 +£1 · 개발비 할인 · 월 운영비 £5 추가"},
++  works:{name:"제작실",cost:75,benefit:"단계마다 개당 원가 최대 £1 절감 · 월 운영비 £5 추가"},
++  store:{name:"판매점",cost:80,benefit:"단계마다 수요 +2개 · 판매품당 포장 수익 +£1 · 월 운영비 £5 추가"}
+ };
+ const mapPositions = {
+   library:[51,30], parlor:[72,69], kitchen:[22,68],
+@@ -627,8 +672,12 @@
+ let selectedDepartment="works";
+ 
+ const researchDiscount=[0,0,25,45];
++function canDesign(id){
++  return !state.unlocked.includes(id) || (productHistory(state,id).reputation>=4&&!state.productNotes?.[id]?.revised);
++}
+ function researchFee(id,level=state.shop.design){
+-  return Math.ceil(products[id].research*(100-researchDiscount[level])/100);
++  const base=state.unlocked.includes(id)?Math.max(40,Math.ceil(products[id].research*.65)):products[id].research;
++  return Math.ceil(base*(100-researchDiscount[level])/100);
+ }
+ function workerSprite(image,position){
+   return '<img alt="" class="map-person" src="'+businessArt[image]+'" style="left:'+position[0]+'%;top:'+position[1]+'%">';
+@@ -668,7 +717,18 @@
+     btn("대출 · £144","loan",!active||state.usedLoan)+'</div><small>왕진 시 건강 +24 · 대출은 월 £24씩 상환</small>';
+ }
+ function inventoryRows(){
+-  return state.unlocked.map(id=>'<div class="work-ledger"><span>'+products[id].name+'</span><b>'+state.stock[id]+'개</b></div>').join("");
++  return state.unlocked.map(id=>{
++    const line=productHistory(state,id),stock=state.stock[id],fine=state.fineStock[id]||0;
++    const pressure=businessTerms(state,id).pressure;
++    return '<div class="sale-row"><b>'+products[id].name+' · 평판 '+line.reputation+'/20</b><span>표준품 '+(stock-fine)+'개 · 고급품 '+fine+'개 · 누적 판매 '+line.units+'개 · 완납 '+line.orders+'회</span>'+
++      (pressure?'<small>최근 판매로 이번 달 소매 수요 −'+pressure+'개</small>':'')+'</div>';
++  }).join("");
++}
++function orderDesk(){
++  const active=state.order;
++  if(active)return '<h4>받은 발주서</h4><p>'+productBuyers[active.id]+' · '+products[active.id].name+' '+active.qty+'개 · 개당 '+money(active.rate)+'<br>'+monthText(active.due)+' 월말 자동 납품 · 부족분 개당 '+money(active.shortFee??2)+' 부담</p>';
++  const offers=state.unlocked.map(id=>customerOffer(state,id)).filter(Boolean);
++  return '<h4>거래처 재주문</h4>'+(offers.length?offers.map(o=>'<div class="sale-row"><b>'+productBuyers[o.id]+'</b><span>'+products[o.id].name+' '+o.qty+'개 · 개당 '+money(o.rate)+' · '+monthText(o.due)+' 납기 · 미납 개당 '+money(o.shortFee)+' 부담</span>'+btn('발주 수락','order:'+o.id,state.phase!=="plan")+'</div>').join("")+'<small>한 번에 한 건을 수락할 수 있습니다. 납기에는 해당 품목의 표준품부터 출고합니다.</small>':state.month===state.duration?'<p>이번 달이 마지막 영업입니다.</p>':'<p>한 품목의 평판이 3에 이르면 거래처가 다음 달 납품을 제안합니다.</p>');
+ }
+ function companyDetail(){
+   const id=selectedDepartment, room=departments[id], level=state.shop[id], active=state.phase==="plan";
+@@ -678,21 +738,21 @@
+       Object.entries(products).map(([key,p])=>{
+         const done=state.unlocked.includes(key),fee=researchFee(key);
+         return '<div class="work-ledger"><span>'+p.name+'</span>'+
+-          (done?'<b>개발 완료</b>':btn('개발 · '+money(fee),'develop:'+key,!active||!!state.prototype||state.month===state.duration||state.fund-fee<cashNeeded()))+'</div>';
++          (done&&!canDesign(key)?'<b>'+(state.productNotes?.[key]?.revised?'개량 완료':'평판 4부터 개량')+'</b>':btn((done?'개량 · ':'개발 · ')+money(fee),'develop:'+key,!active||!!state.prototype||state.month===state.duration||state.fund-fee<cashNeeded()))+'</div>';
+       }).join("");
+   }else if(id==="works"){
+     controls='<h4>이달 생산품</h4><div class="work-actions">'+state.unlocked.map(key=>option(products[key].name,"product:"+key,state.product===key,!active)).join("")+'</div>'+
+-      '<h4>품질</h4><div class="work-actions">'+[["standard","표준품"],["fine","고급품"]].map(([key,label])=>option(label,"quality:"+key,state.quality===key,!active)).join("")+'</div>'+
++      '<h4>생산·소매 등급</h4><div class="work-actions">'+[["standard","표준품"],["fine","고급품"]].map(([key,label])=>option(label,"quality:"+key,state.quality===key,!active)).join("")+'</div>'+
+       (active?stepper("qty","생산량 (개)",0):'<p>생산량 '+state.qty+'개</p>')+
+       '<div class="work-cost" id="work-cost">'+productionCost(forecast().unit)+'</div>';
+   }else{
+     controls='<h4>'+products[state.product].name+'</h4><p>주요 고객 · '+businessTailwind(state.product).audience+'　이달의 수요 · '+businessTailwind(state.product).trend+'</p>'+
+       (active?stepper("price","판매가 (£)",4):'<p>판매가 '+money(state.price)+'</p>')+
+       (active?'<div class="work-ledger"><span>이 가격의 예상 수요</span><b id="shop-demand">'+forecast().demand+'개</b></div>':'')+
+-      '<h4>상품별 재고</h4>'+inventoryRows();
++      '<h4>상품 장부</h4>'+inventoryRows()+orderDesk();
+   }
+   return '<div class="work-title"><h3>'+room.name+'</h3><b>Lv. '+level+' / 3</b></div>'+controls+
+-    '<section class="expansion-quote"><h4>사업 확장</h4><p>'+room.benefit+'</p><div id="investment-quote">'+expansionQuote(id)+'</div></section>'+btn(level===3?"최대 규모":"증설 · "+money(room.cost*level),"expand:"+id,!active||level===3||state.fund<room.cost*level,"work-order");
++    '<section class="expansion-quote"><h4>사업 확장</h4><p>'+room.benefit+'</p><div id="investment-quote">'+expansionQuote(id)+'</div></section>'+btn(level===3?"최대 규모":"증설 · "+money(room.cost*level),"expand:"+id,!active||level===3||state.fund<room.cost*level,"work-order")+(level>1?btn("설비 매각 · "+money(Math.floor(room.cost*(level-1)*.5)),"liquidate:"+id,!active):"");
+ }
+ function expansionQuote(id){
+   const level=state.shop[id], next=Math.min(3,level+1);
+@@ -703,14 +763,14 @@
+   let rows="";
+   if(id==="works")rows+=compare("개당 생산 원가",money(now.unit),money(after.unit));
+   if(id==="store")rows+=compare("구매 수요",now.demand+"개",after.demand+"개")+compare("현재 물량으로 판매",now.sold+"개",after.sold+"개");
+-  if(id==="design")rows+=compare("개당 도안 웃돈",money((level-1)*(state.quality==="fine"?2:1)),money((next-1)*(state.quality==="fine"?2:1)))+compare("신상품 개발비 할인",researchDiscount[level]+"%",researchDiscount[next]+"%");
++  if(id==="design")rows+=compare("개당 도안 웃돈",money((level-1)),money((next-1)))+compare("신상품 개발비 할인",researchDiscount[level]+"%",researchDiscount[next]+"%");
+   if(state.phase!=="plan")return rows;
+   rows+=compare("이달 영업이익",money(now.margin),money(after.margin));
+   if(next===level)return rows;
+   const gain=after.margin-now.margin, cost=departments[id].cost*level;
+-  let detail=gain?'같은 물량·가격·수요라면 '+Math.ceil(cost/gain)+'개월에 증설비 회수':id==="store"?"팔 수 있는 물량이 부족해 이달 추가 매출은 £0입니다.":"현재 생산·판매 조건에서는 이달 추가 이익이 없습니다.";
++  let detail=gain<0?'현재 물량에서는 증설 뒤 비용이 더 큽니다.':gain>0?'같은 물량·가격·수요라면 '+Math.ceil(cost/gain)+'개월에 증설비 회수':id==="store"?"팔 수 있는 물량이 부족해 이달 추가 매출은 £0입니다.":"현재 생산·판매 조건에서는 이달 추가 이익이 없습니다.";
+   if(id==="design")detail+=' · 개발비 할인 별도';
+-  rows+='<p class="quote-summary">증설비 '+money(cost)+' · 이달 영업이익 +'+money(gain)+'</p><small>'+detail+'</small>';
++  rows+='<p class="quote-summary">증설비 '+money(cost)+' · 이달 영업이익 변화 '+money(gain)+'</p><small>'+detail+'</small>';
+   const neededAfter=cashNeeded()+(after.unit-now.unit)*state.qty;
+   if(state.fund>=cost&&state.fund-cost<neededAfter)rows+='<p class="danger">증설하면 이번 달 준비비가 '+money(neededAfter-(state.fund-cost))+' 부족합니다.</p>';
+   return rows;
+@@ -719,7 +779,7 @@
+   return '<span>총생산비</span><strong>'+money(unit*state.qty)+'</strong><small>개당 '+money(unit)+' × '+state.qty+'개</small>';
+ }
+ function salesGauge(sold){
+-  const available=state.qty+state.stock[state.product];
++  const available=forecast().available;
+   return '<span>판매 가능 '+available+'개 중 예상 판매 <b>'+sold+'개</b> · '+(available?Math.round(sold/available*100):0)+'%</span>'+
+     '<progress aria-label="예상 판매 비중" value="'+sold+'" max="'+Math.max(1,available)+'"></progress>';
+ }
+@@ -731,7 +791,7 @@
+ function salesBooks(){
+   return '<details class="sales-books"><summary>월별 영업 장부</summary><p>판매 대금과 납품 선금은 가문 자금에 합산됩니다.</p>'+
+     (state.salesBook.length?state.salesBook.slice().reverse().map(r=>'<div class="sale-row"><b>'+monthText(r.month)+' · '+products[r.product].name+'</b>'+
+-      '<span>판매 '+r.sold+'개 · '+money(r.revenue)+'　납품 선금 '+money(r.advance)+'　생산비 '+money(r.cost)+'</span>'+(r.investment?.total?'<span>시설 기여 이익 +'+money(r.investment.total)+'</span>':'')+'</div>').join(""):
++      '<span>소매 '+r.sold+'개 · '+money(r.revenue-(r.wholesale||0))+(r.delivery?' · '+products[r.delivery.id].name+' 납품 '+r.delivery.shipped+'/'+r.delivery.qty+'개 '+money(r.wholesale):'')+'　납품 선금 '+money(r.advance)+'　생산비 '+money(r.cost)+'</span>'+(r.investment?.total?'<span>시설 기여 이익 +'+money(r.investment.total)+'</span>':'')+'</div>').join(""):
+       '<p>첫 월간 결산 후 판매 내역이 기록됩니다.</p>')+'</details>';
+ }
+ function managementPanel(){
+@@ -742,7 +802,7 @@
+   const actual=state.salesBook.at(-1);
+   const settled=["event","result","vow","investiture","ending"].includes(state.phase);
+   const remaining=state.sequence?state.plan.slice(state.sequence.index+1).reduce((n,id)=>n+actions[id].cost,0):0;
+-  const live=state.sequence?'<section class="budget-book"><h3>확정된 이달 예산</h3>'+amountRow("남은 교육·활동비",remaining)+amountRow("저택 운영",overhead()-Math.min(24,state.debt))+amountRow("팬텀사 운영",state.qty*state.sequence.unit)+(state.debt?amountRow("채무 상환",Math.min(24,state.debt)):"")+'</section>':"";
++  const live=state.sequence?'<section class="budget-book"><h3>확정된 이달 예산</h3>'+amountRow("남은 교육·활동비",remaining)+amountRow("저택 운영",overhead()-Math.min(24,state.debt))+amountRow("팬텀사 운영",state.qty*state.sequence.unit+(state.sequence.trade?.holding||0)+(state.sequence.trade?.operation||0)+(state.sequence.trade?.penalty||0))+(state.debt?amountRow("채무 상환",Math.min(24,state.debt)):"")+'</section>':"";
+   const budget=active?'<div id="live-budget">'+budgetTable()+'</div>':settled&&state.report?actualBudget():live;
+   const bottom=company?(active?businessForecast():settled&&actual?'<div class="work-ledger"><span>'+monthText(actual.month)+' 영업 수입</span><b>'+money(actual.revenue+actual.advance)+'</b></div>':'')+budget+salesBooks():budget;
+   return header+
+@@ -970,6 +1030,7 @@
+   setTimeout(()=>chip.remove(),930);
+ }
+ function setNumber(key,value){
++  if(state.phase!=="plan"||!["qty","price"].includes(key)||!Number.isFinite(value))return;
+   state[key]=Math.min(40,Math.max(key==="price"?4:0,Math.round(value)));
+   const field=$(key);
+   field.value=state[key];
+@@ -1075,6 +1136,23 @@
+     render(true);
+     return;
+   }
++  if(["material","lead"].includes(action)&&state.phase==="plan"&&!state.prototype){
++    const options=action==="material"?["common","select"]:["maker","sales"];
++    if(!options.includes(id))return;
++    state[action]=id;persist();render();return;
++  }
++  if(action==="order"&&state.phase==="plan"&&tab==="company"){
++    const offer=customerOffer(state,id);
++    if(!offer)return;
++    state.order=offer;persist();render();announce(productBuyers[id]+"의 발주서를 접수했습니다.");return;
++  }
++  if(action==="liquidate"&&state.phase==="plan"&&tab==="company"&&Object.hasOwn(departments,id)){
++    const level=state.shop[id];if(level<2)return;
++    const proceeds=Math.floor(departments[id].cost*(level-1)*.5);
++    if(!confirmed){askConfirmation(key,"설비를 매각할까요?",departments[id].name+" Lv. "+level+" → "+(level-1)+" · 매각 대금 "+money(proceeds),"매각",rect);return;}
++    state.shop[id]--;state.fund+=proceeds;state.accounts.divest=(state.accounts.divest||0)+proceeds;
++    persist();render();announce("설비 매각 대금 "+money(proceeds)+" 입금");return;
++  }
+   if(action==="brief"&&state.phase==="plan"&&!state.prototype&&["family","gift"].includes(id)){state.brief=id;persist();render();respond("choose",rect);return;}
+   if(action==="sample"&&state.phase==="result"&&sampleReview()){
+     const p=state.prototype;
+@@ -1201,7 +1279,7 @@
+     if(operation)handleAction(operation,rect,true);
+     return;
+   }
+-  if(action==="step"){
++  if(action==="step"&&state.phase==="plan"){
+     setNumber(id,state[id]+Number(value));respond("step",rect,"#market-balance");return;
+   }
+   if(action==="execute"&&state.phase==="plan"&&!planReady()){
+@@ -1255,6 +1333,7 @@
+       state.visit=id;
+       message="자유행동 · "+visits[id];
+     }else if(action==="product"){
++      if(!state.unlocked.includes(id))return;
+       if(state.product!==id){state.product=id;state.price=products[id].price;}
+     }else if(action==="quality"){
+       state.quality=id;
+@@ -1281,14 +1360,14 @@
+       const prior=forecast();
+       state.fund-=cost;state.shop[id]=level+1;
+       const current=forecast();
+-      message=departments[id].name+" Lv. "+(level+1)+" · 예상 영업이익 +"+money(current.margin-prior.margin);
++      message=departments[id].name+" Lv. "+(level+1)+" · 예상 영업이익 변화 "+money(current.margin-prior.margin);
+       pattern="build";
+     }else if(action==="develop"){
+       if(!Object.hasOwn(products,id))return;
+       const cost=researchFee(id);
+-      if(state.fund-cost<cashNeeded()||state.prototype||state.month===state.duration||state.unlocked.includes(id))return;
+-      state.accounts.researchSaved=(state.accounts.researchSaved||0)+products[id].research-cost;
+-      state.fund-=cost;state.prototype={product:id,brief:state.brief||"family",review:state.month,reworked:false,approved:false};
++      if(state.fund-cost<cashNeeded()||state.prototype||state.month===state.duration||!canDesign(id))return;
++      state.accounts.researchSaved=(state.accounts.researchSaved||0)+researchFee(id,1)-cost;
++      state.fund-=cost;state.prototype={product:id,revised:state.unlocked.includes(id),material:state.material||"common",lead:state.lead||"maker",brief:state.brief||"family",review:state.month,reworked:false,approved:false};
+       message=products[id].name+" 시제품 착수";pattern="build";
+     }
+   }
+--- a/js/reports.js
++++ b/js/reports.js
+@@ -15,8 +15,8 @@
+ function monthlyBudget(){
+   const est=marketStats(),debt=Math.min(24,state.debt);
+   const tuition=plannedTuition();
+-  const company=est.unit*state.qty, estate=overhead()-debt;
+-  return {tuition,company,estate,debt,total:tuition+company+estate+debt,revenue:est.revenue,closing:est.balance};
++  const company=est.unit*state.qty+est.expenses, estate=overhead()-debt;
++  return {tuition,company,estate,debt,trade:est.trade,total:tuition+company+estate+debt,revenue:est.revenue,closing:est.balance};
+ }
+ function amountRow(name,value,cls=""){
+   return '<div class="amount-row '+cls+'"><span>'+name+'</span><strong>'+money(value)+'</strong></div>';
+@@ -32,7 +32,8 @@
+   return '<section class="budget-book forecast">'+(compact?'':'<h3>이달 자금 예상</h3>')+
+     '<div class="cash-head"><span>예상 월말 잔액</span><strong>'+money(b.closing)+'</strong><b class="cash-change">'+(change>0?'▲ '+money(change)+' 증가':change<0?'▼ '+money(-change)+' 감소':'변동 없음')+'</b></div>'+
+     amountRow("현재 가용 자금",state.fund)+flow("팬텀사 예상 매출",b.revenue,false)+flow("남은 지출 합계",b.total,true)+
+-    (compact?'<details class="expense-details"><summary>지출 내역·시설 효과</summary>':'')+'<div class="cash-detail">'+amountRow("저택 운영 · 시설 유지",b.estate)+amountRow("팬텀사 운영 · 생산비",b.company)+amountRow("교육·활동비",b.tuition)+
++    (compact?'<details class="expense-details"><summary>지출 내역·시설 효과</summary>':'')+'<div class="cash-detail">'+amountRow("저택 운영 · 시설 유지",b.estate)+amountRow("팬텀사 운영 · 생산비",b.company)+
++    '<small>설비 운영 '+money(b.trade.operation)+' · 월말 보관 '+money(b.trade.holding)+' (전 품목 8개까지 무료)'+(b.trade.order?' · 예상 납품 '+b.trade.shipped+'/'+b.trade.order.qty+'개 · 미납 부담 '+money(b.trade.penalty):'')+'</small>'+amountRow("교육·활동비",b.tuition)+
+     (b.debt?amountRow("채무 상환",b.debt):"")+'</div>'+
+     (state.accounts.estate||state.accounts.company?'<p>가용 자금에 이미 반영된 지출 · 저택 '+money(state.accounts.estate)+' / 팬텀사 '+money(state.accounts.company)+'</p>':'')+contributionNote(investmentEffect(forecast()),state.accounts.researchSaved)+(compact?'</details>':'')+'</section>';
+ }
+@@ -41,23 +42,24 @@
+   const items=[];
+   if(investment?.production)items.push("생산비 절감 "+money(investment.production));
+   if(investment?.extraSales)items.push("매대 추가 매출 "+money(investment.extraSales));
++  if(investment?.overheadChange)items.push("운영·보관비 변화 "+money(investment.overheadChange));
+   if(investment?.wrapping)items.push("포장 수익 "+money(investment.wrapping));
+   if(investment?.design)items.push("도안 웃돈 "+money(investment.design));
+   if(research)items.push("개발비 할인 "+money(research));
+-  return '<aside class="investment-result"><b>기본 시설 대비 +'+money((investment?.total||0)+(research||0))+'</b><p>'+items.join(" · ")+'</p><small>같은 달·가격·물량에서의 차이로, 위 수입과 지출에 반영되어 있습니다.</small></aside>';
++  return '<aside class="investment-result"><b>기본 시설 대비 '+money((investment?.total||0)+(research||0))+'</b><p>'+items.join(" · ")+'</p><small>같은 달·가격·물량에서의 차이로, 위 수입과 지출에 반영되어 있습니다.</small></aside>';
+ }
+ function actualBudget(){
+   const r=state.report,a=state.accounts;
+   if(!r)return "";
+   const legacy=r.debtPayment==null;
+-  const expenses=a.estate+a.company+r.training+r.cost+r.bills;
++  const expenses=a.estate+a.company+r.training+r.cost+r.bills+(r.expenses||0);
+   return '<section class="budget-book"><h3>가문 회계</h3>'+
+     amountRow(a.partial?"기록 시작 잔액":"월초 잔액",a.opening)+
+-    amountRow("팬텀사 판매 매출",r.income)+(r.advance?amountRow("납품 선금",r.advance):"")+
++    amountRow("팬텀사 소매 매출",r.income-(r.wholesale||0))+(r.wholesale?amountRow("거래처 납품 대금",r.wholesale):"")+(a.divest?amountRow("설비 매각 대금",a.divest):"")+(r.advance?amountRow("납품 선금",r.advance):"")+
+     (a.borrowed?amountRow("대출 입금",a.borrowed):"")+
+     amountRow(legacy?"저택 유지·채무 합산":"저택 운영",r.bills-(r.debtPayment||0)+a.estate)+
+     (a.estate?'<p>유지 '+money(r.bills-(r.debtPayment||0))+' · 개수·지원 등 '+money(a.estate)+'</p>':'')+
+-    amountRow("팬텀사 운영",r.cost+a.company)+
++    amountRow("팬텀사 운영",r.cost+a.company+(r.expenses||0))+(r.expenses?'<p>설비 운영 '+money(r.operating)+' · 보관 '+money(r.storage)+' · 미납 부담 '+money(r.penalty)+'</p>':"")+
+     (a.company?'<p>생산 '+money(r.cost)+' · 증설·개발 '+money(a.company)+'</p>':'')+
+     amountRow("교육·활동비",r.training)+(r.debtPayment?amountRow("채무 상환",r.debtPayment):"")+
+     amountRow("지출 합계",expenses,"subtotal")+amountRow("월말 잔액",state.fund,"balance")+
+--- a/js/scenes.js
++++ b/js/scenes.js
+@@ -83,7 +83,7 @@
+   con.hidden=false;
+   if(event){
+     const buttons=event.choices.map((c,i)=>btn(c.label+(c.when&&!c.when(state)?' · '+c.hint:""),"choose:"+i,Boolean(c.when&&!c.when(state)),"vn-choice")).join("");
+-    con.innerHTML=staged(castName(event),"",event.text,buttons,"",event.slot?choreography[event.slot][0]:event.id.startsWith("season-")&&event.speaker==="엘리자베스"?"garden":"ballroom");return true;
++    con.innerHTML=staged(castName(event),"",storyLine(event),buttons,"",event.slot?choreography[event.slot][0]:event.id.startsWith("season-")&&event.speaker==="엘리자베스"?"garden":"ballroom");return true;
+   }
+   const c=chatDialogue();
+   con.innerHTML=dialogueCast("세바스찬")+'<article class="dialogue"><small>'+c.caption+'</small><p>'+c.line+'</p>'+(c.effects?'<small>'+escapeHTML(c.effects)+'</small>':'')+'<div class="answers">'+c.buttons+'</div></article>';
+@@ -115,7 +115,10 @@
+   const after=snapStats(state);
+   const effects=Object.keys(after).filter(k=>before[k]!==after[k])
+     .map(k=>k+" "+signed(after[k]-before[k])).join(" · ")||"수치 변동 없음";
+-  const [title,line]=lines[id];
++  const [title,usual]=lines[id];
++  let line=usual;
++  if(id==="tea"&&state.flags.teaBlend)line="“설탕은 하나. 그래, 오늘도 그걸로.” 시엘이 서류에서 눈을 떼지 않고 잔을 받습니다.";
++  if(id==="health"&&state.flags.morningGloves)line="“손을 내밀기도 전에 장갑부터 챙기는 녀석이 그걸 물어?” 시엘이 반대쪽 손도 내밉니다.";
+   state.spoken={turn:state.month,title,line,effects};
+   persist();render(true);
+ }
+--- a/js/story.js
++++ b/js/story.js
+@@ -145,3 +145,70 @@
+    ]}
+ ];
+ }
++
++function recordedChoice(run,id){
++  return run.events.find(entry=>entry.id===id)?.index;
++}
++function storyLine(event){
++  return event.rememberedText ? event.rememberedText(state) : event.text;
++}
++function visitMemory(place,person){
++  if(!person)return null;
++  for(const entry of state.events){
++    if(entry.month>=state.month||state.visitMemories?.[entry.id])continue;
++    const memory=visitRecollections[entry.id];
++    if(memory?.place===place&&memory.person===person&&memory.lines[entry.index])
++      return {id:entry.id,line:memory.lines[entry.index]};
++  }
++  return null;
++}
++const visitRecollections={
++  postalReply:{place:"library",person:"tanaka",lines:[
++    "화이트채플에서 온 두 통은 한 봉투에 들었습니다. 다음에 찾으실 때도 같이 꺼내 드리지요.",
++    "제보자 앞으로 보낸 봉투가 돌아오지 않았습니다. 답신이 오면 이 칸을 먼저 보시지요."]},
++  greenhouseKey:{place:"garden",person:"finny",lines:[
++    "도련님, 오늘은 제가 노크할게요. 지난번에 열쇠 맡아 주셨잖아요!",
++    "지난번에 같이 보신 그 봉오리예요. 오늘 아침에 벌어졌어요."]},
++  finnyRoseLabel:{place:"garden",person:"finny",lines:[
++    "오늘은 돌아가며 보실 필요 없어요. 제 쪽에서 제가 읽어 드릴게요.",
++    "장부의 네 번째 줄이 여기예요. 비가 와도 번호는 그대로라서 금방 찾았어요!"]},
++  bardSupper:{place:"kitchen",person:"bard",lines:[
++    "오늘도 한 숟갈 덜어 놨습니다. 간 보실 분이 계시니까요.",
++    "도련님 접시는 바로 이 뚜껑 밑에 있습니다. 오늘은 따뜻할 겁니다."]},
++  linenMarks:{place:"quarters",person:"mey",lines:[
++    "파란 실은 손님방, 흰 실은 도련님 방. 이번엔 수건이 제자리에 갔습니다요!",
++    "개킨 쪽으로 손을 넣으면 작은 수건부터 잡혀요. 도련님이 보신 그대로예요."]}
++};
++function followupEvents(){
++  const after=(s,id)=>s.events.some(e=>e.id===id&&(e.month==null||e.month<s.month));
++  return [
++    {id:"finnyRoseLabel",visitOnly:true,visitPlace:"garden",title:"장미의 표찰",speaker:"피니안",
++     text:"도련님 쪽에서 읽으시게 꽂았는데, 물을 줄 때마다 제가 반대로 읽어요. 이 이름, 다시 쓸까요?",
++     sees:s=>s.visit==="garden"&&!!s.people.finny,
++     responses:["그럼 이번엔 제가 읽는 쪽으로요. 내일 꽃이 피면 제가 먼저 알려 드릴게요!","장부 순서대로 하나, 둘…… 아, 그럼 잉크가 번져도 어느 화분인지 알겠어요."],
++     choices:[choice("네 글씨대로 둬. 화분을 돌리면 되잖아.","표찰의 방향을 피니안에게 맡겼다.",()=>{}),
++              choice("화분 번호를 장부에도 적어 두지.","장미의 번호를 정원 장부에 옮겼다.",()=>{})]},
++    {id:"bardSupper",visitOnly:true,visitPlace:"kitchen",title:"식기 전에",speaker:"바르도",
++     text:"수프는 다 됐는데 은쟁반이 아직 안 왔습니다. 손님 몫을 다시 끓일까요, 도련님?",
++     sees:s=>s.visit==="kitchen"&&!!s.people.bard,
++     responses:["그럼 여기, 제일 작은 숟가락입니다. 냄비 위에서 드셨단 말은 안 하겠습니다.","뚜껑이 꼭 맞는 그릇이라…… 과연. 불을 다시 지필 필요도 없군요."],
++     choices:[choice("내가 먼저 간을 보지.","바르도가 맛볼 몫을 덜어 두었다.",()=>talkTrust("bard")),
++              choice("한 그릇 덜어서 덮어 둬.","바르도가 시엘의 접시를 따로 덮었다.",()=>shift("hp",2))]},
++    {id:"linenMarks",visitOnly:true,visitPlace:"quarters",title:"리넨장 맨 윗칸",speaker:"메이린",
++     text:"손님방 수건이 또 도련님 방에 들어갔습니다요. 글씨가 어찌나 비슷한지…….",
++     sees:s=>s.visit==="quarters"&&!!s.people.mey&&(!s.people.snake||s.month%2===1),
++     responses:["실 색깔은 저도 금방 알아봅니다요. 바느질 상자를 가져올게요!","아, 손으로도 크기를 알겠어요. 맨 윗칸부터 다시 개겠습니다요."],
++     choices:[choice("가장자리에 다른 색 실을 달아.","메이린이 두 색의 실로 수건을 표시했다.",()=>talkTrust("mey")),
++              choice("접는 방향을 달리해 봐.","메이린이 손으로 수건을 구분하게 됐다.",()=>changeStat("통찰",2))]},
++    {id:"supplierReply",chapter:true,speaker:"세바스찬",title:"인수증의 두 번째 장",text:"공장에서 회신이 왔습니다.",
++     rememberedText:s=>(s.flags.audit||recordedChoice(s,"match")===0)?"조사하신 하청 명부에 같은 작업장의 이름이 두 번 있습니다. 오늘 온 인수증에는 이름 하나가 지워져 있군요.":"지난번에 만나신 직원 대표가 인수증 사본을 보냈습니다. 일한 사람들에겐 한 장도 돌아가지 않았답니다.",
++     sees:s=>after(s,"match"),choices:[choice("다음 납품 때 사본을 양쪽에 보내.","양쪽에 인수증을 보냈다. 새 재주문에서 개당 대금 +£1.",()=>{state.flags.sharedReceipt=true;shift("renown",1)}),
++       choice("경리 담당에게 두 장을 대조시켜.","대조 절차를 마련했다. 새 재주문의 미납 부담이 개당 £1로 감소한다.",()=>{state.flags.checkedReceipt=true;changeStat("경영",5)})]},
++    {id:"postalReply",chapter:true,speaker:"세바스찬",title:"회송 봉투",text:"화이트채플에서 답신이 왔습니다.",
++     rememberedText:s=>(s.flags.postmark||recordedChoice(s,"chapel")===0)?"도련님이 읽으신 소인을 보고 우체국에서 답을 보냈습니다. 전보는 이틀 동안 한 창구에 맡겨져 있었답니다.":"지난번 정리하신 연락망에서 답이 왔습니다. 세 곳에서 같은 전보를 받았는데, 회신할 주소가 서로 다릅니다.",
++     sees:s=>after(s,"chapel"),choices:[choice("원본과 답신을 한 봉투에 넣어.","화이트채플 서신을 가문 기록에 보관했다.",()=>changeStat("통찰",5)),
++       choice("첫 제보자에게 확인을 부탁해.","첫 제보자에게 답장을 보냈다.",()=>changeStat("의지",5))]},
++    {id:"snakeReturn",speaker:"스네이크",title:"돌아오는 길",text:"갈 곳이 없으면 오라고 했던 말…… 아직 유효하냐고, 에밀리가 물어.",
++     sees:()=>false,choices:[choice("네 자리는 비워 뒀어. 들어와.","스네이크가 돌아와 풋맨으로 일한다.",()=>recruit("snake"))]}
++  ];
++}
