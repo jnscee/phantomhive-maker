@@ -10,7 +10,7 @@ for(const name of ['content','prince','recruit','story','scenes','audio','report
 const run=s=>vm.runInContext(s,ctx,{timeout:1800});run('let tourSession=false;render=function(){};');
 run('render=()=>{};respond=()=>{};announce=()=>{};focusAction=()=>{};popMoney=()=>{};document.querySelector=()=>null;');
 const assertOk=source=>assert.ok(run(source),source);
-const setup=(code="")=>run('state=initial();state.phase="plan";tab="company";'+code);
+const setup=(code="")=>run('state=initial();state.owlSeed=1;state.phase="plan";tab="company";'+code);
 function pick(){
   run('if(recruitScenes[state.pending])state.recruitPage={id:state.pending,version:2,at:recruitScenes[state.pending].lines.length-1};choose(0)');
 }
