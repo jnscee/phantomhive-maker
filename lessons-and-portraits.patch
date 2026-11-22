@@ -167,7 +167,7 @@
 +<script src="js/tour.js?v=e380777efa81"></script>
 +<script src="js/content.js?v=a51a55a6c9b6"></script>
 +<link rel="stylesheet" href="css/recruit.css?v=b0fcf649ce20">
-+<script src="js/recruit.js?v=125b4e4b514c"></script>
++<script src="js/recruit.js?v=736f94f8abd7"></script>
 +<script src="js/story.js?v=67ad4d7098cb"></script>
 +<script src="js/scenes.js?v=984605a2b05e"></script>
 +<script src="js/audio.js?v=0c4fad4e8349"></script>
@@ -1086,21 +1086,21 @@
 +      auto.setAttribute("aria-pressed","false");auto.textContent="자동 재생";
 +    }
 +  }
-+  const conversation=stage.querySelector("#conversation");
-+  if(conversation){
-+    if(hidden && getComputedStyle(conversation).display==="grid"){
-+      const rows=getComputedStyle(conversation).gridTemplateRows.split(" ");
-+      if(rows.length>1 && rows.every(row=>row.endsWith("px"))){
-+        conversation.style.gridTemplateRows=["minmax(0,1fr)",...rows.slice(1)].join(" ");
-+      }
-+    } else if(!hidden) conversation.style.removeProperty("grid-template-rows");
-+  }
++  const figures=Array.from(stage.querySelectorAll("#conversation .standing-window"));
++  const before=hidden?figures.map(figure=>figure.getBoundingClientRect()):[];
++  for(const figure of figures)figure.style.removeProperty("transform");
 +  stage.dataset.artOnly=String(hidden);
 +  const openingMat=stage.querySelector(".opening-mat");
 +  if(openingMat)openingMat.hidden=hidden;
 +  for(const overlay of stage.querySelectorAll("#conversation .dialogue,#conversation .answers,#conversation .opening-top,#conversation .review-bubble,#conversation .review-slip")){
 +    overlay.style.visibility=hidden?"hidden":"";
 +    overlay.inert=hidden;
++  }
++  if(hidden){
++    figures.forEach((figure,i)=>{
++      const after=figure.getBoundingClientRect();
++      figure.style.transform="translate("+(before[i].left-after.left)+"px,"+(before[i].top-after.top)+"px)";
++    });
 +  }
 +  toggle.setAttribute("aria-pressed",String(hidden));
 +  toggle.textContent=hidden?"대화창 표시":"대화창 숨기기";
@@ -1541,7 +1541,7 @@
  <button type="button" data-id="gardener">피니안</button><button type="button" data-id="maid">메이린</button><button type="button" data-id="cook">바르도</button><button type="button" data-id="homecoming">타나카</button><button type="button" data-id="circus">스네이크</button><button type="button" data-id="visitPrince">소마·아그니</button>
  </nav></main></div>
 -<script src="js/recruit.js?v=27041d4d6af2"></script><script>const previewAsset=k=>k;
-+<script src="js/recruit.js?v=125b4e4b514c"></script><script>const previewAsset=k=>k;
++<script src="js/recruit.js?v=736f94f8abd7"></script><script>const previewAsset=k=>k;
  const host=document.getElementById("conversation"),stage=document.getElementById("scene");
  observePortraitStage(stage);
  function openBook(id){
