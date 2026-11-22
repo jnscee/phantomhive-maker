@@ -21,6 +21,15 @@ jobs:
           mkdir site
           for archive in game-part-*.zip; do unzip -q "$archive" -d site; done
           test -s site/index.html
+          if ! grep -Fq 'planMonth:1,plan:emptyPlan(),visit:null' site/js/game.js; then
+            patch --batch --forward --no-backup-if-mismatch --fuzz=0 -d site -p1 < monthly-plan.patch
+          fi
+          grep -Fq 'state.plan=emptyPlan()' site/js/game.js
+          for module in game chapters content reports tour; do
+            node --check "site/js/$module.js"
+            version=$(sha256sum "site/js/$module.js" | cut -c1-12)
+            sed -Ei "s|(js/$module[.]js)([?]v=[[:alnum:]-]+)?\"|\1?v=$version\"|g" site/index.html
+          done
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
