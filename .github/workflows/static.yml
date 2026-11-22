@@ -25,17 +25,28 @@ jobs:
             patch --batch --forward --no-backup-if-mismatch --fuzz=0 -d site -p1 < monthly-plan.patch
           fi
           grep -Fq 'state.plan=emptyPlan()' site/js/game.js
-          for change in arrival-and-schedule.patch court-opinion.patch ending-music.patch story-and-commerce.patch; do
+          for change in arrival-and-schedule.patch court-opinion.patch ending-music.patch story-and-commerce.patch lessons-and-portraits.patch; do
             if ! patch --force --reverse --dry-run --fuzz=0 -d site -p1 < "$change" >/dev/null; then
               patch --batch --forward --no-backup-if-mismatch --fuzz=0 -d site -p1 < "$change"
             fi
           done
-          for module in game chapters content reports tour recruit story scenes audio; do
+          for module in game chapters content reports tour recruit story scenes audio prologue; do
             node --check "site/js/$module.js"
             version=$(sha256sum "site/js/$module.js" | cut -c1-12)
             sed -Ei "s|(js/$module[.]js)([?]v=[[:alnum:]-]+)?\"|\1?v=$version\"|g" site/index.html site/recruit-preview.html
           done
           node story-commerce.cjs site
+      - name: Check animation and portrait interaction in Chromium and Firefox
+        env:
+          NODE_PATH: ${{ runner.temp }}/browser-qa/node_modules
+        run: |
+          npm install --prefix "$RUNNER_TEMP/browser-qa" --no-save --no-package-lock playwright@1.56.1
+          "$RUNNER_TEMP/browser-qa/node_modules/.bin/playwright" install --with-deps chromium firefox
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory site > "$RUNNER_TEMP/game-http.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          for attempt in {1..20}; do curl -fsS http://127.0.0.1:4173/index.html -o /dev/null && break; sleep 1; done
+          node lessons-and-portraits.cjs
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
