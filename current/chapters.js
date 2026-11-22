@@ -1,11 +1,11 @@
 "use strict";
 function portraitAge(){const run=tourSession?.state??state;return ageAt(run.month,portraitDay(run));}
 function portraitDay(run){return ["event","result","vow","ending"].includes(run.phase)?calendarDate(run.month+1,0).getUTCDate():run.phase==="slotEvent"||run.phase==="review"?Math.min(28,10*((run.sequence?.index??0)+1)):1;}
-const portraits={라우:"assets/npc-lau.webp",세바스찬:"assets/sebastian.webp",타나카:"assets/npc-tanaka.webp",피니안:"assets/npc-finny.webp",메이린:"assets/npc-mey.webp",바르도:"assets/npc-bard.webp",스네이크:"assets/npc-snake.webp",소마:"assets/npc-soma.webp",아그니:"assets/npc-agni.webp",get 엘리자베스(){const age=elizabethAge();return age===13?"assets/npc-lizzy.webp":"assets/npc-lizzy-"+age+(age===12?"-portrait":"")+".webp";},get 시엘(){const age=portraitAge();return age<11?"assets/ciel.png":"assets/ciel-"+Math.min(age,12)+".webp";}};
-const castByEvent={gardener:"피니안",maid:"메이린",cook:"바르도",circus:"스네이크",visitPrince:"소마",jubilee:"세바스찬",agniTray:"아그니",greenhouseKey:"피니안"};
+const portraits={라우:"assets/npc-lau.webp",세바스찬:"assets/sebastian.webp",타나카:"assets/npc-tanaka.webp",피니안:"assets/npc-finny.webp",메이린:"assets/npc-mey.webp",올빼미:"assets/portraits/mey-owl.webp",바르도:"assets/npc-bard.webp",스네이크:"assets/npc-snake.webp",소마:"assets/portraits/soma.webp",아그니:"assets/portraits/agni.webp",get 엘리자베스(){const age=elizabethAge();return age===13?"assets/npc-lizzy.webp":"assets/npc-lizzy-"+age+(age===12?"-portrait":"")+".webp";},get 시엘(){const age=portraitAge();return age<11?"assets/ciel.png":"assets/ciel-"+Math.min(age,12)+".webp";}};
+const castByEvent={gardener:"피니안",maid:"올빼미",cook:"바르도",circus:"스네이크",visitPrince:"소마",jubilee:"세바스찬",agniTray:"아그니",greenhouseKey:"피니안"};
 function castName(e){return castByEvent[e.id]||((e.speaker in portraits)?e.speaker:"세바스찬");}
 function elizabethAge(){return Math.max(11,Math.min(13,portraitAge()+1));}
-const castHeights={세바스찬:189,타나카:164,피니안:165,메이린:165,바르도:181,스네이크:172,소마:174,아그니:188,라우:177};
+const castHeights={세바스찬:189,타나카:164,피니안:165,메이린:165,올빼미:165,바르도:181,스네이크:172,소마:174,아그니:188,라우:177};
 function dialogueCast(speaker,cast=[speaker==="시엘"?"세바스찬":speaker,"시엘"]){
   return cast.map((name,index)=>
     '<img class="butler cast '+(index?"cast-right":"cast-left")+'" alt="'+name+'" style="--cast-height:'+

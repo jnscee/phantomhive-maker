@@ -199,13 +199,13 @@
 +<script src="js/tour.js?v=e380777efa81"></script>
 +<script src="js/content.js?v=d769419af08b"></script>
 +<link rel="stylesheet" href="css/recruit.css?v=b0fcf649ce20">
-+<script src="js/prince.js?v=e8a735fc28a4"></script><script src="js/recruit.js?v=19d63d834b19"></script>
++<script src="js/prince.js?v=e8a735fc28a4"></script><script src="js/recruit.js?v=5ac9fa46403b"></script>
 +<script src="js/story.js?v=34de2fcd8bbd"></script>
 +<script src="js/scenes.js?v=7b5e2f2f3753"></script>
 +<script src="js/audio.js?v=a2c2b562bba2"></script>
 +<script src="js/reports.js?v=4f9c37d3604c"></script>
 +<script src="js/prologue.js?v=9bdb9de8c466"></script>
-+<script src="js/chapters.js?v=b15694995087"></script>
++<script src="js/chapters.js?v=ad542ea111ab"></script>
 +<script src="js/staffing.js?v=580e246534c9"></script>
 +<script src="js/term-events.js?v=88ff00703568"></script>
 +<script src="js/visitors.js?v=128e1fbff437"></script>
@@ -292,7 +292,7 @@
 @@ -1,22 +1,22 @@
  "use strict";
 -const portraits={세바스찬:"assets/sebastian.webp",타나카:"assets/npc-tanaka.webp",피니안:"assets/npc-finny.webp",메이린:"assets/npc-mey.webp",바르도:"assets/npc-bard.webp",스네이크:"assets/npc-snake.webp",소마:"assets/npc-soma.webp",아그니:"assets/npc-agni.webp",get 엘리자베스(){const age=elizabethAge();return age===13?"assets/npc-lizzy.webp":"assets/npc-lizzy-"+age+".webp";},get 시엘(){const age=ageAt(state.month);return age<11?"assets/ciel.png":"assets/ciel-"+Math.min(age,12)+".webp";}};
-+const portraits={라우:"assets/npc-lau.webp",세바스찬:"assets/sebastian.webp",타나카:"assets/npc-tanaka.webp",피니안:"assets/npc-finny.webp",메이린:"assets/npc-mey.webp",바르도:"assets/npc-bard.webp",스네이크:"assets/npc-snake.webp",소마:"assets/npc-soma.webp",아그니:"assets/npc-agni.webp",get 엘리자베스(){const age=elizabethAge();return age===13?"assets/npc-lizzy.webp":"assets/npc-lizzy-"+age+".webp";},get 시엘(){return cielArt(currentCielAge());}};
++const portraits={라우:"assets/npc-lau.webp",세바스찬:"assets/sebastian.webp",타나카:"assets/npc-tanaka.webp",피니안:"assets/npc-finny.webp",메이린:"assets/npc-mey.webp",바르도:"assets/npc-bard.webp",스네이크:"assets/npc-snake.webp",소마:"assets/portraits/soma.webp",아그니:"assets/portraits/agni.webp",get 엘리자베스(){const age=elizabethAge();return age===13?"assets/npc-lizzy.webp":"assets/npc-lizzy-"+age+".webp";},get 시엘(){return cielArt(currentCielAge());}};
  const castByEvent={gardener:"피니안",maid:"메이린",cook:"바르도",circus:"스네이크",visitPrince:"소마",jubilee:"세바스찬",agniTray:"아그니",greenhouseKey:"피니안"};
  function castName(e){return castByEvent[e.id]||((e.speaker in portraits)?e.speaker:"세바스찬");}
 -function elizabethAge(){return Math.max(11,Math.min(13,ageAt(state.month)+1));}
@@ -301,10 +301,11 @@
    const left=speaker==="시엘"?"세바스찬":speaker;
    return [left,"시엘"].map((name,index)=>
 -    sceneStanding(name,index?"right":"left",portraits[name],name==="엘리자베스"?'data-lizzy-age="'+elizabethAge()+'" ':"")).join("");
-+    sceneStanding(name,index?"right":"left",portraits[name],name==="엘리자베스"?elizabethAge():undefined)).join("");
- }
+-}
 -function staged(who,title,line,buttons,caption="",room="library"){
 -  const start='<div class="review-room" style="background-image:url(&quot;'+sceneArt[room]+'&quot;)"></div>'+dialogueCast(who);
++    sceneStanding(name,index?"right":"left",portraits[name],name==="엘리자베스"?elizabethAge():undefined)).join("");
++}
 +function staged(who,title,line,buttons,caption="",room="library",partner=who){
 +  const start='<div class="review-room" style="background-image:url(&quot;'+sceneArt[room]+'&quot;)"></div>'+dialogueCast(partner);
    const speaker=(caption?caption+'　·　':'')+who,heading=title?'<h2>'+title+'</h2>':'';
@@ -1951,7 +1952,15 @@
    if(i+step>=openingLines.length){finishOpening();return;}
 --- a/js/recruit.js
 +++ b/js/recruit.js
-@@ -18,13 +18,13 @@
+@@ -12,19 +12,19 @@
+ const recruitProps={tea:"assets/goods-tea.webp"};
+ const recruitCast={
+   ciel:"assets/ciel.png",ciel11:"assets/ciel-11.webp",ciel12:"assets/ciel-12.webp",seb:"assets/sebastian.webp",
+-  finny:"assets/npc-finny.webp",mey:"assets/npc-mey.webp",bard:"assets/npc-bard.webp",tanaka:"assets/npc-tanaka.webp",
+-  snake:"assets/npc-snake.webp",soma:"assets/npc-soma.webp",agni:"assets/npc-agni.webp"
++  finny:"assets/npc-finny.webp",mey:"assets/npc-mey.webp",owl:"assets/portraits/mey-owl.webp",bard:"assets/npc-bard.webp",tanaka:"assets/npc-tanaka.webp",
++  snake:"assets/npc-snake.webp",soma:"assets/portraits/soma.webp",agni:"assets/portraits/agni.webp"
+ };
  // Speakers before the naming scene use the boy's number. His gardener portrait appears only at the manor.
  const recruitScenes={
    gardener:{name:"피니안",title:"번호 대신 이름을",result:"피니안이 팬텀하이브가의 정원사가 되었다.",scenes:[
@@ -1968,7 +1977,7 @@
        ["S-012","밖이었다. 하늘에 둥근 빛이 떠 있었다. 바로 앞에 두 사람이 서 있었다."],["S-012","으아아……!"],
        ["세바스찬","도련님, 제 뒤로."],["시엘","잠깐, 세바스찬."],["시엘","네 이름은?"],["피니안의 회상","그때는 무슨 말인지 몰랐다. 내게 이름을 물은 사람은 도련님이 처음이었다."]]},
      {title:"그 뒤, 저택의 서재",art:"library",cast:["finny","ciel"],lines:[
-@@ -35,10 +35,10 @@
+@@ -35,23 +35,25 @@
        ["시엘","그래. 그래서 네 이름은 피니언이다."]]},
      {title:"세바스찬의 한마디",art:"library",cast:["ciel","seb"],lines:[
        ["세바스찬","꽤 거창한 이름을 골라 주셨군요."],["세바스찬","제 경우처럼 개 이름을 물려받는 것보다는 낫겠습니다만."]]},
@@ -1981,7 +1990,29 @@
        ["세바스찬","이제야 표정이 풀리는군요."],["세바스찬","그럼 그 책을 조금만 놓아 주시겠습니까. 말씨도, 힘을 쓰는 법도 차차 익히셔야겠군요."]]}
    ]},
    maid:{name:"메이린",title:"아침의 올빼미",result:"메이린이 팬텀하이브가의 메이드로 합류했다.",scenes:[
-@@ -68,13 +68,13 @@
+     {"title": "아침 시중", "art": "bedroom", "cast": ["seb"], "lines": [["세바스찬", "도련님. 아침입니다."], ["시엘", "으음……."], ["장면", "세바스찬이 커튼을 걷었다. 햇빛이 이불 끝까지 들어왔다."]], "music": "daily"},
+-    {"title": "깨진 창", "art": "bedroom", "cast": ["seb"], "lines": [["장면", "창이 깨졌다. 시엘이 몸을 일으키기도 전에 은제 찻주전자가 그의 앞을 가로막았다."], ["올빼미", "빗나갔어……?"], ["시엘", "뭐야? 이건 또 왜 새는 거야?"], ["장면", "세바스찬이 찻잔을 받쳐 들었다. 주전자 옆구리에서 새는 홍차가 잔 안으로 떨어졌다."]]},
++    {"title": "깨진 창", "art": "bedroom", "cast": ["seb"], "lines": [["장면", "창이 깨졌다. 시엘이 몸을 일으키기도 전에 은제 찻주전자가 그의 앞을 가로막았다."]]},
++    {"title": "창밖", "art": "garden", "cast": ["owl"], "lines": [["올빼미", "빗나갔어……?"]]},
++    {"title": "깨진 창", "art": "bedroom", "cast": ["seb"], "lines": [["시엘", "뭐야? 이건 또 왜 새는 거야?"], ["장면", "세바스찬이 찻잔을 받쳐 들었다. 주전자 옆구리에서 새는 홍차가 잔 안으로 떨어졌다."]]},
+     {"title": "닐기리", "art": "bedroom", "cast": ["seb", "ciel"], "lines": [["세바스찬", "오늘 아침 차는 닐기리로 골랐습니다."], ["시엘", "차 이름을 물어봤어? 방금 내 머리 옆을 지나간 게 뭐냐고!"], ["세바스찬", "누가 도련님을 쏘았습니다. 제법 눈이 좋은 손님이군요."], ["세바스찬", "피니. 잠깐 이쪽으로 와 주시겠습니까?"]], "prop": "tea"},
+     {"title": "식사가 식기 전에", "art": "garden", "cast": ["ciel", "seb"], "lines": [["장면", "정원에 아침상이 차려졌다. 세바스찬이 시엘의 의자를 당겼다."], ["세바스찬", "완두콩 수프와 미트볼입니다. 크루아상은 방금 구웠고, 달걀도 삶아 두었습니다."], ["세바스찬", "후식은 오렌지 젤리입니다. 그럼 다녀오겠습니다. 천천히 드십시오."], ["시엘", "……어?"]], "music": "daily"},
+-    {"title": "창가의 올빼미", "art": "library", "cast": ["seb", "ciel"], "lines": [["세바스찬", "실례하겠습니다, 도련님. 아침에 찾아온 ‘올빼미’를 데려왔습니다."], ["올빼미", "저 애가…… 팬텀하이브 백작?"], ["시엘", "청방의 백이 나를 노린다더니. 자기가 길렀다는 올빼미까지 보낸 걸 보면 정보가 맞았군."], ["올빼미", "날 죽여. 뭘 물어봐도 대답은 못 들어. 바닥만 더러워질 거야."], ["세바스찬", "바닥까지 다시 닦을 일을 왜 만들겠습니까? 저는 다른 용건이 있습니다."]]},
+-    {"title": "뜻밖의 일자리", "art": "library", "cast": ["seb", "ciel"], "lines": [["세바스찬", "팬텀하이브가에서 일해 보실 생각은 없습니까?"], ["올빼미", "……뭐?"], ["시엘", "뭐라고? 세바스찬, 저 사람은 오늘 아침에 나를 쏘러 왔어!"], ["세바스찬", "예. 그런데 저희는 사람이 모자라고, 피니 혼자서 저택 일을 전부 맡을 수도 없지요. 저 눈이라면 망을 보는 데도 쓸모가 있겠습니다."], ["세바스찬", "게다가 일을 그르친 이상 백에게 돌아갈 수도 없겠지요. 이곳에는 빈자리가 있습니다."]]},
+-    {"title": "빈자리는 메이드", "art": "library", "cast": ["ciel", "seb"], "lines": [["세바스찬", "손님을 맞으려면 메이드 한 명은 있어야 한다고 하신 분은 도련님이셨습니다."], ["시엘", "메이드? 잠깐. 올빼미가……?"], ["세바스찬", "예. 이분은 여성입니다만."], ["시엘", "……그렇다고 날 죽이러 온 사람한테 앞치마를 주겠다는 거야?"]]},
+-    {"title": "저택이 찾는 사람", "art": "library", "cast": ["seb", "ciel"], "lines": [["세바스찬", "도련님을 지킬 솜씨가 있고, 배신할 수 없는 처지에 있고, 도련님이 직접 그 실력을 보신 사람. 구인 광고를 내도 좀처럼 찾기 힘들겠지요."], ["올빼미", "잠깐. 둘이서 멋대로 정하지 마. 난 안 해. 사람을 죽이던 손으로 메이드 일을 어떻게 하라고."], ["세바스찬", "먼지떨이를 들어 보기도 전에 그걸 어떻게 아십니까? 주인에게 성가신 것을 치운다는 점에선 익숙한 일일 텐데요."], ["세바스찬", "소개장도 여권도 없이 청방에 쫓기면서, 이 문을 나가면 어디로 가실 생각입니까?"], ["올빼미", "그건……."]]},
+-    {"title": "고용 조건", "art": "library", "cast": ["seb"], "lines": [["세바스찬", "메이드 경력은 묻지 않습니다. 나이도, 어디에서 오셨는지도요."], ["세바스찬", "급료와 휴일이 있고, 설탕과 홍차도 넉넉히 드립니다. 일을 잘하시면 급료는 올라갑니다."], ["세바스찬", "어떻습니까? 첫 일자리치고는 괜찮은 조건이지요."]], "music": "daily"},
+-    {"title": "그 눈동자", "art": "library", "cast": ["ciel", "seb"], "lines": [["장면", "세바스찬이 올빼미 앞에 몸을 낮췄다. 그의 어깨 너머, 창가에 어린 백작이 서 있었다."], ["세바스찬", "그 눈동자―, 도련님을 위해 써보지 않겠습니까?"]], "music": "daily"}
++    {"title": "창가의 올빼미", "art": "library", "cast": ["owl", "seb"], "lines": [["세바스찬", "실례하겠습니다, 도련님. 아침에 찾아온 ‘올빼미’를 데려왔습니다."], ["올빼미", "저 애가…… 팬텀하이브 백작?"], ["시엘", "청방의 백이 나를 노린다더니. 자기가 길렀다는 올빼미까지 보낸 걸 보면 정보가 맞았군."], ["올빼미", "날 죽여. 뭘 물어봐도 대답은 못 들어. 바닥만 더러워질 거야."], ["세바스찬", "바닥까지 다시 닦을 일을 왜 만들겠습니까? 저는 다른 용건이 있습니다."]], "castBySpeaker": {"시엘": ["owl", "ciel"]}},
++    {"title": "뜻밖의 일자리", "art": "library", "cast": ["owl", "seb"], "lines": [["세바스찬", "팬텀하이브가에서 일해 보실 생각은 없습니까?"], ["올빼미", "……뭐?"], ["시엘", "뭐라고? 세바스찬, 저 사람은 오늘 아침에 나를 쏘러 왔어!"], ["세바스찬", "예. 그런데 저희는 사람이 모자라고, 피니 혼자서 저택 일을 전부 맡을 수도 없지요. 저 눈이라면 망을 보는 데도 쓸모가 있겠습니다."], ["세바스찬", "게다가 일을 그르친 이상 백에게 돌아갈 수도 없겠지요. 이곳에는 빈자리가 있습니다."]], "castBySpeaker": {"시엘": ["owl", "ciel"]}},
++    {"title": "빈자리는 메이드", "art": "library", "cast": ["owl", "seb"], "lines": [["세바스찬", "손님을 맞으려면 메이드 한 명은 있어야 한다고 하신 분은 도련님이셨습니다."], ["시엘", "메이드? 잠깐. 올빼미가……?"], ["세바스찬", "예. 이분은 여성입니다만."], ["시엘", "……그렇다고 날 죽이러 온 사람한테 앞치마를 주겠다는 거야?"]], "castBySpeaker": {"시엘": ["owl", "ciel"]}},
++    {"title": "저택이 찾는 사람", "art": "library", "cast": ["owl", "seb"], "lines": [["세바스찬", "도련님을 지킬 솜씨가 있고, 배신할 수 없는 처지에 있고, 도련님이 직접 그 실력을 보신 사람. 구인 광고를 내도 좀처럼 찾기 힘들겠지요."], ["올빼미", "잠깐. 둘이서 멋대로 정하지 마. 난 안 해. 사람을 죽이던 손으로 메이드 일을 어떻게 하라고."], ["세바스찬", "먼지떨이를 들어 보기도 전에 그걸 어떻게 아십니까? 주인에게 성가신 것을 치운다는 점에선 익숙한 일일 텐데요."], ["세바스찬", "소개장도 여권도 없이 청방에 쫓기면서, 이 문을 나가면 어디로 가실 생각입니까?"], ["올빼미", "그건……."]]},
++    {"title": "고용 조건", "art": "library", "cast": ["owl", "seb"], "lines": [["세바스찬", "메이드 경력은 묻지 않습니다. 나이도, 어디에서 오셨는지도요."], ["세바스찬", "급료와 휴일이 있고, 설탕과 홍차도 넉넉히 드립니다. 일을 잘하시면 급료는 올라갑니다."], ["세바스찬", "어떻습니까? 첫 일자리치고는 괜찮은 조건이지요."]], "music": "daily"},
++    {"title": "그 눈동자", "art": "library", "cast": ["owl", "seb"], "lines": [["장면", "세바스찬이 올빼미 앞에 몸을 낮췄다. 그의 어깨 너머, 창가에 어린 백작이 서 있었다."], ["세바스찬", "그 눈동자―, 도련님을 위해 써보지 않겠습니까?"]], "music": "daily"}
+   ]},
+   cook:{name:"바르도",title:"저택의 새 셰프",result:"바르도가 팬텀하이브가의 셰프로 합류했다.",scenes:[
+     {title:"서재 면담",art:"library",cast:["ciel","seb"],lines:[
+@@ -68,13 +70,13 @@
        ["시엘","전장에선 숯이 될 때까지 구우라는 명령을 받았을지도 모르지."],
        ["시엘","내 주방에선 태우지 마. 이건 명령이야."],
        ["장면","바르도가 고개를 들었다."]]},
@@ -1997,7 +2028,7 @@
        ["장면","서재 문을 두드리는 소리에 시엘이 펜을 놓았다. 문 앞에 선 타나카가 모자를 벗었다."],
        ["타나카","다녀왔습니다, 도련님. 오래 자리를 비웠습니다."],
        ["시엘","어서 와, 할아범. 앉아. 할아범한테 직접 묻고 싶은 게 있었어."],
-@@ -85,7 +85,7 @@
+@@ -85,7 +87,7 @@
        ["시엘","할아범 잘못이 아니야."],
        ["장면","시엘이 책상 한쪽에 쌓아 둔 편지를 타나카 앞으로 밀었다."],
        ["시엘","돌아오면 맡기려고 남겨 뒀어. 예전처럼 할아범이 먼저 봐 줘."]]},
@@ -2006,7 +2037,7 @@
        ["타나카","예, 도련님. 그 전에…… 세바스찬 씨, 잠시 손을 펴 주시겠습니까?"],
        ["장면","타나카가 조끼에서 회중시계를 꺼내 세바스찬의 흰 장갑 위에 놓았다. 뚜껑에는 팬텀하이브가의 문장이 새겨져 있었다."],
        ["세바스찬","이 시계를 제게 주시는 겁니까?"],
-@@ -93,62 +93,63 @@
+@@ -93,62 +95,63 @@
        ["타나카","제가 아직 당신이 어떤 분인지는 잘 모릅니다만…… 도련님을 잘 부탁드립니다."],
        ["세바스찬","……예. 팬텀하이브가의 집사로서 최선을 다해 도련님을 모시겠습니다."]]}
    ]},
@@ -2124,7 +2155,7 @@
  }
  function pageAt(id,at){return Number.isInteger(at)?Math.min(Math.max(0,at),recruitScenes[id].lines.length-1):0;}
  function recruitPage(id){return pageAt(id,state.recruitPage?.id===id?state.recruitPage.at:0);}
-@@ -158,18 +159,110 @@
+@@ -158,48 +161,140 @@
      stage.style.setProperty("--portrait-scene-width",entry.contentRect.width+"px");
    });
    observer.observe(stage);
@@ -2186,9 +2217,9 @@
 -  return '<img class="butler cast cast-'+side+'" alt="'+name+'" '+extra+'src="'+src+'">';
 +// Eye positions and eye-to-chin lengths were measured on each illustration at 400 px high.
 +const standingMeasures={
-+  "세바스찬":[189,67,43], "아그니":[193,47,43], "바르도":[181,52,46],
-+  "피니안":[163,67,42], "메이린":[165,94,46], "스네이크":[177,64,46],
-+  "소마":[171,60,44], "타나카":[166,64,44], "라우":[178,62,42],
++  "세바스찬":[189,67,43], "아그니":[193,49,36], "바르도":[181,52,46],
++  "피니안":[163,67,42], "메이린":[165,94,46], "올빼미":[165,77,44], "스네이크":[177,64,46],
++  "소마":[171,68,42], "타나카":[166,64,44], "라우":[178,62,42],
 +  "엘리자베스11":[144,88,37], "엘리자베스12":[150,43,22], "엘리자베스13":[156,89,46]
 +};
 +const cielMeasures=[[140,86,46],[146,79,45],[152,62,46]];
@@ -2225,9 +2256,10 @@
    return '<article class="dialogue" '+attributes+'>'+(speaker?'<small>'+speaker+'</small>':'')+heading+
      '<p>'+text+' '+next+'</p></article>';
  }
- const recruitNames={ciel:"시엘",seb:"세바스찬",finny:"피니안",mey:"메이린",bard:"바르도",tanaka:"타나카",snake:"스네이크",soma:"소마",agni:"아그니"};
+-const recruitNames={ciel:"시엘",seb:"세바스찬",finny:"피니안",mey:"메이린",bard:"바르도",tanaka:"타나카",snake:"스네이크",soma:"소마",agni:"아그니"};
 -function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers=""){
 -  const book=recruitScenes[id],{scene,speaker,text}=book.lines[at];
++const recruitNames={ciel:"시엘",seb:"세바스찬",finny:"피니안",mey:"메이린",owl:"올빼미",bard:"바르도",tanaka:"타나카",snake:"스네이크",soma:"소마",agni:"아그니"};
 +function readerControls(at,last,auto){
 +  return '<div class="opening-top recruit-controls" role="group" aria-label="대사 재생">'+
 +    '<button type="button" data-read="previous" '+(at===0?'disabled':'')+'>이전</button>'+
@@ -2239,7 +2271,12 @@
    const art=recruitArt[scene.art],bg=file(art.bg),last=at===book.lines.length-1;
    const backdrop=art.crop
      ? '<svg class="review-room recruit-backdrop '+art.tone+'" viewBox="'+art.crop.join(" ")+'" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><image width="680" height="380" href="'+bg+'"/></svg>'
-@@ -181,25 +274,25 @@
+     : '<div class="review-room '+(art.tone||'')+'" style="background-image:url(&quot;'+bg+'&quot;)"></div>';
+-  const cast=scene.cast||[];
++  const cast=scene.castBySpeaker?.[speaker]||scene.cast||[];
+   const actors=cast.map((person,i)=>{
+     const side=person==="ciel"?"right":cast.includes("ciel")||i===0?"left":"right";
+     return sceneStanding(recruitNames[person],side,file(recruitCast[person]));
    }).join("");
    const label=last?(readOnly?"회상 마치기":"영입 확정"):"다음 대사";
    const arrow=answers?'':'<button type="button" class="line-next" data-read="'+(last?'finish':'next')+'" aria-label="'+label+'">▼</button>';
@@ -2273,7 +2310,7 @@
      recruitTimer=setTimeout(()=>{if(line.isConnected&&!document.hidden)step(at+1);else stopRecruitAuto();},delay);
    }
    function click(e){
-@@ -215,7 +308,7 @@
+@@ -215,7 +310,7 @@
      if(read==="previous"&&at>0)step(at-1);
      if(read==="next"&&at<end)step(at+1);
      if(read==="skip"&&at<end)step(end);
@@ -2282,7 +2319,7 @@
    }
    function keydown(e){
      if(e.altKey||e.ctrlKey||e.metaKey||e.repeat||!["ArrowLeft","ArrowRight"].includes(e.key))return;
-@@ -235,32 +328,34 @@
+@@ -235,32 +330,34 @@
    const hasChoices=at===recruitScenes[id].lines.length-1&&event.choices.length>1;
    const answers=hasChoices?'<div class="answers" role="group" aria-label="대화 선택지">'+
      event.choices.map((c,i)=>btn(c.label,"choose:"+i,Boolean(c.when&&!c.when(state)),"vn-choice")).join("")+'</div>':"";
@@ -2896,7 +2933,7 @@
 +<button type="button" id="rail-music" aria-label="배경음악" aria-pressed="true">BGM 켜짐</button>
  </nav></main></div>
 -<script src="js/recruit.js?v=27041d4d6af2"></script><script>const previewAsset=k=>k;
-+<script src="js/prince.js?v=e8a735fc28a4"></script><script src="js/recruit.js?v=19d63d834b19"></script><script src="js/audio.js?v=a2c2b562bba2"></script><script>
++<script src="js/prince.js?v=e8a735fc28a4"></script><script src="js/recruit.js?v=5ac9fa46403b"></script><script src="js/audio.js?v=a2c2b562bba2"></script><script>
 +const tourSession=false;
 +document.getElementById("rail-music").addEventListener("click",()=>toggleChannel("bgm"));
 +for(const type of ["click","keydown"])document.addEventListener(type,e=>{if(e.isTrusted)musicPlayer.unlock();},{capture:true,once:true});

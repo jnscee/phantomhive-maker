@@ -47,6 +47,11 @@ async function check(browserType){
       assert.equal(await londonTab.count(),0);
       await page.evaluate(()=>{state.flags.townhouse=true;recruit('soma');recruit('agni');render();});
       await londonTab.click();
+      for(const id of ['soma','agni']){
+        const host=page.locator('[data-employee="'+id+'"] img');
+        assert.equal(await host.getAttribute('src'),'assets/portraits/'+id+'.webp');
+        await host.evaluate(im=>im.decode());
+      }
       await page.locator('[data-employee="soma"]').click();
       await page.locator('[data-duty="salon"]').click();
       await page.locator('[data-employee="agni"]').click();
@@ -117,6 +122,25 @@ async function check(browserType){
           const im=new Image();im.src=src;return im.decode();
         }));
       });
+      // An old save can resume on the outdoor cutaway. The maid uniform is a separate asset.
+      await page.evaluate(()=>{
+        state=initial();state.month=state.planMonth=15;state.phase='event';state.pending='maid';state.eventQueue=['cook'];
+        recruit('finny');state.recruitPage={id:'maid',version:2,at:4};tab='plan';render();
+      });
+      const owl=page.getByRole('img',{name:'올빼미',exact:true});
+      assert.equal(await owl.getAttribute('src'),'assets/portraits/mey-owl.webp');
+      await owl.evaluate(im=>im.decode());
+      await page.getByRole('button',{name:'다음 대사'}).click();
+      assert.equal(await owl.count(),0);
+      await page.getByRole('button',{name:'건너뛰기'}).click();
+      await owl.evaluate(im=>im.decode());
+      await page.getByRole('button',{name:'영입 확정'}).click();
+      assert.ok(await page.evaluate(()=>Boolean(state.people.mey)));
+      await page.evaluate(()=>{state.phase='plan';state.pending=null;tab='staffing';render();});
+      assert.equal(await page.locator('[data-employee=mey] img').getAttribute('src'),'assets/npc-mey.webp');
+      await page.evaluate(()=>openRecruitMemory('maid'));
+      await page.getByRole('button',{name:'건너뛰기'}).click();
+      await owl.evaluate(im=>im.decode());
       await page.addInitScript(()=>{
         window.playedMusic=[];
         window.Audio=new Proxy(window.Audio,{construct(Audio,args){
