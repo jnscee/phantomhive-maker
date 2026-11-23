@@ -37,7 +37,17 @@ body,body *,body *::before,body *::after{font-family:var(--serif)!important}
 .work-title{border-color:#3d557a}.work-title h3{color:#1b2436}
 .property-map .map-person{width:5%;animation:shop-staff 3s steps(2,end) infinite}
 .map-fitting{position:absolute;width:8%;height:auto;transform:translate(-50%,-85%);filter:drop-shadow(1px 2px #1e253477)}
-.map-person:nth-of-type(3){animation-delay:-1.1s}.map-award{position:absolute;width:22px;height:22px;margin:-20px 0 0 10px;background:url('../assets/rank.png') 0 0/44px 22px;image-rendering:pixelated}.map-award.award-3{background-position:-22px 0}
+.map-person:nth-of-type(3){animation-delay:-1.1s}
+.map-award { position:absolute; margin:4% 0 0 5%; width:16px; height:12px; pointer-events:none; }
+.map-award::before,.map-award.award-3::after {
+  content:""; position:absolute; width:2px; height:2px; background:#fff6dc;
+  box-shadow:0 -4px #b4cde3,0 -2px #fff6dc,0 2px #fff6dc,0 4px #b4cde3,-4px 0 #b4cde3,-2px 0 #fff6dc,2px 0 #fff6dc,4px 0 #b4cde3;
+  animation:facility-twinkle 2.8s ease-in-out infinite;
+}
+.map-award.award-3::after { left:10px; top:-6px; scale:.75; animation-delay:-1.4s; }
+@keyframes facility-twinkle { 0%,100% { opacity:1; } 50% { opacity:.32; } }
+@media(prefers-reduced-motion:reduce) { .map-award::before,.map-award.award-3::after { animation:none; } }
+
 @keyframes shop-staff{0%,70%,100%{translate:0 0}45%{translate:2px -2px}}
 .scene[data-mode=company] .map-person { transform:translate(-50%,-100%); animation:none; }
 .delivery-cart { left:78%; top:97%; transform:translate(-50%,-100%); }
