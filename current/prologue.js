@@ -2,7 +2,7 @@
 
 const previousOpeningPages=[0, 2, 5, 6, 8, 10, 12, 14, 16, 18, 20, 21, 22, 24, 27, 29, 31, 34, 36, 38, 40, 42, 43, 44, 46, 49, 50];
 const openingScenes=[
-  {art:"cell", alt:"어두운 지하실에서 소년이 두 손으로 철창을 움켜쥐고 있다.", lines:[
+  {art:"cell", alt:"철창 앞 차가운 돌바닥에 시엘이 무릎을 꿇고 있다.", lines:[
     ["","······."],
     ["악마","너는 커다란 희생을 치렀다."],
     ["악마","값은 확실히 받았으니, 나와 계약할지는 네가 정해라."],
@@ -24,7 +24,7 @@ const openingScenes=[
     ["악마","작은 몸에 웬 욕심이 그리 많을까."],
     ["악마","그러면······ 그 커다란 눈동자에!"]
   ]},
-  {art:"fire", alt:"불타는 의식장 앞에 소년과 검은 연미복 차림의 악마가 나란히 서 있다.", lines:[
+  {art:"fire", alt:"언덕 위의 시엘과 세바스찬이 밤하늘 아래 불타는 건물을 바라본다.", lines:[
     ["독백","······."],
     ["독백","그가 내게 바란 것은 세 가지였다."],
     ["독백","그가 복수를 끝낼 때까지, 배신하지 않고 지켜낼 것."],
@@ -137,6 +137,8 @@ function drawOpening(focus=false){
     picture.replaceChildren();
     delete picture.dataset.art;
     delete picture.dataset.source;
+  }else if(scene.art==="ring" && entry.beat>=5 && !cue?.cg){
+    openingArt({art:"hillside",alt:"동트기 전 들판에서 반지를 움켜쥔 시엘이 세바스찬을 올려다본다."});
   }else openingArt(scene,cue?.cg);
   playNovelCue(surface,signing?null:"opening:"+i,cue);
   musicPlayer.sync(trackForView());
