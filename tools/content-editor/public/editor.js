@@ -170,7 +170,7 @@ function linesEditor(parent,initial,onChange,field={}) {
   },"add-line");
   function draw() {
     body.replaceChildren();
-    list.forEach(([who,text,metadata],index)=>{
+    list.forEach(([who,text,metadata,cue],index)=>{
       const row=node("div",undefined,"line");
       const speaker=node("input");
       speaker.value=who;
@@ -210,6 +210,7 @@ function linesEditor(parent,initial,onChange,field={}) {
         image.setAttribute("aria-label",(index+1)+"번 대사의 CG");
         image.addEventListener("input",()=>{
           if(image.value) list[index][2]=image.value;
+          else if(list[index][3])list[index][2]=null;
           else list[index].length=2;
           onChange(list);
         });
@@ -229,17 +230,70 @@ function linesEditor(parent,initial,onChange,field={}) {
         toggle.checked=Boolean(metadata);
         toggle.addEventListener("input",()=>{
           if(toggle.checked) list[index][2]=true;
+          else if(list[index][3])list[index][2]=null;
           else list[index].length=2;
           onChange(list);
         });
         option.prepend(toggle);
         row.append(option);
       }
+      if(isWeb&&field.cues)row.append(cueEditor(index,cue,field,updated=>{
+        const line=list[index];
+        const legacy=line[2];
+        line.length=2;
+        if(Object.keys(updated).length)line.push(legacy??null,updated);
+        else if(legacy!=null)line.push(legacy);
+        onChange(list);
+      }));
       body.append(row);
     });
   }
   parent.append(add,body);
   draw();
+}
+
+function cueEditor(index,initial,field,onChange){
+  const cue={...initial};
+  const panel=node("details",undefined,"line-options cue-editor");
+  const summary=node("summary");
+  panel.append(summary);
+  const form=node("div",undefined,"cue-controls");
+  panel.append(form);
+  function updateSummary(){
+    const count=Object.keys(cue).length;
+    summary.textContent=(index+1)+"번 대사 연출"+(count?" · "+count+"개":"");
+  }
+  function set(key,value){
+    if(value)cue[key]=value;
+    else delete cue[key];
+    updateSummary();
+    onChange({...cue});
+  }
+  for(const [key,label,empty] of [
+    ["fx","화면 전환","기본"],["cg","CG 교체","장면 기본"],["bgm","배경 음악","장면 기본"],["se","효과음","없음"]
+  ]){
+    if(key==="cg"&&field.metadata==="illustration")continue;
+    const control=labeled(form,label,select([["",empty],...field.cues[key]],cue[key]??""));
+    control.addEventListener("input",()=>set(key,control.value));
+  }
+  if(!field.manual){
+    const wait=labeled(form,"자동 재생 추가 대기 (초)",node("input"));
+    wait.type="number";wait.min="0";wait.max="10";wait.step=".1";wait.value=(cue.wait??0)/1000;
+    wait.addEventListener("change",()=>{
+      const seconds=Math.min(10,Math.max(0,wait.valueAsNumber||0));
+      wait.value=seconds;
+      set("wait",Math.round(seconds*1000));
+    });
+  }
+  if(field.castCue){
+    const standing=labeled(form,"스탠딩 교체",select([["","장면 기본"],...field.cues.standing],cue.standing??""));
+    standing.addEventListener("input",()=>set("standing",standing.value));
+    const hide=labeled(form,"스탠딩 숨기기",node("input"));
+    hide.type="checkbox";hide.checked=Boolean(cue.hideCast);
+    hide.addEventListener("change",()=>set("hideCast",hide.checked));
+  }
+  updateSummary();
+  return panel;
 }
 
 function select(options,current) {
@@ -299,7 +353,24 @@ function choicesEditor(parent,field,initial){
         if(!stat.value)choice[3]=amount.value=0;
         save();
       });
-      row.append(reward,button("선택지 삭제",()=>{
+      row.append(reward);
+      if(isWeb&&field.cues){
+        const branch=node("details",undefined,"cue-editor");
+        branch.append(node("summary","선택지 후속 장면"));
+        const body=node("div");
+        const drawBranch=()=>{
+          body.replaceChildren();
+          if(choice[4]?.length){
+            linesEditor(body,choice[4],lines=>{choice[4]=structuredClone(lines);save();},
+              {cues:field.cues,manual:true,castCue:true});
+            body.append(button("후속 장면 비우기",()=>{choice.length=4;save();drawBranch();}));
+          }else body.append(button("＋ 후속 장면 대사 추가",()=>{choice[4]=[["",""]];save();drawBranch();}));
+        };
+        drawBranch();
+        branch.append(body);
+        row.append(branch);
+      }
+      row.append(button("선택지 삭제",()=>{
         choices.splice(index,1);
         draw();
         save();
@@ -510,7 +581,7 @@ function drawNewEvent(panel) {
   }
   const lines=node("fieldset",undefined,"field");
   lines.append(node("legend","대사 순서"));
-  linesEditor(lines,newEvent.lines,input=>{newEvent.lines=structuredClone(input);previewedDraft=false;updateToolbar();});
+  linesEditor(lines,newEvent.lines,input=>{newEvent.lines=structuredClone(input);previewedDraft=false;updateToolbar();},{cues:data.cueFields,manual:true,castCue:true});
   panel.append(lines);
   updateToolbar();
 }
@@ -666,7 +737,7 @@ if(isWeb){
       });
       addition.lines=[["세바스찬",""]];
       fields.append(node("p","대사를 한 줄 이상 입력해 주세요. 화자는 비워 둘 수 있습니다.","muted"));
-      linesEditor(fields,addition.lines,lines=>{addition.lines=structuredClone(lines);},{required:true});
+      linesEditor(fields,addition.lines,lines=>{addition.lines=structuredClone(lines);},{required:true,cues:data.cueFields,castCue:kind==="scene"});
     }
     if(extensions[kind]){
       const control=labeled(fields,"파일 · "+extensions[kind].replaceAll(",",", "),node("input"));
@@ -771,12 +842,14 @@ if(isWeb){
     $("token-unlock").hidden=!vaultAvailable||!tokenSaved||Boolean(unlockedToken);
     $("token-forget").hidden=!vaultAvailable||!tokenSaved;
     $("publish-submit").hidden=managing;
+    $("token-store").textContent=managing?"이 브라우저에 저장":"저장하고 업로드";
     $("publish-submit").disabled=busy||tokenSaved&&!unlockedToken;
     passwordField.placeholder=tokenSaved?"저장할 때 정한 비밀번호":"저장할 때만 사용 · 12자 이상";
     $("token-state").textContent=!vaultAvailable?"이 브라우저에서는 토큰을 한 번씩 입력해 업로드할 수 있습니다."
       :unlockedToken?"토큰이 잠금 해제되었습니다. 페이지를 새로 열면 다시 잠깁니다."
       :tokenSaved?"암호화된 토큰이 이 브라우저에 저장되어 있습니다."
-      :"저장하려면 잠금 비밀번호를 12자 이상 정해 주세요. 한 번만 업로드할 때는 비워 두세요.";
+      :managing?"토큰과 12자 이상 잠금 비밀번호를 입력한 뒤 ‘이 브라우저에 저장’을 누르세요."
+      :"토큰을 계속 쓰려면 잠금 비밀번호를 정하고 ‘저장하고 업로드’를 누르세요. ‘공개 게임에 반영’은 한 번만 사용합니다.";
   }
   async function openTokenDialog(isManaging){
     try{
@@ -805,6 +878,7 @@ if(isWeb){
       updateToolbar();
       renderTokenControls();
       progress.textContent="";
+      let uploadAfterSave=false;
       try{
         const adapter=await web;
         if(id==="token-store"){
@@ -812,6 +886,7 @@ if(isWeb){
           await adapter.saveToken(token,passwordField.value);
           tokenSaved=true;
           unlockedToken=token;
+          uploadAfterSave=!managing;
           progress.textContent="토큰을 이 브라우저에 저장했습니다.";
         }else if(id==="token-unlock"){
           unlockedToken=await adapter.unlockToken(passwordField.value);
@@ -831,6 +906,7 @@ if(isWeb){
         updateToolbar();
         renderTokenControls();
       }
+      if(uploadAfterSave)$("publish-form").requestSubmit();
     });
   }
   $("publish-close").addEventListener("click",()=>publishDialog.close());

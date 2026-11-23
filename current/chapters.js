@@ -770,7 +770,8 @@ function showEndingScene(host){
   const id=replay?replay.id:state.ending,scene=endingScenes[id];
   if(!scene)return false;
   const end=scene.lines.length-1,at=Math.min(end,Math.max(0,replay?replay.at:state.endingBeat));
-  const [who,line,picture=id]=scene.lines[at],last=at===end;
+  const [who,line,legacyPicture,cue]=scene.lines[at];
+  const picture=cue?.cg||legacyPicture||id,last=at===end;
   clearTimeout(recruitTimer);if(last)stopRecruitAuto();
   const arrow='<button type="button" class="line-next" data-read="'+(last?'finish':'next')+'" aria-label="'+(last?'장면 마치기':'다음 대사')+'">▼</button>';
   host.hidden=false;host.dataset.review="false";
@@ -784,6 +785,8 @@ function showEndingScene(host){
   }
   host.replaceChildren(art);
   host.insertAdjacentHTML("beforeend",sceneLine(who,line,arrow,'data-book="ending-'+id+'" aria-live="polite" aria-atomic="true"')+readerControls(at,last,recruitAuto));
+  playNovelCue(host,"ending:"+id+":"+at,cue);
+  musicPlayer.sync(trackForView());
   bindSceneReader(host,at,end,line,to=>{
     if(replay)replay.at=to;else {state.endingBeat=to;persist();}
     showEndingScene(host);host.querySelector(".line-next").focus({preventScroll:true});
@@ -792,6 +795,6 @@ function showEndingScene(host){
     if(replay){endingReplay=null;tab=replay.origin;}
     else {delete state.endingBeat;persist();}
     render(true);
-  });
+  },cue?.wait);
   return true;
 }

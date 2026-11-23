@@ -177,3 +177,7 @@ dialog iframe { display: block; width: 100%; height: min(77dvh, 790px); border: 
 
 #publish-form label { display: grid; gap: .35rem; }
 #publish-summary:empty { display: none; }
+
+.cue-controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:.65rem; padding:.65rem 0; }
+.cue-controls label { display:grid; gap:.3rem; min-width:0; }
+.cue-editor summary { color:var(--gold); }

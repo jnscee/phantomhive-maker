@@ -259,7 +259,7 @@ function choose(index){
   state.events.push({id:event.id,index,month:state.month,...(examNote?{examNote}:{}),...(isRecruit?{edition:"canonical",age:currentCielAge()}:{}),...(event.id==="visitPrince"?{hadTanaka:Boolean(state.people.tanaka)}:{})});
   state.log.push(examNote||choice.result);
   if(pages||choice.response){
-    state.termOutcome={id:event.id,index,note:choice.response?"":examNote,response:choice.response};
+    state.termOutcome={id:event.id,index,note:choice.response?"":examNote,response:choice.response,responseLines:choice.responseLines};
     state.termPage=0;persist();render(true);return;
   }
   finishEventChoice(event);
@@ -1048,12 +1048,14 @@ function render(focus=false,playbackOffset=0){
     return;
   }
   stopOpeningAuto();openingSession=false;
+  playNovelCue($("overture"),null);
   $("scene").dataset.settled=String(tab==="plan"&&state.phase==="result");
   const stage=state.phase==="scene"&&tab==="plan";
   $("scene").dataset.mode=stage?"play":tab;
   $("playback").hidden=!stage;
   $("playback").innerHTML=stage?playMarkup():"";
   const vn=faceDialogue();
+  if(!vn)playNovelCue($("conversation"),null);
   if(vn){
     const conversation=$("conversation");
     const choices=conversation.querySelector(".dialogue .answers");

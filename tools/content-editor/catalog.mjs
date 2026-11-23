@@ -4,6 +4,8 @@ const propertyName = property => property.key?.name ?? property.key?.value;
 const prop = (node, key) => node?.properties?.find(row => propertyName(row) === key)?.value;
 const rows = node => node?.elements ?? [];
 const properties = node => node?.properties ?? [];
+const readLines=node=>rows(node).map(line=>rows(line).map((part,index)=>index===3
+  ?Object.fromEntries(properties(part).map(entry=>[propertyName(entry),value(entry.value)])):value(part)));
 const strings = node => node?.type === "Literal" && typeof node.value === "string";
 const value = node => node?.value;
 const hangul = /[가-힣]/;
@@ -59,6 +61,14 @@ export function catalog(files, publishedAssets = [], version = "") {
     return g;
   }
 
+  const cueFields={
+    fx:[["fade","검게 페이드"],["dissolve","부드럽게 나타남"],["slide","옆으로 밀기"],["shake","화면 흔들림"]],
+    cg:[],
+    standing:[],
+    bgm:trackOptions,
+    se:publishedAssets.filter(path=>/^assets\/[\w./ -]+\.(mp3|ogg|wav)$/i.test(path))
+      .map(path=>[path,path.split("/").at(-1)])
+  };
   function add(g, file, node, label, type="text", options, extra={}) {
     if (!node || (type !== "lines" && !["Literal","UnaryExpression"].includes(node.type))) return;
     if (["text","prologue","ending","image","audio","select"].includes(type) && !strings(node)) return;
@@ -70,13 +80,15 @@ export function catalog(files, publishedAssets = [], version = "") {
       const list = rows(node);
       if (!list.length || !list.every(line => {
         const parts=rows(line);
-        return parts.length>=2 && parts.length<=(extra.metadata?3:2) && parts.slice(0,2).every(strings)
-          && (parts.length===2 || (extra.metadata==="tanaka"?typeof value(parts[2])==="boolean":strings(parts[2])));
+        return parts.length>=2 && parts.length<=(extra.cues?4:extra.metadata?3:2) && parts.slice(0,2).every(strings)
+          && (parts.length===2 || (extra.cues&&parts.length===4&&value(parts[2])===null)
+            || (extra.metadata==="tanaka"?typeof value(parts[2])==="boolean":extra.metadata==="illustration"&&strings(parts[2])))
+          && (parts.length!==4||parts[3].type==="ObjectExpression");
       })) return;
-      initial = list.map(line => rows(line).map(value));
+      initial = readLines(node);
       for (const line of list) for (const element of rows(line)) covered.add(file+":"+element.start);
     }
-    const field = {id,label,type,value:initial,file,line:node.loc.start.line,options,...extra};
+    const field = {id,label,type,value:initial,file,line:node.loc.start.line,options,...extra,...(extra.cues?{cues:cueFields}:{})};
     g.fields.push(field);
     fields.set(id,{field,node});
     covered.add(id);
@@ -104,6 +116,7 @@ export function catalog(files, publishedAssets = [], version = "") {
     const id=path.split("/").at(-1).slice(0,-5);
     return [id,value(prop(variable("chapters.js","endingArtDescriptions"),id))??id];
   });
+  cueFields.cg=artOptions;
   inventory.ending=Object.fromEntries(artOptions.map(([id])=>[id,"assets/endings/"+id+".webp"]));
   const openingScenes=variable("prologue.js","openingScenes");
   const opening = rows(openingScenes);
@@ -117,7 +130,7 @@ export function catalog(files, publishedAssets = [], version = "") {
       add(g,"prologue.js",prop(scene,"music"),"장면 BGM","select",[["","프롤로그 기본 음악"],...trackOptions],{media:"track"});
     }else add(g,"prologue.js",art,"CG","prologue",undefined,{fixed:true});
     add(g,"prologue.js",prop(scene,"alt"),"CG 대체 설명");
-    add(g,"prologue.js",prop(scene,"lines"),"대사 순서","lines");
+    add(g,"prologue.js",prop(scene,"lines"),"대사 순서","lines",undefined,{cues:true});
   });
 
   for (const p of properties(variable("chapters.js","endingScenes"))) {
@@ -126,7 +139,7 @@ export function catalog(files, publishedAssets = [], version = "") {
     const g=group("story","ending-"+id,"엔딩 · "+title,id,{kind:"ending",id});
     add(g,"audio.js",prop(variable("audio.js","endingTracks"),id),"엔딩 BGM","select",trackOptions,{media:"track"});
     add(g,"chapters.js",prop(p.value,"alt"),"대표 CG 대체 설명");
-    add(g,"chapters.js",prop(p.value,"lines"),"대사 순서","lines",undefined,{metadata:"illustration",artOptions,defaultArt:id});
+    add(g,"chapters.js",prop(p.value,"lines"),"대사 순서","lines",undefined,{metadata:"illustration",artOptions,defaultArt:id,cues:true});
   }
   for (const [id,title] of artOptions) {
     const g=group("assets","cg-"+id,"CG · "+title,id);
@@ -141,6 +154,7 @@ export function catalog(files, publishedAssets = [], version = "") {
     const id=propertyName(p);
     return [id,value(prop(variable("recruit.js","recruitNames"),id))??id];
   });
+  cueFields.standing=recruitCastOptions;
   inventory.standing=Object.fromEntries(recruitCast.map(p=>[propertyName(p),value(p.value)]));
   for(const [id,title] of recruitCastOptions){
     if(!id.startsWith("extra-"))continue;
@@ -181,7 +195,7 @@ export function catalog(files, publishedAssets = [], version = "") {
         value:rows(cast).map(value),options:recruitCastOptions,file};
       fields.set(field.id,{field,node:cast??scene,insert:cast?undefined:"cast"});
       sceneGroup.fields.push(field);
-      add(sceneGroup,file,prop(scene,"lines"),"대사 순서","lines",undefined,{metadata:"tanaka",hasTanaka:id==="visitPrince"});
+      add(sceneGroup,file,prop(scene,"lines"),"대사 순서","lines",undefined,{metadata:"tanaka",hasTanaka:id==="visitPrince",cues:true,castCue:true});
     }
   }
   for (const p of recruitArt) {
@@ -269,7 +283,7 @@ export function catalog(files, publishedAssets = [], version = "") {
     add(g,"story.js",prop(node,"month"),"발생 월","number",undefined,{min:1,max:35});
     add(g,"story.js",prop(node,"room"),"배경","select",roomOptions,{media:"room"});
     add(g,"story.js",prop(node,"track"),"BGM","select",trackOptions,{media:"track"});
-    add(g,"story.js",prop(node,"lines"),"대사 순서","lines");
+    add(g,"story.js",prop(node,"lines"),"대사 순서","lines",undefined,{cues:true,manual:true,castCue:true});
     add(g,"story.js",prop(node,"label"),"마무리 버튼");
     add(g,"story.js",prop(node,"result"),"마지막 대사");
     for(const [key,label,options,media] of [
@@ -287,10 +301,12 @@ export function catalog(files, publishedAssets = [], version = "") {
   }
 
   const rewardOptions=[["","변화 없음"],...["지성","기품","매력","경영","통찰","의지","체력"].map(stat=>[stat,stat]),["hp","건강"],["stress","스트레스"],["motivation","의욕"]];
-  function addChoices(g,id){
+  function addChoices(g,id,branch=true){
     const optionNode=prop(registers.authoredOptions[1],id);
     const field={id:"options:"+id,label:"추가 선택지",type:"choices",file:"story.js",options:rewardOptions,
-      value:rows(optionNode).map(row=>rows(row).map(part=>part.type==="UnaryExpression"?-value(part.argument):value(part)))};
+      cues:branch?cueFields:undefined,
+      value:rows(optionNode).map(row=>rows(row).map((part,index)=>index===4?readLines(part):
+        part.type==="UnaryExpression"?-value(part.argument):value(part)))};
     g.fields.push(field);
     fields.set(field.id,{field,node:optionNode,optionId:id});
   }
@@ -361,7 +377,7 @@ export function catalog(files, publishedAssets = [], version = "") {
       add(g,"visitors.js",prop(choice,"label"),"선택지 "+(i+1));
       add(g,"visitors.js",rows(prop(choice,"reply"))[1],"응답 "+(i+1));
     });
-    addChoices(g,id);
+    addChoices(g,id,false);
   }
   for(const entry of rows(variable("festivals.js","londonFestivals"))){
     const id=value(prop(entry,"id"));
@@ -393,7 +409,7 @@ export function catalog(files, publishedAssets = [], version = "") {
       });
     }
   }
-  return {files,groups:groups.filter(g=>g.fields.length||g.asset),fields,inventory,version,trackOptions,roomOptions,assetSet,eventGroups,customIds,authored,openingScenes,registers,recruitTargets,rewardOptions,recruitCastOptions,recruitArtOptions,artOptions,cueMap:variable("audio.js","eventTracks")};
+  return {files,groups:groups.filter(g=>g.fields.length||g.asset),fields,inventory,version,trackOptions,roomOptions,assetSet,eventGroups,customIds,authored,openingScenes,cueFields,registers,recruitTargets,rewardOptions,recruitCastOptions,recruitArtOptions,artOptions,cueMap:variable("audio.js","eventTracks")};
 }
 
 function textValue(input, limit=5000) {
@@ -405,14 +421,27 @@ function textValue(input, limit=5000) {
 function lineValues(input, field = {}) {
   if(!Array.isArray(input)||!input.length||input.length>250) throw new Error("대사는 1~250줄이어야 합니다.");
   return input.map(row=>{
-    if(!Array.isArray(row)||row.length<2||row.length>(field.metadata?3:2))
+    if(!Array.isArray(row)||row.length<2||row.length>(field.cues?4:field.metadata?3:2))
       throw new Error("화자와 대사를 입력해 주세요.");
     const line=[row[0]===""?"":textValue(row[0],80),textValue(row[1])];
-    if(row.length===3){
+    if(row.length>=3){
       const extra=row[2];
-      if(field.metadata==="tanaka" && typeof extra==="boolean") line.push(extra);
+      if(row.length===4&&extra===null)line.push(null);
+      else if(field.metadata==="tanaka" && typeof extra==="boolean") line.push(extra);
       else if(field.metadata==="illustration" && field.artOptions.some(([id])=>id===extra)) line.push(extra);
       else throw new Error("대사에 연결된 연출 값을 확인해 주세요.");
+    }
+    if(row.length===4){
+      const cue=row[3];
+      if(!cue||typeof cue!=="object"||Array.isArray(cue))throw new Error("연출 설정을 확인해 주세요.");
+      const entries=Object.entries(cue);
+      for(const [key,setting] of entries){
+        const valid=key==="wait"?Number.isInteger(setting)&&setting>=0&&setting<=10000
+          :key==="hideCast"?setting===true:field.cues[key]?.some?.(([id])=>id===setting);
+        if(!valid)throw new Error("연출 항목이나 리소스가 유효하지 않습니다.");
+      }
+      if(entries.length)line.push(Object.fromEntries(entries));
+      else if(line[2]===null)line.pop();
     }
     return line;
   });
@@ -436,10 +465,15 @@ function statementValue(field, input, assetSet) {
       return input;
     case "choices":
       if(!Array.isArray(input)||input.length>20)throw new Error("추가 선택지는 최대 20개까지 만들 수 있습니다.");
-      return input.map(([label,response,stat,amount])=>{
+      return input.map(([label,response,stat,amount,branch])=>{
         if(!field.options.some(([key])=>key===stat)||!Number.isInteger(amount)||Math.abs(amount)>100)
           throw new Error("선택지 효과는 −100에서 100 사이의 정수로 입력해 주세요.");
-        return [textValue(label,120),textValue(response),stat,stat?amount:0];
+        const result=[textValue(label,120),textValue(response),stat,stat?amount:0];
+        if(branch?.length){
+          if(!field.cues)throw new Error("이 선택지에는 후속 장면을 연결할 수 없습니다.");
+          result.push(lineValues(branch,field));
+        }
+        return result;
       });
     default:
       if(field.fixed) throw new Error("이 항목은 파일 교체로 수정할 수 있습니다.");
@@ -514,7 +548,7 @@ export function applyEdits(model, request) {
         id,month:input.month,title:textValue(input.title,200),
         room:statementValue({type:"select",label:"배경",options:model.roomOptions},input.room),
         track:statementValue({type:"select",label:"BGM",options:model.trackOptions},input.track),
-        lines:lineValues(input.lines),label:textValue(input.label,120),result:textValue(input.result),
+        lines:lineValues(input.lines,{cues:model.cueFields}),label:textValue(input.label,120),result:textValue(input.result),
         picture:statementValue({type:"select",label:"CG",options:[["",""],...model.artOptions]},input.picture??""),
         standing:statementValue({type:"select",label:"스탠딩",options:[["",""],...model.recruitCastOptions]},input.standing??"")
       };
@@ -532,14 +566,14 @@ export function applyEdits(model, request) {
       const scenes=model.openingScenes;
       const last=rows(scenes).at(-1);
       const at=last?.end??scenes.start+1;
-      replace("prologue.js",at,at,(last?",":"")+"\n  "+quoted({title,art,alt:title,music,lines:lineValues(addition.lines)}));
+      replace("prologue.js",at,at,(last?",":"")+"\n  "+quoted({title,art,alt:title,music,lines:lineValues(addition.lines,{cues:model.cueFields})}));
     }else if(kind==="scene"){
       const target=model.recruitTargets.get(addition.target);
       if(!target)throw new Error("영입 이벤트를 선택해 주세요.");
       const [source,scenes]=target;
       const scene={title:textValue(name,150),art:statementValue({type:"select",label:"배경",options:model.recruitArtOptions},addition.art),
         music:statementValue({type:"select",label:"BGM",options:[["",""],...model.trackOptions]},addition.music),
-        lines:lineValues(addition.lines),
+        lines:lineValues(addition.lines,{cues:model.cueFields}),
         cast:statementValue({type:"cast",options:model.recruitCastOptions},addition.cast??[]),
         picture:statementValue({type:"select",label:"CG",options:[["",""],...model.artOptions]},addition.picture??"")};
       if(!scene.music)delete scene.music;

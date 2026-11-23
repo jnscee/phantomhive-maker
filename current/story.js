@@ -23,8 +23,8 @@ const authoredEvents=[];
 const authoredOptions={};
 function appendAuthoredOptions(event){
   if(!Object.hasOwn(authoredOptions,event.id)||visitEncounterCards.some(card=>card.id===event.id))return event;
-  const choices=authoredOptions[event.id].map(([label,response,stat,amount])=>({
-    label,result:response,response,
+  const choices=authoredOptions[event.id].map(([label,response,stat,amount,responseLines])=>({
+    label,result:response,response,responseLines,
     effect:()=>{if(stat)shift(stat,amount);}
   }));
   return {...event,choices:[...event.choices,...choices]};

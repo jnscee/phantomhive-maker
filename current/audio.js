@@ -57,8 +57,8 @@ function eventTrack(id){
 }
 
 function recruitTrack(id,at){
-  const scene=recruitScenes[id].lines[at].scene;
-  return scene.music || (Object.hasOwn(eventTracks,id)?eventTracks[id]:id==="maid"?"gloomy":"daily");
+  const {scene,cue}=recruitScenes[id].lines[at];
+  return cue?.bgm||scene.music || (Object.hasOwn(eventTracks,id)?eventTracks[id]:id==="maid"?"gloomy":"daily");
 }
 
 const endingTracks={
@@ -67,11 +67,15 @@ const endingTracks={
 };
 function trackForView(){
   if(tourSession||(tab==="plan"&&state.phase==="guide"))return "tutorial";
-  if(inOpening())return openingLines[openingIndex()]?.scene.music||"prologue";
+  if(inOpening()){
+    const line=openingLines[openingIndex()];
+    return line?.cue?.bgm||line?.scene.music||"prologue";
+  }
   if(tab==="plan"&&state.phase==="investiture")return "titleApproval";
   if((tab==="plan"&&state.phase==="ending")||(tab==="endingMemory"&&endingReplay)){
     const id=tab==="endingMemory"?endingReplay.id:state.ending;
-    return endingTracks[id]||"manor";
+    const at=tab==="endingMemory"?endingReplay.at:state.endingBeat;
+    return endingScenes[id]?.lines[at]?.[3]?.bgm||endingTracks[id]||"manor";
   }
   if(state.ill && !["staffMemory","recollection","endingMemory","title"].includes(tab))return "illness";
   if(tab==="staffMemory"&&recruitMemory)return recruitTrack(recruitMemory.id,recruitMemory.at);
@@ -84,7 +88,7 @@ function trackForView(){
       const event=pendingEvent();
       if(event && Object.hasOwn(recruitScenes,event.id))return recruitTrack(event.id,recruitPage(event.id));
       if(event?.id==="birthday"&&state.termOutcome?.id==="birthday")return "romantic";
-      return event?.track||(event?.exam&&!Object.hasOwn(eventTracks,event.id)?"test":eventTrack(event?.id));
+      return (event&&termCue(event)?.bgm)||event?.track||(event?.exam&&!Object.hasOwn(eventTracks,event.id)?"test":eventTrack(event?.id));
     }
   }
   if(tab==="plan"&&["scene","slotEvent","review"].includes(state.phase)&&state.sequence){
@@ -208,6 +212,13 @@ function updateRailMusic(){
   button.setAttribute("aria-pressed",String(mixer.bgm));
 }
 updateRailMusic();
+function playNovelSound(path){
+  if(!mixer.sfx||!mixer.sfxVolume)return;
+  const sound=new Audio(path);
+  sound.volume=mixer.sfxVolume/100;
+  sound.play().catch(()=>{});
+  return sound;
+}
 function toggleChannel(kind){
   mixer[kind]=!mixer[kind];saveSoundPref(kind==="sfx"?"sound":"bgm",mixer[kind]?"on":"off");
   const button=document.getElementById("toggle-"+kind);

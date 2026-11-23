@@ -136,9 +136,9 @@ export function assetUrl(filename){
 export async function api(path,body){
   const current=model();
   if(path==="/api/catalog"){
-    const {groups,inventory,version,trackOptions,roomOptions,artOptions,recruitCastOptions,recruitArtOptions,recruitTargets}=current;
+    const {groups,inventory,version,trackOptions,roomOptions,artOptions,recruitCastOptions,recruitArtOptions,recruitTargets,cueFields}=current;
     const recruits=[...recruitTargets.keys()].map(id=>[id,groups.find(group=>group.key==="recruit-"+id)?.title??id]);
-    return {groups,inventory,version,trackOptions,roomOptions,artOptions,recruitCastOptions,recruitArtOptions,recruits,canUndo:Boolean(saved.previous),hasOlder:hasFiles(older),publishCount:sourceCommit?Object.keys(saved.sources).length+Object.keys(saved.media).length:0};
+    return {groups,inventory,version,trackOptions,roomOptions,artOptions,recruitCastOptions,recruitArtOptions,recruits,cueFields,canUndo:Boolean(saved.previous),hasOlder:hasFiles(older),publishCount:sourceCommit?Object.keys(saved.sources).length+Object.keys(saved.media).length:0};
   }
   if(path==="/api/preview")return preview(current,body);
   if(path==="/api/save"){
@@ -214,9 +214,13 @@ export async function saveToken(token,password){
   const key=await tokenCipher(password,salt);
   const encrypted=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,utf8.encode(token));
   const encode=bytes=>btoa(String.fromCharCode(...bytes));
-  localStorage.setItem(tokenKey,JSON.stringify({
-    salt:encode(salt),iv:encode(iv),encrypted:encode(new Uint8Array(encrypted))
-  }));
+  const record=JSON.stringify({salt:encode(salt),iv:encode(iv),encrypted:encode(new Uint8Array(encrypted))});
+  try{
+    localStorage.setItem(tokenKey,record);
+    if(localStorage.getItem(tokenKey)!==record)throw new Error("storage unavailable");
+  }catch{
+    throw new Error("이 브라우저가 사이트 데이터 저장을 막고 있습니다. 사이트 데이터 저장을 허용한 뒤 다시 시도해 주세요.");
+  }
 }
 
 export async function unlockToken(password){

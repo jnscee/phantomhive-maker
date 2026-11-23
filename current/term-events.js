@@ -80,17 +80,23 @@ function termPages(event){
   const script=event.slot&&examDialogue[event.slot];
   return event.exam&&script?[["",script[0]],["시엘",script[1]],["세바스찬",event.text]]:null;
 }
+function termCue(event){
+  const lines=state.termOutcome?.id===event?.id?state.termOutcome?.responseLines:termPages(event);
+  return lines?.[Math.min(state.termPage||0,lines.length-1)]?.[3];
+}
 function termDialogue(event,buttons){
   const pages=termPages(event);
   const outcome=state.termOutcome?.id===event.id?state.termOutcome:null;
   if(!pages&&!outcome?.response)return "";
-  const script=outcome?.response?[["",outcome.response]]:outcome?(event.authored?[["",event.response]]:birthdayDialogue[event.id]?.replies[outcome.index]||[["세바스찬",examDialogue[event.slot][2+outcome.index]]]):pages;
+  const script=outcome?.responseLines??(outcome?.response?[["",outcome.response]]:outcome?(event.authored?[["",event.response]]:birthdayDialogue[event.id]?.replies[outcome.index]||[["세바스찬",examDialogue[event.slot][2+outcome.index]]]):pages);
   const at=Math.min(state.termPage||0,script.length-1),[who,line]=script[at];
   const end=at===script.length-1,actions=end?(outcome?btn("기록을 덮는다","term-close"):buttons):btn("다음 ▸","term-next:"+at);
   const room=event.room||birthdayDialogue[event.id]?.room||choreography[event.slot]?.[0]||"ballroom";
-  const art=event.picture?"assets/endings/"+event.picture+".webp":sceneArt[room];
-  const cast=event.standing&&Object.hasOwn(recruitCast,event.standing)
-    ?sceneStanding(recruitNames[event.standing],"left",recruitCast[event.standing]):event.picture?"":dialogueCast("세바스찬");
+  const cue=termCue(event),picture=cue?.cg||event.picture;
+  const art=picture?"assets/endings/"+picture+".webp":sceneArt[room];
+  const standing=cue?.standing||event.standing;
+  const cast=cue?.hideCast?"":standing&&Object.hasOwn(recruitCast,standing)
+    ?sceneStanding(recruitNames[standing],"left",recruitCast[standing]):picture?"":dialogueCast("세바스찬");
   return '<div class="review-room" style="background-image:url(&quot;'+art+'&quot;)"></div>'+cast+
     '<article class="dialogue"><small>'+escapeHTML(who||event.title)+'</small><p>'+escapeHTML(line)+'</p>'+
     (outcome?.note&&end?'<small>'+escapeHTML(outcome.note)+'</small>':'')+'<div class="answers">'+actions+'</div></article>';

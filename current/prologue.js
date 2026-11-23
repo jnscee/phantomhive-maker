@@ -69,7 +69,7 @@ const openingScenes=[
     ["세바스찬","알겠습니다."]
   ]}
 ];
-const openingLines=openingScenes.flatMap((scene,sceneIndex)=>scene.lines.map(([speaker,text],beat)=>({scene,sceneIndex,beat,speaker,text})));
+const openingLines=openingScenes.flatMap((scene,sceneIndex)=>scene.lines.map(([speaker,text,,cue],beat)=>({scene,sceneIndex,beat,speaker,text,cue})));
 let recollectionLine=0, openingAuto=false, openingTimer=0, openingSession=false;
 
 function openingHold(entry){
@@ -83,9 +83,9 @@ function openingIndex(){return tab==="recollection"?recollectionLine:state.openi
 function clearOpeningTimer(){clearTimeout(openingTimer);openingTimer=0;}
 function stopOpeningAuto(){clearOpeningTimer();openingAuto=false;}
 function openingImage(scene){return "assets/"+(scene.title?"endings":"prologue")+"/"+scene.art+".webp";}
-function openingArt(scene){
+function openingArt(scene,picture){
   const frame=$("opening-picture");
-  const source=openingImage(scene);
+  const source=picture?"assets/endings/"+picture+".webp":openingImage(scene);
   if(frame.dataset.source===source)return;
   frame.dataset.source=source;
   frame.dataset.art=scene.art;
@@ -121,7 +121,8 @@ function drawOpening(focus=false){
   surface.dataset.close=String(!signing&&!scene.title&&((scene.art==="seal"&&entry.beat>=5)||(scene.art==="cell"&&entry.beat>=6)||(scene.art==="ring"&&entry.beat>=3&&entry.beat<=6)));
   surface.dataset.establish=String(!signing&&!scene.title&&entry.beat===0&&["fire","manor"].includes(scene.art));
   surface.dataset.signing=String(signing);
-  const voiceOnly=!scene.title&&scene.art==="cell"&&entry.speaker==="악마";
+  const cue=signing?null:entry.cue;
+  const voiceOnly=!cue?.cg&&!scene.title&&scene.art==="cell"&&entry.speaker==="악마";
   surface.dataset.voiceOnly=String(voiceOnly);
   $("opening-dialogue").classList.toggle("dialogue",!voiceOnly);
   const reader=$("opening-read");
@@ -133,7 +134,9 @@ function drawOpening(focus=false){
     picture.replaceChildren();
     delete picture.dataset.art;
     delete picture.dataset.source;
-  }else openingArt(scene);
+  }else openingArt(scene,cue?.cg);
+  playNovelCue(surface,signing?null:"opening:"+i,cue);
+  musicPlayer.sync(trackForView());
   const thought=!signing&&entry.speaker==="독백";
   surface.dataset.voice=thought?"thought":"speech";
   $("opening-speaker").hidden=thought;
@@ -151,7 +154,7 @@ function drawOpening(focus=false){
   $("opening-auto").setAttribute("aria-pressed",String(openingAuto));
   $("opening-auto").textContent=openingAuto?"자동 멈춤":"자동 재생";
   if(openingAuto&&!signing&&!document.hidden&&!$("picker").open)
-    openingTimer=setTimeout(()=>stepOpening(1),openingHold(entry)+(surface.dataset.establish==="true"?900:0));
+    openingTimer=setTimeout(()=>stepOpening(1),openingHold(entry)+(cue?.wait??0)+(surface.dataset.establish==="true"?900:0));
   if(focus)(voiceOnly?reader:signing?$("opening-slots").querySelector("button"):$("opening-next")).focus({preventScroll:true});
 }
 function finishOpening(){

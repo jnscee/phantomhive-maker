@@ -184,7 +184,7 @@ const recruitScenes={
   visitPrince:princeChapter
 };
 for(const book of Object.values(recruitScenes)){
-  book.lines=book.scenes.flatMap((scene,i)=>scene.lines.map(([speaker,text,withTanaka])=>({scene,i,speaker,text,withTanaka})));
+  book.lines=book.scenes.flatMap((scene,i)=>scene.lines.map(([speaker,text,withTanaka,cue])=>({scene,i,speaker,text,withTanaka,cue})));
 }
 function pageAt(id,at){return Number.isInteger(at)?Math.min(Math.max(0,at),recruitScenes[id].lines.length-1):0;}
 function recruitPage(id){return pageAt(id,state.recruitPage?.id===id?state.recruitPage.at:0);}
@@ -296,13 +296,34 @@ function readerControls(at,last,auto){
     '<button type="button" data-read="auto" aria-pressed="'+auto+'" '+(last?'disabled':'')+'>'+(auto?'자동 멈춤':'자동 재생')+'</button>'+
     '<button type="button" data-read="skip" '+(last?'disabled':'')+'>건너뛰기</button></div>';
 }
+const novelEffects={
+  fade:[{filter:"brightness(0)"},{filter:"brightness(1)"}],
+  dissolve:[{opacity:.22},{opacity:1}],
+  slide:[{transform:"translateX(3%)",opacity:.55},{transform:"translateX(0)",opacity:1}],
+  shake:[{transform:"translateX(0)"},{transform:"translateX(-5px)"},{transform:"translateX(5px)"},{transform:"translateX(-2px)"},{transform:"translateX(0)"}]
+};
+const novelPlayback=new WeakMap();
+function playNovelCue(host,key,cue){
+  const previous=novelPlayback.get(host);
+  if(previous?.key===key&&previous.cue===cue)return;
+  previous?.animation?.cancel();
+  previous?.sound?.pause();
+  if(!key){novelPlayback.delete(host);return;}
+  const playback={key,cue};
+  novelPlayback.set(host,playback);
+  const reduced=typeof motionReduced==="function"?motionReduced():matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(cue?.fx&&Object.hasOwn(novelEffects,cue.fx)&&!reduced&&host.animate)
+    playback.animation=host.animate(novelEffects[cue.fx],{duration:cue.fx==="shake"?320:500,easing:"ease-out"});
+  if(cue?.se&&typeof playNovelSound==="function")playback.sound=playNovelSound(cue.se);
+}
 function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers="",hasTanaka=false){
-  const book=recruitScenes[id],{scene,speaker,text,withTanaka}=book.lines[at];
-  const art=scene.picture?{bg:"assets/endings/"+scene.picture+".webp"}:recruitArt[scene.art],bg=file(art.bg),last=at===book.lines.length-1;
+  const book=recruitScenes[id],{scene,speaker,text,withTanaka,cue}=book.lines[at];
+  const picture=cue?.cg||scene.picture;
+  const art=picture?{bg:"assets/endings/"+picture+".webp"}:recruitArt[scene.art],bg=file(art.bg),last=at===book.lines.length-1;
   const backdrop=art.crop
     ? '<svg class="review-room recruit-backdrop '+art.tone+'" viewBox="'+art.crop.join(" ")+'" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><image width="680" height="380" href="'+bg+'"/></svg>'
     : '<div class="review-room '+(art.tone||'')+'" style="background-image:url(&quot;'+bg+'&quot;)"></div>';
-  const cast=scene.castBySpeaker?.[speaker]||scene.cast||[];
+  const cast=cue?.hideCast?[]:cue?.standing?[cue.standing]:scene.castBySpeaker?.[speaker]||scene.cast||[];
   const actors=cast.map((person,i)=>{
     const side=person==="ciel"?"right":cast.includes("ciel")||i===0?"left":"right";
     return sceneStanding(recruitNames[person],side,file(recruitCast[person]));
@@ -320,14 +341,16 @@ function drawRecruitReader(host,id,at,file,readOnly,onPage,onFinish,answers="",h
   const end=recruitScenes[id].lines.length-1;
   clearTimeout(recruitTimer);if(at===end)stopRecruitAuto();
   host.innerHTML=recruitMarkup(id,at,file,readOnly,recruitAuto,answers,hasTanaka);
-  bindSceneReader(host,at,end,recruitScenes[id].lines[at].text,onPage,answers?null:onFinish);
+  const {text,cue}=recruitScenes[id].lines[at];
+  playNovelCue(host,id+":"+at,cue);
+  bindSceneReader(host,at,end,text,onPage,answers?null:onFinish,cue?.wait);
 }
-function bindSceneReader(host,at,end,text,onPage,onFinish){
+function bindSceneReader(host,at,end,text,onPage,onFinish,wait=0){
   const line=host.querySelector(".dialogue"),bar=host.querySelector(".recruit-controls");
   function step(to){if(line.isConnected)onPage(to);}
   function arm(){
     if(!recruitAuto||at===end)return;
-    const delay=Math.min(6200,1700+text.length*90);
+    const delay=Math.min(6200,1700+text.length*90)+wait;
     recruitTimer=setTimeout(()=>{if(line.isConnected&&!document.hidden)step(at+1);else stopRecruitAuto();},delay);
   }
   function click(e){
