@@ -134,13 +134,13 @@ function scriptedEvents(){
     {id:"bargainManners",title:"무례한 젊은 사업가",speaker:"세바스찬",text:"계약서에는 빈틈이 없습니다. 다만 상대는 악수도 하지 않고 돌아섰습니다.",sees:s=>s.stats.경영>=28&&s.stats.경영-s.stats.기품>=10,choices:[
       choice("답례 방문을 잡는다","기품 +6 · 왕실 신뢰 상승",()=>{shift("기품",6);shift("royal",1)}),
       choice("납품 약속에 집중한다","경영 +8",()=>shift("경영",8))]},
-    {id:"teaPrivilege",title:"두 번째 잔",speaker:"세바스찬",text:"시엘이 빈 잔을 내려놓습니다. 명령을 기다릴 필요는 없었습니다. 세바스찬이 두 번째 잔을 채웁니다.",sees:s=>s.flags.quietTea>=3,choices:[
+    {id:"teaPrivilege",title:"두 번째 잔",speaker:"세바스찬",lines:[["","시엘이 빈 잔을 내려놓는다. 명령을 기다릴 필요는 없었다. 세바스찬이 두 번째 잔을 채운다."]],sees:s=>s.flags.quietTea>=3,choices:[
       choice("설탕을 하나 줄인다","둘만의 차 취향 기록 · 의욕 +6",()=>{state.flags.teaBlend=true;shift("motivation",6)}),
       choice("평소대로 따른다","스트레스 −6",()=>shift("stress",-6))]},
-    {id:"agniTray",visitPlace:"townhouse",title:"빈 쟁반을 드는 법",speaker:"아그니",text:"아그니는 빈 쟁반을 거두는 동안에도 소마에게서 시선을 떼지 않습니다. 세바스찬이 그 손놀림을 지켜봅니다.",sees:s=>s.people.agni&&s.visit==="townhouse",choices:[
+    {id:"agniTray",narration:true,visitPlace:"townhouse",title:"빈 쟁반을 드는 법",speaker:"아그니",text:"아그니는 빈 쟁반을 거두는 동안에도 소마에게서 시선을 떼지 않는다. 세바스찬이 그 빈틈없는 손놀림을 유심히 지켜본다.",sees:s=>s.people.agni&&s.visit==="townhouse",choices:[
       choice("차를 올리는 순서를 묻는다","집사 교류 기록 · 소마의 신뢰 상승",()=>{state.flags.agniLesson=true;talkTrust("soma",2,1)}),
       choice("주인의 말을 기다린다","의지 +5",()=>shift("의지",5))]},
-    {id:"greenhouseKey",visitPlace:"garden",title:"온실의 여벌 열쇠",speaker:"피니안",text:"피니안이 도련님의 손바닥에 열쇠를 놓습니다. 오늘은 먼저 들어가 보시겠느냐고 묻습니다.",sees:s=>s.people.finny?.toward>=5&&s.visit==="garden",choices:[
+    {id:"greenhouseKey",narration:true,visitPlace:"garden",title:"온실의 여벌 열쇠",speaker:"피니안",text:"피니안이 도련님의 손바닥에 작은 열쇠를 살며시 올려놓는다. 오늘은 먼저 들어가 보시겠느냐고 해맑게 묻는다.",sees:s=>s.people.finny?.toward>=5&&s.visit==="garden",choices:[
       choice("맡아 둔다","피니안의 신뢰 상승",()=>talkTrust("finny",2,2)),
       choice("함께 온실을 돈다","스트레스 −7",()=>shift("stress",-7))]}
   ];
@@ -203,7 +203,7 @@ function recordedChoice(run,id){
   return run.events.find(entry=>entry.id===id)?.index;
 }
 function storyLine(event){
-  return event.rememberedText ? event.rememberedText(state) : event.text;
+  return event.rememberedText ? event.rememberedText(state) : (event.lines?.[0]?.[1]??event.text);
 }
 function visitMemory(place,person){
   if(!person)return null;
@@ -217,40 +217,40 @@ function visitMemory(place,person){
 }
 const visitRecollections={
   postalReply:{place:"library",person:"tanaka",lines:[
-    "화이트채플에서 온 두 통은 한 봉투에 들었습니다. 다음에 찾으실 때도 같이 꺼내 드리지요.",
-    "제보자 앞으로 보낸 봉투가 돌아오지 않았습니다. 답신이 오면 이 칸을 먼저 보시지요."]},
+    "화이트채플에서 온 두 통은 한 봉투에 묶어 두었습니다. 다음에 찾으실 때도 나란히 꺼내 드리지요.",
+    "제보자 앞으로 보낸 봉투가 아직 돌아오지 않았습니다. 답신이 오면 이 칸부터 먼저 살피시지요."]},
   greenhouseKey:{place:"garden",person:"finny",lines:[
-    "도련님, 오늘은 제가 노크할게요. 지난번에 열쇠 맡아 주셨잖아요!",
-    "지난번에 같이 보신 그 봉오리예요. 오늘 아침에 벌어졌어요."]},
+    "도련님, 오늘은 제가 노크할게요! 지난번에 열쇠를 맡아 주셨잖아요!",
+    "지난번에 같이 보신 그 봉오리예요! 오늘 아침에 활짝 벌어졌어요!"]},
   finnyRoseLabel:{place:"garden",person:"finny",lines:[
-    "오늘은 돌아가며 보실 필요 없어요. 제 쪽에서 제가 읽어 드릴게요.",
-    "장부의 네 번째 줄이 여기예요. 비가 와도 번호는 그대로라서 금방 찾았어요!"]},
+    "오늘은 돌아가며 보실 필요 없어요. 제 쪽에서 제가 바로 읽어 드릴게요!",
+    "장부의 네 번째 줄이 바로 여기예요. 비가 와도 번호는 그대로라서 금방 찾았어요!"]},
   bardSupper:{place:"kitchen",person:"bard",lines:[
-    "오늘도 한 숟갈 덜어 놨습니다. 간 보실 분이 계시니까요.",
-    "도련님 접시는 바로 이 뚜껑 밑에 있습니다. 오늘은 따뜻할 겁니다."]},
+    "오늘도 한 숟갈 덜어 놨습니다. 간 보실 주인님이 계시니까요.",
+    "도련님 접시는 바로 이 뚜껑 밑에 있습니다. 오늘은 식지 않고 따뜻할 겁니다."]},
   linenMarks:{place:"quarters",person:"mey",lines:[
-    "파란 실은 손님방, 흰 실은 도련님 방. 이번엔 수건이 제자리에 갔습니다요!",
-    "개킨 쪽으로 손을 넣으면 작은 수건부터 잡혀요. 도련님이 보신 그대로예요."]}
+    "파란 실은 손님방, 흰 실은 도련님 방! 이번엔 수건이 딱 제자리를 찾아갔다요!",
+    "개킨 쪽으로 손을 넣으면 작은 수건부터 쏙 잡힌다요! 도련님이 보신 그대로예요!"]}
 };
 function followupEvents(){
   const after=(s,id)=>s.events.some(e=>e.id===id&&(e.month==null||e.month<s.month));
   return [
     {id:"finnyRoseLabel",visitOnly:true,visitPlace:"garden",title:"장미의 표찰",speaker:"피니안",
-     text:"도련님 쪽에서 읽으시게 꽂았는데, 물을 줄 때마다 제가 반대로 읽어요. 이 이름, 다시 쓸까요?",
+     text:"도련님 쪽에서 읽으시게 꽂았는데, 물을 줄 때마다 제가 자꾸 거꾸로 읽어요. 이 이름표, 다시 쓸까요?",
      sees:s=>s.visit==="garden"&&!!s.people.finny,
-     responses:["그럼 이번엔 제가 읽는 쪽으로요. 내일 꽃이 피면 제가 먼저 알려 드릴게요!","장부 순서대로 하나, 둘…… 아, 그럼 잉크가 번져도 어느 화분인지 알겠어요."],
+     responses:["그럼 이번엔 제가 읽는 쪽으로요! 내일 꽃이 피면 제가 제일 먼저 달려가서 알려 드릴게요!","장부 순서대로 하나, 둘…… 아! 그럼 잉크가 물에 번져도 어느 화분인지 금방 알겠어요!"],
      choices:[choice("네 글씨대로 둬. 화분을 돌리면 되잖아.","표찰의 방향을 피니안에게 맡겼다.",()=>{}),
               choice("화분 번호를 장부에도 적어 두지.","장미의 번호를 정원 장부에 옮겼다.",()=>{})]},
     {id:"bardSupper",visitOnly:true,visitPlace:"kitchen",title:"식기 전에",speaker:"바르도",
-     text:"수프는 다 됐는데 은쟁반이 아직 안 왔습니다. 손님 몫을 다시 끓일까요, 도련님?",
+     text:"수프는 다 끓었는데 은쟁반이 아직 안 왔군요. 손님 몫을 다시 끓일까요, 도련님?",
      sees:s=>s.visit==="kitchen"&&!!s.people.bard,
-     responses:["그럼 여기, 제일 작은 숟가락입니다. 냄비 위에서 드셨단 말은 안 하겠습니다.","뚜껑이 꼭 맞는 그릇이라…… 과연. 불을 다시 지필 필요도 없군요."],
+     responses:["그럼 여기, 제일 작은 숟가락입니다. 냄비 위에서 드셨단 말은 입 밖에도 안 내겠습니다.","뚜껑이 꼭 맞는 그릇이라…… 과연. 불을 다시 지필 필요도 없겠군요."],
      choices:[choice("내가 먼저 간을 보지.","바르도가 맛볼 몫을 덜어 두었다.",()=>talkTrust("bard")),
               choice("한 그릇 덜어서 덮어 둬.","바르도가 시엘의 접시를 따로 덮었다.",()=>shift("hp",2))]},
     {id:"linenMarks",visitOnly:true,visitPlace:"quarters",title:"리넨장 맨 윗칸",speaker:"메이린",
-     text:"손님방 수건이 또 도련님 방에 들어갔습니다요. 글씨가 어찌나 비슷한지…….",
+     text:"으아앗, 손님방 수건이 또 도련님 방에 들어갔습니다요! 글씨가 어찌나 비슷한지 도통…….",
      sees:s=>s.visit==="quarters"&&!!s.people.mey&&(!s.people.snake||s.month%2===1),
-     responses:["실 색깔은 저도 금방 알아봅니다요. 바느질 상자를 가져올게요!","아, 손으로도 크기를 알겠어요. 맨 윗칸부터 다시 개겠습니다요."],
+     responses:["실 색깔이야 저도 금방 알아봅니다요! 얼른 바느질 상자를 가져올게요!","아! 손끝만으로도 크기를 딱 알겠다요! 맨 윗칸부터 죄다 다시 개겠습니다요!"],
      choices:[choice("가장자리에 다른 색 실을 달아.","메이린이 두 색의 실로 수건을 표시했다.",()=>talkTrust("mey")),
               choice("접는 방향을 달리해 봐.","메이린이 손으로 수건을 구분하게 됐다.",()=>changeStat("통찰",2))]},
     {id:"supplierReply",chapter:true,speaker:"세바스찬",title:"인수증의 두 번째 장",text:"공장에서 회신이 왔습니다.",
@@ -258,7 +258,7 @@ function followupEvents(){
      sees:s=>after(s,"match"),choices:[choice("다음 납품 때 사본을 양쪽에 보내.","양쪽에 인수증을 보냈다. 새 재주문에서 개당 대금 +£1.",()=>{state.flags.sharedReceipt=true;shift("renown",1)}),
        choice("경리 담당에게 두 장을 대조시켜.","대조 절차를 마련했다. 새 재주문의 미납 부담이 개당 £1로 감소한다.",()=>{state.flags.checkedReceipt=true;changeStat("경영",5)})]},
     {id:"postalReply",chapter:true,speaker:"세바스찬",title:"회송 봉투",text:"화이트채플에서 답신이 왔습니다.",
-     rememberedText:s=>(s.flags.postmark||recordedChoice(s,"chapel")===0)?"도련님이 읽으신 소인을 보고 우체국에서 답을 보냈습니다. 전보는 이틀 동안 한 창구에 맡겨져 있었답니다.":"지난번 정리하신 연락망에서 답이 왔습니다. 세 곳에서 같은 전보를 받았는데, 회신할 주소가 서로 다릅니다.",
+     rememberedText:s=>(s.flags.postmark||recordedChoice(s,"chapel")===0)?"도련님께서 읽으신 소인을 토대로 우체국에서 회신을 보내왔습니다. 해당 전보는 이틀 동안 한 창구에 묵혀 있었다더군요.":"지난번 정리하신 연락망에서 답이 왔습니다. 세 곳에서 똑같은 전보를 수령했는데, 정작 회신할 주소가 제각각입니다.",
      sees:s=>after(s,"chapel"),choices:[choice("원본과 답신을 한 봉투에 넣어.","화이트채플 서신을 가문 기록에 보관했다.",()=>changeStat("통찰",5)),
        choice("첫 제보자에게 확인을 부탁해.","첫 제보자에게 답장을 보냈다.",()=>changeStat("의지",5))]},
     {id:"snakeReturn",speaker:"스네이크",title:"돌아오는 길",text:"갈 곳이 없으면 오랬지? 아직 우리 자리가 있어? ⋯라고 에밀리가 말했어.",

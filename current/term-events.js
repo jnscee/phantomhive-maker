@@ -74,7 +74,7 @@ function portfolioEvents(){
   })));
 }
 function termPages(event){
-  if(event.authored)return event.lines;
+  if(event.lines)return event.lines;
   const birthday=birthdayDialogue[event.id];
   if(birthday)return birthday.lines;
   const script=event.slot&&examDialogue[event.slot];

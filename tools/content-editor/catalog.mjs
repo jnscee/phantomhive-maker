@@ -251,6 +251,7 @@ export function catalog(files, publishedAssets = [], version = "") {
     const id=value(prop(node,"id"));
     const g=event(id,value(prop(node,"title")),id==="snakeArrival"?"타운하우스 보유 · 소마·아그니 교류 후 발생":"기존 발생 조건");
     for (const [key,label] of [["title","제목"],["speaker","화자"],["text","이벤트 본문"],["source","출처"]]) add(g,file,prop(node,key),label);
+    add(g,file,prop(node,"lines"),"대사 순서","lines",undefined,{cues:true});
     literalChoices(g,file,prop(node,"choices"));
     const prompt=rows(prop(node,"prompt"));
     add(g,file,prompt[0],"마지막 화자");

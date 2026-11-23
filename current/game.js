@@ -296,7 +296,8 @@ function choose(index){
   if(isRecruit&&recruitPage(event.id)!==recruitScenes[event.id].lines.length-1)return;
   const pages=termPages(event);
   if(state.termOutcome||(pages&&(state.termPage||0)<pages.length-1))return;
-  const examBefore=event.exam||pages?snapStats(state):null;
+  const scriptedOutcome=pages&&(event.authored||!event.lines);
+  const examBefore=event.exam||scriptedOutcome?snapStats(state):null;
   const before=choiceSnapshot();
   flagEvent(event.id,choice.effect);
   showChoiceImpact(choice.label,before);
@@ -311,7 +312,7 @@ function choose(index){
   if(isRecruit)delete state.recruitPage;
   state.events.push({id:event.id,index,month:state.month,...(examNote?{examNote}:{}),...(isRecruit?{edition:"canonical",age:currentCielAge()}:{}),...(event.id==="visitPrince"?{hadTanaka:Boolean(state.people.tanaka)}:{})});
   state.log.push(examNote||choice.result);
-  if(pages||choice.response){
+  if(scriptedOutcome||choice.response){
     state.termOutcome={id:event.id,index,note:choice.response?"":examNote,response:choice.response,responseLines:choice.responseLines,nextScene:choice.nextScene};
     state.termPage=0;persist();render(true);return;
   }
@@ -776,7 +777,13 @@ function normalizeSave(run){
   }
   if(copy.recruitPage?.id==="circus"&&copy.recruitPage.version!==4)delete copy.recruitPage;
   if(copy.recruitPage?.id==="visitPrince"&&copy.recruitPage.version!==3)delete copy.recruitPage;
-  if(copy.recruitPage?.id==="maid"&&copy.recruitPage.version!==2)delete copy.recruitPage;
+  if(copy.recruitPage?.id==="maid"&&copy.recruitPage.version===2){
+    const arrival=recruitScenes.maid.lines.findIndex(page=>page.scene===recruitScenes.maid.scenes[6])-1;
+    const at=copy.recruitPage.at;
+    copy.recruitPage.at=pageAt("maid",at>=arrival?at+1:at);
+    copy.recruitPage.version=3;
+  }
+  if(copy.recruitPage?.id==="maid"&&copy.recruitPage.version!==3)delete copy.recruitPage;
   if(copy.recruitPage?.id==="cook"&&copy.recruitPage.version==null){
     // The original cut had five pages before Ciel's first question.
     copy.recruitPage.at=pageAt("cook",copy.recruitPage.at-5);
@@ -1028,19 +1035,19 @@ function managementPanel(){
 }
 
 const marketGoods={
-  cocoa:{name:"핫초콜릿",cost:22,stat:"motivation",amount:12,label:"의욕",line:"카카오를 진하게 풀었어. 숟가락을 세워 볼 생각이라면 조금 더 식혀야겠지만."},
-  broth:{name:"따뜻한 콘소메",cost:24,stat:"hp",amount:13,label:"건강",line:"기름은 걷어 냈어. 입맛이 없는 날에는 한 컵만 마셔도 괜찮지."},
+  cocoa:{name:"핫초콜릿",cost:22,stat:"motivation",amount:12,label:"의욕",line:"카카오를 진하게 풀었지. 숟가락을 세워 볼 생각이라면 조금 더 식혀야겠지만 말이야."},
+  broth:{name:"따뜻한 콘소메",cost:24,stat:"hp",amount:13,label:"건강",line:"기름은 싹 걷어 냈어. 입맛이 없는 날엔 한 컵만 마셔도 괜찮을 걸세."},
   lavender:{name:"라벤더 향주머니",cost:20,stat:"stress",amount:-12,label:"스트레스",line:"서랍에 넣어 두면 장부를 펼칠 때마다 향이 날 거야."},
-  tart:{name:"체리 타르트",cost:14,stat:"motivation",amount:6,label:"의욕",line:"가장자리가 조금 깨진 건 내가 먹었어. 이건 마차로 가져가도 멀쩡할걸."},
-  ginger:{name:"생강 당과",cost:10,stat:"hp",amount:4,label:"건강",line:"설탕을 두 번 입혔지. 그래도 마지막엔 생강 맛이 남아."},
-  biscuit:{name:"버터 비스킷 한 봉",cost:8,stat:"stress",amount:-3,label:"스트레스",line:"깨지기 전에 하나 집어. 봉투는 책갈피로 써도 돼."},
-  novel:{name:"주머니판 모험소설",icon:"reading",cost:17,stat:"motivation",amount:8,label:"의욕",line:"책갈피가 붙어 있네. 집사가 부르면 거기까지만 읽으면 되겠지."},
+  tart:{name:"체리 타르트",cost:14,stat:"motivation",amount:6,label:"의욕",line:"가장자리가 조금 깨진 건 내가 먹었어. 이건 마차로 가져가도 멀쩡할 걸?"},
+  ginger:{name:"생강 당과",cost:10,stat:"hp",amount:4,label:"건강",line:"설탕을 두 번 입혔지. 그래도 마지막엔 생강 맛이 남더라고."},
+  biscuit:{name:"버터 비스킷 한 봉",cost:8,stat:"stress",amount:-3,label:"스트레스",line:"깨지기 전에 하나 집게. 봉투는 책갈피로 써도 좋지."},
+  novel:{name:"주머니판 모험소설",icon:"reading",cost:17,stat:"motivation",amount:8,label:"의욕",line:"책갈피가 붙어 있네. 집사가 부르면 딱 거기까지만 읽고 덮으면 되겠지."},
   abacus:{name:"휴대용 주판 대여",icon:"accounts",cost:19,lesson:"accounts",line:"외상 전표를 계산할 때 써 봐. 회계 수업 한 번 치 대여료야."},
-  lens:{name:"손돋보기 대여",icon:"casework",cost:20,lesson:"inquiry",line:"종이에 남은 눌린 자국까지 보일걸. 기록 조사 때 가져가."},
+  lens:{name:"손돋보기 대여",icon:"casework",cost:20,lesson:"inquiry",line:"종이에 남은 눌린 자국까지 보일 걸. 조사할 때 가져가."},
   shoes:{name:"무도화 조정권",icon:"dance",cost:22,lesson:"dance",line:"뒤축을 발에 맞춰 주지. 다음 무도 수업 전에 들르면 돼."},
   weights:{name:"손아령 대여",icon:"exercise",cost:16,lesson:"exercise",line:"한 쌍이야. 다음 체력 단련이 끝나면 저택으로 사람을 보낼게."},
   tea:{name:"홍차 한 잔",cost:12,stat:"stress",amount:-5,label:"스트레스",line:"마침 차가 잘 우러났어. 한 잔 하겠어?"},
-  scone:{name:"버터 스콘",cost:15,stat:"hp",amount:6,label:"건강",line:"스콘은 따뜻할 때 반으로 갈라야 버터가 스며들지."}
+  scone:{name:"버터 스콘",cost:15,stat:"hp",amount:6,label:"건강",line:"스콘은 따뜻할 때 반으로 갈라야 버터가 스며드는 법이지."}
 };
 let selectedGood="tea";
 function marketPanel(){
