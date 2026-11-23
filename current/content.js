@@ -92,7 +92,7 @@ const categories = [
 const servants = {
   tanaka:{name:"타나카",home:"library",job:"library"}, finny:{name:"피니안",home:"garden",job:"garden"},
   mey:{name:"메이린",home:"quarters",job:"parlor"}, bard:{name:"바르도",home:"kitchen",job:"kitchen"},
-  snake:{name:"스네이크",role:"풋맨",home:"quarters",job:"guard"}, soma:{name:"소마",home:"townhouse",job:null},
+  snake:{name:"스네이크",role:"풋맨",home:"quarters",job:"parlor"}, soma:{name:"소마",home:"townhouse",job:null},
   agni:{name:"아그니",home:"townhouse",job:null}
 };
 const annex = {
