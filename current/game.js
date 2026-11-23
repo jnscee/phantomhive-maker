@@ -868,7 +868,7 @@ function workerSprite(role,position){
 }
 function propertyMap(company){
   const rooms=company?departments:estateRooms;
-  const visibleFittings=new Set(["design3","works3","store2","store3","kitchen2","kitchen3"]);
+  const visibleFittings=new Set(["design3","works3","store2","store3"]);
   const levels=company?state.shop:{...state.level,...state.annex};
   let additions="",pins="";
   for(const [id,room] of Object.entries(rooms)){
