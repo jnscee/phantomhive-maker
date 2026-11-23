@@ -870,37 +870,75 @@ body { background:radial-gradient(ellipse at 50% 42%,#263247,#0c1421 78%); }
 
 /* Keep the calendar header and its return button unobstructed. */
 #scene[data-calendar=true] :is(#date,#money) { display:none; }
-body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; }
+/* Reserve space for a map before its image loads so the target stays in view. */
+body.guiding .property-map > .map-base { aspect-ratio:auto 3 / 2; }
+body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; animation:none; }
 #tour-ring {
   position:fixed; z-index:40; pointer-events:none; box-sizing:border-box;
   border:2px solid #f4dc9e; border-radius:6px;
   box-shadow:0 0 0 1px #4f4535,0 0 0 200vmax rgb(7 17 30 / 24%);
 }
 #guide-replay {
-  position:fixed; z-index:41; box-sizing:border-box; width:min(22rem,calc(100vw - 20px));
-  max-height:calc(100dvh - 20px); overflow:auto; padding:14px 17px 12px;
-  border:1px solid #a5b9ce; border-radius:10px; color:#f4f7fc;
-  background:linear-gradient(140deg,#273b52f2,#112337f5);
-  box-shadow:inset 0 1px #e4efff38,0 5px 20px #07121e66;
+  --guide-gold:#f6e3af;
+  position:fixed; z-index:41; box-sizing:border-box;
+  display:grid; grid-template: minmax(0,1fr) auto / 44px minmax(0,1fr);
+  gap:7px 10px;
+  width:min(22rem,calc(100vw - 20px)); max-height:var(--guide-height,calc(100dvh - 20px));
+  overflow:hidden; padding:10px;
+  border:1px solid #bbd6ed80; border-radius:10px 4px 10px 4px; color:#f2f6fb;
+  background:var(--dialogue-glass);
+  -webkit-backdrop-filter:blur(9px) saturate(115%); backdrop-filter:blur(9px) saturate(115%);
+  box-shadow:inset 0 1px #e8f5ff33,0 5px 18px #07121e65;
 }
+#guide-replay,#tour-ring { transition:none; }
 #guide-replay[hidden],#tour-ring[hidden] { display:none; }
-#guide-replay header,#guide-replay footer { display:flex; align-items:center; gap:6px; }
-#guide-replay header { justify-content:space-between; color:#c8d9e8; font-size:12px; }
-#tour-count { font-variant-numeric:tabular-nums; color:#e9d5a6; }
-#guide-replay h2 { margin:7px 0 4px; font-size:clamp(17px,1.6vw,21px); line-height:1.3; }
-#guide-replay p { margin:0; line-height:1.55; font-size:14px; word-break:keep-all; overflow-wrap:anywhere; }
-#guide-replay footer { margin-top:10px; }
-#guide-replay button { background:#30465d; color:#fff; border:1px solid #8599ad; border-radius:5px; min-height:34px; padding:4px 12px; }
-#guide-replay button:first-child { margin-right:auto; }
-#guide-replay button:disabled { opacity:.48; }
-#guide-replay button:is(:hover,:focus-visible):enabled { background:#465e78; }
-@media (pointer:coarse) { #guide-replay button { min-height:44px; } }
-@media(max-height:480px) {
-  #guide-replay { width:min(18rem,calc(100vw - 20px)); padding:8px 12px; }
-  #guide-replay h2 { margin:4px 0; font-size:16px; }
-  #guide-replay p { font-size:13px; }
-  #guide-replay footer { margin-top:5px; }
+.guide-sr-only {
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip-path:inset(50%); white-space:nowrap;
 }
+.guide-portrait {
+  position:relative; height:54px; overflow:hidden;
+  border:1px solid #bed7ee70; border-radius:6px 2px;
+  background:linear-gradient(145deg,#a9c6e04d,#7394b326);
+}
+.guide-portrait img {
+  position:absolute; top:3px; left:50%; width:74px; max-width:none; height:auto; transform:translateX(-52%);
+}
+.guide-body { display:grid; grid-template-rows:minmax(0,1fr) auto; gap:5px; min-height:0; }
+#tour-hint {
+  overflow:auto; margin:0; padding:0 1px;
+  font-size:14px; line-height:1.55; word-break:keep-all; overflow-wrap:anywhere;
+  text-shadow:0 1px 2px #09192b;
+}
+.guide-action {
+  display:flex; align-items:baseline; gap:6px; margin:0; color:var(--guide-gold);
+}
+.guide-action span { flex:none; color:#d0e0ef; font-size:11px; }
+.guide-action strong {
+  padding:1px 6px; border:1px solid #f3dfac42; border-radius:4px;
+  background:#f3dfac14; font-size:13px; overflow-wrap:anywhere;
+}
+#guide-replay footer {
+  grid-column:1/-1; display:flex; align-items:center; gap:5px;
+  border-top:1px solid #bbd6ed40; padding-top:5px;
+}
+#guide-replay button {
+  background:#97b9d21c; color:#eef6ff; border:1px solid #a9c1d86b; border-radius:5px;
+  min-height:30px; padding:3px 9px; font-size:12px; line-height:1.3;
+}
+#guide-replay button:first-child { margin-right:auto; }
+#guide-replay button[data-action="guide-forward"] {
+  background:#a9c9e244; border-color:#bfdcf49c; font-weight:700;
+}
+#guide-replay button:disabled { opacity:.48; }
+#guide-replay button:is(:hover,:focus-visible):enabled { background-color:#9fc5ea56; border-color:#d5e7fa; }
+#guide-replay button:focus-visible { outline:2px solid var(--guide-gold); outline-offset:-2px; }
+@media(pointer:coarse) { #guide-replay button { min-height:44px; } }
+@media(max-width:480px), (max-height:480px) {
+  #guide-replay { gap:5px 8px; padding:8px 9px; }
+  #tour-hint { font-size:13px; }
+}
+@media(max-width:480px) { #guide-replay { width:min(21rem,calc(100vw - 20px)); } }
 
 /* Monthly plan: itinerary above, spending breakdown and closing balance below. */
 #calendar .calendar-foot {
