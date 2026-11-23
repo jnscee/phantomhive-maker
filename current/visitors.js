@@ -173,13 +173,13 @@ const visitEncounterCards = [
     id: "visitTownhouseChess", place: "townhouse", npc: "소마", title: "두 번째 체스판",
     condition: run => Boolean(run.flags.townhouse && run.people.soma && (run.people.agni || run.flags.agni)) && run.month % 2 === 1,
     lines: [
-      ["소마", "시엘! 이쪽 판은 건드리지 마라. 네가 지난번에 지려다가 돌아간 판이다!"],
+      ["소마", "시엘! 그 판은 그대로 둬! 지난번에 네가 지기 직전에 집에 갔잖아."],
       ["시엘", "아직 안 졌어. 그런데 체스판을 왜 하나 더 샀지?"],
-      ["소마", "네가 올 때까지 나도 계속 두고 싶었거든. 네 말을 함부로 옮길 수는 없잖아."],
+      ["소마", "나도 체스는 두고 싶고, 네가 오기 전에 네 말을 옮겨 버리긴 싫잖아. 그래서 하나 더 샀어!"],
       ["시엘", "……그쪽 판에서도 내 말을 두고 있었네. 이 수를 세 번이나 연습했어?"]
     ],
     choices: [
-      {label: "소마가 준비한 수부터 받아 준다", reply: ["소마", "좋아. 이번에는 아그니한테 슬쩍 물어볼 필요도 없다고!"], trust: "soma"},
+      {label: "소마가 준비한 수부터 받아 준다", reply: ["소마", "좋아! 아그니, 이번엔 귀띔해 주면 안 돼. 이 수는 내가 생각했어!"], trust: "soma"},
       {label: "두 판의 차이를 찾아낸다", reply: ["시엘", "네가 연습할 때는 이 폰이 한 칸 뒤에 있었지. 자, 이제 내 차례야."], stat: "통찰", amount: 2}
     ]
   },
