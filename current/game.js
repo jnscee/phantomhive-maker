@@ -29,7 +29,7 @@ try{ saves=JSON.parse(localStorage.getItem(storageKey)||"{}"); }catch{ storageOk
 if(!saves || typeof saves!=="object")saves={};
 let state=saves.auto?.v===1?saves.auto:initial();
 state=structuredClone(state);
-let tab=state.phase==="plan"?"home":"plan";
+let tab="title";
 let selectedSlot=0;
 let editingVisit=false;
 const $=id=>document.getElementById(id);
@@ -579,16 +579,16 @@ function plannerContents() {
   periods.push(calendarSlot("자유행동", visits[state.visit]??"", "pick-visit", editingVisit));
   const estimate = marketStats();
   const note = plannerNote(editingVisit?state.visit:chosen);
-  return (editingVisit?'<div class="lesson-index">자유행동 · 월 1회</div>':'<div class="lesson-index">'+categories.map(([name],i)=>option(name,"category:"+i,i===lessonPage,false,"index-tab")).join("")+'</div>')+
+  return (editingVisit?'<div class="lesson-index visit-index"><span class="index-tab">자유행동 · 월 1회</span></div>':'<div class="lesson-index">'+categories.map(([name],i)=>option(name,"category:"+i,i===lessonPage,false,"index-tab")).join("")+'</div>')+
     '<div class="card-field" role="group" aria-label="'+(editingVisit?'자유행동':slotNames[selectedSlot]+' 활동 목록')+'">'+
       '<div class="card-bank">'+cards.slice(0,half).join('')+'</div>'+
       '<div class="card-bank">'+cards.slice(half).join('')+'</div></div>'+
     '<div class="calendar-foot"><div class="calendar-summary"><strong>'+monthText(state.month)+'</strong>'+
       '<span class="calendar-note">'+note+'</span></div>'+
       '<div class="calendar-periods" role="group" aria-label="편집할 기간">'+periods.join('')+'</div>'+
-      '<div class="calendar-settle">'+plannerCosts(estimate)+
+      festivalNotice()+'<div class="calendar-settle">'+plannerCosts(estimate)+
       '<div class="plan-balance"><span>예상 월말 자금</span><strong>'+money(estimate.balance)+'</strong></div>'+
-      btn('이달 일정 실행','execute',!planReady()||estimate.blocked,'calendar-run')+'</div>'+festivalNotice()+(healthNotice(state)?'<p class="calendar-warning">'+healthNotice(state)+'</p>':'')+
+      btn('이달 일정 실행','execute',!planReady()||estimate.blocked,'calendar-run')+'</div>'+(healthNotice(state)?'<p class="calendar-warning">'+healthNotice(state)+'</p>':'')+
       (state.unwell>0?'<p class="calendar-warning">위독 · 이번 월말에 건강이 18 미만이면 시엘이 숨을 거둡니다.</p>':'')+
       (state.arrears>0?'<p class="calendar-warning">미지급금 경고 · 이번 월말까지 잔액을 £0 이상으로 회복하세요.</p>':'')+
       (estimate.blocked?'<p class="calendar-warning">준비비가 부족합니다. 활동이나 생산량을 조정하세요.</p>':'')+'</div>';
@@ -630,7 +630,11 @@ function relationBook(){
   return '<h3>인물 관계</h3>'+peopleInHouse().map(id=>{const r=state.people[id];return '<div class="work-ledger"><b>'+servants[id].name+'</b><span>상대 → 시엘 신뢰　'+rank(r.toward)+'</span></div>';}).join("");
 }
 function titlePanel(){
-  return frame("팬텀하이브 메이커",'<div class="book-cover"><small>1886 — 1888</small><h2>EARL<br>PHANTOMHIVE<br>MAKER</h2><p>팬텀하이브 메이커</p>'+btn('<span class="return-label">회차로 돌아가기</span>',"back",false,"return-control")+btn("새 회차","reset")+'</div>');
+  const ongoing=saves.auto?.v===1;
+  const slots=[1,2,3].some(id=>saves[id]?.v===1);
+  return '<article class="book-cover"><small>1886 — 1888</small><h2 lang="en">EARL<br>PHANTOMHIVE<br>MAKER</h2><p>팬텀하이브 백작 메이커</p><div class="cover-actions">'+
+    (ongoing?btn("이어하기","resume",false,"primary"):"")+btn(ongoing?"새 회차":"게임 시작","reset",false,ongoing?"":"primary")+
+    (slots?btn("저장 기록","tab:save"):"")+'</div></article>';
 }
 function londonCareer(run){
   if(run.stats.경영>=140&&run.fund>=260)return "merchant";
@@ -1042,10 +1046,21 @@ function businessForecast(){
     tile("생산비",money(est.unit*state.qty),"market-cost")+tile("예상 월말 자금",money(est.balance),"market-balance")+'</div><div class="sales-gauge" id="sales-gauge">'+salesGauge(est.sold)+'</div>';
 }
 function salesBooks(){
+  const entries=state.salesBook.slice().reverse();
+  const cap=Math.max(1,...entries.flatMap(r=>[r.revenue-(r.wholesale||0),r.wholesale||0,r.advance||0,r.cost||0]));
+  function line(label,value,tone){
+    return '<div class="sale-metric '+tone+'"><dt>'+label+'</dt><dd>'+money(value)+'</dd><i aria-hidden="true" style="--amount:'+100*value/cap+'%"></i></div>';
+  }
+  const rows=entries.map((r,i)=>{
+    const retail=r.revenue-(r.wholesale||0),gain=r.investment?.total;
+    return '<details class="sale-month"'+(i===0?' open':'')+'><summary><span>'+monthText(r.month)+'</span><b>'+products[r.product].name+'</b></summary>'+
+      '<dl>'+line("소매 판매 · "+r.sold+"개",retail,"receipt")+
+      (r.delivery?line(products[r.delivery.id].name+" 납품 "+r.delivery.shipped+"/"+r.delivery.qty+"개",r.wholesale||0,"receipt"):"")+
+      line("납품 선금",r.advance||0,"receipt")+line("생산비",r.cost||0,"outlay")+'</dl>'+
+      (gain!=null?'<p class="sale-gain"><span>시설 기여 이익</span><b>'+(gain>0?"+":gain<0?"−":"")+money(Math.abs(gain))+'</b></p>':'')+'</details>';
+  }).join("");
   return '<details class="sales-books"><summary>월별 영업 장부</summary><p>판매 대금과 납품 선금은 가문 자금에 합산됩니다.</p>'+
-    (state.salesBook.length?state.salesBook.slice().reverse().map(r=>'<div class="sale-row"><b>'+monthText(r.month)+' · '+products[r.product].name+'</b>'+
-      '<span>소매 '+r.sold+'개 · '+money(r.revenue-(r.wholesale||0))+(r.delivery?' · '+products[r.delivery.id].name+' 납품 '+r.delivery.shipped+'/'+r.delivery.qty+'개 '+money(r.wholesale):'')+'　납품 선금 '+money(r.advance)+'　생산비 '+money(r.cost)+'</span>'+(r.investment?.total?'<span>시설 기여 이익 +'+money(r.investment.total)+'</span>':'')+'</div>').join(""):
-      '<p>첫 월간 결산 후 판매 내역이 기록됩니다.</p>')+'</details>';
+    (rows||'<p>첫 월간 결산 후 판매 내역이 기록됩니다.</p>')+'</details>';
 }
 function managementPanel(){
   const company=tab==="company",active=state.phase==="plan";
@@ -1100,7 +1115,7 @@ function marketPanel(){
 }
 const panels={market:marketPanel,title:titlePanel,plan:planPanel,status:statusPanel,estate:managementPanel,townhouse:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
 state=normalizeSave(state);
-if(state.phase==="event")tab="plan";
+
 function sheetTitle(){
   if(tab==="plan"){
     if(state.phase==="vow")return "마지막 명령";
@@ -1151,7 +1166,7 @@ function render(focus=false,playbackOffset=0){
   updateIllness(state);
   musicPlayer.sync(trackForView());
   stopPlayback();
-  $("system-back").disabled=tab==="home";
+  $("system-back").disabled=tab==="home"||tab==="title";
   $("system-book").setAttribute("aria-pressed",String(tab==="record"));
   $("system-save").setAttribute("aria-pressed",String(tab==="save"));
   const opening=inOpening();
@@ -1195,7 +1210,7 @@ function render(focus=false,playbackOffset=0){
   const home=tab==="home";
   const calendar=tab==="plan" && state.phase==="plan";
   if(!calendar)editingVisit=false;
-  $("home-standing").hidden=!(home||calendar||tab==="status"||tab==="title");
+  $("home-standing").hidden=!(home||calendar||tab==="status");
   $("calendar").hidden=!calendar;
   $("scene").dataset.calendar=String(calendar);
   $("scene").dataset.business=String(tab==="company"||tab==="estate"||tab==="townhouse"||tab==="staffing");
@@ -1230,7 +1245,7 @@ function render(focus=false,playbackOffset=0){
     }
   }
   panel.scrollTop=deskScroll;
-  if(focus)title.focus({preventScroll:true});
+  if(focus)(tab==="title"?panel.querySelector(".cover-actions button"):title).focus({preventScroll:true});
 }
 let flashTimer;
 function announce(message){
@@ -1340,7 +1355,7 @@ function goBack(rect){
     focusAction("pick-visit");respond("back",rect);
     return true;
   }
-  if(tab==="home")return false;
+  if(tab==="home"||tab==="title")return false;
   handleAction("back",rect);
   return true;
 }
@@ -1411,6 +1426,11 @@ function handleAction(key,rect,confirmed=false){
   const fund=state.fund;
   if(openingAction(action,id,confirmed,rect))return;
   if(tab==="recollection"&&["system-back","back"].includes(action)){finishOpening();return;}
+  if(tab==="title"&&action==="resume"&&saves.auto?.v===1){
+    tab=state.phase==="plan"?"home":"plan";render(true);
+    if(state.phase==="guide")showGuidePage(0);
+    return;
+  }
   if(action==="open-guide"){showGuidePage(0);return;}
   if(action==="goods"&&tab==="market"&&Object.hasOwn(marketGoods,id)){
     selectedGood=id;
@@ -1534,7 +1554,7 @@ function handleAction(key,rect,confirmed=false){
   if(action==="tab"){
     if(id==="townhouse"&&!state.flags.townhouse)return;
     if(id==="townhouse")selectedEmployee=null;
-    if(["contract","guide"].includes(state.phase)&&!["save","plan"].includes(id)){tab="plan";render(true);return;}
+    if(["contract","guide"].includes(state.phase)&&!["save","plan","title"].includes(id)){tab="plan";render(true);return;}
     if(id==="chat"&&state.phase!=="plan"){announce("진행 중인 일정과 결산을 먼저 마쳐 주세요.");return;}
     if(id==="plan")lessonPage=Math.max(0,categories.findIndex(([,list])=>list.includes(state.plan[selectedSlot])));
     if(["record","save"].includes(id)){
@@ -1551,6 +1571,8 @@ function handleAction(key,rect,confirmed=false){
     render(true);respond("tap",rect);return;
   }
   if(action==="back"){
+    if(tab==="title")return;
+    if(tab==="save"&&utilityOrigin==="title"){utilityOrigin=null;tab="title";render(true);return;}
     if(tab==="staffing"){tab="estate";render();$("panel").scrollTop=estateReturnScroll;focusAction("tab:staffing");return;}
     if(["contract","guide"].includes(state.phase)){tab="plan";render(true);return;}
     editingVisit=false;
@@ -1618,7 +1640,8 @@ function handleAction(key,rect,confirmed=false){
   let message="";
   let pattern="choose";
   if(action==="reset"){
-    if(!confirmed){askConfirmation(key,"새 회차","현재 진행이 초기화됩니다.<br>수동 저장은 유지됩니다.","새 회차 시작",rect);return;}
+    if(tab!=="title"){utilityOrigin=null;tab="title";render(true);return;}
+    if(saves.auto?.v===1&&!confirmed){askConfirmation(key,"새 회차","현재 진행이 초기화됩니다.<br>수동 저장은 유지됩니다.","새 회차 시작",rect);return;}
     utilityOrigin=null;state=initial();selectedSlot=0;editingVisit=false;lessonPage=0;tab="plan";message="새 회차 시작";
   }else if(action==="store"){
     if(saves[id]&&!confirmed){askConfirmation(key,"슬롯 "+id+" 저장","기존 슬롯의 저장 내용을 교체합니다.","덮어쓰기",rect);return;}

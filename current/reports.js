@@ -21,6 +21,15 @@ function monthlyBudget(){
 function amountRow(name,value,cls=""){
   return '<div class="amount-row '+cls+'"><span>'+name+'</span><strong>'+money(value)+'</strong></div>';
 }
+function tradeCosts(trade){
+  function fee(label,value,note=""){
+    return '<div><dt>'+label+'</dt><dd>'+money(value)+'</dd>'+(note?'<dd class="fee-rule">'+note+'</dd>':'')+'</div>';
+  }
+  return '<dl class="trade-fees">'+fee("설비 운영",trade.operation)+
+    fee("운송",trade.freight,"소매·납품 합계 "+trade.freightAllowance+"개까지 무료<br>초과 1개당 £3")+
+    fee("월말 보관",trade.holding,"전 품목 합산 8개까지 무료<br>초과 1개당 £1")+
+    (trade.order?fee("미납 부담",trade.penalty,"예상 납품 "+trade.shipped+" / "+trade.order.qty+"개"):"")+'</dl>';
+}
 function budgetTable(compact=false){
   const b=monthlyBudget();
   const change=b.closing-state.fund;
@@ -33,7 +42,7 @@ function budgetTable(compact=false){
     '<div class="cash-head"><span>예상 월말 잔액</span><strong>'+money(b.closing)+'</strong><b class="cash-change">'+(change>0?'▲ '+money(change)+' 증가':change<0?'▼ '+money(-change)+' 감소':'변동 없음')+'</b></div>'+
     amountRow("현재 가용 자금",state.fund)+flow("팬텀사 예상 매출",b.revenue,false)+flow("남은 지출 합계",b.total,true)+
     (compact?'<details class="expense-details"><summary>지출 내역·시설 효과</summary>':'')+'<div class="cash-detail">'+amountRow("저택 운영 · 시설 유지",b.estate)+amountRow("팬텀사 운영 · 생산비",b.company)+
-    '<small>설비 운영 '+money(b.trade.operation)+' · 운송 '+money(b.trade.freight)+' (소매·납품 합계 '+b.trade.freightAllowance+'개 초과분은 개당 £3) · 월말 보관 '+money(b.trade.holding)+' (전 품목 합산 8개까지 무료, 초과분 개당 £1)'+(b.trade.order?' · 예상 납품 '+b.trade.shipped+'/'+b.trade.order.qty+'개 · 미납 부담 '+money(b.trade.penalty):'')+'</small>'+amountRow("교육·활동비",b.tuition)+
+    tradeCosts(b.trade)+amountRow("교육·활동비",b.tuition)+
     (b.debt?amountRow("채무 상환",b.debt):"")+'</div>'+
     (state.accounts.estate||state.accounts.company?'<p>가용 자금에 이미 반영된 지출 · 저택 '+money(state.accounts.estate)+' / 팬텀사 '+money(state.accounts.company)+'</p>':'')+contributionNote(investmentEffect(forecast()),state.accounts.researchSaved)+(compact?'</details>':'')+'</section>';
 }

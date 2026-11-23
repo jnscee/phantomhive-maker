@@ -261,9 +261,23 @@ function observePortraitStage(stage){
   const observer=new ResizeObserver(([entry])=>{
     stage.style.setProperty("--portrait-scene-height",entry.contentRect.height+"px");
     stage.style.setProperty("--portrait-scene-width",entry.contentRect.width+"px");
+    const room=stage.querySelector("#playback:not([hidden]) .stage-room");
+    if(room)fitLessonRoom(room);
   });
   observer.observe(stage);
   const toggle=document.getElementById("dialogue-visibility");
+  const rail=document.getElementById("system-menu");
+  if(rail&&typeof matchMedia==="function"){
+    const mobile=matchMedia("(max-width:960px) and (orientation:portrait),(max-width:700px) and (orientation:landscape)");
+    function placeToggle(){
+      if(mobile.matches&&stage.dataset.story==="true"){
+        if(toggle.parentElement!==rail)rail.prepend(toggle);
+      }else if(toggle.parentElement!==stage)stage.append(toggle);
+    }
+    new MutationObserver(placeToggle).observe(stage,{attributes:true,attributeFilter:["data-story"]});
+    mobile.addEventListener("change",placeToggle);
+    placeToggle();
+  }
   toggle.addEventListener("click",event=>{
     event.stopPropagation();
     setArtOnly(stage,stage.dataset.artOnly!=="true");
@@ -319,10 +333,10 @@ function setArtOnly(stage,hidden){
 function cielPortraitScale(age){return String(Math.min(152,140+6*(age-10))/186);}
 // Eye positions and eye-to-chin lengths were measured on each illustration at 400 px high.
 const standingMeasures={
-  "세바스찬":[189,67,43], "아그니":[193,53,35], "바르도":[181,52,46],
-  "피니안":[163,67,42], "메이린":[165,94,46], "올빼미":[165,77,40], "스네이크":[177,64,46],
-  "소마":[171,74,43], "타나카":[166,64,44], "라우":[178,62,42],
-  "엘리자베스11":[144,88,37], "엘리자베스12":[150,106,50], "엘리자베스13":[156,89,46]
+  "세바스찬":[189,67,43], "아그니":[193,53,36], "바르도":[181,52,46],
+  "피니안":[163,68,44], "메이린":[165,94,45], "올빼미":[165,77,40], "스네이크":[177,64,45],
+  "소마":[171,74,44], "타나카":[166,64,44], "라우":[178,62,42],
+  "엘리자베스11":[144,87,39], "엘리자베스12":[150,106,50], "엘리자베스13":[156,89,45]
 };
 const cielMeasures=[[140,86,46],[146,79,45],[152,62,46]];
 function standingFit(profile,age){
@@ -344,15 +358,12 @@ function setPortraitAge(stage,age){
 }
 function framedStanding(name,src,classes,profile=name){
   const age=Number(document.getElementById("scene").dataset.castAge)||10;
-  const fit=standingFit(Object.hasOwn(standingMeasures,profile)?profile:"세바스찬",age);
+  const fit=name==="시엘"?{scale:Number(cielPortraitScale(age)),window:Number(cielPortraitScale(age))}:standingFit(Object.hasOwn(standingMeasures,profile)?profile:"세바스찬",age);
   return '<span class="standing-window '+classes+'" style="--figure-scale:'+fit.scale+';--figure-height:'+fit.window+'"><img src="'+src+'" alt="'+String(name).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')+'"></span>';
 }
 function sceneStanding(name,side,src,age){
-  if(name!=="시엘"){
-    const profile=name==="엘리자베스"?name+(age||13):name;
-    return framedStanding(name,src,"cast cast-"+side,profile);
-  }
-  return '<img class="butler cast cast-'+side+'" alt="'+name+'" src="'+src+'">';
+  const profile=name==="엘리자베스"?name+(age||Number(document.getElementById("scene").dataset.castAge)+1):name;
+  return framedStanding(name,src,"cast cast-"+side,profile);
 }
 function novelSpeakerName(speaker){
   const name=speaker?.trim();
@@ -364,7 +375,7 @@ function sceneLine(speaker,text,next,attributes="",heading=""){
     '<p>'+text+' '+next+'</p></article>';
 }
 const novelExpressions={};
-const recruitNames={ciel:"시엘",seb:"세바스찬",finny:"피니안",mey:"메이린",owl:"올빼미",bard:"바르도",tanaka:"타나카",snake:"스네이크",soma:"소마",agni:"아그니"};
+const recruitNames={ciel:"시엘",ciel11:"시엘",ciel12:"시엘",seb:"세바스찬",finny:"피니안",mey:"메이린",owl:"올빼미",bard:"바르도",tanaka:"타나카",snake:"스네이크",soma:"소마",agni:"아그니"};
 function readerControls(at,last,auto){
   return '<div class="opening-top recruit-controls" role="group" aria-label="대사 재생">'+
     '<button type="button" data-read="previous" '+(at===0?'disabled':'')+'>이전</button>'+

@@ -81,10 +81,7 @@ body.guiding #scene #dialogue-visibility {display:none}
   82% {transform:translateY(-1.4%)}
 }
 html[data-game-motion=reduced] :is(#ciel-greet > .greeting-hop,.performer,.motion-object) {animation:none!important}
-#playback .lesson-plane {
-  width:100%;
-  width:max(var(--portrait-scene-width),calc(var(--portrait-scene-height) * 1.5));
-}
+
 
 #overture .opening-mat[hidden] {display:none!important}
 
@@ -105,7 +102,7 @@ html[data-game-motion=reduced] :is(#ciel-greet > .greeting-hop,.performer,.motio
 #scene #conversation .cast[alt="시엘"] {
   scale:calc(var(--ciel-scale) * var(--standing-zoom) * var(--cast-camera,1));
 }
-.lesson-plane[data-room=gym] {--foot-x:56%;--foot-y:82%}
+.lesson-plane[data-room=gym] {--foot-x:.56;--foot-y:.82}
 #scene[data-mode=market] .lau-counter {
   height:100%; min-height:0; display:grid; grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);
   grid-template-rows:auto minmax(0,1fr) auto; gap:6px 3%; padding:8px 6% 12px; align-items:stretch;
@@ -161,4 +158,47 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
   #scene[data-mode=market] .shop-trade {gap:2px;padding-top:2px}
   #scene[data-mode=market] .shop-trade .shop-buy {min-height:30px}
   #scene[data-mode=market] .shop-talk :is(h3,p,small) {margin:1px 0;line-height:1.15}
+}
+
+@media(max-width:960px) and (orientation:portrait),(max-width:700px) and (orientation:landscape) {
+  #scene[data-story=true] {
+    --portrait-height:min(calc(var(--portrait-scene-height) * .74),calc(var(--portrait-scene-width) * .77));
+    --line-height-mobile:min(10rem,26dvh);
+    --opening-inset:min(16px,3cqw);
+  }
+  #scene #overture:not([data-voice-only=true]) .opening-mat {
+    display:grid; grid-template:minmax(0,1fr) var(--line-height-mobile) / minmax(0,1fr);
+    padding:16px 2% var(--opening-inset); justify-content:stretch;
+  }
+  #scene #overture:not([data-voice-only=true]) .opening-mat > #opening-dialogue {
+    grid-area:2/1; width:100%; height:100%; max-height:none; min-height:0; justify-self:stretch;
+  }
+  #scene #overture:not([data-voice-only=true]) #opening-cast > .cast {
+    bottom:calc(var(--opening-inset) + var(--line-height-mobile) - 5px);
+  }
+  #scene #conversation:not([data-review=true]) > article.dialogue {
+    height:var(--line-height-mobile); min-height:0; max-height:var(--line-height-mobile); overflow-y:auto;
+  }
+  /* Both actors share the edge of the dialogue row, even when reading choices. */
+  #scene #conversation:not([hidden]):not([data-review=true]):has(> .cast):has(> .dialogue) {
+    display:grid; grid-template: minmax(0,1fr) auto / minmax(0,1fr); row-gap:0; align-items:end;
+  }
+  #scene #conversation:not([data-review=true]):has(> .cast) > :is(.dialogue,.art-layout-space) {
+    position:relative; grid-area:2/1; inset:auto; z-index:2; justify-self:center; width:100%; margin:0;
+  }
+  #scene #conversation:not([data-review=true]):has(> .cast) > .dialogue {max-height:min(10rem,26dvh);}
+  #scene #conversation:not([data-review=true]):has(> .dialogue) > :is(.standing-window.cast,img.cast) {
+    grid-area:1/1; position:relative; inset:auto; align-self:end; margin-block:0;
+    transform-origin:center bottom; object-position:center bottom; translate:0 5px; pointer-events:none;
+  }
+  #scene #conversation:not([data-review=true]):has(> .cast):has(> .answers:not([hidden])) {
+    grid-template-rows:minmax(0,1fr) auto auto;
+  }
+  #scene #conversation:not([data-review=true]):has(> .cast) > .answers {
+    grid-area:1/1; align-self:center;
+  }
+  #scene #conversation:not([data-review=true]):has(> .answers:not([hidden])) > .cast { grid-area:2/1; }
+  #scene #conversation:not([data-review=true]):has(> .cast):has(> .answers:not([hidden])) > :is(.dialogue,.art-layout-space) { grid-area:3/1; }
+  #scene #conversation:not([data-review=true]) > .cast-left { justify-self:start; }
+  #scene #conversation:not([data-review=true]) > .cast-right { justify-self:end; }
 }

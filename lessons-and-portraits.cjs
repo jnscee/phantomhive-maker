@@ -2,6 +2,12 @@
 const {chromium,firefox}=require('playwright');
 const assert=require('node:assert/strict');
 const base='http://127.0.0.1:4173/';
+async function openGame(page){
+  // Exercise the bundled assets and fallback fonts without depending on a public font service.
+  await page.route(/^https:\/\/fonts\.(?:googleapis|gstatic)\.com\//,route=>route.abort());
+  await page.goto(base,{waitUntil:"domcontentloaded"});
+}
+
 async function checkNotebook(page){
   await page.locator('#system-save').click();
   assert.equal(await page.locator('#sheet-title').innerText(),'저장 · 설정');
@@ -57,6 +63,39 @@ async function checkNotebook(page){
   assert.equal(await page.evaluate(()=>state.month),14);
 }
 
+async function checkRoomCamera(page,activity){
+  await page.evaluate(id=>{
+    state=initial();state.phase="plan";tab="plan";state.plan=[id,"study","walk"];state.visit="none";
+    execute();stopPlayback();
+  },activity);
+  const image=page.locator("#playback .stage-room");
+  await image.evaluate(async im=>{
+    await im.decode();
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  });
+  const lesson=await image.evaluate(im=>{
+    const box=e=>e.getBoundingClientRect().toJSON();
+    return {fit:getComputedStyle(im).objectFit,position:getComputedStyle(im).objectPosition,file:im.src,aspect:im.naturalWidth/im.naturalHeight,art:box(im),actor:box(document.querySelector(".performer")),
+      crop:box(document.querySelector(".lesson-art")),filter:getComputedStyle(im).filter};
+  });
+  await page.evaluate(()=>{state.phase="review";render();});
+  const review=await page.locator("#conversation .review-room").evaluate(el=>({
+    box:el.getBoundingClientRect().toJSON(),image:getComputedStyle(el).backgroundImage,
+    size:getComputedStyle(el).backgroundSize,position:getComputedStyle(el).backgroundPosition,filter:getComputedStyle(el).filter
+  }));
+  assert.ok(review.image.includes(lesson.file));
+  assert.equal(review.size,"cover");assert.equal(review.position,"50% 50%");
+  assert.equal(lesson.filter,review.filter);
+  const {box}=review;
+  assert.equal(lesson.fit,review.size);assert.equal(lesson.position,review.position);
+  for(const axis of ["x","y","width","height"]){
+    assert.ok(Math.abs(lesson.art[axis]-box[axis])<2,JSON.stringify({activity,lesson,review,axis}));
+  }
+  const paintedHeight=Math.max(box.height,box.width/lesson.aspect);
+  assert.ok(Math.abs(lesson.actor.height/paintedHeight-.255)<.01,JSON.stringify({activity,lesson,review}));
+  assert.ok(lesson.actor.left>=lesson.crop.left-1&&lesson.actor.right<=lesson.crop.right+1);
+}
+
 async function check(browserType){
   const browser=await browserType.launch({headless:true,...(browserType===chromium&&process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
   try{
@@ -65,7 +104,10 @@ async function check(browserType){
       const page=await browser.newPage({viewport,reducedMotion:'reduce'});
       const errors=[];page.on('pageerror',error=>{errors.push(error.message);console.error('Browser error:',error.message);});
       page.setDefaultTimeout(12000); console.log(browserType.name(),viewport.width);
-      await page.goto(base);
+      await openGame(page);
+      assert.ok(await page.locator('.book-cover').isVisible());
+      assert.equal(await page.locator('#overture').isVisible(),false);
+      await page.locator('.book-cover [data-action="reset"]').click();
       await page.locator('#dialogue-visibility').click();
       const prologue=await page.locator('#opening-line').textContent();
       assert.equal(await page.locator('#opening-dialogue').isVisible(),false,JSON.stringify(await page.evaluate(()=>({state:document.getElementById('scene').dataset.artOnly,pressed:document.getElementById('dialogue-visibility').getAttribute('aria-pressed'),mat:document.querySelector('.opening-mat').hidden,errors:document.getElementById('launch-help').hidden}))));
@@ -75,7 +117,7 @@ async function check(browserType){
       if(viewport.width===390){
         for(const [width,height,month] of [[319,866,14],[375,667,1],[390,844,26],[430,932,14]]){
           const phone=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});
-          await phone.goto(base);
+          await openGame(phone);
           await phone.evaluate(month=>{
             state=initial();state.month=state.planMonth=month;state.phase='plan';tab='home';render();
           },month);
@@ -103,10 +145,15 @@ async function check(browserType){
           assert.deepEqual(geometry.rows,[...Array(3).fill(geometry.rows[0]),...Array(3).fill(geometry.rows[5])]);
           assert.ok(geometry.rows[5]>geometry.rows[0]&&Math.max(...geometry.widths)-Math.min(...geometry.widths)<=1);
           assert.ok(geometry.smallest>=44&&geometry.rightEdge<=width);
-          if(width===319)await checkNotebook(phone);
+          if(width===319){
+            await checkNotebook(phone);
+            await checkRoomCamera(phone,"study");
+            await checkRoomCamera(phone,"exercise");
+          }
           await phone.close();
         }
       }
+      for(const activity of ["study","exercise"])await checkRoomCamera(page,activity);
       for(const [month,age] of [[1,10],[14,11],[26,12]]){
         await page.evaluate(month=>{state=initial();state.month=month;state.planMonth=month;state.phase='plan';tab='home';render();},month);
         const portrait=page.locator('#ciel-greet > #home-standing');
@@ -136,8 +183,11 @@ async function check(browserType){
       await page.evaluate(()=>{state=initial();state.phase='plan';tab='estate';render();});
       const londonTab=page.getByRole('button',{name:'타운하우스',exact:true});
       assert.equal(await londonTab.count(),0);
-      await page.evaluate(()=>{state.flags.townhouse=true;recruit('soma');recruit('agni');render();});
+      await page.evaluate(()=>{state.flags.townhouse=true;render();});
       await londonTab.click();
+      assert.doesNotMatch(await page.locator('.london-board').innerText(),/소마|아그니|합류/);
+      assert.equal(await page.evaluate(()=>sourceNote({id:'visitPrince'})),'');
+      await page.evaluate(()=>{recruit('soma');recruit('agni');render();});
       for(const id of ['soma','agni']){
         const host=page.locator('[data-employee="'+id+'"] img');
         assert.equal(await host.getAttribute('src'),'assets/portraits/'+id+'.webp');
@@ -149,6 +199,7 @@ async function check(browserType){
       await page.locator('[data-duty="kitchen"]').click();
       assert.ok((await page.locator('.london-request').innerText()).includes('준비 완료'));
       await page.reload();
+      await page.locator('.book-cover [data-action="resume"]').click();
       await page.locator('#nav [data-action="tab:estate"]').click();
       assert.equal(await page.locator('[data-duty="salon"] em').textContent(),'소마');
       assert.equal(await page.locator('[data-duty="kitchen"] em').textContent(),'아그니');
@@ -190,7 +241,7 @@ async function check(browserType){
         await page.locator('.ending-cg').evaluate(im=>im.decode());
         await page.locator('#conversation [data-read="next"]').click();
         const line=await page.locator('#conversation .dialogue p').textContent();
-        await page.reload();assert.equal(await page.locator('#conversation .dialogue p').textContent(),line);
+        await page.reload();await page.locator('.book-cover [data-action="resume"]').click(); assert.equal(await page.locator('#conversation .dialogue p').textContent(),line);
         await page.locator('#dialogue-visibility').click();await page.locator('#conversation .dialogue').waitFor({state:'hidden'});
         await page.locator('#dialogue-visibility').click();
         await page.locator('#conversation [data-read="skip"]').click();
@@ -206,6 +257,7 @@ async function check(browserType){
         ][trustTier(state.people.mey.toward)],id);
         assert.equal(await farewell.locator('.farewell-bubble p').textContent(),farewellLine);
         await page.reload();
+        await page.locator('.book-cover [data-action="resume"]').click();
         assert.equal(await farewell.locator('.farewell-bubble p').textContent(),farewellLine);
         await farewell.locator('.farewell-person').evaluate(im=>im.decode());
         await farewell.locator('[data-farewell="skip"]').click();

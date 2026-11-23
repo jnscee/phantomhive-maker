@@ -31,9 +31,18 @@ function guideMenu(page){
     '<span class="'+(subjects.includes(label)?"current":"")+'">'+label+'</span>').join("")+'</span>';
 }
 function instructionBook(){
- const paths=["오늘 날짜 · 진행 개월 · 보유금","상·중·하순 선택 → 활동 카드","자유행동 → 방문 장소","상품 개발 → 생산량 → 판매가","시설 선택 → 개수 또는 사용인 배치","상순 → 중순 → 하순 → 자유행동(선택) → 월말 결산","화제 선택 · 건강과 능력 확인","사건 기록 · 회차 저장"];
- return '<details class="notebook-guide"><summary><i class="book-spread" aria-hidden="true"></i><span><strong>튜토리얼 안내서</strong><small>세바스찬의 설명을 글로 읽기</small></span></summary>'+guide.map(([title,body],i)=>
-   '<details class="guide-topic"><summary><b>'+title+'</b><small>'+paths[i]+'</small></summary><p>'+body+'</p></details>').join("")+
+ const topics=[
+   ["날짜판과 명패","날짜와 보유금","왼쪽 위 달력에서 현재 날짜와 전체 35개월 중 몇 개월째인지 확인할 수 있습니다. 오른쪽 위 명패에는 시엘의 나이와 가문의 보유금이 표시됩니다."],
+   ["일정표","한 달 일정 편성","상순·중순·하순 중 바꿀 칸을 누르고 활동을 선택합니다. 카드의 £ 표시는 해당 활동의 비용입니다. 휴식 뒤에는 다음 수업에 집중하기 쉽고, 같은 능력을 반복해서 훈련하면 실기 시험이 열립니다. 12세부터는 응용 실기를 마친 능력이 375 이상일 때 그 능력을 사용하는 일정에서 최종 실기를 치를 수 있습니다."],
+   ["자유행동","방문지 선택","한 달에 한 곳을 방문할 수 있습니다. 일정표의 ‘자유행동’에서 장소를 고르면 하순 일정이 끝난 뒤 방문합니다. 방문하지 않을 때는 ‘방문 생략’을 선택합니다."],
+   ["팬텀사","상품·생산량·판매가 설정","‘관리 · 경영’에서 ‘팬텀 사(社)’를 엽니다. 개발실에서 상품을 개발하고, 제작실에서 생산량을, 판매점에서 판매가를 정합니다. ‘이달 자금 예상’에서 수업료를 포함한 월말 잔액을 확인할 수 있습니다."],
+   ["저택","시설 개수와 사용인 배치","‘관리 · 경영’의 저택 지도에서 방을 누르면 개수 효과와 비용을 확인할 수 있습니다. ‘사용인 배치’에서 인물을 고르고 근무할 방을 누릅니다. 간식과 수업 준비물은 저택 메인 화면의 ‘상점’에서 구매합니다."],
+   ["실행","일정 진행과 월말 결산","세 순의 활동과 자유행동을 정한 뒤 ‘이달 일정 실행’을 누릅니다. 저택 메인 화면의 ‘실행’으로도 시작할 수 있습니다. 상순부터 차례로 성과를 확인하고, 하순이 끝나면 선택한 방문지를 거쳐 월말 결산을 봅니다."],
+   ["대화와 상태","화제 선택과 능력 확인","저택 메인 화면의 ‘대화’에서 화제를 고르면 시엘의 반응을 볼 수 있습니다. ‘상태’에서는 건강·스트레스와 각 능력치를 확인할 수 있습니다."],
+   ["가문 장부와 수첩","사건 기록과 저장","하단의 ‘가문 장부’에는 지난 사건과 엔딩이 기록됩니다. ‘수첩 · 저장’에서 회차를 저장하거나 불러오고 음량을 조절할 수 있습니다. 하단의 BGM 버튼을 누르면 배경음악이 켜지거나 꺼집니다."]
+ ];
+ return '<details class="notebook-guide"><summary><i class="book-spread" aria-hidden="true"></i><strong>튜토리얼 안내서</strong></summary>'+topics.map(([title,subject,body])=>
+   '<details class="guide-topic"><summary><b>'+title+'</b><small>'+subject+'</small></summary><p>'+body+'</p></details>').join("")+
    btn("세바스찬의 안내 다시 재생","open-guide",false,"guide-replay-button")+'</details>';
 }
 const visitsVN={
@@ -228,7 +237,7 @@ function foundationEvents(){return [{id:"homecoming",chapter:true,household:true
  choice("서재 열쇠를 돌려준다","타나카 복귀 · 서재 근무",()=>{recruit("tanaka");state.staff="library";}),
  choice("먼저 다과를 함께한다","타나카 복귀 · 신뢰 상승",()=>{recruit("tanaka");state.staff="library";talkTrust("tanaka",2);})]},
  {id:"unasked",speaker:"세바스찬",title:"명령보다 한 박자 먼저",lines:[["","시엘이 손을 내밀자 흰 장갑이 이미 그 위에 놓였다."],["시엘","“… 아직 안 불렀는데?”"],["","세바스찬은 태연히 반대쪽 장갑의 단추를 풀었다."],["세바스찬","“다시 벗겨 드릴까요?”"]],sees:s=>s.month>=4&&(s.flags.attention||0)>=3,choices:[choice("말없이 다음 장갑을 건넨다","둘만의 아침 습관 기록",()=>{state.flags.morningGloves=true;}),choice("도련님의 대답을 기다린다","의지 +15",()=>changeStat("의지",15))]}];}
-function sourceNote(e){return e.source||({jubilee:"1887년 6월 빅토리아 여왕 즉위 50주년 · 가문 참여 IF",match:"1888년 런던 성냥공장 파업 · 회사 대응 IF",circus:"런던 타운하우스 · 소마와 아그니가 맞이한 방문객",visitPrince:"런던 타운하우스 보유 · 바르도, 피니안, 메이린 합류 후",gardener:"원작 연구소 탈출 · 첫 만남과 명명 / 게임 달력에 배치",maid:"원작 30권 · 올빼미에게 건넨 고용 제안 / 피니안 합류 뒤 월말 추첨",cook:"원작의 서재 면담 · 메이린 합류 뒤 게임 달력에 배치",homecoming:"원작 회중시계 계승 장면 · 저택 복귀일의 서재로 각색"}[e.id])||"";}
+function sourceNote(e){return e.source||({jubilee:"1887년 6월 빅토리아 여왕 즉위 50주년 · 가문 참여 IF",match:"1888년 런던 성냥공장 파업 · 회사 대응 IF",circus:"런던 타운하우스 · 소마와 아그니가 맞이한 방문객",gardener:"원작 연구소 탈출 · 첫 만남과 명명 / 게임 달력에 배치",maid:"원작 30권 · 올빼미에게 건넨 고용 제안 / 피니안 합류 뒤 월말 추첨",cook:"원작의 서재 면담 · 메이린 합류 뒤 게임 달력에 배치",homecoming:"원작 회중시계 계승 장면 · 저택 복귀일의 서재로 각색"}[e.id])||"";}
 function houseValues(){
  const staff=Object.values(state.jobs),matched=Object.entries(state.jobs).filter(([p,r])=>servants[p]?.job===r).length;
  const rooms=[...Object.values(state.level),...Object.values(state.annex)],improvements=rooms.reduce((s,v)=>s+v-1,0);

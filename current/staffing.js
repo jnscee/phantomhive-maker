@@ -63,24 +63,33 @@ function settleLondon(run){
   (office.book??=[]).push({month:run.month,summary,story:ready?request.result:""});
   run.log.push("타운하우스 · "+summary);
 }
+const londonLayout={post:{pin:[50,20],floor:[42,58,43]},salon:{pin:[26,59],floor:[25,38,83]},kitchen:{pin:[74,59],floor:[65,77,83]}};
+let selectedLondonRoom="salon";
 function londonBoard(){
   const {power,request,ready}=londonPlan(state);
   const ids=londonResidents(state);
   const jobs=state.london?.jobs||{};
   const locked=state.phase!=="plan";
   const roomButtons=Object.entries(londonRooms).map(([id,room])=>{
-    const names=ids.filter(person=>jobs[person]===id).map(person=>londonHosts[person].name).join(" · ");
-    return '<button type="button" data-duty="'+id+'" '+(locked?'disabled':'')+'><img alt="" src="assets/'+room.image+'"><span><b>'+room.name+'</b><small>'+room.work+'</small><strong>'+room.effect+' +'+power[id]+room.unit+'</strong></span><em>'+(names||'미배치')+'</em></button>';
+    const {pin:[x,y],floor:[left,right,feet]}=londonLayout[id];
+    const team=ids.filter(person=>jobs[person]===id);
+    const walkers=team.map((person,i)=>{
+      const span=(right-left)/team.length;
+      return '<span aria-hidden="true" class="duty-lane" style="left:'+(left+i*span)+'%;width:'+span+'%;top:'+feet+'%;--pace:11s;--delay:-'+(i+1)*3+'s"><span class="duty-walker" data-servant="'+person+'"><img alt="" src="assets/staff/'+person+'.png"></span></span>';
+    }).join("");
+    const names=team.map(person=>londonHosts[person].name).join(" · ")||"미배치";
+    return walkers+'<button type="button" class="map-pin" data-duty="'+id+'" style="left:'+x+'%;top:'+y+'%" aria-pressed="'+(selectedLondonRoom===id)+'"><b>'+room.name+'</b><em>'+names+'</em></button>';
   }).join("");
+  const room=londonRooms[selectedLondonRoom];
   const roster=ids.map(id=>{
     const host=londonHosts[id];
     const skill=state.london?.skill?.[id]||0;
     return staffCard(id,host.name,host.role+" · "+(londonRooms[jobs[id]]?.name||"대기")+" · 숙련도 "+skill+"/30","특기 "+londonRooms[host.specialty].name+" +1 · 숙련 보너스 +"+Math.floor(skill/10),locked);
   }).join("");
   const records=(state.london?.book||[]).slice().reverse().map(entry=>'<p><b>'+monthText(entry.month)+'</b><br>'+entry.summary+(entry.story?'<br>'+entry.story:'')+'</p>').join("");
-  return '<div class="property-grid staff-board london-board"><section class="property-grounds london-rooms"><h3>런던 타운하우스</h3>'+roomButtons+'</section>'+
-    '<section class="property-desk staff-roster"><div class="work-title"><h3>이번 달 배치</h3></div><p>'+
-    (!ids.length?'바르도·피니안·메이린이 모두 합류하면 소마와 아그니를 만날 수 있습니다. 입주 후 업무를 맡겨 주세요.':locked?'일정을 마치면 다음 달 배치를 바꿀 수 있습니다.':'인물을 누른 뒤 방을 선택하세요. 두 사람이 한 방을 맡으면 효과가 합산됩니다.')+'</p>'+roster+
+  return '<div class="property-grid staff-board london-board"><section class="property-grounds london-rooms"><div class="property-map staff-map london-map" role="group" aria-label="런던 타운하우스 근무지"><img alt="" class="map-base" src="assets/map-london.webp">'+roomButtons+'</div><div class="london-duty-info" aria-live="polite"><b>'+room.name+'</b><span>'+room.work+'</span><strong>'+room.effect+' +'+power[selectedLondonRoom]+room.unit+'</strong></div></section>'+
+    '<section class="property-desk staff-roster"><div class="work-title"><h3>이번 달 배치</h3></div>'+
+    (ids.length?'<p>'+(locked?'일정을 마치면 다음 달 배치를 바꿀 수 있습니다.':'인물을 누른 뒤 방을 선택하세요. 두 사람이 한 방을 맡으면 효과가 합산됩니다.')+'</p>':'')+roster+
     (ids.length?'<button type="button" data-duty="off" '+(locked?'disabled':'')+'>대기 배치</button>':'')+
     '<p>배치한 달마다 숙련도 +1. 숙련도 10마다 맡은 업무의 효과가 1씩 늘어납니다.</p>'+
     '<section class="budget-book london-request"><h3>'+request.name+'</h3><p>'+request.rooms.map(id=>londonRooms[id].name).join(" + ")+'에 각각 한 명을 배치하면 월말에 가문 명성 +1</p><b>'+(ready?'준비 완료':'준비 중')+'</b></section>'+
@@ -109,6 +118,7 @@ function placeEmployee(id,room){
     state.london??={};state.london.jobs??={};
     if(room==="off")delete state.london.jobs[id];
     else state.london.jobs[id]=room;
+    if(room!=="off")selectedLondonRoom=room;
     name=londonHosts[id].name;
     assignment=londonRooms[room]?.name||"대기";
   }else{
@@ -167,6 +177,10 @@ document.addEventListener("click",event=>{
   const zone=event.target.closest("[data-duty]:not(:disabled)");
   if(zone){
     if(selectedEmployee)placeEmployee(selectedEmployee,zone.dataset.duty);
-    else announce("먼저 배치할 사용인을 선택해 주세요.");
+    else if(tab==="townhouse"&&Object.hasOwn(londonRooms,zone.dataset.duty)){
+      selectedLondonRoom=zone.dataset.duty;
+      const scroll=$("panel").scrollTop;render();$("panel").scrollTop=scroll;
+      document.querySelector('[data-duty="'+selectedLondonRoom+'"]').focus({preventScroll:true});
+    }else announce("먼저 배치할 사용인을 선택해 주세요.");
   }
 });
