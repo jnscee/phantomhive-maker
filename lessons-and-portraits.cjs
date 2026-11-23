@@ -134,7 +134,16 @@ async function check(browserType){
       assert.match(await gallery.locator('summary').innerText(),/2개 기록/);
       await gallery.locator('summary').click();
       await page.locator('[data-action="ending-art:ill"]').click();
-      await page.locator('.ending-cg').evaluate(im=>im.decode());await page.locator('#system-back').click();
+      await page.locator('.ending-cg').evaluate(im=>im.decode());
+      await page.evaluate(()=>{
+        const host=document.querySelector('#conversation');
+        const lines=endingScenes.ill.lines;
+        for(const [beat,[,,picture,cue]] of lines.entries()){
+          if(host.querySelector('.ending-cg').dataset.picture!==(cue?.cg||picture))throw Error('Illness ending CG at line '+(beat+1));
+          if(beat<lines.length-1)host.querySelector('[data-read="next"]').click();
+        }
+      });
+      await page.locator('#system-back').click();
       assert.equal(await page.evaluate(()=>tab),'record');
       await page.evaluate(async()=>{
         if(Object.keys(endingScenes).length!==6)throw Error('Ending catalog mismatch');

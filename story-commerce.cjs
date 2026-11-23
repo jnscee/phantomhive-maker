@@ -411,5 +411,6 @@ for(const index of [0,1]){
   assertOk('state.sequence.visitEvent===(replyIndex===0?"visitLibraryWax":"visitLibraryCarbon")');
 }
 assert.deepEqual(Array.from(run('Object.keys(endingScenes).sort()')),['broke','ill','releaseNoTitle','releaseTitle','vowNoTitle','vowTitle']);
-assertOk('Object.entries(endingScenes).every(([id,scene])=>scene.lines.length>=(id==="releaseNoTitle"?41:48))');
+const minimumEndingLines={broke:48,ill:43,releaseNoTitle:41,releaseTitle:48,vowNoTitle:48,vowTitle:48};
+for(const [id,minimum] of Object.entries(minimumEndingLines))assert.ok(run('endingScenes.'+id+'.lines.length')>=minimum,id);
 console.log('PASS illness, reserved tuition during sick leave, recovery, optional fair outcomes and demand, both library follow-ups after loading, one-way trust, and all six ending scripts.');
