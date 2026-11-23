@@ -40,6 +40,36 @@ function authoredStoryEvents(){
     choices:[choice(label,title,()=>{})]
   }));
 }
+// A decision is settled once, through the same event and monthly accounts as the campaign.
+function fundedDecision(label,result,cost,account,effect){
+  return choice(label+" · £"+cost,result,()=>{
+    state.fund-=cost;
+    state.accounts[account]+=cost;
+    effect();
+  },run=>run.fund>=cost,"자금 부족");
+}
+function finalYearDecisions(){
+  return [
+    {id:"winterAxles",month:26,title:"봉투에 든 바퀴",speaker:"세바스찬",
+      text:"보증서는 없고, 부러진 나무 바퀴만 들어 있습니다. 편지를 쓴 아이가 답장은 그림으로 그려 달라는군요. 수레 주인인 동생은 아직 글을 모른답니다. 같은 축을 쓴 물량이 여섯 상자입니다.",
+      choices:[
+        fundedDecision("여섯 상자 모두 무상 교환한다","판매점마다 교환품을 두고 아이에게는 새 바퀴를 끼운 수레를 그려 보냈다. 가문 명성 +4",180,"company",()=>shift("renown",4)),
+        choice("시엘이 판매 기록을 대조하게 한다","시엘은 축을 깎은 날짜까지 대조해 수리할 집을 골랐다. 통찰 +8 · 스트레스 +8",()=>{changeStat("통찰",8);shift("stress",8);})
+      ]},
+    {id:"carrierPlace",month:29,title:"마차의 빈 네 자리",speaker:"세바스찬",
+      text:"운송업자가 연말까지 마차 네 자리를 비워 두겠답니다. 지금은 매달 열일곱 번째 물건부터 운임이 3파운드씩 붙지요. 계약하면 스무 개까지는 웃돈 없이 보낼 수 있습니다.",
+      choices:[
+        fundedDecision("정기 운송 자리를 계약한다","다음 출하부터 추가 운송비 없이 보낼 수 있는 월 물량이 16개에서 20개로 늘었다.",48,"company",()=>{state.flags.carrierSpace=true;}),
+        choice("필요할 때마다 마차를 부른다","시엘이 마차를 부를 날짜만 장부에 표시했다. 경영 +6",()=>changeStat("경영",6))
+      ]},
+    {id:"estateRoof",month:32,title:"빗물 아래 놓인 악보",speaker:"세바스찬",
+      text:"영지 학교의 음악실에서 비가 샌답니다. 아이들은 건반마다 찻잔을 얹어 물을 받고 있습니다. 수리공은 개학 전까지 한 주가 비고, 저택의 응접실도 그 주엔 손님이 없습니다.",
+      choices:[
+        fundedDecision("학교 지붕의 수리비를 맡는다","개학 날 아이들이 수리공과 도련님 앞으로 첫 연주회의 초대장을 보냈다. 가문 명성 +5",240,"estate",()=>shift("renown",5)),
+        choice("저택 응접실을 수업에 내준다","도련님은 일주일 동안 피아노 연습을 들으며 결재했다. 가문 명성 +2 · 스트레스 +6",()=>{shift("renown",2);shift("stress",6);})
+      ]}
+  ].map(event=>({...event,season:true,sees:run=>run.duration===35&&run.month===event.month}));
+}
 function scriptedEvents(){
   const timed=[
     [5,"expo","박람회의 유리 진열장","전시 책임자가 완구 하나만 골라 달라고 합니다. 태엽 인형 곁에는 아이가 직접 굴릴 수 있는 작은 수레가 있습니다.",

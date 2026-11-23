@@ -33,7 +33,7 @@ function budgetTable(compact=false){
     '<div class="cash-head"><span>예상 월말 잔액</span><strong>'+money(b.closing)+'</strong><b class="cash-change">'+(change>0?'▲ '+money(change)+' 증가':change<0?'▼ '+money(-change)+' 감소':'변동 없음')+'</b></div>'+
     amountRow("현재 가용 자금",state.fund)+flow("팬텀사 예상 매출",b.revenue,false)+flow("남은 지출 합계",b.total,true)+
     (compact?'<details class="expense-details"><summary>지출 내역·시설 효과</summary>':'')+'<div class="cash-detail">'+amountRow("저택 운영 · 시설 유지",b.estate)+amountRow("팬텀사 운영 · 생산비",b.company)+
-    '<small>설비 운영 '+money(b.trade.operation)+' · 월말 보관 '+money(b.trade.holding)+' (전 품목 8개까지 무료)'+(b.trade.order?' · 예상 납품 '+b.trade.shipped+'/'+b.trade.order.qty+'개 · 미납 부담 '+money(b.trade.penalty):'')+'</small>'+amountRow("교육·활동비",b.tuition)+
+    '<small>설비 운영 '+money(b.trade.operation)+' · 운송 '+money(b.trade.freight)+' (소매·납품 합계 '+b.trade.freightAllowance+'개 초과분은 개당 £3) · 월말 보관 '+money(b.trade.holding)+' (전 품목 8개까지 무료)'+(b.trade.order?' · 예상 납품 '+b.trade.shipped+'/'+b.trade.order.qty+'개 · 미납 부담 '+money(b.trade.penalty):'')+'</small>'+amountRow("교육·활동비",b.tuition)+
     (b.debt?amountRow("채무 상환",b.debt):"")+'</div>'+
     (state.accounts.estate||state.accounts.company?'<p>가용 자금에 이미 반영된 지출 · 저택 '+money(state.accounts.estate)+' / 팬텀사 '+money(state.accounts.company)+'</p>':'')+contributionNote(investmentEffect(forecast()),state.accounts.researchSaved)+(compact?'</details>':'')+'</section>';
 }
@@ -42,7 +42,7 @@ function contributionNote(investment,research){
   const items=[];
   if(investment?.production)items.push("생산비 절감 "+money(investment.production));
   if(investment?.extraSales)items.push("매대 추가 매출 "+money(investment.extraSales));
-  if(investment?.overheadChange)items.push("운영·보관비 변화 "+money(investment.overheadChange));
+  if(investment?.overheadChange)items.push("운영·물류비 변화 "+money(investment.overheadChange));
   if(investment?.wrapping)items.push("포장 수익 "+money(investment.wrapping));
   if(investment?.design)items.push("도안 웃돈 "+money(investment.design));
   if(research)items.push("개발비 할인 "+money(research));
@@ -59,8 +59,8 @@ function actualBudget(){
     (a.borrowed?amountRow("대출 입금",a.borrowed):"")+
     amountRow(legacy?"저택 유지·채무 합산":"저택 운영",r.bills-(r.debtPayment||0)+a.estate)+
     (a.estate?'<p>유지 '+money(r.bills-(r.debtPayment||0))+' · 개수·지원 등 '+money(a.estate)+'</p>':'')+
-    amountRow("팬텀사 운영",r.cost+a.company+(r.expenses||0))+(r.expenses?'<p>설비 운영 '+money(r.operating)+' · 보관 '+money(r.storage)+' · 미납 부담 '+money(r.penalty)+'</p>':"")+
-    (a.company?'<p>생산 '+money(r.cost)+' · 증설·개발 '+money(a.company)+'</p>':'')+
+    amountRow("팬텀사 운영",r.cost+a.company+(r.expenses||0))+(r.expenses?'<p>설비 운영 '+money(r.operating)+(r.freight?' · 운송 '+money(r.freight):'')+' · 보관 '+money(r.storage)+' · 미납 부담 '+money(r.penalty)+'</p>':"")+
+    (a.company?'<p>생산 '+money(r.cost)+' · 투자·사업 지출 '+money(a.company)+'</p>':'')+
     amountRow("교육·활동비",r.training)+(r.debtPayment?amountRow("채무 상환",r.debtPayment):"")+
     amountRow("지출 합계",expenses,"subtotal")+amountRow("월말 잔액",state.fund,"balance")+
     '<p>기간 중 자금 변동　'+signed(state.fund-a.opening)+' £</p>'+

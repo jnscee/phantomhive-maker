@@ -59,14 +59,14 @@ const portfolios = [
   ["체력","마지막 한 바퀴","체조실의 호흡을 잃지 않고 정원을 한 바퀴 돈 뒤 마지막 무도의 회전을 마친다."]
 ];
 const portfolioRanks=[
-  {threshold:120,reward:75,name:"응용 실기"},
-  {threshold:375,reward:125,name:"최종 실기"}
+  {threshold:120,reward:35,name:"응용 실기"},
+  {threshold:375,reward:30,name:"최종 실기"}
 ];
 function portfolioEvents(){
   return portfolios.flatMap(([stat,title,assignment],i)=>portfolioRanks.map(({threshold,reward,name},rank)=>({
     id:"portfolio-"+i+"-"+rank,statExam:true,exam:true,speaker:"세바스찬",title:title+" · "+name,
     text:assignment+" 세바스찬이 채점표를 내밀었다. “도련님의 풀이로 마치시겠습니까?”",
-    sees:run=>run.stats[stat]>=threshold && (!rank||(run.month>=25&&run.flags["portfolio-"+i+"-0"])),
+    sees:run=>run.stats[stat]>=threshold && (!rank||(run.month>=25&&run.flags["portfolio-"+i+"-0"]&&actions[run.sequence?.activity]?.gains[stat]>0)),
     choices:[
       choice("끝까지 직접 해 보인다",name+" 통과",()=>changeStat(stat,reward)),
       choice("어려운 부분만 다시 짚는다",name+" 보충",()=>{changeStat(stat,Math.ceil(reward*.7));shift("stress",-15);})

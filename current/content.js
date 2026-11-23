@@ -207,7 +207,7 @@ function businessTerms(run,id){
     pressure:Math.min(Math.ceil(p.demand[(run.month-1)%6]*0.60),Math.floor(recentRetail(run,id)/4))};
 }
 function operatingCost(shop){
-  return Object.values(shop).reduce((n,level)=>n+5*(level-1),0);
+  return Object.values(shop).reduce((sum,level)=>sum+5*(level-1)+(level>=3?6:0),0);
 }
 function supplyPlan(run,shop,demand,unit,receipt){
   const id=run.product,order=run.order?.due===run.month?run.order:null;
@@ -226,8 +226,10 @@ function supplyPlan(run,shop,demand,unit,receipt){
   if(run.quality==="fine")fine[id]-=sold;
   const holding=Math.ceil(Math.max(0,Object.values(stock).reduce((n,v)=>n+v,0)-8)*0.75);
   const short=order?order.qty-shipped:0;
-  const trade={holding,operation:operatingCost(shop),penalty:short*(order?.shortFee??2),wholesale:order?shipped*order.rate:0,shipped,short,order,stock,fine};
-  const revenue=sold*receipt+trade.wholesale,cost=run.qty*unit,expenses=holding+trade.penalty+trade.operation;
+  const freightAllowance=run.flags.carrierSpace?20:16;
+  const freight=Math.max(0,sold+shipped-freightAllowance)*3;
+  const trade={holding,freight,freightAllowance,operation:operatingCost(shop),penalty:short*(order?.shortFee??2),wholesale:order?shipped*order.rate:0,shipped,short,order,stock,fine};
+  const revenue=sold*receipt+trade.wholesale,cost=run.qty*unit,expenses=holding+freight+trade.penalty+trade.operation;
   return {unit,demand,receipt,sold,available,cost,revenue,expenses,margin:revenue-cost-expenses,trade};
 }
 function recordTrading(run,id,sold,trade){

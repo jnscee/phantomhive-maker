@@ -217,11 +217,17 @@ ctx.campaignSchedule=[
   ["rest", "rest", "rest", 15, 21],
   ["rest", "rest", "rest", 15, 19]
 ];
-const fullRun=vm.runInContext(`(()=>{
+ctx.facilityPurchases={3:["expand:store"],5:["expand:design"],7:["upgrade:parlor"],10:["expand:works"],
+  13:["upgrade:library"],15:["expand:store"],17:["expand:design"],19:["expand:works"]};
+function playCampaign(invest){
+  ctx.invest=invest;
+  return vm.runInContext(`(()=>{
+  let january;
   state=initial();state.owlSeed=0;state.phase="plan";tab="plan";
   for(const [a,b,c,price,qty] of campaignSchedule){
     if(state.phase!=="plan")throw Error("Could not enter calendar at "+state.month);
     state.plan=[a,b,c];state.visit="town";state.price=price;state.qty=qty;
+    if(invest)for(const action of facilityPurchases[state.month]||[])handleAction(action,null,true);
     execute();
     if(state.phase!=="scene")throw Error("Infeasible budget at "+state.month);
     for(let steps=0;steps<180;steps++){
@@ -242,17 +248,53 @@ const fullRun=vm.runInContext(`(()=>{
         if(visitor && (state.sequence.encounterPage||0)<visitor.lines.length-1)handleAction("encounter-next:"+(state.sequence.encounterPage||0));
         else if(state.sequence.visitEvent)chooseVisitEvent(0);
         else if(state.sequence.visitBefore)finishVisit();else visitDone(true);
-      }else if(state.phase==="result")advance();
+      }else if(state.phase==="result"){
+        if(state.month===25)january={stats:Object.values(state.stats),fund:state.fund};
+        advance();
+      }
       else break;
     }
   }
-  return {finished:state.phase==="ending"||state.phase==="investiture",stats:Object.values(state.stats),
+  return {january,finished:state.phase==="ending"||state.phase==="investiture",ending:state.ending,
+    stats:Object.values(state.stats),fund:state.fund,decisions:state.events.filter(e=>["winterAxles","carrierPlace","estateRoof"].includes(e.id)).map(e=>e.month),
     birthdays:state.events.filter(e=>birthdayDialogue[e.id]).map(e=>e.month),exams:state.events.filter(e=>e.id.startsWith("portfolio-")).length};
 })()`,ctx,{timeout:8000});
-assert.ok(fullRun.finished);assert.equal(fullRun.exams,14);
-assert.deepEqual(Array.from(fullRun.stats),Array(7).fill(500));
-assert.deepEqual(Array.from(fullRun.birthdays),[12,24]);
-console.log('PASS 35 months from the initial estate, 7 x 500, 14 portfolio exams and both birthdays.');
+}
+for(const invest of [false,true]){
+  const campaign=playCampaign(invest);
+  assert.ok(campaign.finished);
+  assert.ok(campaign.january.stats.filter(value=>value<500).length>=4);
+  assert.ok(campaign.stats.some((value,i)=>value>campaign.january.stats[i]));
+  assert.equal(campaign.exams,14);
+  assert.deepEqual(Array.from(campaign.birthdays),[12,24]);
+  assert.deepEqual(Array.from(campaign.decisions),[26,29,32]);
+  if(invest)assert.equal(campaign.ending,"vowTitle");
+  console.log('PASS 35-month campaign',invest?'expanded estate':'starting facilities',
+    'January',JSON.stringify(campaign.january),'final funds',campaign.fund);
+}
+
+// Charge excess freight exactly once, including wholesale shipments, and honor a pre-update signed quote.
+setup('state.month=26;state.qty=21;state.price=10;state.visit="town";state.plan=["walk","walk","walk"];state.order={id:"toys",qty:5,rate:14,due:26}');
+assertOk('forecast().sold===16 && forecast().trade.shipped===5 && forecast().trade.freight===15');
+run('state.flags.carrierSpace=true');assert.equal(run('forecast().trade.freight'),3);
+const signedClosing=run('marketStats().balance');
+run('execute();delete state.sequence.trade.freight;persist();state=normalizeSave(saves.auto);settleMonth()');
+assert.equal(run('state.fund'),signedClosing+3);
+assertOk('state.report.freight===0');
+for(const [id,cost,account] of [['winterAxles',180,'company'],['carrierPlace',48,'company'],['estateRoof',240,'estate']]){
+  ctx.decisionId=id;ctx.cost=cost;ctx.account=account;
+  setup('state.month=26;state.pending=decisionId;state.phase="event";state.fund=cost-1');
+  run('choose(0)');assertOk('state.pending===decisionId && !state.flags[decisionId] && state.fund===cost-1');
+  run('choose(1)');assertOk('state.flags[decisionId] && state.fund===cost-1 && state.accounts[account]===0');
+  setup('state.pending=decisionId;state.phase="event";state.fund=cost;choose(0);state=normalizeSave(saves.auto)');
+  assertOk('state.flags[decisionId] && state.fund===0 && state.accounts[account]===cost');
+}
+setup('state.month=25;state.fund=3000;for(const key of stats)state.stats[key]=500;state=normalizeSave(state)');
+assertOk('state.fund===3000 && stats.every(key=>state.stats[key]===500)');
+setup('state.month=25;state.stats.지성=375;state.flags["portfolio-0-0"]=true;state.sequence={activity:"rest"}');
+assertOk('!events.find(e=>e.id==="portfolio-0-1").sees(state)');
+run('state.sequence.activity="study"');assertOk('events.find(e=>e.id==="portfolio-0-1").sees(state)');
+run('events.find(e=>e.id==="portfolio-0-1").choices[0].effect()');assert.equal(run('state.stats.지성'),405);
 
 for(const condition of ["state.hp=30","state.stress=100"]){
   setup(condition+';state.plan=["exercise","rest","rest"];state.visit="library";state.qty=0;execute()');

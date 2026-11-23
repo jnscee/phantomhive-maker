@@ -49,9 +49,9 @@ function btn(label,action,disabled=false,style=""){
   return '<button type="button" class="'+style+'" data-action="'+action+'" '+(disabled?"disabled":"")+'>'+label+'</button>';
 }
 function lessonGain(key,current,base,month){
-  const rate=1.1+(month-1)*0.065;
+  const rate=1.1+Math.min(month-1,12)*0.065;
   const max=statMax(key);
-  const mastery=Math.max(.24,1-Math.max(0,current-300)/210);
+  const mastery=Math.max(.20,1-Math.max(0,current-280)/235);
   return Math.min(max-current,Math.round(base*rate*mastery*max/abilityMax));
 }
 function scheduleNote(id){
@@ -106,7 +106,7 @@ function flagEvent(id,effect){
   state.flags[id]=true;
   effect();
 }
-const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),followupEvents(),appliedExams(),portfolioEvents(),visitorEvents(),authoredStoryEvents()).map(appendAuthoredOptions);
+const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),finalYearDecisions(),followupEvents(),appliedExams(),portfolioEvents(),visitorEvents(),authoredStoryEvents()).map(appendAuthoredOptions);
 
 function pendingEvent(){
   return events.find(event=>event.id===state.pending);
@@ -189,7 +189,7 @@ function settleMonth(){
     const line=productHistory(state,product);
     state.productHistory[product]={...line,units:line.units+sold,reputation:Math.min(20,line.reputation+(sold>=6?1:0))};
   }
-  const expenses=trade?trade.holding+trade.penalty+trade.operation:0;
+  const expenses=trade?trade.holding+trade.penalty+trade.operation+(trade.freight||0):0;
   const income=sold*receipt+(trade?.wholesale||0);
   const cost=unit*state.qty;
   const debtPayment=Math.min(24,state.debt),bills=overhead();
@@ -197,7 +197,7 @@ function settleMonth(){
   state.fund+=income-cost-bills-expenses;
   // Paid sales and supply contracts belong to Funtom. Scheduled work only trains Ciel.
   state.salesBook.push({month:state.month,product,sold,revenue:income,cost,advance:visitAdvance,investment,expenses,wholesale:trade?.wholesale||0,delivery:trade?.order?{id:trade.order.id,shipped:trade.shipped,qty:trade.order.qty}:null});
-  state.report={income,cost,expenses,storage:trade?.holding||0,operating:trade?.operation||0,penalty:trade?.penalty||0,wholesale:trade?.wholesale||0,advance:visitAdvance,bills,debtPayment,sold,before,investment,training:trainingPaid};
+  state.report={income,cost,expenses,storage:trade?.holding||0,freight:trade?.freight||0,operating:trade?.operation||0,penalty:trade?.penalty||0,wholesale:trade?.wholesale||0,advance:visitAdvance,bills,debtPayment,sold,before,investment,training:trainingPaid};
   if(sold>=14&&income>cost+expenses+25)state.renown+=1;
   state.log.push(products[product].name+" "+sold+"개 소매 · 매출 "+money(sold*receipt)+" / 생산비 "+money(cost)+" / 재고 "+state.stock[product]+"개");
   state.log.push("저택 유지·채무 상환 "+money(bills));
@@ -240,7 +240,7 @@ function recordContractAdvance(amount){
 const choiceMilestones={
   keys:"서재 관리 권한 인수",deed:"가문 증빙 확보",market:"시장 거래 기록",audit:"회계 감사 기록",
   lookout:"망보기 기록",postmark:"소인 기록",agniLesson:"아그니와의 집사 교류 기록",agniTea:"아그니와의 다과 기록",
-  checkedReceipt:"영수증 확인",sharedReceipt:"영수증 공유",teaBlend:"차 배합 기록",morningGloves:"아침 장갑 기록"
+  carrierSpace:"정기 운송 4자리 확보",checkedReceipt:"영수증 확인",sharedReceipt:"영수증 공유",teaBlend:"차 배합 기록",morningGloves:"아침 장갑 기록"
 };
 function choiceSnapshot(){
   const values={...snapStats(state),"가문 자금":state.fund,"가문 명성":state.renown,"왕실 평가":state.royal,"신뢰":state.trust,"채무":state.debt};
@@ -848,9 +848,9 @@ function statusPanel(){
 }
 const businessArt={"estate": "assets/map-estate.png", "design2": "assets/map-design2.png", "library2": "assets/map-library2.png", "parlor2": "assets/map-parlor2.png", "designer": "assets/map-designer.png", "cart-candy": "assets/map-cart-candy.png", "kitchen3": "assets/map-kitchen3.png", "store2": "assets/map-store2.png", "maker": "assets/map-maker.png", "cart-sweets": "assets/map-cart-sweets.png", "cart-hamper": "assets/map-cart-hamper.png", "parlor3": "assets/map-parlor3.png", "cart-toys": "assets/map-cart-toys.png", "clerk": "assets/map-clerk.png", "works2": "assets/map-works2.png", "store3": "assets/map-store3.png", "kitchen2": "assets/map-kitchen2.png", "library3": "assets/map-library3.png", "cart-plush": "assets/map-cart-plush.png", "design3": "assets/map-design3.png", "works3": "assets/map-works3.png", "company": "assets/map-company.png", "steward": "assets/map-steward.png", "cart-game": "assets/map-cart-game.png"};
 const departments = {
-  design:{name:"개발실",cost:65,benefit:"단계마다 도안 수익 +£1 · 개발비 할인 · 월 운영비 £5 추가"},
-  works:{name:"제작실",cost:75,benefit:"단계마다 개당 원가 최대 £1 절감 · 월 운영비 £5 추가"},
-  store:{name:"판매점",cost:80,benefit:"단계마다 수요 +2개 · 판매품당 포장 수익 +£1 · 월 운영비 £5 추가"}
+  design:{name:"개발실",cost:65,benefit:"단계마다 도안 수익 +£1 · 개발비 할인 · 월 운영비 Lv.2 £5 / Lv.3 £16"},
+  works:{name:"제작실",cost:75,benefit:"단계마다 개당 원가 최대 £1 절감 · 월 운영비 Lv.2 £5 / Lv.3 £16"},
+  store:{name:"판매점",cost:80,benefit:"단계마다 수요 +2개 · 판매품당 포장 수익 +£1 · 월 운영비 Lv.2 £5 / Lv.3 £16"}
 };
 const mapPositions = {
   library:[51,30], parlor:[72,69], kitchen:[22,68],
