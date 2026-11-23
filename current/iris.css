@@ -1293,19 +1293,68 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
   white-space: nowrap;
 }
 
-/* Reserve the space above the two-column phone menu for Ciel. */
+/* A shared grid edge keeps the portrait seated on the command panel at every age. */
 @media (max-width:960px) and (orientation:portrait) {
   #scene[data-mode=home] {
-    --phone-menu-height:calc(3 * clamp(52px,7cqw,66px) + 10px);
-    --phone-ciel-height:min(66%, calc(92% - var(--phone-menu-height)));
+    display:grid;
+    grid-template: minmax(0,1fr) auto / minmax(0,1fr);
+    --home-inset:clamp(4px,1.5cqw,12px);
   }
-  #scene[data-mode=home] #home-standing,
-  #scene[data-mode=home] #ciel-greet {
-    height:var(--phone-ciel-height);
-    top:auto;
-    bottom:calc(5% + var(--phone-menu-height));
-    object-position:center bottom;
+  #scene[data-mode=home] > button#ciel-greet {
+    grid-area:1 / 1;
+    position:relative;
+    place-self:end center;
+    inset:auto;
+    top:6px;
+    margin:0;
+    translate:none;
+    min-height:0;
+    height:calc(100% - clamp(54px,10svh,92px));
+    max-width:100%;
   }
+  #scene[data-mode=home] #nav {
+    grid-area:2 / 1;
+    position:relative;
+    inset:auto;
+    width:auto;
+    max-width:none;
+    margin:0 var(--home-inset) var(--home-inset);
+    padding:4px;
+    scale:none;
+    z-index:6;
+    --menu-target:clamp(44px,6.1svh,56px);
+  }
+  #nav .command-grid {gap:4px}
+  #scene[data-mode=home] #nav .command-grid button {
+    min-height:var(--menu-target);
+    padding:4px;
+    font-size:clamp(15px,3.8cqw,18px);
+  }
+  #scene[data-mode=home] #ciel-aside:not(:empty) {
+    grid-area:1 / 1;
+    inset:auto var(--home-inset) 12px auto;
+    max-width:min(72%,22rem);
+  }
+}
+@media (max-width:960px) and (orientation:portrait), (max-width:960px) and (pointer:coarse) {
+  #system-menu {
+    display:grid;
+    grid-template-columns:repeat(6,minmax(0,1fr));
+    gap:4px;
+    padding:4px max(6px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));
+  }
+  #system-menu .imprint,#system-menu kbd {display:none}
+  #system-menu > button,#system-menu > button:hover {
+    min-width:0;
+    min-height:44px;
+    padding:4px 2px;
+    justify-content:center;
+    gap:3px;
+    font-size:clamp(12px,3.2vw,14px);
+  }
+}
+@media (max-width:599px) and (orientation:portrait) {
+  #system-menu {grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media (max-width:960px), (pointer:coarse) {
   #scene #home-standing, #scene #conversation img.cast[alt="시엘"] {
