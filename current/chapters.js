@@ -102,6 +102,7 @@ function visitScene(){
 function visitDone(engage){
  if(state.phase!=="visit"||state.sequence.visitBefore||state.visitTurn===state.month)return;
  const id=state.visit,seq=state.sequence;
+ const before=choiceSnapshot();
  const memory=visitMemory(id,visitPerson(id));
  if(memory){state.visitMemories??={};state.visitMemories[memory.id]=true;}
  seq.visitBefore=snapStats(state);
@@ -119,6 +120,7 @@ function visitDone(engage){
    shift("stress",-4);
    shift("motivation",2);
  }
+ showChoiceImpact(engage?visitsVN[id][2]:"잠시 머물다 돌아간다",before);
  state.log.push("자유행동 · "+visits[id]+(engage?" · 교류":" · 휴식"));
  persist();render(true);
 }
@@ -131,7 +133,9 @@ function chooseVisitEvent(index){
  const card=visitEncounterCards.find(item=>item.id===event?.id);
  if(card && (seq.encounterPage||0)<card.lines.length-1)return;
  if(!choice||(choice.when&&!choice.when(state)))return;
+ const before=choiceSnapshot();
  flagEvent(event.id,choice.effect);
+ showChoiceImpact(choice.label,before);
  state.events.push({id:event.id,index,month:state.month});
  seq.visitReply=choice.response||event.responses?.[index]||null;
  seq.replySpeaker=castName(event);

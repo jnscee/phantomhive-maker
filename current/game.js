@@ -237,6 +237,38 @@ function recordContractAdvance(amount){
   report.advance=(report.advance||0)+amount;
   state.fund+=amount;
 }
+const choiceMilestones={
+  keys:"서재 관리 권한 인수",deed:"가문 증빙 확보",market:"시장 거래 기록",audit:"회계 감사 기록",
+  lookout:"망보기 기록",postmark:"소인 기록",agniLesson:"아그니와의 집사 교류 기록",agniTea:"아그니와의 다과 기록",
+  checkedReceipt:"영수증 확인",sharedReceipt:"영수증 공유",teaBlend:"차 배합 기록",morningGloves:"아침 장갑 기록"
+};
+function choiceSnapshot(){
+  const values={...snapStats(state),"가문 자금":state.fund,"가문 명성":state.renown,"왕실 평가":state.royal,"신뢰":state.trust,"채무":state.debt};
+  const milestones=new Set();
+  for(const [id,person] of Object.entries(servants)){
+    values[person.name+"의 신뢰"]=state.people[id]?.toward||0;
+    if(state.people[id])milestones.add(person.name+" 합류");
+  }
+  for(const [id,label] of Object.entries(choiceMilestones))if(state.flags[id])milestones.add(label);
+  for(const [id,name] of Object.entries(visits))if(canVisit(id))milestones.add(name+" 방문 가능");
+  for(const id of state.unlocked)milestones.add(products[id].name+" 판매 가능");
+  return {values,milestones};
+}
+function showChoiceImpact(label,before){
+  const dialog=document.getElementById("choice-impact");
+  if(!dialog?.showModal)return;
+  const after=choiceSnapshot();
+  const rows=Object.entries(after.values).map(([name,value])=>({name,value,delta:value-before.values[name]})).filter(row=>row.delta);
+  const notes=[...after.milestones].filter(label=>!before.milestones.has(label));
+  const peak=Math.max(1,...rows.map(row=>Math.abs(row.delta)));
+  dialog.querySelector("h2").textContent=label;
+  dialog.querySelector(".impact-body").innerHTML=rows.map(({name,value,delta})=>{
+    const unit=name==="가문 자금"||name==="채무"?"£":"";
+    const size=Math.abs(delta)/peak*50;
+    return '<div class="impact-row"><span>'+escapeHTML(name)+'</span><small>'+unit+(value-delta)+' → '+unit+value+'</small><b>'+signed(delta)+unit+'</b><i aria-hidden="true" class="impact-track"><i class="'+(delta>0?'increase':'decrease')+'" style="width:'+size+'%"></i></i></div>';
+  }).join("")+(rows.length?"":"<p>수치 변동 없음</p>")+notes.map(note=>'<p class="impact-note">'+escapeHTML(note)+'</p>').join("");
+  if(!dialog.open)dialog.showModal();
+}
 function choose(index){
   const event=pendingEvent();
   const choice=event?.choices[index];
@@ -246,7 +278,9 @@ function choose(index){
   const pages=termPages(event);
   if(state.termOutcome||(pages&&(state.termPage||0)<pages.length-1))return;
   const examBefore=event.exam||pages?snapStats(state):null;
+  const before=choiceSnapshot();
   flagEvent(event.id,choice.effect);
+  showChoiceImpact(choice.label,before);
   let examNote="";
   if(examBefore){
     const after=snapStats(state);
@@ -586,7 +620,7 @@ function startTownhouseGuests(run){
 }
 function annexDesk(){
   const locked=state.phase!=="plan";
-  const rooms=Object.entries(annex).map(([id,r])=>'<div class="annex-line"><div><b>'+r.name+' · Lv.'+state.annex[id]+'</b><small>'+r.desc+'</small></div>'+btn(state.annex[id]===3?"완료":money(r.cost*state.annex[id]),"annex:"+id,locked||state.annex[id]>=3||state.fund<r.cost*state.annex[id])+'</div>').join("");
+  const rooms=Object.entries(annex).filter(([id])=>!Object.hasOwn(dutyPins,id)).map(([id,r])=>'<div class="annex-line"><div><b>'+r.name+' · Lv.'+state.annex[id]+'</b><small>'+r.desc+'</small></div>'+btn(state.annex[id]===3?"완료":money(r.cost*state.annex[id]),"annex:"+id,locked||state.annex[id]>=3||state.fund<r.cost*state.annex[id])+'</div>').join("");
   return '<details class="annexes"><summary>부속 시설</summary>'+rooms+'</details>'+
     '<details class="annexes"><summary>런던 타운하우스</summary><p>취득비 £250</p>'+btn(state.flags.townhouse?"보유 중":"타운하우스 취득","townhouse",!canBuyTownhouse())+'</details>';
 
@@ -816,7 +850,7 @@ const mapPositions = {
 // Button positions are separate from furniture anchors so labels can clear the staff.
 const companyPinPositions = {design:[52,20],works:[76,48],store:[23,55]};
 const companyStaffFeet = {designer:[32,36.5],maker:[67,72.2],clerk:[22,77]};
-const workPositions = {library:[46,30],parlor:[70,64],kitchen:[20,61]};
+const estateRooms = {...facilities,garden:annex.garden,guard:annex.guard};
 let selectedRoom="library";
 let selectedDepartment="works";
 
@@ -832,36 +866,36 @@ function workerSprite(image,position){
   return '<img alt="" class="map-person" src="'+businessArt[image]+'" style="left:'+position[0]+'%;top:'+position[1]+'%">';
 }
 function propertyMap(company){
-  const rooms=company?departments:facilities;
-  const levels=company?state.shop:state.level;
+  const rooms=company?departments:estateRooms;
+  const levels=company?state.shop:{...state.level,...state.annex};
   let additions="",pins="";
   for(const [id,room] of Object.entries(rooms)){
-    const [x,y]=mapPositions[id];
+    const [x,y]=mapPositions[id]||dutyPins[id];
     if(levels[id]>1){
       for(let tier=2;tier<=levels[id];tier++){
         const offset=tier===2?-10:11;
-        additions+='<img alt="" class="map-fitting" src="'+businessArt[id+tier]+'" style="left:'+(x+offset)+'%;top:'+(y-5)+'%">';
+        if(businessArt[id+tier])additions+='<img alt="" class="map-fitting" src="'+businessArt[id+tier]+'" style="left:'+(x+offset)+'%;top:'+(y-5)+'%">';
       }
       additions+='<i class="map-award award-'+levels[id]+'" aria-hidden="true" style="left:'+x+'%;top:'+y+'%"></i>';
     }
     const selected=id===(company?selectedDepartment:selectedRoom);
-    const [pinX,pinY]=company?companyPinPositions[id]:[x,y];
+    const [pinX,pinY]=company?companyPinPositions[id]:dutyPins[id];
     pins+='<button type="button" data-action="station:'+id+'" aria-pressed="'+selected+'" class="map-pin" style="left:'+pinX+'%;top:'+pinY+'%">'+
       room.name+' <small>Lv.'+levels[id]+'</small></button>';
   }
   const people=company
     ? Object.entries(companyStaffFeet).map(([sprite,feet])=>workerSprite(sprite,feet)).join("")
-    : state.staff?workerSprite("steward",workPositions[state.staff]):"";
-  return '<div class="property-map" role="group" aria-label="시설 선택"><img alt="" class="map-base" src="'+businessArt[company?"company":"estate"]+'">'+
+    : estateWalkers();
+  return '<div class="property-map '+(company?'company-map':'estate-map')+'" role="group" aria-label="시설 선택"><img alt="" class="map-base" src="'+businessArt[company?"company":"estate"]+'">'+
     additions+people+(company&&state.qty>0?'<img alt="" class="delivery-cart" src="'+businessArt["cart-"+state.product]+'">':"")+pins+'</div>';
 }
 function roomDetail(){
-  const id=selectedRoom, room=facilities[id], level=state.level[id], active=state.phase==="plan";
+  const id=selectedRoom, room=estateRooms[id], auxiliary=Object.hasOwn(annex,id), level=(auxiliary?state.annex:state.level)[id], active=state.phase==="plan";
   const steps=[1,2,3].map(n=>'<i class="'+(n<=level?'filled':'')+'"></i>').join('');
   return '<div class="work-title"><h3>'+room.name+'</h3><b>'+level+' / 3단계</b></div>'+
     '<div class="facility-steps" aria-hidden="true">'+steps+'</div>'+
-    '<dl class="facility-data"><dt>시설 효과</dt><dd>'+room.desc+'</dd><dt>월 유지비</dt><dd>'+money(level*4)+(level<3?' → '+money((level+1)*4):'')+'</dd></dl>'+
-    btn(level===3?"개수 완료":"시설 개수 · "+money(room.cost*level),"upgrade:"+id,!active||level===3||state.fund<room.cost*level,"work-order")+
+    '<dl class="facility-data"><dt>시설 효과</dt><dd>'+room.desc+'</dd><dt>월 유지비</dt><dd>'+money(auxiliary?(level-1)*2:level*4)+(level<3?' → '+money(auxiliary?level*2:(level+1)*4):'')+'</dd></dl>'+
+    btn(level===3?"개수 완료":"시설 개수 · "+money(room.cost*level),(auxiliary?"annex:":"upgrade:")+id,!active||level===3||state.fund<room.cost*level,"work-order")+
     '<h4>저택 지원</h4><div class="work-actions">'+btn("왕진 · £55","doctor",!active||state.fund<55||state.flags["doctor"+state.month])+
     btn("대출 · £144","loan",!active||state.usedLoan)+'</div><small>왕진 시 건강 +24 · 대출은 월 £24씩 상환</small>';
 }
@@ -1391,13 +1425,13 @@ function handleAction(key,rect,confirmed=false){
     const panelScroll=$("panel").scrollTop;
     persist();render();
     const detail=document.querySelector(action==="townhouse"?".annexes:last-child":".annexes");
-    if(detail)detail.open=true;
+    if(detail && !(action==="annex" && Object.hasOwn(dutyPins,id)))detail.open=true;
     $("panel").scrollTop=panelScroll;
     respond("build",rect,".property-desk");
     popMoney(state.fund-fund);return;
   }
   if(action==="station"){
-    if(tab==="estate" && Object.hasOwn(facilities,id))selectedRoom=id;
+    if(tab==="estate" && Object.hasOwn(estateRooms,id))selectedRoom=id;
     else if(tab==="company" && Object.hasOwn(departments,id))selectedDepartment=id;
     else return;
     const scroll=$("panel").scrollTop;

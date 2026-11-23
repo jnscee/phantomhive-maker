@@ -1,8 +1,7 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Earl Phantomhive Maker · 팬텀하이브 메이커</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&amp;display=swap" media="print" onload="this.media='all'"><link rel="stylesheet" href="css/base.css?v=d5c5498f2621"><link rel="stylesheet" href="css/edition.css?v=9b6efb2e6eb0"><link rel="stylesheet" href="css/folio.css?v=2666eab55135"><link rel="stylesheet" href="css/iris.css?v=96f581c02ee6"><link rel="stylesheet" href="css/prologue.css?v=2e9990900c1f"><style>
 .home-standing,.cast[alt="시엘"],.performer img { filter:url(#ciel-tailoring) drop-shadow(1px 3px 2px #17264344); }
-.review-room,.stage-room,.property-map[aria-label] .map-base,.property-map .map-fitting,
-.property-map .delivery-cart { filter:url(#estate-ink); }
+.review-room,.stage-room { filter:url(#estate-ink); }
 
 </style><link rel="stylesheet" href="css/almanac.css?v=838f2b78bebd"></head>
 <body>
@@ -10,6 +9,10 @@
   <defs>
     <filter id="estate-ink" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%">
       <feColorMatrix type="matrix" values=".41 .36 .10 0 .008  .30 .59 .12 0 .025  .46 .43 .25 0 .053  0 0 0 1 0"/>
+    </filter>
+    <!-- 40% estate ink mixed with 60% original RGB. -->
+    <filter id="management-ink" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values=".764 .144 .040 0 .0032  .120 .836 .048 0 .010  .184 .172 .700 0 .0212  0 0 0 1 0"/>
     </filter>
     <filter id="ciel-tailoring" color-interpolation-filters="sRGB">
       <!-- Jacket cloth is the green-dominant part of this sprite. Neutrals, hair, and skin keep their original RGB. -->
@@ -21,6 +24,11 @@
     </filter>
   </defs>
 </svg>
+<dialog id="choice-impact" aria-labelledby="impact-heading">
+  <header><small>선택 결과</small><h2 id="impact-heading"></h2></header>
+  <div class="impact-body"></div>
+  <form method="dialog"><button autofocus>계속</button></form>
+</dialog>
 <aside id="launch-help" role="status">
 <strong>팬텀하이브 백작 메이커</strong>
 <p>게임을 불러오는 중입니다. 이 안내가 계속 보이면 현재 화면에서 게임 실행이 시작되지 않은 상태입니다.</p>
