@@ -77,6 +77,7 @@ function drawStoryFlow(panel,group){
     return list;
   }
   const board=node("section",undefined,"flow-board");
+  panel.append(board);
   const header=node("header",undefined,"flow-head");
   header.append(node("h3","장면 흐름도"));
   if(choicesField)header.append(button("＋ 선택지 추가",()=>{
@@ -102,8 +103,7 @@ function drawStoryFlow(panel,group){
       if(active)requestAnimationFrame(()=>{rail.scrollLeft=active.offsetLeft-rail.offsetLeft-16;});
     }
   }
-  const map=scene&&sceneConnectionMap(scenes,scene);
-  if(map)board.append(map);
+  if(scene)drawSceneConnectionMap(board,scenes,scene);
   if(scene?.linked){
     const incoming=scenes.flatMap(source=>source.choices.filter(choice=>choice[5]?.next===id).map(choice=>[source,choice[0]]));
     const parents=node("div",undefined,"flow-incoming");
@@ -187,11 +187,10 @@ function drawStoryFlow(panel,group){
     }
     audit.append(list);
   }else audit.append(node("p","이 장면에서 편집할 수 있는 대사와 연결을 확인했습니다."));
-  panel.append(board);
 }
 
 let flowMapResize;
-function sceneConnectionMap(scenes,current){
+function drawSceneConnectionMap(board,scenes,current){
   const byId=new Map(scenes.map(scene=>[scene.id,scene]));
   const edges=scenes.flatMap(source=>source.choices.flatMap((choice,index)=>{
     const target=byId.get(choice[5]?.next);
@@ -205,7 +204,7 @@ function sceneConnectionMap(scenes,current){
     }
   }
   const links=edges.filter(edge=>connected.has(edge.source));
-  if(!links.length)return null;
+  if(!links.length)return;
 
   // Put a shared destination after all its parents, with one card per scene.
   const remaining=new Set(connected),levels=[];
@@ -262,6 +261,6 @@ function sceneConnectionMap(scenes,current){
   flowMapResize.observe(canvas);
   for(const title of ins.values())flowMapResize.observe(title);
   fold.addEventListener("toggle",paint);
-  requestAnimationFrame(paint);
-  return fold;
+  board.append(fold);
+  paint();
 }

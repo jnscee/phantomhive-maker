@@ -291,7 +291,8 @@ export function catalog(files, publishedAssets = [], version = "") {
   for (const node of rows(authored)) {
     const id=value(prop(node,"id"));
     customIds.push(id);
-    const g=event(id,value(prop(node,"title")),value(prop(node,"month"))===0?"선택지 연결 전용 장면":"추가한 월말 이벤트");
+    const g=event(id,value(prop(node,"title")));
+    g.detail=value(prop(node,"month"))===0?"선택지 연결 전용 장면":"추가한 월말 이벤트";
     add(g,"story.js",prop(node,"title"),"제목");
     add(g,"story.js",prop(node,"month"),"발생 방식","number",undefined,{min:0,max:35,trigger:true});
     add(g,"story.js",prop(node,"room"),"배경","select",roomOptions,{media:"room"});

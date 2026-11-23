@@ -47,6 +47,7 @@ module.exports=async function checkStoryFlow(browser,base){
     await button("장면 흐름도").click();
     const map=page.locator(".connection-map");
     await map.getByRole("button",{name:"봉투 속 쪽지",exact:true}).waitFor();
+    await map.locator("svg path").first().waitFor({state:"attached"});
     assert.equal(await map.locator("svg path").count(),1);
     await button("게임에서 미리보기 ↗").click();
     const game=page.frameLocator("#game-dialog iframe");
