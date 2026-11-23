@@ -297,6 +297,7 @@ function finish(id){
   state.ending=id;state.endingBeat=0;state.phase="ending";
   saves.gallery??={};
   saves.gallery[id]=endingLabels[id][0];
+  if(id==="vowNoTitle")saves.londonCareer=londonCareer(state);
   if(id==="vowTitle"){saves.growthGallery??={};saves.growthGallery[id]=growthRecord(state);}
   persist();render(true);
 }
@@ -437,13 +438,13 @@ function courtImpression(){
 const endingLabels = {
   vowTitle:["여왕의 번견",""],
   vowNoTitle:["문장 없는 마차","왕실의 승인은 미뤄졌습니다. 시엘은 스스로 선택한 이름으로 조사를 이어 갑니다."],
-  releaseTitle:["마지막 명령 · 백작","작위를 돌려받은 날 시엘은 복수를 내려놓았습니다. 마지막 명령을 받은 악마가 장갑을 벗습니다."],
-  releaseNoTitle:["마지막 명령 · 무관의 주인","가문의 문장은 끝내 돌아오지 않았습니다. 복수를 포기한 도련님 앞에서 집사가 계약을 거둡니다."],
+  releaseTitle:["마지막 명령 · 백작","작위를 돌려받은 날 시엘은 복수를 포기했습니다. 세바스찬은 그 자리에서 주인의 영혼을 거뒀습니다."],
+  releaseNoTitle:["마지막 명령 · 무관의 주인","가문의 문장은 끝내 돌아오지 않았습니다. 왕실의 회신을 받은 밤, 악마는 시엘의 영혼을 삼켰습니다."],
   title:["작위 승인","왕실에서 백작 작위를 승인한다는 서신이 도착했습니다."],
   business:["팬텀사 경영 지속","왕실의 답은 유보였습니다. 팬텀사는 다음 분기의 주문을 받습니다."],
   defer:["작위 심의 유보","왕실은 이번 심의에서 결정을 미뤘습니다."],
-  ill:["건강 악화로 종료","건강 18 미만이 두 달 연속 발생했습니다."],
-  broke:["자금 부족으로 종료","월말 자금 부족이 두 달 연속 발생했습니다."]
+  ill:["건강 악화로 종료","어린 시절부터 앓던 천식이 악화되어 시엘은 새벽에 숨을 거뒀습니다."],
+  broke:["자금 부족으로 종료","가게 열쇠를 넘긴 뒤에도 두 사람은 마지막 영수증을 놓고 한참 다퉜습니다."]
 };
 const slotNames=["상순","중순","하순"];
 const phaseNames={contract:"계약",guide:"첫 안내",visit:"자유행동",review:"세바스찬의 강평",scene:"일정 진행",slotEvent:"일정 사건",vow:"마지막 심의",investiture:"왕실 서신",plan:"편성 중",event:"월말 사건",result:"월간 결산",ending:"회차 종료"};
@@ -566,10 +567,15 @@ function relationBook(){
 function titlePanel(){
   return frame("팬텀하이브 메이커",'<div class="book-cover"><small>1886 — 1888</small><h2>EARL<br>PHANTOMHIVE<br>MAKER</h2><p>팬텀하이브 메이커</p>'+btn('<span class="return-label">회차로 돌아가기</span>',"back",false,"return-control")+btn("새 회차","reset")+'</div>');
 }
+function londonCareer(run){
+  if(run.stats.경영>=140&&run.fund>=260)return "merchant";
+  if(run.stats.통찰>=140)return "broker";
+  return "pursuit";
+}
 function epilogue(){
   const allies=peopleInHouse().filter(k=>state.people[k].toward>=5).map(k=>servants[k].name);
   const top=Object.keys(state.stats).sort((a,b)=>state.stats[b]/statMax(b)-state.stats[a]/statMax(a))[0];
-  const route=state.ending==="vowNoTitle"?((state.stats.경영>=140&&state.fund>=260)?"런던의 사업가로 자리 잡았습니다. ":state.stats.통찰>=140?"정보상의 연락망을 얻었습니다. ":"마차를 타고 옛 흔적을 좇습니다. "):"";
+  const route=state.ending==="vowNoTitle"?(londonCareer(state)==="merchant"?"런던의 사업가로 자리 잡았습니다. ":londonCareer(state)==="broker"?"정보상의 연락망을 얻었습니다. ":"마차를 타고 옛 흔적을 좇습니다. "):"";
   return route+(allies.length&&!["releaseTitle","releaseNoTitle","ill","broke"].includes(state.ending)?allies.join("·")+"은 다음 겨울에도 도련님의 지시를 따르겠다고 전했습니다. ":"")+"가장 단련된 능력은 "+top+"이었습니다. 팬텀사의 개발품은 "+state.unlocked.length+"종, 저택에 합류한 고용인은 "+peopleInHouse().filter(id=>servants[id].job).length+"명입니다.";
 }
 function canBuyTownhouse(){return state.phase==="plan" && !state.flags.townhouse && state.fund>=250;}
