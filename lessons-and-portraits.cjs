@@ -2,6 +2,61 @@
 const {chromium,firefox}=require('playwright');
 const assert=require('node:assert/strict');
 const base='http://127.0.0.1:4173/';
+async function checkNotebook(page){
+  await page.locator('#system-save').click();
+  assert.equal(await page.locator('#sheet-title').innerText(),'저장 · 설정');
+  assert.equal(await page.locator('.slot-save').count(),4);
+  const slot=page.getByRole('group',{name:'저장 칸 1',exact:true});
+  const load=slot.getByRole('button',{name:'불러오기'});
+  assert.ok(await load.isDisabled());
+  await slot.getByRole('button',{name:'저장',exact:true}).click();
+  assert.equal(await slot.getAttribute('data-filled'),'true');
+  assert.ok(await load.isEnabled());
+  await slot.getByRole('button',{name:'저장',exact:true}).click();
+  assert.ok(await page.locator('#picker [data-action="confirm"]').isVisible());
+  await page.getByRole('button',{name:'취소',exact:true}).click();
+
+  for(const [kind,label] of [['bgm','배경음악'],['sfx','효과음']]){
+    const slider=page.getByRole('slider',{name:label+' 음량'});
+    await slider.press('Home');
+    await slider.press('ArrowRight');
+    assert.equal(await page.locator('#'+kind+'-value').innerText(),'1%');
+    assert.equal(await slider.evaluate(e=>e.style.getPropertyValue('--volume')),'1%');
+    const mute=page.locator('#toggle-'+kind);
+    const before=await mute.getAttribute('aria-pressed');
+    await mute.click();
+    assert.notEqual(await mute.getAttribute('aria-pressed'),before);
+    assert.equal(await slider.inputValue(),'1');
+  }
+
+  const layout=await page.locator('.motion-options').evaluate(options=>{
+    const buttons=[...options.children];
+    const rects=buttons.map(b=>b.getBoundingClientRect());
+    return {fits:buttons.every(b=>b.scrollWidth<=b.clientWidth+1),
+      rowGap:rects[1].top-rects[0].bottom,columnGap:rects[2].left-rects[1].right,
+      overflow:document.querySelector('#panel').scrollWidth-document.querySelector('#panel').clientWidth};
+  });
+  assert.ok(layout.fits&&layout.rowGap>=6&&layout.columnGap>=6&&layout.overflow<=1,JSON.stringify(layout));
+  await page.locator('[data-action="motion:reduced"]').click();
+  assert.equal(await page.locator('[data-action="motion:reduced"]').getAttribute('aria-pressed'),'true');
+  const book=page.locator('.notebook-guide');
+  await book.locator(':scope > summary').click();
+  assert.equal(await book.locator('.guide-topic').count(),8);
+  await book.locator('.guide-topic > summary').first().click();
+  assert.ok(await book.locator('.guide-topic p').first().isVisible());
+  const saved=await page.evaluate(()=>localStorage.getItem(storageKey));
+  await book.locator('[data-action="open-guide"]').click();
+  assert.ok(await page.locator('#guide-replay').isVisible());
+  await page.locator('[data-action="guide-close"]').click();
+  assert.equal(await page.evaluate(()=>localStorage.getItem(storageKey)),saved);
+  await page.locator('.game-references summary').click();
+  assert.deepEqual(await page.locator('.game-references li').allTextContents(),
+    ['프린세스 메이커 3','카모카테 시리즈','카이로소프트 ‘○○○ 스토리’ 시리즈']);
+  await load.click();
+  await page.locator('#picker [data-action="confirm"]').click();
+  assert.equal(await page.evaluate(()=>state.month),14);
+}
+
 async function check(browserType){
   const browser=await browserType.launch({headless:true,...(browserType===chromium&&process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
   try{
@@ -48,6 +103,7 @@ async function check(browserType){
           assert.deepEqual(geometry.rows,[...Array(3).fill(geometry.rows[0]),...Array(3).fill(geometry.rows[5])]);
           assert.ok(geometry.rows[5]>geometry.rows[0]&&Math.max(...geometry.widths)-Math.min(...geometry.widths)<=1);
           assert.ok(geometry.smallest>=44&&geometry.rightEdge<=width);
+          if(width===319)await checkNotebook(phone);
           await phone.close();
         }
       }
