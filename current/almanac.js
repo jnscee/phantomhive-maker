@@ -80,7 +80,7 @@ function settleFestival(run){
   if(!ticket||run.fairBook?.[fair.id])return;
   const o=fair.options[ticket.index];
   if(!o)return;
-  const absent=Boolean(run.ill||run.illness);
+  const absent=Boolean(run.ill??run.illness);
   const prepared=(run.counts[o.prep]||0)>ticket.start || run.stats[o.stat]>=fairTarget(fair);
   const outcome=absent?"absent":prepared?"success":"practice";
   const result=absent?"공방에서 시엘에게 프로그램과 손님들의 서명지를 보냈다. 빈칸으로 남은 마지막 줄에는 집으로 돌아온 세바스찬이 날짜를 적었다.":o[outcome];
@@ -154,7 +154,8 @@ function relapseNotice(run){
 function healthNotice(run){
   const relapse=relapseNotice(run);
   if(relapse)return relapse;
-  if(run.ill||run.illness)return "병중 · 수업은 요양으로 바뀌며 예약한 수업료는 전액 지불합니다. 건강 50 이상·스트레스 60 이하에서 복귀합니다.";
-  if(run.hp<=42||run.stress>=70)return "병환 주의 · 다음 일정에 휴식이나 요양을 넣을 수 있습니다.";
+  if(run.ill??run.illness)return "병중 · 수업은 요양으로 바뀌며 예약한 수업료는 전액 지불합니다. 건강 50 이상·스트레스 60 이하에서 복귀합니다.";
+  const {onset}=illnessLimits(run);
+  if(run.stress>=onset-12)return "병환 주의 · 스트레스 "+run.stress+" / 발병 기준 "+onset+"입니다. 한 순 쉬면 스트레스를 낮출 수 있습니다.";
   return "";
 }

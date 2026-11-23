@@ -296,7 +296,18 @@ assertOk('!events.find(e=>e.id==="portfolio-0-1").sees(state)');
 run('state.sequence.activity="study"');assertOk('events.find(e=>e.id==="portfolio-0-1").sees(state)');
 run('events.find(e=>e.id==="portfolio-0-1").choices[0].effect()');assert.equal(run('state.stats.지성'),405);
 
-for(const condition of ["state.hp=30","state.stress=100"]){
+// Each limit can independently trigger illness. Equality counts, and recovery has its own boundary.
+setup('state.hp=76;state.stats.체력=50;state.motivation=70;state.stress=74;updateIllness(state)');
+assertOk('!state.ill && illnessLimits(state).onset===75 && healthNotice(state).includes("발병 기준 75") && statusPanel().includes("신체 한계 75")');
+run('state.stress=75;updateIllness(state)');assertOk('state.ill');
+run('state.stress=60;state.hp=49;updateIllness(state)');assertOk('state.ill');
+run('state.hp=50;state.stress=61;updateIllness(state)');assertOk('state.ill');
+run('state.stress=60;updateIllness(state)');assertOk('!state.ill');
+setup('state.stats.체력=500;state.hp=76;state.motivation=70;state.stress=75;updateIllness(state)');
+assertOk('!state.ill && illnessLimits(state).onset>75');
+run('state.motivation=20;updateIllness(state)');assertOk('state.ill && illnessLimits(state).spirit===72');
+setup('state.hp=25;state.stress=20;updateIllness(state)');assertOk('!state.ill');
+for(const condition of ['state.motivation=100;state.stress=illnessLimits(state).stamina','state.stats.체력=500;state.motivation=20;state.stress=illnessLimits(state).spirit']){
   setup(condition+';state.plan=["exercise","rest","rest"];state.visit="library";state.qty=0;execute()');
   assertOk('state.phase==="scene" && state.sequence.activity==="recovery" && state.sequence.onSickLeave');
   assertOk('state.sequence.trainingPaid===actions.exercise.cost && state.fund===state.sequence.opening.fund-actions.exercise.cost && !state.counts.exercise');
@@ -319,7 +330,7 @@ for(const care of ["none","walk","doctor"]){
   run('state.phase="result";advance()');
   assert.equal(run('state.ending'),care==="none"?"ill":null);
 }
-setup('delete state.relapseStage;state.hp=30;state.plan=["exercise","exercise","exercise"];state.qty=0;state.visit="none";execute()');
+setup('delete state.relapseStage;state.hp=30;state.stress=illnessLimits(state).onset;state.plan=["exercise","exercise","exercise"];state.qty=0;state.visit="none";execute()');
 assertOk('state.hp===53 && state.sequence.sickAbsence');
 setup('state.plan=["walk","walk","walk"];state.visit="none";state.price=40;state.qty=0;state.stock.toys=25;execute()');
 run('state.sequence.trade.holding=13;persist();state=normalizeSave(saves.auto);settleMonth()');

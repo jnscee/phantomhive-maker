@@ -34,8 +34,13 @@ let selectedSlot=0;
 let editingVisit=false;
 const $=id=>document.getElementById(id);
 observePortraitStage($("scene"));
+function illnessLimits(run){
+  const stamina=Math.round(65+25*run.stats.체력/statMax("체력")+10*run.hp/100);
+  const spirit=Math.round(65+35*run.motivation/100);
+  return {stamina,spirit,onset:Math.min(stamina,spirit)};
+}
 function updateIllness(run){
-  if(run.hp<=30 || run.stress>=85)run.ill=true;
+  if(run.stress>=illnessLimits(run).onset)run.ill=true;
   else if(run.hp>=50 && run.stress<=60)run.ill=false;
 }
 function persist(){
@@ -840,6 +845,7 @@ function savePanel(){
 }
 function statusPanel(){
   const predicted=state.phase==="plan"?projectTraining():state.report?.before;
+  const limits=illnessLimits(state);
   const current=[state.hp,state.stress,state.motivation];
   const properties=["hp","stress","motivation"];
   const conditions=["건강","스트레스","의욕"];
@@ -852,6 +858,7 @@ function statusPanel(){
   }).join("");
   return frame(state.ill?"시엘 상태 · 병중":"시엘 상태",'<div class="inline"><b>시엘 팬텀하이브</b><span class="small muted">'+
     (state.phase==="plan"?"월말 예상 변동":"이번 달 변동")+'</span></div><div class="hud-group">'+(healthNotice(state)?'<p class="condition-detail">'+healthNotice(state)+'</p>':'')+meters+
+    '<p class="condition-detail">스트레스가 '+limits.onset+'에 닿으면 병이 납니다. 체력·건강으로 정해지는 신체 한계 '+limits.stamina+'와 의욕으로 정해지는 기력 한계 '+limits.spirit+' 중 낮은 쪽이 기준입니다.</p>'+
     '</div><div class="hud-group"><div class="attributes"><div class="attribute attr-label muted"><span>능력치</span><b>현재</b><em>변동</em></div>'+
     stats.map(name=>{
       const delta=predicted?.stats?(state.phase==="plan"?predicted.stats[name]-state.stats[name]:state.stats[name]-predicted.stats[name]):0;
