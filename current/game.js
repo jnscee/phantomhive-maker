@@ -861,22 +861,23 @@ function syncMotion(){
   document.documentElement.dataset.gameMotion=motionMode==="reduced"?"reduced":motionReduced()?"gentle":"full";
 }
 function motionControls(){
-  return '<section class="mixer"><h3>동작 설정</h3><p>시엘의 인사와 일정 애니메이션</p><div class="opts">'+
+  return '<section class="mixer"><h3>동작 설정</h3><p>시엘의 인사와 일정 애니메이션</p><div class="opts motion-options">'+
     Object.entries(motionLabels).map(([key,name])=>option(name,"motion:"+key,motionMode===key,false)).join("")+'</div></section>';
 }
 function savePanel(){
   const rows=["auto","1","2","3"].map((id,index)=>{
     const record=saves[id];
-    const label=index?"수첩 "+index:"자동 저장";
+    const label=index?"저장 칸 "+index:"자동 저장";
     const phase=record && (phaseNames[record.phase] || "");
-    return '<div class="slot-save" data-filled="'+Boolean(record)+'"><div class="slot-info"><strong>'+label+'</strong><span>'+
+    return '<div class="slot-save" role="group" aria-label="'+label+'" data-filled="'+Boolean(record)+'">'+
+      '<div class="slot-info"><i class="slot-book" aria-hidden="true"></i><strong>'+label+'</strong><span>'+
       (record?monthText(record.month)+(phase?" · "+phase:""):"빈 슬롯")+'</span></div><div class="opts">'+
       (index?btn("저장","store:"+id,false,"slot-write"):"")+btn("불러오기","load:"+id,!record,"slot-read")+'</div></div>';
   }).join("");
-  return frame("수첩 · 저장",'<section class="notebook-slots" aria-label="저장 슬롯">'+rows+'</section>'+(!storageOk?'<p class="small danger">브라우저 저장소를 사용할 수 없습니다. 이 탭을 닫으면 진행 내용이 사라집니다.</p>':"")+
+  return frame("저장 · 설정",'<section class="notebook-slots" aria-labelledby="save-slots-title"><h3 id="save-slots-title">저장 기록</h3>'+rows+'</section>'+(!storageOk?'<p class="small danger">브라우저 저장소를 사용할 수 없습니다. 이 탭을 닫으면 진행 내용이 사라집니다.</p>':"")+
     '<div class="notebook-settings">'+audioControls()+motionControls()+'</div>'+instructionBook()+
     '<div class="notebook-actions">'+(state.phase!=="contract"?btn("프롤로그 다시 보기","recollect"):"")+btn("새 회차","reset")+btn("표지로","tab:title")+'</div>'+
-    '<details class="annexes"><summary>제작 참고 · 콘텐츠 편집기</summary><p>장면 흐름도와 표정 편집은 <a href="https://x.com/Dot_teu" target="_blank" rel="noopener noreferrer">돛트(Dot-teu)</a>님의 <a href="https://github.com/Dotteu/VisualNovel-Maker" target="_blank" rel="noopener noreferrer">VisualNovel-Maker</a>를 참고했습니다. <a href="https://creativecommons.org/licenses/by-nc/4.0/deed.ko" target="_blank" rel="noopener noreferrer">참고작 라이선스 · CC BY-NC 4.0</a></p></details>');
+    '<details class="annexes game-references"><summary>제작 참고</summary><ul><li>프린세스 메이커 3</li><li>카모카테 시리즈</li><li>카이로소프트 ‘○○○ 스토리’ 시리즈</li></ul></details>');
 }
 function statusPanel(){
   const predicted=state.phase==="plan"?projectTraining():state.report?.before;
@@ -1108,7 +1109,7 @@ function sheetTitle(){
     if(state.phase==="ending")return endingLabels[state.ending][0];
     return "월간 일정";
   }
-  return {market:"라우의 상점",title:"Earl Phantomhive Maker",status:"상태",estate:"저택 관리",townhouse:"런던 타운하우스",staffing:"사용인 배치",company:"팬텀 사 경영",record:"가문 장부",save:"수첩 · 저장 및 소리"}[tab];
+  return {market:"라우의 상점",title:"Earl Phantomhive Maker",status:"상태",estate:"저택 관리",townhouse:"런던 타운하우스",staffing:"사용인 배치",company:"팬텀 사 경영",record:"가문 장부",save:"저장 · 설정"}[tab];
 }
 const homeRemarks=["무슨 일이지?","차가 식기 전에 마저 마시겠어.","오늘 일정은 확인했나?","잠깐이라면 들어주지."];
 let remarkIndex=0;
