@@ -906,7 +906,7 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
 }
 .guide-body {
   --bubble-fill:#deebf4ed;
-  position:relative; display:grid; grid-template-rows:minmax(0,1fr) auto; gap:5px; min-height:0;
+  position:relative; display:grid; grid-template-rows:minmax(0,1fr); min-height:0;
 }
 /* Keep the tail beside the portrait while the speech text scrolls. */
 .guide-body::before {
@@ -918,14 +918,6 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
   background:var(--bubble-fill); border-radius:7px; color:#192d43;
   font-size:14px; line-height:1.55; word-break:keep-all; overflow-wrap:anywhere;
   text-shadow:none;
-}
-.guide-action {
-  display:flex; align-items:baseline; gap:6px; margin:0; color:var(--guide-gold);
-}
-.guide-action span { flex:none; color:#d0e0ef; font-size:11px; }
-.guide-action strong {
-  padding:1px 6px; border:1px solid #f3dfac42; border-radius:4px;
-  background:#f3dfac14; font-size:13px; overflow-wrap:anywhere;
 }
 #guide-replay footer {
   grid-column:1/-1; display:flex; align-items:center; gap:5px;
