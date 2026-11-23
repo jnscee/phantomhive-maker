@@ -97,16 +97,6 @@ export function catalog(files, publishedAssets = [], version = "") {
     g.fields.push(field);
   }
 
-  const opening = rows(variable("prologue.js","openingScenes"));
-  opening.forEach((scene,i)=>{
-    const art = prop(scene,"art");
-    const g = group("story","opening-"+i,"프롤로그 · "+(i+1),value(art),{kind:"opening",scene:i});
-    // Art IDs also control scene-specific transitions and voice-only scenes.
-    add(g,"prologue.js",art,"CG","prologue",undefined,{fixed:true});
-    add(g,"prologue.js",prop(scene,"alt"),"CG 대체 설명");
-    add(g,"prologue.js",prop(scene,"lines"),"대사 순서","lines");
-  });
-
   const descriptions = properties(variable("chapters.js","endingArtDescriptions"));
   const endingLabels = properties(variable("game.js","endingLabels"));
   const availableCG = publishedAssets.filter(path=>/^assets\/endings\/[^/]+\.webp$/.test(path));
@@ -115,6 +105,21 @@ export function catalog(files, publishedAssets = [], version = "") {
     return [id,value(prop(variable("chapters.js","endingArtDescriptions"),id))??id];
   });
   inventory.ending=Object.fromEntries(artOptions.map(([id])=>[id,"assets/endings/"+id+".webp"]));
+  const openingScenes=variable("prologue.js","openingScenes");
+  const opening = rows(openingScenes);
+  opening.forEach((scene,i)=>{
+    const art = prop(scene,"art");
+    const g = group("story","opening-"+i,"프롤로그 · "+(i+1),value(prop(scene,"title"))??value(art),{kind:"opening",scene:i});
+    // Art IDs also control scene-specific transitions and voice-only scenes.
+    if(prop(scene,"title")){
+      add(g,"prologue.js",prop(scene,"title"),"장면 제목");
+      add(g,"prologue.js",art,"CG","select",artOptions,{media:"ending"});
+      add(g,"prologue.js",prop(scene,"music"),"장면 BGM","select",[["","프롤로그 기본 음악"],...trackOptions],{media:"track"});
+    }else add(g,"prologue.js",art,"CG","prologue",undefined,{fixed:true});
+    add(g,"prologue.js",prop(scene,"alt"),"CG 대체 설명");
+    add(g,"prologue.js",prop(scene,"lines"),"대사 순서","lines");
+  });
+
   for (const p of properties(variable("chapters.js","endingScenes"))) {
     const id=propertyName(p);
     const title=value(rows(endingLabels.find(label=>propertyName(label)===id)?.value)[0])??id;
@@ -388,7 +393,7 @@ export function catalog(files, publishedAssets = [], version = "") {
       });
     }
   }
-  return {files,groups:groups.filter(g=>g.fields.length||g.asset),fields,inventory,version,trackOptions,roomOptions,assetSet,eventGroups,customIds,authored,registers,recruitTargets,rewardOptions,recruitCastOptions,recruitArtOptions,artOptions,cueMap:variable("audio.js","eventTracks")};
+  return {files,groups:groups.filter(g=>g.fields.length||g.asset),fields,inventory,version,trackOptions,roomOptions,assetSet,eventGroups,customIds,authored,openingScenes,registers,recruitTargets,rewardOptions,recruitCastOptions,recruitArtOptions,artOptions,cueMap:variable("audio.js","eventTracks")};
 }
 
 function textValue(input, limit=5000) {
@@ -520,7 +525,15 @@ export function applyEdits(model, request) {
   const addition=request.addition;
   if(addition){
     const {id,name,kind}=addition;
-    if(kind==="scene"){
+    if(kind==="opening"){
+      const title=textValue(name,120);
+      const art=statementValue({type:"select",label:"CG",options:model.artOptions},addition.picture);
+      const music=statementValue({type:"select",label:"BGM",options:[["",""],...model.trackOptions]},addition.music??"");
+      const scenes=model.openingScenes;
+      const last=rows(scenes).at(-1);
+      const at=last?.end??scenes.start+1;
+      replace("prologue.js",at,at,(last?",":"")+"\n  "+quoted({title,art,alt:title,music,lines:lineValues(addition.lines)}));
+    }else if(kind==="scene"){
       const target=model.recruitTargets.get(addition.target);
       if(!target)throw new Error("영입 이벤트를 선택해 주세요.");
       const [source,scenes]=target;

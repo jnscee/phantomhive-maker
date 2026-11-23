@@ -81,13 +81,16 @@ function inOpening(){return tab==="recollection"||(state.phase==="contract"&&tab
 function openingIndex(){return tab==="recollection"?recollectionLine:state.openingLine;}
 function clearOpeningTimer(){clearTimeout(openingTimer);openingTimer=0;}
 function stopOpeningAuto(){clearOpeningTimer();openingAuto=false;}
+function openingImage(scene){return "assets/"+(scene.title?"endings":"prologue")+"/"+scene.art+".webp";}
 function openingArt(scene){
   const frame=$("opening-picture");
-  if(frame.dataset.art===scene.art)return;
+  const source=openingImage(scene);
+  if(frame.dataset.source===source)return;
+  frame.dataset.source=source;
   frame.dataset.art=scene.art;
   const img=new Image();
   img.className="opening-cg"; img.alt=scene.alt;
-  img.src="assets/prologue/"+scene.art+".webp";
+  img.src=source;
   const old=frame.querySelector(".opening-cg:last-child");
   frame.replaceChildren(...(old?[old]:[]),img);
   if(old){
@@ -102,21 +105,22 @@ function openingArt(scene){
   const next=openingScenes[openingScenes.indexOf(scene)+1];
   if(next){
     const preload=new Image();
-    preload.src="assets/prologue/"+next.art+".webp";
+    preload.src=openingImage(next);
   }
 }
 function drawOpening(focus=false){
   clearOpeningTimer();
   delete $("overture").dataset.pause;
   const i=openingIndex(), signing=i===openingLines.length, replay=tab==="recollection";
-  const entry=openingLines[signing?i-1:i],scene=entry.scene;
+  const entry=openingLines[signing?i-1:i];
+  const scene=signing?openingScenes.findLast(page=>!page.title):entry.scene;
   const surface=$("overture");
   if(!openingSession){openingAuto=true;openingSession=true;}
-  surface.dataset.art=scene.art;
-  surface.dataset.close=String(!signing&&((scene.art==="seal"&&entry.beat>=5)||(scene.art==="cell"&&entry.beat>=6)||(scene.art==="ring"&&entry.beat>=3&&entry.beat<=6)));
-  surface.dataset.establish=String(!signing&&entry.beat===0&&["fire","manor"].includes(scene.art));
+  surface.dataset.art=scene.title?"custom":scene.art;
+  surface.dataset.close=String(!signing&&!scene.title&&((scene.art==="seal"&&entry.beat>=5)||(scene.art==="cell"&&entry.beat>=6)||(scene.art==="ring"&&entry.beat>=3&&entry.beat<=6)));
+  surface.dataset.establish=String(!signing&&!scene.title&&entry.beat===0&&["fire","manor"].includes(scene.art));
   surface.dataset.signing=String(signing);
-  const voiceOnly=scene.art==="cell"&&entry.speaker==="악마";
+  const voiceOnly=!scene.title&&scene.art==="cell"&&entry.speaker==="악마";
   surface.dataset.voiceOnly=String(voiceOnly);
   $("opening-dialogue").classList.toggle("dialogue",!voiceOnly);
   const reader=$("opening-read");
@@ -127,6 +131,7 @@ function drawOpening(focus=false){
     const picture=$("opening-picture");
     picture.replaceChildren();
     delete picture.dataset.art;
+    delete picture.dataset.source;
   }else openingArt(scene);
   const thought=!signing&&entry.speaker==="독백";
   surface.dataset.voice=thought?"thought":"speech";
@@ -163,7 +168,7 @@ function stepOpening(step){
   if(tab==="recollection")recollectionLine=next;
   else {state.openingLine=next;persist();}
   const auto=openingAuto;
-  const pause=step===1&&openingLines[i].scene!==openingLines[next].scene&&({fire:1100,manor:1450})[openingLines[next].scene.art];
+  const pause=step===1&&openingLines[i].scene!==openingLines[next].scene&&!openingLines[next].scene.title&&({fire:1100,manor:1450})[openingLines[next].scene.art];
   if(pause){
     clearOpeningTimer();
     $("overture").dataset.pause="true";

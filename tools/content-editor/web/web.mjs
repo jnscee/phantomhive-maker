@@ -66,7 +66,7 @@ function edits(current,body){
   const changes=applyEdits(current,body);
   const sources={...saved.sources,...changes};
   for(const name of Object.keys(changes))if(sources[name]===original[name])delete sources[name];
-  const newPath=body.addition&&!["scene","fx"].includes(body.addition.kind)?additionPath(body.addition):null;
+  const newPath=body.addition&&!["scene","opening","fx"].includes(body.addition.kind)?additionPath(body.addition):null;
   const uploads=Object.fromEntries(Object.entries(body.uploads??{}).map(([name,data])=>{
     if(!current.assetSet.has(name)&&name!==newPath)throw new Error("이 파일은 등록할 수 없습니다.");
     return [name,assetBlob(name,data)];

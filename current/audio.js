@@ -67,7 +67,7 @@ const endingTracks={
 };
 function trackForView(){
   if(tourSession||(tab==="plan"&&state.phase==="guide"))return "tutorial";
-  if(inOpening())return "prologue";
+  if(inOpening())return openingLines[openingIndex()]?.scene.music||"prologue";
   if(tab==="plan"&&state.phase==="investiture")return "titleApproval";
   if((tab==="plan"&&state.phase==="ending")||(tab==="endingMemory"&&endingReplay)){
     const id=tab==="endingMemory"?endingReplay.id:state.ending;

@@ -44,7 +44,7 @@
     <section class="desk" aria-labelledby="entry-title">
       <header class="entry-head">
         <div><p id="entry-detail" class="eyebrow"></p><h2 id="entry-title" tabindex="-1">게임 파일을 읽는 중</h2></div>
-        <button id="preview" disabled>게임에서 미리보기 ↗</button>
+        <div class="toolbar"><button id="add-story" type="button" hidden disabled>＋ 스토리 추가</button><button id="preview" disabled>게임에서 미리보기 ↗</button></div>
       </header>
       <nav id="entry-nav" aria-label="편집 항목" hidden></nav>
       <div class="fields" id="fields"></div>
@@ -62,9 +62,10 @@
     <form id="add-form" class="resource-form">
       <h2 id="add-title">콘텐츠 추가</h2>
       <label>종류<select id="add-kind">
+        <option value="opening">프롤로그 장면</option><option value="scene">영입 장면</option><option value="event">월말 스토리 이벤트</option>
         <option value="standing">스탠딩</option><option value="cg">CG</option>
         <option value="bgm">BGM</option><option value="background">배경</option>
-        <option value="event">월말 이벤트</option><option value="fx">파티클 효과</option><option value="scene">영입 장면</option>
+        <option value="fx">파티클 효과</option>
       </select></label>
       <div id="add-fields"></div>
       <p id="add-error" role="status"></p>

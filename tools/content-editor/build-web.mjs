@@ -23,6 +23,7 @@ for(const folder of ["public","web"]){
     uiHash.update(file).update(await readFile(path.join(source,folder,file)));
   }
 }
+uiHash.update(await readFile(path.join(source,"catalog.mjs")));
 const uiVersion=uiHash.digest("hex").slice(0,16);
 await mkdir(editor,{recursive:true});
 await cp(path.join(source,"public"),editor,{recursive:true});
@@ -37,6 +38,8 @@ const dependencies=[
 for(const [file,target] of dependencies) await cp(path.join(source,"node_modules",file),path.join(editor,target));
 const catalog=(await readFile(path.join(source,"catalog.mjs"),"utf8")).replace('from "acorn"','from "./acorn.mjs"');
 await writeFile(path.join(editor,"catalog.mjs"),catalog);
+const adapter=await readFile(path.join(editor,"web.mjs"),"utf8");
+await writeFile(path.join(editor,"web.mjs"),adapter.replace('"./catalog.mjs"','"./catalog.mjs?v='+uiVersion+'"'));
 const html=(await readFile(path.join(editor,"index.html"),"utf8"))
   .replace("<body>",'<body data-web-editor>')
   .replace('sandbox="allow-scripts"','sandbox="allow-scripts allow-same-origin"')

@@ -53,7 +53,8 @@ function updateToolbar() {
   $("discard").disabled=busy||!draftCount();
   $("undo").disabled=busy||!data?.canUndo||Boolean(draftCount());
   $("preview").disabled=busy||!data||Boolean(deleteEvent);
-  $("add-content").disabled=busy||!data||Boolean(draftCount());
+  $("add-content").disabled=busy||!data||Boolean(newEvent);
+  $("add-story").disabled=busy||!data||Boolean(newEvent);
   $("publish").disabled=busy||!data?.publishCount||Boolean(draftCount());
 }
 
@@ -179,6 +180,7 @@ function linesEditor(parent,initial,onChange,field={}) {
       const line=node("textarea");
       line.value=text;
       line.rows=2;
+      line.required=Boolean(field.required);
       line.setAttribute("aria-label",(index+1)+"번 대사");
       line.addEventListener("input",()=>{list[index][1]=line.value;onChange(list);});
       const actions=node("div",undefined,"line-actions");
@@ -438,6 +440,7 @@ function updatePaneCounts(){
 
 function drawDesk() {
   const panel=$("fields");
+  $("add-story").hidden=!isWeb||section!=="story"||Boolean(newEvent);
   const nav=$("entry-nav");
   nav.replaceChildren();
   nav.hidden=true;
@@ -635,25 +638,26 @@ if(isWeb){
       control.addEventListener("input",()=>{addition[key]=control.value.trim();});
       return control;
     }
-    $("add-submit").textContent=kind==="event"?"이벤트 작성":"추가하고 저장";
+    $("add-submit").textContent=kind==="event"?"이벤트 작성":draftCount()?"추가하고 변경 사항 저장":"추가하고 저장";
     if(kind==="event")return;
-    if(kind!=="scene"){
+    if(!["scene","opening"].includes(kind)){
       const id=input("id","ID · 자동 생성, 수정 가능");
       id.pattern="[a-z][a-z0-9\\-]{0,39}";
       id.value=addition.id=kind+"-"+crypto.randomUUID().slice(0,8);
     }
     if(kind!=="fx")input("name","이름").maxLength=120;
     if(kind==="fx")input("symbol","화면에 뿌릴 문자").maxLength=20;
-    if(kind==="scene"){
-      for(const [key,label,options] of [
-        ["target","영입 이벤트",data.recruits],["art","배경",data.recruitArtOptions],
-        ["music","BGM",[["","기본 음악"],...data.trackOptions]],["picture","CG",[["","사용 안 함"],...data.artOptions]]
-      ]){
-        const control=labeled(fields,label,select(options,options[0][0]));
+    if(["scene","opening"].includes(kind)){
+      fields.append(node("p",kind==="opening"?"프롤로그 마지막에 이어집니다.":"고른 영입 이벤트의 마지막 장면 뒤에 이어집니다.","muted"));
+      const optionsList=kind==="scene"?[["target","영입 이벤트",data.recruits],["art","배경",data.recruitArtOptions]]:[];
+      optionsList.push(["music","BGM",[["","기본 음악"],...data.trackOptions]],["picture","CG",kind==="opening"?data.artOptions:[["","사용 안 함"],...data.artOptions]]);
+      for(const [key,label,options] of optionsList){
+        const preferred=key==="target"?currentGroup()?.preview?.id:null;
+        const control=labeled(fields,label,select(options,options.some(([id])=>id===preferred)?preferred:options[0][0]));
         addition[key]=control.value;
         control.addEventListener("input",()=>{addition[key]=control.value;});
       }
-      const cast=[0,1].map(index=>labeled(fields,"스탠딩 "+(index+1),select([["","없음"],...data.recruitCastOptions],"")));
+      const cast=(kind==="scene"?[0,1]:[]).map(index=>labeled(fields,"스탠딩 "+(index+1),select([["","없음"],...data.recruitCastOptions],"")));
       for(const control of cast)control.addEventListener("input",()=>{
         addition.cast=cast.map(slot=>slot.value).filter(Boolean);
         cast.forEach((slot,index)=>{
@@ -661,7 +665,8 @@ if(isWeb){
         });
       });
       addition.lines=[["세바스찬",""]];
-      linesEditor(fields,addition.lines,lines=>{addition.lines=structuredClone(lines);});
+      fields.append(node("p","대사를 한 줄 이상 입력해 주세요. 화자는 비워 둘 수 있습니다.","muted"));
+      linesEditor(fields,addition.lines,lines=>{addition.lines=structuredClone(lines);},{required:true});
     }
     if(extensions[kind]){
       const control=labeled(fields,"파일 · "+extensions[kind].replaceAll(",",", "),node("input"));
@@ -672,17 +677,20 @@ if(isWeb){
     }
   }
   $("add-content").hidden=false;
-  $("add-content").addEventListener("click",()=>{
+  function openAddition(kind){
+    addKind.value=kind;
     drawAddition();
     addDialog.showModal();
-  });
+  }
+  $("add-content").addEventListener("click",()=>openAddition("standing"));
+  $("add-story").addEventListener("click",()=>openAddition(currentGroup()?.preview?.kind==="recruit"?"scene":"opening"));
   addKind.addEventListener("input",drawAddition);
   $("add-close").addEventListener("click",()=>addDialog.close());
   addDialog.addEventListener("cancel",event=>{if(busy)event.preventDefault();});
   addDialog.addEventListener("close",()=>{$("add-fields").replaceChildren();});
   $("add-form").addEventListener("submit",async event=>{
     event.preventDefault();
-    if(busy||draftCount())return;
+    if(busy||newEvent)return;
     if(addition.kind==="event"){
       addDialog.close();
       openNewEvent();
@@ -707,13 +715,20 @@ if(isWeb){
           reader.readAsDataURL(file);
         });
       }
-      await api("/api/save",{...payload(),addition:input,uploads:incoming});
+      await api("/api/save",{...payload(),addition:input,uploads:{...uploads,...incoming}});
+      clearDraft();
       addDialog.close();
       if(["standing","cg","background","bgm","fx"].includes(input.kind)){
         const destination={standing:["assets","standing"],cg:["assets","cg"],background:["assets","sceneArt"],bgm:["audio","music"],fx:["fx","fx-symbols"]}[input.kind];
         [section,selected]=destination;
         if(input.kind!=="fx")selected+="-extra-"+input.id;
         activePane=null;
+        $("search").value="";
+      }
+      if(input.kind==="opening"){
+        section="story";
+        selected="opening-"+data.groups.filter(group=>group.preview?.kind==="opening").length;
+        activePane="dialogue";
         $("search").value="";
       }
       if(input.kind==="scene"){
