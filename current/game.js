@@ -398,27 +398,24 @@ function projectTraining(){
 }
 function courtRows(){
   const full=state.duration===35;
-  const royal=full?6:2, renown=full?32:3, funds=full?1200:120, health=full?60:30;
+  const royal=full?6:2, renown=full?32:3, funds=full?1200:120;
   const rooms=Object.values(state.level).filter(level=>level>=2).length;
   const shopLevel=Math.max(...Object.values(state.shop));
   function statPair(label,first,a,second,b){
     const left=state.stats[first],right=state.stats[second];
-    return [label,left>=a && right>=b,first+" "+a+" · "+second+" "+b,
-      first+" "+left+"/"+a+" · "+second+" "+right+"/"+b];
+    return [label,left>=a && right>=b,[first,second].join(" · ")+" 수업을 편성하세요."];
   }
   return [
     ...(full?[
       statPair("귀족 교육","지성",420,"기품",440),
       statPair("사교와 조사","매력",300,"통찰",340),
       statPair("사업과 결단","경영",320,"의지",300),
-      ["저택 재건",rooms>=2,"서재·응접실·주방 중 두 곳을 2단계로 개수","2단계 이상 "+rooms+"곳 / 필요 2곳"],
-      ["회사 기반",shopLevel>=2,"개발실·제작실·판매점 중 한 곳을 2단계로 증설","최고 "+shopLevel+"단계 / 필요 2단계"]
+      ["저택 재건",rooms>=2,"서재와 응접실, 주방을 개수하세요."],
+      ["회사 기반",shopLevel>=2,"팬텀사의 시설을 증설하세요."]
     ]:[]),
-    ["가문 증빙",Boolean(state.flags.deed),"서재에서 ‘장부 복원’을 선택해 증빙 확보",state.flags.deed?"증빙 확보":"증빙 미확보"],
-    ["왕실 신임",state.royal>=royal,"왕실 서신에 답하거나 요청을 수행","신임 "+royal+" 이상"],
-    ["가문 명성",state.renown>=renown,"접객과 팬텀사 판매로 명성 쌓기","명성 "+renown+" 이상"],
-    ["재정 안정",state.fund>=funds && state.debt===0,"잔액 "+money(funds)+" 이상 · 채무 전액 상환","잔액 "+money(state.fund)+" / "+money(funds)+" · 채무 "+money(state.debt)+" / £0"],
-    ["건강",state.hp>=health,"최종 심의 때 건강 "+health+" 이상 확보","건강 "+state.hp+" / "+health]
+    ["왕실 신임",state.royal>=royal,"왕실 서신에 답하거나 요청을 수행"],
+    ["가문 명성",state.renown>=renown,"접객과 팬텀사 판매로 명성 쌓기"],
+    ["재정 안정",state.fund>=funds && state.debt===0,"채무를 상환하고 가문 자금을 비축하세요."]
   ];
 }
 function titleRequirements(){return courtRows().map(row=>row[1]);}

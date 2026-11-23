@@ -111,17 +111,17 @@ function courtFolio(rows){
   const approved=["title","vowTitle","releaseTitle"].includes(state.ending);
   const held=["business","defer","vowNoTitle","releaseNoTitle"].includes(state.ending);
   const stage=approved||complete===rows.length?3:state.royal>0&&complete>=rows.length*0.7?2:state.royal>0||state.renown>0||complete>=rows.length*.4?1:0;
-  const wording=["왕실 서신에 가문의 이름이 아직 오르지 않았습니다.","궁정에서 팬텀하이브의 근황을 묻기 시작했습니다.","왕실 서기관이 가문의 증빙과 살림을 함께 검토하고 있습니다.","작위 회복에 필요한 조건을 모두 갖췄습니다."];
+  const wording=["왕실 서신에 가문의 이름이 아직 오르지 않았습니다.","궁정에서 팬텀하이브의 근황을 묻기 시작했습니다.","왕실 서기관이 가문의 평판과 살림을 함께 검토하고 있습니다.","작위 회복에 필요한 조건을 모두 갖췄습니다."];
   const pending=rows.find(row=>!row[1]);
   const title=approved?"작위 회복":held?"이번 심의 유보":stages[stage];
   const description=approved?"왕실이 백작 작위를 승인했습니다.":held?"이번 회차의 작위 승인이 유보되었습니다.":wording[stage];
   const steps=stages.map((label,index)=>
     '<li'+(index<=stage?' class="reached"':'')+(index===stage?' aria-current="step"':'')+'><i aria-hidden="true"></i>'+label+'</li>').join("");
-  const checks=rows.map(([label,ok,hint,reading])=>
-    '<li><div><b>'+label+'</b><small>'+reading+'</small></div><span class="court-status'+(ok?' met':'')+'">'+(ok?'✓ 충족':'미충족')+'</span></li>').join("");
+  const checks=rows.map(([label,ok,hint])=>
+    '<li><div><b>'+label+'</b><small>'+hint+'</small></div><span class="court-status'+(ok?' met':'')+'">'+(ok?'✓ 충족':'미충족')+'</span></li>').join("");
   return '<section class="court-folio"><div class="court-ruling"><header><span>왕실 작위 심의</span><small>'+monthText(state.month)+'</small></header>'+
     '<h3>'+title+'</h3><p>'+description+'</p><ol class="court-stages" aria-label="왕실 평가 단계">'+steps+'</ol></div>'+
-    '<details class="court-register" open><summary><b>작위 회복 요건</b><span>'+complete+' / '+rows.length+' 충족</span></summary>'+
+    '<details class="court-register" open><summary><b>작위 회복 요건</b></summary>'+
     (pending&&!state.ending?'<p class="court-next"><b>다음 준비</b> '+pending[2]+'</p>':'')+
     '<ul class="court-checks">'+checks+'</ul></details></section>';
 }

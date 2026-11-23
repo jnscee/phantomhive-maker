@@ -270,14 +270,14 @@ assertOk('state.ill && !hasPendingVisit()');
 run('state.hp=57;state.stress=51;persist()');
 assertOk('!state.ill && hasPendingVisit()');
 
-setup('Object.assign(state.stats,{지성:420,기품:440,매력:300,통찰:340,경영:320,의지:300});Object.assign(state.level,{library:2,kitchen:2});state.shop.store=2;state.flags.deed=true;state.royal=6;state.renown=32;state.fund=1200;state.debt=0;state.hp=60;state.stats.체력=0');
-assertOk('qualifies() && courtRows().length===10 && courtFolio(courtRows()).includes("10 / 10 충족")');
-for(const change of ['stats.지성--','stats.기품--','stats.매력--','stats.통찰--','stats.경영--','stats.의지--','level.kitchen--','shop.store--','flags.deed=false','royal--','renown--','fund--','debt++','hp--']){
+setup('Object.assign(state.stats,{지성:420,기품:440,매력:300,통찰:340,경영:320,의지:300});Object.assign(state.level,{library:2,kitchen:2});state.shop.store=2;state.flags.deed=true;state.royal=6;state.renown=32;state.fund=1200;state.debt=0;state.flags.deed=false;state.hp=1;state.stats.체력=0');
+assertOk('qualifies() && courtRows().length===8 && !/\\d/.test(courtRows().map(row=>row[2]).join(""))');
+for(const change of ['stats.지성--','stats.기품--','stats.매력--','stats.통찰--','stats.경영--','stats.의지--','level.kitchen--','shop.store--','royal--','renown--','fund--','debt++']){
   const previous=run('structuredClone(state)');
   run('state.'+change);assertOk('!qualifies()');ctx.savedCourt=previous;run('state=savedCourt');
 }
-setup('state.duration=6;state.flags.deed=true;state.royal=2;state.renown=3;state.fund=120;state.hp=30');
-assertOk('qualifies() && courtRows().length===5');
+setup('state.duration=6;state.flags.deed=false;state.royal=2;state.renown=3;state.fund=120;state.hp=1');
+assertOk('qualifies() && courtRows().length===3');
 for(const [index,outcome] of [[0,"success"],[1,"practice"],[1,"absent"]]){
   Object.assign(ctx,{fairIndex:index,fairOutcome:outcome});
   setup('state.month=4;selectFestival(fairIndex);persist();state=normalizeSave(saves.auto);state.month=5;');
