@@ -433,7 +433,15 @@ function linesEditor(parent,initial,onChange,field={}) {
         details.addEventListener("toggle",()=>{if(details.open&&!media.childElementCount)drawCG();});
         row.append(details);
       }
-      if(field.metadata==="tanaka" && (metadata!==undefined || field.hasTanaka)) {
+      if(field.metadata==="tanaka" && typeof metadata==="string"){
+        const label=node("label","타나카 동석 시 대사","line-options");
+        const alternate=node("textarea");
+        alternate.value=metadata;
+        alternate.rows=2;
+        alternate.addEventListener("input",()=>{list[index][2]=alternate.value;update();});
+        label.append(alternate);
+        row.append(label);
+      }else if(field.metadata==="tanaka" && (metadata!==undefined || field.hasTanaka)) {
         const option=node("label","타나카가 있을 때만 표시","line-options");
         const toggle=node("input");
         toggle.type="checkbox";
