@@ -26,10 +26,8 @@ function fitLessonRoom(image){
   if(!view.width||!view.height)return;
   const aspect=image.naturalWidth/image.naturalHeight||(plane.dataset.room==="gym"?1119/630:1.5);
   const height=Math.max(view.height,view.width/aspect);
-  plane.style.width=(height*aspect)+"px";
-  plane.style.height=height+"px";
-  plane.style.setProperty("--room-aspect",String(aspect));
-  plane.style.setProperty("--visible-width",view.width+"px");
+  plane.style.setProperty("--painted-width",(height*aspect)+"px");
+  plane.style.setProperty("--painted-height",height+"px");
 }
 function startPlayback(resumeAt=0){
   stopPlayback();

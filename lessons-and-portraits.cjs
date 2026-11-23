@@ -63,10 +63,13 @@ async function checkRoomCamera(page,activity){
     execute();stopPlayback();
   },activity);
   const image=page.locator("#playback .stage-room");
-  await image.evaluate(im=>im.decode());
+  await image.evaluate(async im=>{
+    await im.decode();
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  });
   const lesson=await image.evaluate(im=>{
     const box=e=>e.getBoundingClientRect().toJSON();
-    return {file:im.src,aspect:im.naturalWidth/im.naturalHeight,art:box(im),actor:box(document.querySelector(".performer")),
+    return {fit:getComputedStyle(im).objectFit,position:getComputedStyle(im).objectPosition,file:im.src,aspect:im.naturalWidth/im.naturalHeight,art:box(im),actor:box(document.querySelector(".performer")),
       crop:box(document.querySelector(".lesson-art")),filter:getComputedStyle(im).filter};
   });
   await page.evaluate(()=>{state.phase="review";render();});
@@ -77,11 +80,13 @@ async function checkRoomCamera(page,activity){
   assert.ok(review.image.includes(lesson.file));
   assert.equal(review.size,"cover");assert.equal(review.position,"50% 50%");
   assert.equal(lesson.filter,review.filter);
-  const {box}=review,w=Math.max(box.width,box.height*lesson.aspect),h=w/lesson.aspect;
-  for(const [actual,expected] of [[lesson.art.width,w],[lesson.art.height,h],[lesson.art.x,box.x+(box.width-w)/2],[lesson.art.y,box.y+(box.height-h)/2]]){
-    assert.ok(Math.abs(actual-expected)<2,JSON.stringify({activity,lesson,review,actual,expected}));
+  const {box}=review;
+  assert.equal(lesson.fit,review.size);assert.equal(lesson.position,review.position);
+  for(const axis of ["x","y","width","height"]){
+    assert.ok(Math.abs(lesson.art[axis]-box[axis])<2,JSON.stringify({activity,lesson,review,axis}));
   }
-  assert.ok(Math.abs(lesson.actor.height/lesson.art.height-.255)<.01);
+  const paintedHeight=Math.max(box.height,box.width/lesson.aspect);
+  assert.ok(Math.abs(lesson.actor.height/paintedHeight-.255)<.01,JSON.stringify({activity,lesson,review}));
   assert.ok(lesson.actor.left>=lesson.crop.left-1&&lesson.actor.right<=lesson.crop.right+1);
 }
 
