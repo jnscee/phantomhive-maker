@@ -53,11 +53,16 @@ function flash(message){ $("flash").textContent=message; }
 function btn(label,action,disabled=false,style=""){
   return '<button type="button" class="'+style+'" data-action="'+action+'" '+(disabled?"disabled":"")+'>'+label+'</button>';
 }
-function lessonGain(key,current,base,month){
+const masteryThreshold=485;
+function lessonGain(key,current,base,month,flags=state.flags){
   const rate=1.1+Math.min(month-1,12)*0.065;
   const max=statMax(key);
   const mastery=Math.max(.14,1-Math.max(0,current-280)/235);
-  return Math.min(max-current,Math.round(base*rate*mastery*max/abilityMax));
+  const gain=Math.round(base*rate*mastery*max/abilityMax);
+  const remaining=max-current;
+  if(flags.lateDispatch)return Math.min(remaining,gain);
+  const beforeMastery=Math.max(0,masteryThreshold-current);
+  return Math.min(remaining,gain,beforeMastery+1);
 }
 function scheduleNote(id){
   const a=actions[id];
@@ -250,6 +255,7 @@ function recordContractAdvance(amount){
 }
 const choiceMilestones={
   keys:"서재 관리 권한 인수",deed:"가문 증빙 확보",market:"시장 거래 기록",audit:"회계 감사 기록",
+  lateDispatch:"두 번째 종합 실기 완료 · 능력치 "+masteryThreshold+" 이후 일정 성장 한도 해제",
   lookout:"망보기 기록",postmark:"소인 기록",agniLesson:"아그니와의 집사 교류 기록",agniTea:"아그니와의 다과 기록",
   carrierSpace:"정기 운송 4자리 확보",checkedReceipt:"영수증 확인",sharedReceipt:"영수증 공유",teaBlend:"차 배합 기록",morningGloves:"아침 장갑 기록"
 };
@@ -437,7 +443,7 @@ function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),
   const changes=Object.entries(a.gains).map(([name,value])=>{
     const before=run.stats[name];
     const secondary=name!==primary;
-    const gain=grade==="poor"&&secondary?-1:lessonGain(name,before,(value+(advancedCourse(run,id)?3:0)+(room?(run.level[room]-1)*4:0))*(grade?lessonGrades[grade].factor:1)*(run.neglect>=2?.85:1),run.month);
+    const gain=grade==="poor"&&secondary?-1:lessonGain(name,before,(value+(advancedCourse(run,id)?3:0)+(room?(run.level[room]-1)*4:0))*(grade?lessonGrades[grade].factor:1)*(run.neglect>=2?.85:1),run.month,run.flags);
     run.stats[name]=cap(before+gain,statMax(name));
     return name+" "+signed(run.stats[name]-before);
   });
@@ -857,6 +863,11 @@ function savePanel(){
 function statusPanel(){
   const predicted=state.phase==="plan"?projectTraining():state.report?.before;
   const limits=illnessLimits(state);
+  let masteryNote="";
+  if(!state.flags.lateDispatch && stats.some(name=>state.stats[name]>=masteryThreshold-5)){
+    const passed=exams.filter(([id])=>advancedCourse(state,id)).length;
+    masteryNote='<p class="condition-detail">능력치 '+masteryThreshold+'를 넘는 일정 성장분은 한 순에 최대 1점입니다. 서로 다른 여섯 과목의 실기를 통과하고 두 번째 종합 실기를 마치면 이 한도가 풀립니다. (과목 실기 '+Math.min(6,passed)+'/6)</p>';
+  }
   const current=[state.hp,state.stress,state.motivation];
   const properties=["hp","stress","motivation"];
   const conditions=["건강","스트레스","의욕"];
@@ -874,7 +885,7 @@ function statusPanel(){
     stats.map(name=>{
       const delta=predicted?.stats?(state.phase==="plan"?predicted.stats[name]-state.stats[name]:state.stats[name]-predicted.stats[name]):0;
       return '<div class="attribute"><span>'+name+'</span><span class="gauge"><i style="width:'+(state.stats[name]/statMax(name)*100)+'%"></i></span><b>'+state.stats[name]+'</b><em>'+(delta?signed(delta):"–")+'</em></div>';
-    }).join("")+'</div></div>');
+    }).join("")+'</div>'+masteryNote+'</div>');
 }
 const businessArt={"estate": "assets/map-estate.png", "design2": "assets/map-design2.png", "library2": "assets/map-library2.png", "parlor2": "assets/map-parlor2.png", "designer": "assets/map-designer.png", "cart-candy": "assets/map-cart-candy.png", "kitchen3": "assets/map-kitchen3.png", "store2": "assets/map-store2.png", "maker": "assets/map-maker.png", "cart-sweets": "assets/map-cart-sweets.png", "cart-hamper": "assets/map-cart-hamper.png", "parlor3": "assets/map-parlor3.png", "cart-toys": "assets/map-cart-toys.png", "clerk": "assets/map-clerk.png", "works2": "assets/map-works2.png", "store3": "assets/map-store3.png", "kitchen2": "assets/map-kitchen2.png", "library3": "assets/map-library3.png", "cart-plush": "assets/map-cart-plush.png", "design3": "assets/map-design3.png", "works3": "assets/map-works3.png", "company": "assets/map-company.png", "steward": "assets/map-steward.png", "cart-game": "assets/map-cart-game.png"};
 const departments = {
