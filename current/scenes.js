@@ -15,7 +15,7 @@ function playMarkup(){
   const stageText=(advancedCourse(state,id)?advancedLessons[id]+" ":"")+(outcome?lessonPlayback(id,seq.grade,seq.remark):line);
   const all=Object.keys(seq.after).filter(k=>seq.before[k]!==seq.after[k]);
   let rows=all.map(k=>'<div class="stage-stat"><span>'+k+'</span><em data-stat="'+k+'">'+seq.before[k]+'</em><i><b></b></i><small>'+signed(seq.after[k]-seq.before[k])+'</small></div>').join("");
-  return '<div class="lesson-art"><div class="lesson-plane" data-room="'+room+'"><div class="stage-room" style="background-image:url(&quot;'+sceneArt[room]+'&quot;)"></div>'+
+  return '<div class="lesson-art"><div class="lesson-plane" data-room="'+room+'"><img class="stage-room" src="'+sceneArt[room]+'" alt="">'+
     '<div class="performer '+movement+'" data-frames="'+pose.join(" ")+'"><img src="'+actors[pose[0]]+'" alt="'+courseName(id)+' 중인 시엘"><span class="motion-object '+prop+'" aria-hidden="true">'+motionObjects[prop]+'</span></div></div></div>'+
     '<div class="stage-top"><b>'+stageNames[room]+'</b><span>'+slotNames[part]+' · '+courseName(id)+(outcome?' · '+outcome:'')+'</span></div>'+
     '<div class="stage-record">'+rows+'</div><div class="stage-foot"><p>'+stageText+'</p><div><button data-action="speed">재생 ×'+speed+'</button><button data-action="skip">이 순 마치기 ›</button></div></div>';
@@ -25,6 +25,11 @@ function startPlayback(resumeAt=0){
   const seq=state.sequence, index=seq.index, turn=state.month;
   const firstDay=index*10+1,lastDay=index===2?new Date(Date.UTC(1886,turn,0)).getUTCDate():firstDay+9;
   const actor=$("playback").querySelector(".performer"),poses=actor.dataset.frames.split(" ");
+  const roomImage=actor.parentElement.querySelector(".stage-room");
+  const fitRoom=()=>{
+    if(roomImage.naturalHeight)roomImage.parentElement.style.setProperty("--room-aspect",String(roomImage.naturalWidth/roomImage.naturalHeight));
+  };
+  if(roomImage.complete)fitRoom();else roomImage.addEventListener("load",fitRoom,{once:true});
   const custom=illustratedActivities.includes((seq.activity||state.plan[index]));
   const frameMs=custom?((seq.activity||state.plan[index])==="exercise"?260:(seq.activity||state.plan[index])==="recovery"?950:460):
     poses[0]==="trot1"?180:poses.includes("step1")?280:poses[0]==="bowOut"?390:800;
