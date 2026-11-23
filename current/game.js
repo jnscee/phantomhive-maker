@@ -339,11 +339,13 @@ function finish(id){
   state.ending=id;state.endingBeat=0;state.phase="ending";
   saves.gallery??={};
   saves.gallery[id]=endingLabels[id][0];
+  saves.farewellGallery??={};
+  saves.farewellGallery[id]=endingFarewellRecord(state);
   if(id==="vowNoTitle")saves.londonCareer=londonCareer(state);
   if(id==="vowTitle"){saves.growthGallery??={};saves.growthGallery[id]=growthRecord(state);}
   persist();render(true);
 }
-function isApprovedEnding(id){return ["title","vowTitle","releaseTitle"].includes(id);}
+function isApprovedEnding(id){return id==="vowTitle"||id==="releaseTitle";}
 // Above the title review's own will minimum so both approved endings are reachable.
 const vengeanceWill=350;
 function cielEndingId(will,approved){
@@ -373,8 +375,7 @@ function advance(){
   state.arrears=state.fund<0?state.arrears+1:0;
   if(state.unwell>=2){finish("ill");return;}
   if(state.arrears>=2){finish("broke");return;}
-  if(state.month===35&&state.duration===35){beginFinale(cielEndingId(state.stats.의지,qualifies()));return;}
-  if(state.month===6&&state.duration===6){beginFinale(qualifies()?"title":state.fund>=260&&state.stats.경영>=31?"business":"defer");return;}
+  if(state.month===state.duration){beginFinale(cielEndingId(state.stats.의지,qualifies()));return;}
   if(state.prototype?.approved){
     const p=state.prototype;if(!state.unlocked.includes(p.product))state.unlocked.push(p.product);state.productNotes??={};state.productNotes[p.product]=p;delete state.prototype;
   }
@@ -446,8 +447,6 @@ function projectTraining(){
   return run;
 }
 function courtRows(){
-  const full=state.duration===35;
-  const royal=full?6:2, renown=full?32:3, funds=full?1200:120;
   const rooms=Object.values(state.level).filter(level=>level>=2).length;
   const shopLevel=Math.max(...Object.values(state.shop));
   function statPair(label,first,a,second,b){
@@ -455,22 +454,20 @@ function courtRows(){
     return [label,left>=a && right>=b,[first,second].join(" · ")+" 수업을 편성하세요."];
   }
   return [
-    ...(full?[
-      statPair("귀족 교육","지성",420,"기품",440),
-      statPair("사교와 조사","매력",300,"통찰",340),
-      statPair("사업과 결단","경영",320,"의지",300),
-      ["저택 재건",rooms>=2,"서재와 응접실, 주방을 개수하세요."],
-      ["회사 기반",shopLevel>=2,"팬텀사의 시설을 증설하세요."]
-    ]:[]),
-    ...(!full||state.stats.의지<vengeanceWill?[["왕실 신임",state.royal>=royal,"왕실 서신에 답하거나 요청을 수행"]]:[]),
-    ["가문 명성",state.renown>=renown,"접객과 팬텀사 판매로 명성 쌓기"],
-    ["재정 안정",state.fund>=funds && state.debt===0,"채무를 상환하고 가문 자금을 비축하세요."]
+    statPair("귀족 교육","지성",420,"기품",440),
+    statPair("사교와 조사","매력",300,"통찰",340),
+    statPair("사업과 결단","경영",320,"의지",300),
+    ["저택 재건",rooms>=2,"서재와 응접실, 주방을 개수하세요."],
+    ["회사 기반",shopLevel>=2,"팬텀사의 시설을 증설하세요."],
+    ...(state.stats.의지<vengeanceWill?[["왕실 신임",state.royal>=6,"왕실 서신에 답하거나 요청을 수행"]]:[]),
+    ["가문 명성",state.renown>=32,"접객과 팬텀사 판매로 명성 쌓기"],
+    ["재정 안정",state.fund>=1200 && state.debt===0,"채무를 상환하고 가문 자금을 비축하세요."]
   ];
 }
 function titleRequirements(){return courtRows().map(row=>row[1]);}
 function courtImpression(){
-  if(["title","vowTitle","releaseTitle"].includes(state.ending))return "왕실에서 작위를 승인했다.";
-  if(["defer","business","vowNoTitle","releaseNoTitle"].includes(state.ending))return "왕실에서 이번 심의를 유보했다.";
+  if(isApprovedEnding(state.ending))return "왕실에서 작위를 승인했다.";
+  if(["vowNoTitle","releaseNoTitle"].includes(state.ending))return "왕실에서 이번 심의를 유보했다.";
   const conditions=titleRequirements();
   const standing=conditions.filter(Boolean).length/conditions.length;
   if(standing>=0.7&&state.royal>0)return "궁정에서 작위 이야기가 오가는 모양이다.";
@@ -480,14 +477,11 @@ function courtImpression(){
 }
 const endingLabels = {
   vowTitle:["여왕의 번견",""],
-  vowNoTitle:["문장 없는 마차","왕실의 승인은 미뤄졌습니다. 시엘은 스스로 선택한 이름으로 조사를 이어 갑니다."],
+  vowNoTitle:["문장 없는 마차","왕실의 승인은 기약 없이 미뤄졌습니다. 시엘은 작위 대신 스스로 선택한 이름으로 집요한 추적을 이어 갑니다."],
   releaseTitle:["마지막 명령 · 백작","작위를 돌려받은 날 시엘은 복수를 포기했습니다. 세바스찬은 그 자리에서 주인의 영혼을 거뒀습니다."],
-  releaseNoTitle:["마지막 명령 · 무관의 주인","가문의 문장은 끝내 돌아오지 않았습니다. 왕실의 회신을 받은 밤, 악마는 시엘의 영혼을 삼켰습니다."],
-  title:["작위 승인","왕실에서 백작 작위를 승인한다는 서신이 도착했습니다."],
-  business:["팬텀사 경영 지속","왕실의 답은 유보였습니다. 팬텀사는 다음 분기의 주문을 받습니다."],
-  defer:["작위 심의 유보","왕실은 이번 심의에서 결정을 미뤘습니다."],
-  ill:["건강 악화로 종료","어린 시절부터 앓던 천식이 악화되어 시엘은 새벽에 숨을 거뒀습니다."],
-  broke:["자금 부족으로 종료","가게 열쇠를 넘긴 뒤에도 두 사람은 마지막 영수증을 놓고 한참 다퉜습니다."]
+  releaseNoTitle:["마지막 명령 · 무관의 주인","가문의 문장은 끝내 돌아오지 않았습니다. 스스로 복수를 내려놓은 밤, 악마는 계약대로 시엘의 영혼을 삼켰습니다."],
+  ill:["건강 악화로 종료","어린 시절부터 숨겨 온 지병이 악화되어, 시엘은 결국 동트기 전 숨을 거뒀습니다."],
+  broke:["자금 부족으로 종료","가문의 열쇠를 넘긴 뒤에도, 주인과 집사는 마지막 영수증 한 장을 놓고 한참이나 다퉜습니다."]
 };
 const slotNames=["상순","중순","하순"];
 const phaseNames={contract:"계약",guide:"첫 안내",visit:"자유행동",review:"세바스찬의 강평",scene:"일정 진행",slotEvent:"일정 사건",vow:"마지막 심의",investiture:"왕실 서신",plan:"편성 중",event:"월말 사건",result:"월간 결산",ending:"회차 종료"};
@@ -683,7 +677,13 @@ function normalizeSave(run){
     copy.abilityScale=abilityMax;
   }
   const defaults=initial();
-  copy.duration=copy.duration||6;
+  copy.duration=defaults.duration;
+  // Resume old demo saves at their last settlement when their ending was retired.
+  if(["title","business","defer"].includes(copy.ending)){
+    copy.ending=null;
+    delete copy.endingBeat;
+    copy.phase="result";
+  }
   // Old checkpoints have no campaign seed. The same checkpoint always receives the same one.
   if(!Number.isInteger(copy.owlSeed))copy.owlSeed=(Math.imul(copy.month,0x45d9f3b)^(copy.fund||0)^0x7f4a7c15)>>>0;
   if(copy.phase==="contract"){

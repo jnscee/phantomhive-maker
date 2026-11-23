@@ -320,8 +320,12 @@ for(const change of ['stats.지성--','stats.기품--','stats.매력--','stats.�
 }
 run('state.stats.의지=350;state.royal=0');
 assertOk('qualifies() && !courtRows().some(row=>row[0]==="왕실 신임")');
-setup('state.duration=6;state.flags.deed=false;state.royal=2;state.renown=3;state.fund=120;state.hp=1');
-assertOk('qualifies() && courtRows().length===3');
+for(const ending of ["title","business","defer"]){
+  ctx.legacyEnding=ending;
+  setup('state=normalizeSave({...state,duration:6,month:6,planMonth:6,phase:"ending",ending:legacyEnding,endingBeat:3})');
+  assertOk('state.duration===35 && state.phase==="result" && !state.ending && state.endingBeat===undefined');
+  run('advance()');assertOk('state.month===7 && state.phase==="plan"');
+}
 for(const [index,outcome] of [[0,"success"],[1,"practice"],[1,"absent"]]){
   Object.assign(ctx,{fairIndex:index,fairOutcome:outcome});
   setup('state.month=4;selectFestival(fairIndex);persist();state=normalizeSave(saves.auto);state.month=5;');
@@ -346,5 +350,5 @@ for(const index of [0,1]){
   run('state.month++;state.sequence={index:2};visitDone(true)');
   assertOk('state.sequence.visitEvent===(replyIndex===0?"visitLibraryWax":"visitLibraryCarbon")');
 }
-assertOk('Object.keys(endingScenes).length===9 && Object.values(endingScenes).every(scene=>scene.lines.length>=48)');
-console.log('PASS illness, reserved tuition during sick leave, recovery, optional fair outcomes and demand, both library follow-ups after loading, one-way trust, and all nine ending scripts.');
+assertOk('Object.keys(endingScenes).length===6 && Object.values(endingScenes).every(scene=>scene.lines.length>=48)');
+console.log('PASS illness, reserved tuition during sick leave, recovery, optional fair outcomes and demand, both library follow-ups after loading, one-way trust, and all six ending scripts.');

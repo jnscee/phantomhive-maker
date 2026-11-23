@@ -104,10 +104,21 @@ async function check(browserType){
         await page.locator('#dialogue-visibility').click();
         await page.locator('#conversation [data-read="skip"]').click();
         await page.locator('#conversation [data-read="finish"]').click();
+        const farewell=page.locator('.ending-farewells');
+        assert.equal(await farewell.locator('.farewell-bubble strong').textContent(),'타나카');
+        await farewell.locator('[data-farewell="next"]').click();
+        assert.equal(await farewell.locator('.farewell-bubble strong').textContent(),'피니안');
+        await farewell.locator('[data-farewell="next"]').click();
+        const farewellLine=await page.evaluate(id=>endingFarewells.mey[
+          ["releaseTitle","releaseNoTitle"].includes(id)?"mourning":"parting"
+        ][trustTier(state.people.mey.toward)],id);
+        assert.equal(await farewell.locator('.farewell-bubble p').textContent(),farewellLine);
+        await page.reload();
+        assert.equal(await farewell.locator('.farewell-bubble p').textContent(),farewellLine);
+        await farewell.locator('.farewell-person').evaluate(im=>im.decode());
+        await farewell.locator('[data-farewell="skip"]').click();
         if(id==='vowTitle'){
           await page.locator('.growth-backdrop').evaluate(im=>im.decode());
-          assert.deepEqual(await page.locator('.growth-cast strong').allTextContents(),['메이린']);
-          await page.locator('.growth-cast img').evaluate(im=>im.decode());
           await page.locator('.growth-end').click();
         }
         assert.ok(await page.locator('#sheet').isVisible());
@@ -124,7 +135,7 @@ async function check(browserType){
       await page.locator('.ending-cg').evaluate(im=>im.decode());await page.locator('#system-back').click();
       assert.equal(await page.evaluate(()=>tab),'record');
       await page.evaluate(async()=>{
-        if(Object.keys(endingScenes).length!==9)throw Error('Ending catalog mismatch');
+        if(Object.keys(endingScenes).length!==6)throw Error('Ending catalog mismatch');
         const unique=new Set(Object.values(choreography).map(row=>row[1]));
         if(unique.size!==Object.keys(actions).length)throw Error('Reused activity loop');
         await Promise.all([...Object.keys(endingScenes).map(id=>'assets/endings/'+id+'.webp'),...Object.values(actors)].map(src=>{

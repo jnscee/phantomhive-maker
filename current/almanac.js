@@ -113,8 +113,8 @@ function filedSection(title,body,count){
 function courtFolio(rows){
   const stages=["관심 밖","가문에 주목","왕실 검토","재가 가능"];
   const complete=rows.filter(row=>row[1]).length;
-  const approved=["title","vowTitle","releaseTitle"].includes(state.ending);
-  const held=["business","defer","vowNoTitle","releaseNoTitle"].includes(state.ending);
+  const approved=isApprovedEnding(state.ending);
+  const held=["vowNoTitle","releaseNoTitle"].includes(state.ending);
   const stage=approved||complete===rows.length?3:state.royal>0&&complete>=rows.length*0.7?2:state.royal>0||state.renown>0||complete>=rows.length*.4?1:0;
   const wording=["왕실 서신에 가문의 이름이 아직 오르지 않았습니다.","궁정에서 팬텀하이브의 근황을 묻기 시작했습니다.","왕실 서기관이 가문의 평판과 살림을 함께 검토하고 있습니다.","작위 회복에 필요한 조건을 모두 갖췄습니다."];
   const pending=rows.find(row=>!row[1]);
