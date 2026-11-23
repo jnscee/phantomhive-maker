@@ -430,7 +430,7 @@ function courtImpression(){
   return "지금으로선 작위를 되찾을 가망이 희박해 보인다.";
 }
 const endingLabels = {
-  vowTitle:["여왕의 번견","작위가 돌아왔습니다. 시엘은 엷은 봉랍을 깨고 다음 의뢰를 펼칩니다. 계약은 계속됩니다."],
+  vowTitle:["여왕의 번견",""],
   vowNoTitle:["문장 없는 마차","왕실의 승인은 미뤄졌습니다. 시엘은 스스로 선택한 이름으로 조사를 이어 갑니다."],
   releaseTitle:["마지막 명령 · 백작","작위를 돌려받은 날 시엘은 복수를 내려놓았습니다. 마지막 명령을 받은 악마가 장갑을 벗습니다."],
   releaseNoTitle:["마지막 명령 · 무관의 주인","가문의 문장은 끝내 돌아오지 않았습니다. 복수를 포기한 도련님 앞에서 집사가 계약을 거둡니다."],
@@ -535,9 +535,9 @@ function planPanel(){
   if(state.phase==="result")return monthlyResults();
   if(state.phase==="ending"){
     const [title,description]=endingLabels[state.ending];
-    return frame(title,endingThumb(state.ending)+'<p class="muted">'+description+'</p><div class="summary-grid">'+tile("보유 자금",money(state.fund))+
+    return frame(title,endingThumb(state.ending)+(description?'<p class="muted">'+description+'</p>':'')+'<div class="summary-grid">'+tile("보유 자금",money(state.fund))+
       tile("경영",state.stats.경영)+tile("완료 사건",state.events.length)+'</div>'+
-      '<p>'+epilogue()+'</p><div class="inline">'+btn("장부 보기","tab:record")+btn("새 회차","reset",false,"primary")+'</div>','회차 종료');
+      (state.ending==="vowTitle"?'':'<p>'+epilogue()+'</p>')+'<div class="inline">'+btn("장부 보기","tab:record")+btn("새 회차","reset",false,"primary")+'</div>','회차 종료');
   }
   return "";
 }
