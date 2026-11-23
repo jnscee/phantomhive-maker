@@ -264,6 +264,10 @@ function sampleReview(){
  const note=p.reworked?"재검수 결과, 지적한 부분을 보완했습니다.":p.brief==="gift"?"진열대에서는 눈에 띕니다. 아이 혼자 리본을 풀기에는 매듭이 빡빡하군요.":notes[p.product];
  return '<section class="budget-book sample-review"><header><img src="assets/map-cart-'+p.product+'.png" alt=""><div><small>팬텀사 시제품 검수</small><h3>'+products[p.product].name+'</h3></div></header><p>'+note+'</p><div class="sample-actions">'+btn("출시 승인 · 다음 달 생산","sample:approve")+btn("재작업 · £12","sample:redo",state.fund<12||state.month>=state.duration-1||p.reworked)+'</div></section>';
 }
+let facilityLedgerOpen=true;
+document.addEventListener("toggle",event=>{
+  if(event.target.matches?.(".estate-ledger")&&event.target.isConnected)facilityLedgerOpen=event.target.open;
+},true);
 function facilityLedger(){
  const conditionBase=houseValues().시설상태;
  const rooms=Object.entries({...state.level,...state.annex}).map(([id,n])=>{
@@ -275,7 +279,7 @@ function facilityLedger(){
  const total=rooms.reduce((sum,item)=>sum+item.cost,0);
  const rows=rooms.map(({room,n,cost,condition})=>
    '<tr><th scope="row">'+room.name+' <small>Lv.'+n+'</small></th><td>'+money(cost)+'</td><td><span class="room-health"><meter aria-label="'+room.name+' 상태" min="0" max="100" value="'+condition+'"></meter>'+condition+'</span></td></tr>').join("");
- return '<section class="estate-ledger"><h3>시설별 유지비와 상태</h3><p>월 시설 유지비 <strong>'+money(total)+'</strong></p><table><thead><tr><th>시설</th><th>월 비용</th><th>상태</th></tr></thead><tbody>'+rows+'</tbody></table><small>공통 관리비 £36과 경비 절감액은 별도입니다.</small></section>';
+ return '<details class="estate-ledger"'+(facilityLedgerOpen?' open':'')+'><summary>시설별 유지비와 상태</summary><p>월 시설 유지비 <strong>'+money(total)+'</strong></p><table><thead><tr><th>시설</th><th>월 비용</th><th>상태</th></tr></thead><tbody>'+rows+'</tbody></table><small>공통 관리비 £36과 경비 절감액은 별도입니다.</small></details>';
 }
 
 // Later assignments combine subjects that the player actually practised.

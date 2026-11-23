@@ -106,9 +106,42 @@ html[data-game-motion=reduced] :is(#ciel-greet > .greeting-hop,.performer,.motio
   scale:calc(var(--ciel-scale) * var(--standing-zoom) * var(--cast-camera,1));
 }
 .lesson-plane[data-room=gym] {--foot-x:56%;--foot-y:82%}
-#scene[data-mode=market] .goods-list {
-  max-height:clamp(126px,37vh,330px);overflow-y:auto;overscroll-behavior:contain;
-  scrollbar-gutter:stable;padding:2px;
+#scene[data-mode=market] .lau-counter {
+  height:100%; min-height:0; display:grid; grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);
+  grid-template-rows:auto minmax(0,1fr) auto; gap:6px 3%; padding:8px 6% 12px; align-items:stretch;
+}
+#scene[data-mode=market] .shop-stock {display:contents}
+#scene[data-mode=market] .shop-purse {grid-area:1/2;justify-self:end;align-self:start;margin:0}
+#scene[data-mode=market] .goods-list {grid-area:1/1/4/2;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);gap:5px;min-height:0}
+#scene[data-mode=market] .goods-ticket {
+  grid-template-columns:minmax(0,1fr) auto;grid-template-rows:minmax(0,1fr) auto;
+  align-items:center;min-height:0;padding:4px 7px;
+}
+#scene[data-mode=market] .goods-ticket b {grid-column:1/-1;align-self:center;font-size:clamp(12px,1.35cqw,17px)}
+#scene[data-mode=market] .goods-ticket img {grid-column:1; width:26px;height:22px}
+#scene[data-mode=market] .goods-ticket strong {grid-column:2;align-self:center;font-size:clamp(15px,2cqw,24px)}
+#scene[data-mode=market] .shop-talk {grid-area:3/2;width:100%;margin:0;padding:8px}
+#scene[data-mode=market] .lau-standing {right:4%;height:95%}
+.estate-ledger>summary {cursor:pointer;font-weight:700;padding:7px 0}
+@media (orientation:portrait) and (max-width:650px) {
+  #scene[data-mode=market] .lau-counter {grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;padding:4px 5% 9px}
+  #scene[data-mode=market] .shop-purse {grid-area:1/1}
+  #scene[data-mode=market] .goods-list {grid-area:2/1}
+  #scene[data-mode=market] .shop-talk {grid-area:3/1}
+}
+@media (orientation:landscape) and (max-height:530px) {
+  #scene[data-mode=market] .lau-counter {padding:3px 4% 6px;grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+  #scene[data-mode=market] .goods-list {grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}
+  #scene[data-mode=market] .goods-ticket {padding:2px 4px}
+  #scene[data-mode=market] .goods-ticket img {width:17px;height:16px}
+  #scene[data-mode=market] .shop-talk p {font-size:12px}
+}
+@media (max-width:370px) and (orientation:portrait) {
+  #scene[data-mode=market] .lau-counter {gap:3px;padding:2px 3% 4px}
+  #scene[data-mode=market] .goods-list {gap:3px}
+  #scene[data-mode=market] .goods-ticket {padding:1px 3px}
+  #scene[data-mode=market] .goods-ticket img {width:16px;height:14px}
+  #scene[data-mode=market] .shop-talk p {margin:2px 0;font-size:12px}
 }
 #scene[data-mode=market] .goods-ticket:focus-visible {outline:2px solid #735327;outline-offset:-3px}
 /* An intentional tap still has a small response with OS motion reduction.
@@ -121,3 +154,11 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
 #scene[data-art-only=true] #conversation :is(.dialogue,.answers,.opening-top,.review-bubble,.review-slip){display:none!important}
 
 #scene #conversation:has(.ending-cg) > .cast { z-index:1; }
+@media (orientation:landscape) and (max-height:530px) {
+  #scene[data-mode=market] .sheet-head {padding:3px 12%}
+  #scene[data-mode=market] .shop-purse {padding:1px 7px}
+  #scene[data-mode=market] .shop-talk {padding:3px 6px}
+  #scene[data-mode=market] .shop-trade {gap:2px;padding-top:2px}
+  #scene[data-mode=market] .shop-trade .shop-buy {min-height:30px}
+  #scene[data-mode=market] .shop-talk :is(h3,p,small) {margin:1px 0;line-height:1.15}
+}
