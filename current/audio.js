@@ -211,10 +211,10 @@ function audioControls(){
     const on=mixer[kind],v=mixer[kind+"Volume"];
     return '<div class="mixer-row"><label for="'+kind+'-volume">'+label+'</label>'+
       '<button class="mixer-toggle" type="button" id="toggle-'+kind+'" data-action="'+action+'" aria-label="'+label+' 켜기 또는 끄기" aria-pressed="'+on+'">'+(on?"켜짐":"꺼짐")+'</button>'+
-      '<input type="range" id="'+kind+'-volume" min="0" max="100" step="1" value="'+v+'" aria-label="'+label+' 음량">'+
+      '<input class="volume-slider" type="range" style="--volume:'+v+'%" id="'+kind+'-volume" min="0" max="100" step="1" value="'+v+'" aria-label="'+label+' 음량">'+
       '<output for="'+kind+'-volume" id="'+kind+'-value">'+v+'%</output></div>';
   }
-  return '<section class="mixer"><h3>소리 설정</h3>'+row("bgm","배경음악","music")+row("sfx","효과음","sound")+'</section>';
+  return '<section class="mixer audio-mixer"><h3><i class="volume-emblem" aria-hidden="true"></i>음량 조절</h3>'+row("bgm","배경음악","music")+row("sfx","효과음","sound")+'</section>';
 }
 function updateRailMusic(){
   const button=document.getElementById("rail-music");
@@ -240,6 +240,7 @@ document.addEventListener("input",event=>{
   if(el.id!=="bgm-volume"&&el.id!=="sfx-volume")return;
   const kind=el.id==="bgm-volume"?"bgm":"sfx";
   mixer[kind+"Volume"]=el.valueAsNumber;saveSoundPref(el.id,el.value);
+  el.style.setProperty("--volume",el.value+"%");
   document.getElementById(kind+"-value").textContent=el.value+"%";
   if(kind==="bgm")musicPlayer.sync();else syncClickVolume();
 });
