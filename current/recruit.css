@@ -44,8 +44,8 @@
 
 #dialogue-visibility {display:none}
 #scene[data-story=true] #dialogue-visibility {
-  display:block;position:absolute;z-index:10;right:3%;top:2%;
-  color:#f3f5fa;background:#182536db;border:1px solid #a3b4c4;border-radius:5px;
+  display:block;position:absolute;z-index:10;left:10%;top:10%;
+  color:#f3f5fa;background:#182536f2;border:1px solid #c7d3df;border-radius:5px;
   font:inherit;font-size:clamp(12px,1.4cqw,15px);padding:6px 12px;cursor:pointer;
 }
 #scene[data-art-only=true] :is(#date,#money,.opening-mat,#opening-read,
@@ -53,6 +53,13 @@
   #conversation .review-bubble,#conversation .review-slip) {
   visibility:hidden;pointer-events:none;
 }
+#dialogue-visibility:focus-visible {outline:2px solid white;outline-offset:2px}
+
+/* Match the softer ink shadows and restrained colors of the original cast. */
+img:is([src$="/soma.webp"],[src$="/agni.webp"],[src$="/mey-owl.webp"]) {
+  filter:saturate(.80) contrast(.90) brightness(1.03);
+}
+
 body.guiding #scene #dialogue-visibility {display:none}
 @media(pointer:coarse){#scene[data-story=true] #dialogue-visibility {min-height:44px}}
 
