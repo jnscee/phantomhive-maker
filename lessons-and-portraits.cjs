@@ -133,18 +133,21 @@ async function check(browserType){
       const gallery=page.locator('.file-section').filter({has:page.getByText('엔딩 도감',{exact:true})});
       assert.match(await gallery.locator('summary').innerText(),/2개 기록/);
       await gallery.locator('summary').click();
-      await page.locator('[data-action="ending-art:ill"]').click();
-      await page.locator('.ending-cg').evaluate(im=>im.decode());
-      await page.evaluate(()=>{
-        const host=document.querySelector('#conversation');
-        const lines=endingScenes.ill.lines;
-        for(const [beat,[,,picture,cue]] of lines.entries()){
-          if(host.querySelector('.ending-cg').dataset.picture!==(cue?.cg||picture))throw Error('Illness ending CG at line '+(beat+1));
-          if(beat<lines.length-1)host.querySelector('[data-read="next"]').click();
-        }
-      });
-      await page.locator('#system-back').click();
-      assert.equal(await page.evaluate(()=>tab),'record');
+      for(const ending of ['ill','broke']){
+        await page.locator('[data-action="ending-art:'+ending+'"]').click();
+        await page.locator('.ending-cg').evaluate(im=>im.decode());
+        await page.evaluate(id=>{
+          const host=document.querySelector('#conversation');
+          const lines=endingScenes[id].lines;
+          for(const [beat,[,,picture,cue]] of lines.entries()){
+            if(host.querySelector('.ending-cg').dataset.picture!==(cue?.cg||picture))throw Error(id+' ending CG at line '+(beat+1));
+            if(beat<lines.length-1)host.querySelector('[data-read="next"]').click();
+          }
+        },ending);
+        await page.locator('#system-back').click();
+        assert.equal(await page.evaluate(()=>tab),'record');
+        if(await gallery.locator('summary').evaluate(el=>!el.parentElement.open))await gallery.locator('summary').click();
+      }
       await page.evaluate(async()=>{
         if(Object.keys(endingScenes).length!==6)throw Error('Ending catalog mismatch');
         const unique=new Set(Object.values(choreography).map(row=>row[1]));
@@ -156,7 +159,7 @@ async function check(browserType){
       // An old save can resume on the outdoor cutaway. The maid uniform is a separate asset.
       await page.evaluate(()=>{
         state=initial();state.month=state.planMonth=15;state.phase='event';state.pending='maid';state.eventQueue=['cook'];
-        recruit('finny');state.recruitPage={id:'maid',version:2,at:4};tab='plan';render();
+        recruit('finny');delete state.storyPageEdition;state.recruitPage={id:'maid',version:2,at:4};state=normalizeSave(state);tab='plan';render();
       });
       const owl=page.getByRole('img',{name:'올빼미',exact:true});
       assert.equal(await owl.getAttribute('src'),'assets/portraits/mey-owl.webp');
@@ -164,7 +167,8 @@ async function check(browserType){
       await page.getByRole('button',{name:'다음 대사'}).click();
       assert.equal(await owl.count(),0);
       await page.getByRole('button',{name:'건너뛰기'}).click();
-      await owl.evaluate(im=>im.decode());
+      const speakerPortrait=page.locator('#conversation .standing-window img[alt="세바스찬"]');
+      await speakerPortrait.evaluate(im=>im.decode());
       await page.getByRole('button',{name:'영입 확정'}).click();
       const impact=page.locator('#choice-impact');
       assert.ok(await impact.isVisible());
@@ -175,7 +179,7 @@ async function check(browserType){
       assert.equal(await page.locator('[data-employee=mey] img').getAttribute('src'),'assets/npc-mey.webp');
       await page.evaluate(()=>openRecruitMemory('maid'));
       await page.getByRole('button',{name:'건너뛰기'}).click();
-      await owl.evaluate(im=>im.decode());
+      await speakerPortrait.evaluate(im=>im.decode());
       await page.addInitScript(()=>{
         window.playedMusic=[];
         window.Audio=new Proxy(window.Audio,{construct(Audio,args){

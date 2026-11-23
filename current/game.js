@@ -15,7 +15,7 @@ function plannedTuition(){
 }
 function careActivity(run,planned){return run.ill && planned!=="rest" && planned!=="recovery"?"recovery":planned;}
 function initial(){
-  return startAccounts({owlSeed:Math.floor(Math.random()*0x100000000),v:1,unifiedAbilityCaps:true,abilityScale:abilityMax,duration:35,people:{},jobs:{},annex:{bedroom:1,garden:1,guard:1,quarters:1},month:1,phase:"contract",openingLine:0,openingEdition:2,fund:500,hp:76,stress:20,motivation:70,
+  return startAccounts({owlSeed:Math.floor(Math.random()*0x100000000),v:1,unifiedAbilityCaps:true,abilityScale:abilityMax,duration:35,people:{},jobs:{},annex:{bedroom:1,garden:1,guard:1,quarters:1},month:1,phase:"contract",openingLine:0,openingEdition:2,storyPageEdition:2,fund:500,hp:76,stress:20,motivation:70,
     stats:{지성:18,기품:14,매력:8,경영:5,통찰:30,의지:125,체력:50},
     planMonth:1,plan:emptyPlan(),visit:null,level:{library:1,parlor:1,kitchen:1},staff:null,
     shop:{design:1,works:1,store:1},salesBook:[],productHistory:{},fineStock:{},order:null,
@@ -299,7 +299,7 @@ function choose(index){
   const choice=event?.choices[index];
   if(!["event","slotEvent"].includes(state.phase)||!choice||(choice.when&&!choice.when(state)))return;
   const isRecruit=Object.hasOwn(recruitScenes,event.id);
-  if(isRecruit&&recruitPage(event.id)!==recruitScenes[event.id].lines.length-1)return;
+  if(isRecruit&&recruitPage(event.id)!==recruitReadingOrder(event.id,Boolean(state.people.tanaka)).at(-1))return;
   const pages=termPages(event);
   if(state.termOutcome||(pages&&(state.termPage||0)<pages.length-1))return;
   const scriptedOutcome=pages&&(event.authored||!event.lines);
@@ -656,6 +656,13 @@ function annexDesk(){
     btn(state.flags.townhouse?"런던 타운하우스 · 보유 중":"런던 타운하우스 취득 · £250","townhouse",!canBuyTownhouse(),"townhouse-purchase");
 
 }
+// Page numbers from the previous scripts, used only when opening an existing save.
+const previousRecruitPages={
+  gardener:[0,1,2,3,4,5,6,7,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31],
+  maid:[0,1,2,3,6,7,8,9,10,11,14,15,16,18,19,21,22,23,24,25,26,27,28,29,30,32,33,34,35,36,37,38,39,40,41,42,43,44,45,47],
+  circus:[0,1,3,4,5,6,7,9,10,11,12,13,14,14,15,16,17,18,19,20,21,22,24,23,26,27,28,29,30,31,33,34,35,36,37,38,39,41,42,44,45,46],
+  visitPrince:[0,2,3,4,6,8,9,10,12,13,14,16,18,19,20,21,22,23,24,25,26,27,28,29,29,30,32,33,34,35,39,40,45,46,48,51]
+};
 function normalizeSave(run){
   const copy=structuredClone(run);
   // Sites used these names for the same save slot and 500-point scale.
@@ -777,14 +784,14 @@ function normalizeSave(run){
   }
   if(copy.recruitPage?.id==="circus"&&copy.recruitPage.version===3){
     // Readers past the old promise of a visit resume at the revised conversation.
-    const meeting=recruitScenes.circus.lines.findIndex(page=>page.scene===recruitScenes.circus.scenes[6]);
+    const meeting=14;
     copy.recruitPage.at=Math.min(pageAt("circus",copy.recruitPage.at),meeting);
     copy.recruitPage.version=4;
   }
   if(copy.recruitPage?.id==="circus"&&copy.recruitPage.version!==4)delete copy.recruitPage;
   if(copy.recruitPage?.id==="visitPrince"&&copy.recruitPage.version!==3)delete copy.recruitPage;
   if(copy.recruitPage?.id==="maid"&&copy.recruitPage.version===2){
-    const arrival=recruitScenes.maid.lines.findIndex(page=>page.scene===recruitScenes.maid.scenes[6])-1;
+    const arrival=15;
     const at=copy.recruitPage.at;
     copy.recruitPage.at=pageAt("maid",at>=arrival?at+1:at);
     copy.recruitPage.version=3;
@@ -794,6 +801,17 @@ function normalizeSave(run){
     // The original cut had five pages before Ciel's first question.
     copy.recruitPage.at=pageAt("cook",copy.recruitPage.at-5);
     copy.recruitPage.version=2;
+  }
+  if(copy.storyPageEdition!==2){
+    const bookmark=copy.recruitPage;
+    const pages=bookmark&&previousRecruitPages[bookmark.id];
+    if(Array.isArray(pages)&&Number.isInteger(bookmark.at)){
+      bookmark.at=pages[Math.min(pages.length-1,Math.max(0,bookmark.at))];
+    }
+    if(copy.ending==="broke"&&Number.isInteger(copy.endingBeat)&&copy.endingBeat>=19){
+      copy.endingBeat=Math.max(19,copy.endingBeat-2);
+    }
+    copy.storyPageEdition=2;
   }
   if(["result","vow"].includes(copy.phase)&&!copy.pending){
     const arrival=overdueArrival(copy)||(tanakaReturns(copy)?"homecoming":null)||(townhouseGuestsDue(copy)?"visitPrince":null);

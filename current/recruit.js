@@ -19,32 +19,31 @@ const recruitCast={
 const recruitScenes={
   gardener:{name:"피니안",title:"번호 대신 이름을",result:"피니안이 팬텀하이브가의 정원사가 되었다.",scenes:[
     {title:"연구소",music:"gloomy",art:"lab",lines:[
-      ["연구원","여긴 끝났어. 기록부터 전부 불태워!"],
-      ["다른 연구원","아이들은 어떡합니까?"],
-      ["연구원","실험체 따위 살려 둘 수 없어. 서둘러!"],
-      ["","위가 소란스럽다. 피니안의 옆에 앉아 있던 아이가 먼저 고개를 들었다."]
+      ["연구원","여긴 끝났어. 기록부터 전부 불태워!",null,{"cg":"black"}],
+      ["다른 연구원","아이들은 어떡합니까?",null,{"cg":"black"}],
+      ["연구원","실험체 따위 살려 둘 수 없어. 서둘러!",null,{"cg":"black"}],
+      ["","위가 소란스럽다. 피니안의 옆에 앉아 있던 아이가 먼저 고개를 들었다.",null,{"cg":"black"}]
     ]},
     {title:"선생님",music:"gloomy",art:"dark",lines:[
-      ["아이","선생님……?"],
-      ["","철문이 열렸다. 아이들은 그저 묻고 싶은 게 있었을 뿐이었다."],
-      ["","탕―!"],
-      ["S-012","방금까지 내 옆에 앉아 있었잖아. 선생님, 왜……?"],
-      ["","바로 옆에서 고막을 찢는 총성이 울렸다."],
-      ["","정신을 차렸을 때, 부서진 철문 너머로 S-012는 맨발로 달리고 있었다."],
-      ["","그리고 좁은 사다리를 기어올라, 머리 위 뚜껑을 힘껏 밀어 젖혔다."]
+      ["아이","선생님……?",null,{"cg":"black"}],
+      ["","철문이 열렸다. 아이들은 그저 묻고 싶은 게 있었을 뿐이었다.",null,{"cg":"black"}],
+      ["","탕―!",null,{"cg":"black","fx":"shake"}],
+      ["","바로 옆에서 고막을 찢는 총성이 울렸다.",null,{"cg":"black"}],
+      ["","정신을 차렸을 때, 부서진 철문 너머로 S-012는 맨발로 달리고 있었다.",null,{"cg":"black"}],
+      ["","그리고 좁은 사다리를 기어올라, 머리 위 뚜껑을 힘껏 밀어 젖혔다.",null,{"cg":"black"}]
     ]},
     {title:"달빛 아래",music:"gloomy",art:"night",cast:["ciel","seb"],lines:[
-      ["","······."],
+      ["","······.",null,{"fx":"fade"}],
       ["","밖이었다."],
       ["","하늘에 크고 둥근 빛이 떠 있었다. S-012의 바로 앞에는 두 사람이 서 있었다."],
-      ["S-012","으아아……!"],
+      ["S-012","으아아……!",null,{"fx":"shake"}],
       ["세바스찬","도련님, 제 뒤로."],
       ["시엘","잠깐, 세바스찬."],
-      ["시엘","네 이름은 뭐지?"],
+      ["시엘","… 네 이름은 뭐지?"],
       ["장면","그때는 그것이 무슨 말인지 알 수 없었다.\nS-012에게 번호가 아니라 이름을 물은 사람은 시엘이 처음이었으니까."]
     ]},
     {title:"그 뒤, 저택의 서재",art:"library",cast:["finny","ciel"],lines:[
-      ["장면","피니안의 머리카락이 조금 자랐을 때쯤, 시엘이 제 방으로 소년을 불렀다."],
+      ["장면","피니안의 머리카락이 조금 자랐을 때쯤, 시엘이 제 방으로 소년을 불렀다.",null,{"fx":"fade"}],
       ["시엘","너한테 이름을 하나 지어 주겠어."],
       ["소년","이름……요?"],
       ["시엘","언제까지고 널 피험자 12번이라 부를 순 없잖아. 금발이 제법 근사하게 자랐군."]
@@ -57,44 +56,93 @@ const recruitScenes={
     {title:"소년의 책",music:"romantic",art:"library",cast:["finny","ciel"],lines:[
       ["시엘","이 책은 네 거야. 글자를 익히거든 네 이름이 나온 대목을 직접 읽어 봐. 알았지, 피니안?"],
       ["피니안","네!"],
-      ["장면","피니안이 책을 품에 꼭 껴안았다. 소년의 팔 안에서 양장본 표지가 푹 우그러졌다."]
+      ["장면","피니안이 책을 품에 꼭 껴안았다. 소년의 팔 안에서 양장본 표지가 푹 우그러졌다.",null,{"fx":"shake"}]
     ]},
     {title:"저택의 새 사용인",music:"cheerful",art:"library",cast:["finny","seb"],lines:[
       ["세바스찬","이제야 표정이 풀리는군요."],
-      ["세바스찬","그럼 그 책은 조금만 놓아 주시겠습니까. 말씨도, 힘을 쓰는 법도 차차 익히셔야겠습니다."]
+      ["세바스찬","그럼 그 책은 조금만 놓아 주시겠습니까. "],
+      ["세바스찬","말씨도, 힘을 쓰는 법도 차차 익히셔야겠습니다."]
     ]}
   ]},
   maid:{name:"메이린",title:"아침의 올빼미",result:"메이린이 팬텀하이브가의 메이드로 합류했다.",scenes:[
-    {"title": "아침 시중", "art": "bedroom", "cast": ["seb"], "lines": [["세바스찬", "도련님. 아침입니다."], ["시엘", "으음……."], ["장면", "세바스찬이 커튼을 걷었다. 햇빛이 이불 끝까지 들어왔다."]], "music": "daily"},
-    {"title": "깨진 창", "art": "bedroom", "cast": ["seb"], "lines": [["장면", "창이 박살 났다. 시엘이 몸을 일으키기도 전에 은제 찻주전자가 그의 앞을 가로막았다."]]},
+    {"title": "아침 시중", "art": "bedroom", "cast": ["seb"], "lines": [
+      ["세바스찬","도련님. 아침입니다.",null,{"fx":"fade"}],
+      ["시엘","으음……."],
+      ["장면","세바스찬이 커튼을 걷었다. 햇빛이 이불 끝까지 들어왔다."]
+    ], "music": "daily"},
+    {"title": "깨진 창", "art": "bedroom", "cast": ["seb"], "lines": [
+      ["세바스찬","……!",null,{"fx":"slide"}],
+      ["장면"," 시엘이 몸을 일으키기도 전에 은제 찻주전자가 그의 앞을 가로막았다."],
+      ["","쨍그랑 ―!",null,{"fx":"shake"}]
+    ]},
     {"title": "창밖", "art": "garden", "cast": ["owl"], "lines": [["올빼미", "빗나갔어……?"]]},
-    {"title": "깨진 창", "art": "bedroom", "cast": ["seb"], "lines": [["시엘", "뭐야? 주전자는 또 왜 줄줄 새는 거지?"], ["장면", "세바스찬이 찻잔을 받쳐 들었다. 총알이 뚫은 주전자 옆구리에서 홍차가 잔 안으로 똑똑 떨어졌다."]]},
+    {"title": "깨진 창", "art": "bedroom", "cast": ["seb"], "lines": [
+      ["시엘","뭐야? 주전자는 또 왜 줄줄 새는 거지?",null,{"right":"ciel","left":"seb","fx":"shake"}],
+      ["장면","세바스찬이 찻잔을 받쳐 들었다. 총알이 뚫은 주전자 옆구리에서 홍차가 잔 안으로 똑똑 떨어졌다.",null,{"right":"ciel","left":"seb"}]
+    ]},
     {"title": "닐기리", "art": "bedroom", "cast": ["seb", "ciel"], "lines": [
-      ["세바스찬","오늘 아침 차는 산뜻한 닐기리로 골랐습니다."],
-      ["시엘","차 이름을 물어봤어?! 방금 내 머리 옆을 스쳐 간 게 뭐냐고!"],
-      ["세바스찬","누가 도련님을 저격했습니다. 제법 눈이 좋은 손님이군요."]
+      ["세바스찬","…… 오늘 아침 차는 산뜻한 닐기리로 골랐습니다."],
+      ["시엘","차 이름을 물어봤어?! 방금 내 머리 옆을 스쳐 간 게 뭐냐고!",null,{"fx":"shake"}],
+      ["세바스찬","누가 도련님을 저격했습니다. 제법 눈이 좋은 손님이군요."],
+      ["시엘","하아…?! 지금 그런 말이나 할 때야?"]
     ], "prop": "tea"},
     {"title": "식사가 식기 전에", "art": "garden", "cast": ["ciel", "seb"], "lines": [
-      ["장면","그런 소동이 있고, 결국 정원에 아침상이 차려졌다."],
+      ["","…….",null,{"cg":"black","hideCast":true,"fx":"fade"}],
+      ["장면","― 그런 소동이 있고, 결국 정원에 아침상이 차려졌다.",null,{"fx":"fade"}],
       ["장면","세바스찬이 시엘의 의자를 당겼다."],
       ["세바스찬","완두콩 수프와 미트볼입니다. 크루아상은 방금 구웠고, 달걀도 삶아 두었습니다."],
+      ["시엘","(맛 없을 것 같은 메뉴인데…….)"],
       ["세바스찬","후식은 오렌지 젤리입니다. 그럼 잠시 다녀오겠습니다. 천천히 드십시오."],
       ["시엘","……어?"],
-      ["장면","잠시 후, 세바스찬이 포박한 침입자를 질질 끌고 정원으로 돌아왔다."]
+      ["","…….",null,{"fx":"fade","cg":"black","hideCast":true}],
+      ["장면","잠시 후, 세바스찬이 포박한 침입자를 질질 끌고 저택으로 돌아왔다.",null,{"fx":"fade","cg":"black","hideCast":true}]
     ], "music": "daily"},
-    {"title": "창가의 올빼미", "art": "library", "cast": ["owl", "seb"], "lines": [["세바스찬", "실례하겠습니다, 도련님. 아침에 찾아온 ‘올빼미’를 데려왔습니다."], ["올빼미", "저 애가…… 팬텀하이브 백작?"], ["시엘", "청방의 백이 나를 노린다더니. 제 손으로 길렀다는 올빼미까지 보낸 걸 보면 정보가 맞았군."], ["올빼미", "날 죽여. 뭘 물어봐도 대답은 안 해. 정원 바닥만 피로 더러워질걸."], ["세바스찬", "바닥까지 다시 닦을 일을 제가 왜 만들겠습니까? 저는 다른 용건이 있습니다."]], "castBySpeaker": {"시엘": ["owl", "ciel"]}},
-    {"title": "뜻밖의 일자리", "art": "library", "cast": ["owl", "seb"], "lines": [["세바스찬", "팬텀하이브가에서 일해 보실 생각은 없습니까?"], ["올빼미", "……뭐?"], ["시엘", "뭐라고? 세바스찬, 저 녀석은 오늘 아침에 나를 쏘러 왔어!"], ["세바스찬", "예. 그런데 저희는 사람이 모자라고, 피니 혼자서 저택 일을 전부 맡을 수도 없지요. 저 눈이라면 망을 보는 데도 쓸모가 있겠습니다."], ["세바스찬", "게다가 일을 그르친 이상 이제 백에게 돌아갈 수도 없겠지요. 마침 이곳에는 빈자리가 있습니다."]], "castBySpeaker": {"시엘": ["owl", "ciel"]}},
-    {"title": "빈자리는 메이드", "art": "library", "cast": ["owl", "seb"], "lines": [["세바스찬", "손님을 맞으려면 메이드 한 명은 있어야 한다고 말씀하신 분은 도련님이셨습니다."], ["시엘", "메이드? 잠깐. 올빼미가……?"], ["세바스찬", "예. 이분은 여성입니다만."], ["시엘", "……그렇다고 날 죽이러 온 녀석한테 메이드 앞치마를 두르겠다는 거야?"]], "castBySpeaker": {"시엘": ["owl", "ciel"]}},
-    {"title": "저택이 찾는 사람", "art": "library", "cast": ["owl", "seb"], "lines": [["세바스찬", "도련님을 지킬 솜씨가 있고, 배신할 수 없는 처지에 있고, 도련님이 직접 그 실력을 검증하신 사람. 구인 광고를 내도 좀처럼 찾기 힘들겠지요."], ["올빼미", "잠깐. 둘이서 멋대로 정하지 마. 난 안 해. 사람 죽이던 손으로 메이드 일을 어떻게 하라고."], ["세바스찬", "먼지떨이를 들어 보기도 전에 그걸 어찌 아십니까? 주인에게 성가신 것을 치운다는 점에선 꽤 익숙한 일일 텐데요."], ["세바스찬", "소개장도 여권도 없이 청방에 쫓기면서, 이 문을 나가면 어디로 가실 생각입니까?"], ["올빼미", "그건……."]]},
-    {"title": "고용 조건", "art": "library", "cast": ["owl", "seb"], "lines": [["세바스찬", "메이드 경력은 묻지 않습니다. 나이도, 어디에서 오셨는지도요."], ["세바스찬", "급료와 휴일이 있고, 설탕과 홍차도 넉넉히 드립니다. 일을 잘하시면 급료는 올라갑니다."], ["세바스찬", "어떻습니까? 첫 일자리치고는 꽤 괜찮은 조건이지요."]], "music": "daily"},
-    {"title": "그 눈동자", "art": "library", "cast": ["owl", "seb"], "lines": [["장면", "세바스찬이 올빼미 앞에 몸을 낮췄다. 그의 어깨 너머, 창가에 어린 백작이 서 있었다."], ["세바스찬", "그 눈동자―, 도련님을 위해 써보지 않겠습니까?"]], "music": "daily"}
+    {"title": "창가의 올빼미", "art": "library", "cast": ["owl", "seb"], "lines": [
+      ["세바스찬","실례하겠습니다, 도련님. 아침에 찾아온 ‘올빼미’를 데려왔습니다.",null,{"fx":"fade"}],
+      ["올빼미","저 애가…… 팬텀하이브 백작?"],
+      ["시엘","청방의 백이 나를 노린다더니. 제 손으로 길렀다는 올빼미까지 보낸 걸 보면 정보가 맞았군.",null,{"left":"owl","right":"ciel"}],
+      ["올빼미","날 죽여. 뭘 물어봐도 대답은 안 해. 정원 바닥만 피로 더러워질걸.",null,{"left":"owl","right":"ciel"}],
+      ["세바스찬","바닥까지 다시 닦을 일을 제가 왜 만들겠습니까? 저는 다른 용건이 있습니다."]
+    ], "castBySpeaker": {"시엘": ["owl", "ciel"]}},
+    {music:"daily","title": "뜻밖의 일자리", "art": "library", "cast": ["owl", "seb"], "lines": [
+      ["세바스찬","팬텀하이브가에서 일해 보실 생각은 없습니까?"],
+      ["올빼미","……뭐?",null,{"fx":"shake"}],
+      ["시엘","뭐라고? 세바스찬, 저 녀석은 오늘 아침에 나를 쏘러 왔어!",null,{"fx":"shake","right":"ciel","left":"seb"}],
+      ["세바스찬","예. 그런데 저희는 사람이 모자라고, 피니 혼자서 저택 일을 전부 맡을 수도 없지요. ",null,{"left":"seb","right":"ciel"}],
+      ["세바스찬","저 눈이라면 망을 보는 데도 쓸모가 있겠습니다."],
+      ["세바스찬","게다가 일을 그르친 이상 이제 백에게 돌아갈 수도 없겠지요? 마침 이곳에는 빈자리가 있습니다."]
+    ], "castBySpeaker": {"시엘": ["owl", "ciel"]}},
+    {music:"daily","title": "빈자리는 메이드", "art": "library", "cast": ["owl", "seb"], "lines": [
+      ["세바스찬","손님을 맞으려면 메이드 한 명은 있어야 한다고 말씀하신 분은 도련님이셨습니다."],
+      ["시엘","메이드? 잠깐. 올빼미가……?",null,{"left":"owl","right":"ciel"}],
+      ["세바스찬","예. 이분은 여성입니다만."],
+      ["시엘","……그렇다고 날 죽이러 온 녀석한테 메이드 앞치마를 두르겠다는 거야?",null,{"fx":"shake","left":"seb","right":"ciel"}]
+    ], "castBySpeaker": {"시엘": ["owl", "ciel"]}},
+    {music:"daily","title": "저택이 찾는 사람", "art": "library", "cast": ["owl", "seb"], "lines": [
+      ["세바스찬","도련님을 지킬 솜씨가 있고, 배신할 수 없는 처지에 있고, 도련님이 직접 그 실력을 검증하신 사람.\n구인 광고를 내도 좀처럼 찾기 힘들겠지요."],
+      ["올빼미","잠깐. 둘이서 멋대로 정하지 마. 난 안 해.\n사람 죽이던 손으로 메이드 일을 어떻게 하라고."],
+      ["세바스찬","먼지떨이를 들어 보기도 전에 그걸 어찌 아십니까?\n주인에게 성가신 것을 치운다는 점에선 꽤 익숙한 일일 텐데요."],
+      ["세바스찬","소개장도 여권도 없이 청방에 쫓기면서, 이 문을 나가면 어디로 가실 생각입니까?"],
+      ["올빼미","그건……."]
+    ]},
+    {"title": "고용 조건", "art": "library", "cast": ["owl", "seb"], "lines": [
+      ["세바스찬","메이드 경력은 묻지 않습니다. 나이도, 어디에서 오셨는지도요."],
+      ["세바스찬","급료와 휴일이 있고, 설탕과 홍차도 넉넉히 드립니다. 일을 잘하시면 급료도 올라갑니다."],
+      ["세바스찬","어떻습니까? 첫 일자리치고는 꽤 괜찮은 조건이지요."]
+    ], "music": "daily"},
+    {"title": "그 눈동자", "art": "library", "cast": ["owl", "seb"], "lines": [
+      ["장면","세바스찬이 올빼미 앞에 몸을 낮췄다. "],
+      ["장면","그의 어깨 너머, 창가에 어린 백작이 서 있었다.",null,{"left":"seb","right":"ciel"}],
+      ["세바스찬","그 눈동자―, 도련님을 위해 써보지 않겠습니까?",null,{"left":"seb","right":"ciel"}]
+    ], "music": "daily"}
   ]},
   cook:{name:"바르도",title:"저택의 새 셰프",result:"바르도가 팬텀하이브가의 셰프로 합류했다.",scenes:[
     {title:"서재 면담",art:"library",cast:["ciel","seb"],lines:[
       ["시엘","미군 출신을 우리 집 셰프로 쓰겠다고?"],
       ["세바스찬","네, 도련님."],
       ["시엘","꼭 둬야 해? 지금까지 주방은 너 혼자서도 잘 꾸려 왔잖아."],
-      ["세바스찬","손님은 저녁상에 오른 요리로도 그 집을 평합니다. 팬텀하이브가의 이름을 다시 세우시려면 셰프가 필요합니다."]]},
+      ["세바스찬","손님은 저녁상에 오른 요리로도 그 집을 평합니다. \n팬텀하이브 가의 이름을 다시 세우시려면 셰프가 필요합니다."]
+    ]},
     {title:"요리와 출신",art:"library",cast:["ciel","bard"],lines:[
       ["시엘","이름이 알려진 셰프라면 대개 프랑스나 이탈리아 사람이잖아."],
       ["바르도","뭐야, 양키라서 영 마땅찮단 건가? 프랑스 놈이 구우면 같은 고기도 더 고상한 맛이 난다 이거지?"],
@@ -105,9 +153,10 @@ const recruitScenes={
       ["시엘","하지만 내 주방에선 태우지 마. 이건 명령이야."],
       ["장면","바르도가 고개를 들었다."]]},
     {title:"교육을 맡기다",music:"etiquette",art:"library",cast:["ciel","seb"],lines:[
-      ["세바스찬","애초에 제가 이분을 데려온 건 요리 솜씨를 보아서가 아닙니다. 이만한 대저택에 상급 사용인이 저 하나일 수는 없으니까요."],
+      ["세바스찬","애초에 제가 이분을 데려온 건 요리 솜씨를 보아서가 아닙니다.\n이만한 대저택에 상급 사용인이 저 하나일 수는 없으니까요."],
       ["시엘","방식은 너한테 맡기지. 제대로 교육시켜."],
-      ["세바스찬","알겠습니다."]]}
+      ["세바스찬","알겠습니다."]
+    ]}
   ]},
   homecoming:{name:"타나카",title:"돌아온 집사",result:"타나카가 휴직을 마치고 저택 서재로 돌아왔다.",scenes:[
     {title:"다시 찾은 서재",music:"gloomy",art:"library",cast:["tanaka","ciel"],lines:[
@@ -132,55 +181,67 @@ const recruitScenes={
   circus:{name:"스네이크",title:"봉투에 적힌 이름",result:"스네이크는 타운하우스에서 소마와 아그니를 만났다. 본저택에서 시엘과 이야기를 나눈 뒤, 뱀들과 함께 풋맨으로 일하기로 했다.",scenes:[
     {title:"봉투에 적힌 이름",music:"gloomy",art:"field",cast:["snake"],lines:[
       ["장면","공연이 끝나면 조커가 돈을 세고, 스네이크는 뱀을 셌다. 오늘은 뱀을 다 세고도 천막을 떠날 수 없었다."],
-      ["장면","스코틀랜드 야드가 단원들을 데려간 뒤였다. 조커의 짐 속에 마른 분 냄새가 밴 편지 한 통이 남아 있었다. ‘팬텀하이브 백작 귀하.’"]]},
+      ["장면","스코틀랜드 야드가 단원들을 데려간 뒤였다. 조커의 짐 속에 마른 분 냄새가 밴 편지 한 통이 남아 있었다. "],
+      ["","‘팬텀하이브 백작 귀하.’"]
+    ]},
     {title:"런던의 번지",music:"gloomy",art:"london",cast:["snake"],lines:[
       ["장면","런던의 타운하우스. 스네이크는 봉투에 적힌 번지와 눈앞의 문패를 번갈아 보았다. 목도리 속에서 오스카가 먼저 고개를 내밀었다."],
       ["스네이크","봉투랑 문패에 똑같은 이름이 있어. 이번엔 제대로 왔네. ⋯라고 오스카가 말했어."]]},
     {title:"타운하우스의 문간",music:"daily",art:"london",cast:["snake","soma"],lines:[
       ["소마","이봐! 문 열어 달라며? 그렇게 보고만 있으면 안에서 어떻게 알아!"],
       ["스네이크","이 편지를 읽을 사람을 찾고 있어. 여기 ‘팬텀하이브 백작 귀하’라고 쓰여 있지? ⋯라고 오스카가 말했어."],
-      ["소마","시엘한테 볼일 있어? 오늘은 본저택에 있는데. 아그니, 우리 마차 아직 마구간에 있지?"]]},
+      ["소마","시엘한테 볼일 있어? 오늘은 본저택에 있는데. "],
+      ["소마","아그니, 우리 마차가 아직 마구간에 있나?"]
+    ]},
     {title:"손으로 전할 편지",music:"daily",art:"london",cast:["snake","agni"],lines:[
-      ["아그니","아직 마구간에 있습니다, 전하. 손님, 봉투만 전해 드려도 되겠습니까?"],
+      ["아그니","아직 마구간에 있습니다, 왕자님.\n손님, 봉투만 전해 드려도 되겠습니까?"],
       ["스네이크","고마워. 그래도 이건 스네이크가 직접 건네고 싶대. ⋯라고 키츠가 말했어."],
       ["아그니","그렇다면 마차를 대겠습니다. 바구니도 이리 주십시오."],
-      ["스네이크","바구니는 밑을 받쳐 줘. 에밀리가 손잡이에 턱을 괴고 자거든. ⋯라고 키츠가 말했어."]]},
+      ["스네이크","바구니는 밑을 받쳐 줘. 에밀리가 손잡이에 턱을 괴고 자거든. ⋯라고 키츠가 말했어."]
+    ]},
     {title:"마차를 빌리다",music:"daily",art:"london",cast:["snake","soma"],lines:[
       ["소마","다들 내 마차에서 자면 되잖아! 참, 시엘한테 전해 줘. 지난번 체스는 아직 내 차례라고!"]]},
-    {title:"온실 앞",music:"daily",art:"garden",cast:["snake"],lines:[
-      ["장면","본저택 온실 앞에서 마차가 멎었다. 스네이크가 바구니 뚜껑을 조금 들자 납작한 머리들이 볕 드는 돌턱으로 하나씩 미끄러져 나왔다."],
-      ["스네이크","누굴 기다리든 여기서 기다려. 배가 따뜻한 동안은 내가 널 용서할 테니까. ⋯라고 와일드가 말했어."]]},
+    {title:"온실 앞",music:"gloomy",art:"garden",cast:["snake"],lines:[
+      ["장면","본저택 온실 앞에서 마차가 멎었다. 스네이크가 바구니 뚜껑을 조금 들자 납작한 머리들이 볕 드는 돌턱으로 하나씩 미끄러져 나왔다."]
+    ]},
     {title:"백작에게 묻다",music:"gloomy",art:"garden",cast:["snake","ciel"],lines:[
       ["시엘","시엘 팬텀하이브야. 아그니가 편지를 든 손님이 온다고 했는데, 네가 그 녀석인가? 거기 내 장갑을 깔고 누운 녀석은 일행이고?"],
-      ["스네이크","우리랑 같이 온 애는 스네이크야. 장갑이 마음에 든 저 애는 와일드고. ⋯라고 에밀리가 말했어."],
+      ["스네이크","난 스네이크야. 장갑이 마음에 든 저 애는 와일드고. ⋯라고 에밀리가 말했어."],
       ["장면","스네이크는 벌떡 일어섰다. 손에 쥐고 온 편지를 내미는 데는 한참이 더 걸렸다."],
       ["스네이크","조커의 짐에서 이게 나왔어. 우리 식구들을 데려가라고 한 게 당신이야? ⋯라고 와일드가 말했어."],
       ["시엘","편지부터 좀 보지. 그런데 조커가 누구지?"],
-      ["스네이크","우리 서커스의 단장 대리야. 밤에 스네이크가 떨면 자기가 입던 웃옷을 덮어 줬어. 그 애는 자느라 몰랐지만 난 봤어. ⋯라고 에밀리가 말했어."],
+      ["스네이크","우리 서커스의 단장 대리야. ⋯라고 에밀리가 말했어."],
       ["스네이크","얼굴만이라도 볼 수 있어? 우리가 왔다고 조커한테 전해 줘. ⋯라고 오스카가 말했어."],
       ["시엘","서커스단이라면…… 노아의 방주 서커스단인가?"],
-      ["장면","시엘은 며칠 전 야드에서 받아 본 보고서를 떠올렸다. 첫 장에는 잡혀간 단원들의 명단이, 그 뒤에는 아이들이 사라진 날짜와 서커스의 순회 일정이 나란히 적혀 있었다."],
       ["스네이크","맞아. 그게 우리 천막에 걸린 이름이야. ⋯라고 와일드가 말했어."],
+      ["장면","시엘은 며칠 전 세바스찬에게서 받아 본 스코틀랜드 야드의 보고서를 떠올렸다."],
+      ["장면"," 첫 장에는 잡혀간 단원들의 명단이, 그 뒤에는 아이들이 사라진 날짜와 서커스의 순회 일정이 나란히 적혀 있었다."],
       ["시엘","그럼 왜 잡혀갔는지도 똑바로 알아 둬. 네가 같이 지낸 단원들이 공연을 다니면서 아이들을 납치했어. 야드가 쫓고 있던 건 그 사건이야."],
-      ["장면","봉투 가장자리가 바스락거렸다. 스네이크는 구겨진 데를 엄지로 몇 번이고 폈다. 먼저 입을 연 건 목도리 속에 있던 에밀리였다."],
+      ["장면","봉투 가장자리가 바스락거렸다. 스네이크는 구겨진 데를 엄지로 몇 번이고 폈다."],
       ["스네이크","조커가 그랬다고? 매일 같은 천막에서 잤는데 스네이크한텐 아무 말도 안 했어. ⋯라고 에밀리가 말했어."],
-      ["시엘","네가 그 사람을 보고 싶은 건 알겠어. 그래도 내 이름으로 면회시켜 주진 않아. 아직 아이가 돌아오길 기다리는 집이 있으니까."],
-      ["장면","시엘은 편지를 접힌 자국대로 접어 돌려주었다. 스네이크가 봉투를 받았는데도 그 손은 거기 그대로 있었다."]]},
+      ["시엘","네가 그 사람을 보고 싶은 건 알겠어. 그래도 내 이름으로 면회시켜 주진 않아. 아직 피해 아동이 돌아오길 기다리는 집이 있으니까."],
+      ["장면","시엘은 편지를 접힌 자국대로 접어 돌려주었다. 스네이크가 봉투를 받았는데도 그 손은 거기 그대로 있었다."]
+    ]},
     {title:"열어 둘 문",music:"romantic",art:"garden",cast:["snake","ciel"],lines:[
-      ["시엘","스네이크. 네가 보고 들은 건 야드에 네 입으로 얘기해. 그다음에 돌아갈 곳이 없으면 여기로 와. 일손이 하나 필요하거든."],
-      ["스네이크","천막에선 뱀을 돌봤어. 여기선 스네이크가 뭘 하면 돼? ⋯라고 와일드가 말했어."],
+      ["시엘","스네이크, 네가 보고 들은 건 야드에 네 입으로 얘기해. 난 해줄 수 있는 게 없어."],
+      ["시엘","…그 다음에― 돌아갈 곳이 없으면 여기로 와. 일손이 하나 필요하거든."],
+      ["스네이크","천막에선 뱀을 돌봤어. 여기선 뭘 하면 돼? ⋯라고 와일드가 말했어."],
       ["시엘","풋맨 일이지. 손님이 오면 외투를 받고 응접실로 안내해. 식사 때는 세바스찬 곁에서 시중을 들고."],
-      ["스네이크","외투는 스네이크가 받을게. 우리는 모자걸이에 있어도 돼? ⋯라고 오스카가 말했어."],
-      ["시엘","손님이 모자를 걸었다가 기절할 일 있나. 너희 거처도 따로 만들어 두면 되는 거지?"],
+      ["스네이크","그럼 우리는 모자걸이에 있어도 돼? ⋯라고 오스카가 말했어."],
+      ["시엘","손님이 모자를 걸었다가 기절할 일 있나. 뱀들의 거처도 따로 만들어 두면 되는 거지?"],
       ["장면","시엘이 손을 내밀었다. 스네이크는 손바닥을 바지에 한 번 닦고, 옷깃 위로 올라온 오스카 쪽으로 귀를 기울였다."],
       ["스네이크","그럼 내일 아침에 다시 올게. 네 장갑은 조금만 더 빌려 줘. 와일드가 벌써 잠들었어. ⋯라고 오스카가 말했어."],
-      ["장면","그가 손을 잡고 일어서자 바구니에서 에밀리가 따라 나왔다. 소맷부리와 소맷부리 사이, 두 사람의 손등을 건너갔다."]]},
+      ["장면","그가 손을 잡고 일어서자 바구니에서 에밀리가 따라 나왔다. 소맷부리와 소맷부리 사이, 두 사람의 손등을 건너갔다."]
+    ]},
     {title:"풋맨의 첫 급료",music:"romantic",art:"garden",cast:["seb","ciel"],lines:[
-      ["세바스찬","조커를 만나게 해 달라고 다시 찾아올지도 모릅니다. 그래도 곁에 두시겠습니까?"],
-      ["시엘","그때도 대답은 같아. 풋맨 자리를 준 건 저 녀석한테지, 서커스단한테가 아니야."],
+      ["","…….",null,{"fx":"fade"}],
+      ["세바스찬","어쩌려고 저런 수상한 자를 받아들이셨습니까?"],
+      ["시엘","마침 '애완동물'이 하나 갖고 싶었거든."],
+      ["세바스찬","정말, 그런 이유라니…. 어쩔 수 없군요."],
       ["세바스찬","그럼 근무표에 올리겠습니다. 그런데 도련님, 장갑은 되찾으셨습니까?"],
       ["시엘","마음에 들었다잖아. 첫 급료에서 장갑 값을 떼면 주인이 너무 옹졸해 보이겠지?"],
-      ["세바스찬","그럼 장부에는 새 풋맨의 동행을 위한 침구 한 벌로 적어 두지요."]]}
+      ["세바스찬","그럼 장부에는 새 풋맨의 동행을 위한 침구 한 벌로 적어 두지요."]
+    ]}
   ]},
   visitPrince:princeChapter
 };
@@ -188,7 +249,14 @@ for(const book of Object.values(recruitScenes)){
   book.lines=book.scenes.flatMap((scene,i)=>scene.lines.map(([speaker,text,withTanaka,cue])=>({scene,i,speaker,text,withTanaka,cue})));
 }
 function pageAt(id,at){return Number.isInteger(at)?Math.min(Math.max(0,at),recruitScenes[id].lines.length-1):0;}
-function recruitPage(id){return pageAt(id,state.recruitPage?.id===id?state.recruitPage.at:0);}
+function recruitReadingOrder(id,hasTanaka){
+  return recruitScenes[id].lines.flatMap((page,at)=>page.withTanaka===true&&!hasTanaka?[]:[at]);
+}
+function recruitPage(id){
+  const order=recruitReadingOrder(id,Boolean(state.people.tanaka));
+  const saved=pageAt(id,state.recruitPage?.id===id?state.recruitPage.at:0);
+  return order.find(at=>at>=saved)??order.at(-1);
+}
 function observePortraitStage(stage){
   const observer=new ResizeObserver(([entry])=>{
     stage.style.setProperty("--portrait-scene-height",entry.contentRect.height+"px");
@@ -334,10 +402,11 @@ function novelCast(cue,file=x=>x){
     return sceneStanding(recruitNames[id],side,file(art));
   }).join("");
 }
-function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers="",hasTanaka=false){
+function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers="",hasTanaka=false,order=recruitReadingOrder(id,hasTanaka)){
+  at=order.find(page=>page>=at)??order.at(-1);
   const book=recruitScenes[id],{scene,speaker,text,withTanaka,cue}=book.lines[at];
   const picture=cue?.cg||scene.picture;
-  const art=picture?{bg:"assets/endings/"+picture+".webp"}:recruitArt[scene.art],bg=file(art.bg),last=at===book.lines.length-1;
+  const art=picture?{bg:"assets/endings/"+picture+".webp"}:recruitArt[scene.art],bg=file(art.bg),last=at===order.at(-1);
   const backdrop=art.crop
     ? '<svg class="review-room recruit-backdrop '+art.tone+'" viewBox="'+art.crop.join(" ")+'" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><image width="680" height="380" href="'+bg+'"/></svg>'
     : '<div class="review-room '+(art.tone||'')+'" style="background-image:url(&quot;'+bg+'&quot;)"></div>';
@@ -348,20 +417,22 @@ function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers="",hasT
   }).join("");
   const label=last?(readOnly?"회상 마치기":"영입 확정"):"다음 대사";
   const arrow=answers?'':'<button type="button" class="line-next" data-read="'+(last?'finish':'next')+'" aria-label="'+label+'">▼</button>';
-  const controls=readerControls(at,last,auto);
+  const controls=readerControls(order.indexOf(at),last,auto);
   const props=scene.prop?'<img class="recruit-tea" alt="닐기리 홍차" src="'+file(recruitProps[scene.prop])+'">':'';
-  return backdrop+actors+props+sceneLine(speaker,hasTanaka&&withTanaka?withTanaka:text,arrow,
+  return backdrop+actors+props+sceneLine(speaker,hasTanaka&&typeof withTanaka==="string"?withTanaka:text,arrow,
     'data-book="'+id+'" data-leaf="'+at+'" aria-live="polite" aria-atomic="true"')+answers+controls;
 }
 let recruitTimer=0,recruitAuto=false;
 function stopRecruitAuto(){clearTimeout(recruitTimer);recruitTimer=0;recruitAuto=false;}
 function drawRecruitReader(host,id,at,file,readOnly,onPage,onFinish,answers="",hasTanaka=false){
-  const end=recruitScenes[id].lines.length-1;
-  clearTimeout(recruitTimer);if(at===end)stopRecruitAuto();
-  host.innerHTML=recruitMarkup(id,at,file,readOnly,recruitAuto,answers,hasTanaka);
+  const order=recruitReadingOrder(id,hasTanaka);
+  at=order.find(page=>page>=at)??order.at(-1);
+  const index=order.indexOf(at),end=order.length-1;
+  clearTimeout(recruitTimer);if(index===end)stopRecruitAuto();
+  host.innerHTML=recruitMarkup(id,at,file,readOnly,recruitAuto,answers,hasTanaka,order);
   const {text,cue}=recruitScenes[id].lines[at];
   playNovelCue(host,id+":"+at,cue);
-  bindSceneReader(host,at,end,text,onPage,answers?null:onFinish,cue?.wait);
+  bindSceneReader(host,index,end,text,to=>onPage(order[to]),answers?null:onFinish,cue?.wait);
 }
 function bindSceneReader(host,at,end,text,onPage,onFinish,wait=0){
   const line=host.querySelector(".dialogue"),bar=host.querySelector(".recruit-controls");
@@ -401,7 +472,7 @@ function bindSceneReader(host,at,end,text,onPage,onFinish,wait=0){
 function showMonthlyRecruit(host,event){
   const id=event.id,at=recruitPage(id);
   const current=()=>tab==="plan"&&["event","slotEvent"].includes(state.phase)&&state.pending===id&&recruitPage(id)===at;
-  const hasChoices=at===recruitScenes[id].lines.length-1&&event.choices.length>1;
+  const hasChoices=at===recruitReadingOrder(id,Boolean(state.people.tanaka)).at(-1)&&event.choices.length>1;
   const answers=hasChoices?'<div class="answers" role="group" aria-label="대화 선택지">'+
     event.choices.map((c,i)=>btn(c.label,"choose:"+i,Boolean(c.when&&!c.when(state)),"vn-choice")).join("")+'</div>':"";
   host.hidden=false;drawRecruitReader(host,id,at,recruitArtwork(currentCielAge()),false,to=>{

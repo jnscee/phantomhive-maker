@@ -47,9 +47,23 @@ run('state.recruitPage={id:"visitPrince",at:6,version:3};state=normalizeSave(sta
 pick();assertOk('state.people.soma && state.people.agni && !townhouseGuestsDue(state)');
 setup('state.flags.townhouse=true;recruit("soma");recruit("agni");state.flags.visitPrince=true;state=normalizeSave(state)');
 assertOk('state.people.soma && state.people.agni && !state.pending');
+for(const [book,version,oldPage,newPage] of [['gardener',null,11,10],['maid',3,4,6],['circus',4,37,41],['visitPrince',3,33,46]]){
+  Object.assign(ctx,{book,version,oldPage});
+  setup('delete state.storyPageEdition;state.recruitPage={id:book,version,at:oldPage};state=normalizeSave(state)');
+  assert.equal(run('state.recruitPage.at'),newPage);
+  assert.equal(run('normalizeSave(state).recruitPage.at'),newPage);
+}
+setup('delete state.storyPageEdition;state.phase="ending";state.ending="broke";state.endingBeat=43;state=normalizeSave(state)');
+assert.equal(run('state.endingBeat'),41);
+assert.equal(run('normalizeSave(state).endingBeat'),41);
 const princePages=run('recruitScenes.visitPrince.lines');
 assert.ok(princePages.length>0);
-const welcome=princePages.findIndex(p=>p.withTanaka);
+const welcome=princePages.findIndex(p=>typeof p.withTanaka==="string");
+const tanakaOnly=princePages.findIndex(p=>p.withTanaka===true);
+assert.ok(tanakaOnly>=0);
+ctx.tanakaOnly=tanakaOnly;
+assertOk('!recruitReadingOrder("visitPrince",false).includes(tanakaOnly) && recruitReadingOrder("visitPrince",true).includes(tanakaOnly)');
+assertOk('recruitMarkup("visitPrince",tanakaOnly,x=>x,true,false,"",true).includes(recruitScenes.visitPrince.lines[tanakaOnly].text)');
 if(welcome>=0){
   ctx.welcome=welcome;
   assertOk('!recruitMarkup("visitPrince",welcome).includes("타나카") && recruitMarkup("visitPrince",welcome,x=>x,true,false,"",true).includes("타나카")');
@@ -411,6 +425,6 @@ for(const index of [0,1]){
   assertOk('state.sequence.visitEvent===(replyIndex===0?"visitLibraryWax":"visitLibraryCarbon")');
 }
 assert.deepEqual(Array.from(run('Object.keys(endingScenes).sort()')),['broke','ill','releaseNoTitle','releaseTitle','vowNoTitle','vowTitle']);
-const minimumEndingLines={broke:48,ill:43,releaseNoTitle:41,releaseTitle:48,vowNoTitle:48,vowTitle:48};
+const minimumEndingLines={broke:47,ill:43,releaseNoTitle:41,releaseTitle:48,vowNoTitle:48,vowTitle:48};
 for(const [id,minimum] of Object.entries(minimumEndingLines))assert.ok(run('endingScenes.'+id+'.lines.length')>=minimum,id);
 console.log('PASS illness, reserved tuition during sick leave, recovery, optional fair outcomes and demand, both library follow-ups after loading, one-way trust, and all six ending scripts.');
