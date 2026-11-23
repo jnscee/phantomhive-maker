@@ -66,8 +66,12 @@
 </div>
 <div id="tour-ring" aria-hidden="true" hidden></div>
 <aside id="guide-replay" aria-labelledby="guide-replay-title" hidden>
-  <header><span>세바스찬의 조작 안내</span><span id="tour-count"></span></header>
-  <div aria-live="polite" aria-atomic="true"><h2 id="guide-replay-title"></h2><p id="tour-hint"></p></div>
+  <div class="guide-portrait" aria-hidden="true"><img src="assets/sebastian.webp" alt="" width="542" height="1000" decoding="async"></div>
+  <div class="guide-body" aria-live="polite" aria-atomic="true">
+    <h2 id="guide-replay-title" class="guide-sr-only"></h2>
+    <p id="tour-hint"></p>
+    <p class="guide-action"><span>누를 버튼</span><strong id="tour-action"></strong></p>
+  </div>
   <footer><button type="button" data-action="guide-close">안내 종료</button><button type="button" data-action="guide-prev">이전</button><button type="button" data-action="guide-forward">다음</button></footer>
 </aside>
 <dialog id="picker" aria-labelledby="picker-title"></dialog>
