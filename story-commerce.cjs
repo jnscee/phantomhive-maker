@@ -276,6 +276,8 @@ for(const change of ['stats.지성--','stats.기품--','stats.매력--','stats.�
   const previous=run('structuredClone(state)');
   run('state.'+change);assertOk('!qualifies()');ctx.savedCourt=previous;run('state=savedCourt');
 }
+run('state.stats.의지=350;state.royal=0');
+assertOk('qualifies() && !courtRows().some(row=>row[0]==="왕실 신임")');
 setup('state.duration=6;state.flags.deed=false;state.royal=2;state.renown=3;state.fund=120;state.hp=1');
 assertOk('qualifies() && courtRows().length===3');
 for(const [index,outcome] of [[0,"success"],[1,"practice"],[1,"absent"]]){

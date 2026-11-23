@@ -109,3 +109,12 @@
 .fair-options {display:flex;flex-wrap:wrap;gap:.3rem}.fair-options button {flex:1;min-width:9rem}
 .fair-report {border-left:3px solid #9a7741;padding:.6rem .8rem;margin:.7rem 0;background:#f7f0df;color:#292b32;line-height:1.55}
 .fair-report p {margin:.4rem 0}.fair-report h4 {margin:.25rem 0}
+.trust-entry[data-tier] { display:grid;grid-template-columns:25px minmax(0,1fr) auto;align-items:center;gap:8px;min-height:36px;--stage:#a5b4c4; }
+.trust-entry[data-tier="1"] {--stage:#9cbfe0}
+.trust-entry[data-tier="2"] {--stage:#92cabc}
+.trust-entry[data-tier="3"] {--stage:#e1c28a}
+.trust-entry img {width:24px;height:32px;object-fit:contain;image-rendering:pixelated}
+.trust-stage {display:grid;justify-items:end;gap:3px;color:var(--stage);font-weight:700}
+.trust-stage>span {display:flex;gap:2px}
+.trust-stage i {width:7px;height:3px;background:#607182}
+.trust-stage i.filled {background:var(--stage)}

@@ -1379,13 +1379,13 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
   #scene[data-mode=save] .notebook-slots .slot-save {display:flex;justify-content:space-between;align-items:center;gap:6px}
 }
 
-.property-map:is(.estate-map,.company-map,.staff-map) :is(img,.map-award) { filter:url(#management-ink); }
+.property-map:is(.estate-map,.company-map,.staff-map) :is(img,.map-award) { filter:url(#management-ink) saturate(.88) brightness(1.04); }
 #scene .estate-map button.map-pin { transform:translate(-50%,-50%); }
 .duty-lane { position:absolute; pointer-events:none; height:0; }
-.duty-walker { position:absolute; bottom:0; width:clamp(13px,1.8vw,23px); animation:duty-patrol var(--pace) ease-in-out var(--delay) infinite alternate; }
-.duty-walker img { width:100%; animation:duty-step .42s steps(2,end) infinite, duty-turn calc(var(--pace)*2) steps(1,end) var(--delay) infinite; }
-@keyframes duty-patrol { from {left:0;transform:translateX(-30%)} to {left:100%;transform:translateX(-70%)} }
-@keyframes duty-step { 50% {translate:0 -1px} }
+.duty-walker { position:absolute; bottom:0; width:clamp(15px,1.9vw,26px); animation:duty-patrol var(--pace) ease-in-out var(--delay) infinite alternate; }
+.duty-walker img { width:100%; animation:duty-turn calc(var(--pace)*2) steps(1,end) var(--delay) infinite; }
+@keyframes duty-patrol { 0%,38% {left:0;transform:translateX(-50%)} 70%,100% {left:100%;transform:translateX(-50%)} }
+
 @keyframes duty-turn { 50% {scale:-1 1} }
 @media(prefers-reduced-motion:reduce) { .duty-walker,.duty-walker img { animation:none; } .duty-walker { left:50%;transform:translateX(-50%); } }
 #choice-impact { box-sizing:border-box; width:min(340px,calc(100vw - 32px)); max-height:80dvh; overflow:auto; padding:20px; color:#e6eef7; background:#192b40f5; border:1px solid #8da5bb; border-radius:12px; box-shadow:0 12px 44px #07132466; backdrop-filter:blur(12px); }
@@ -1401,3 +1401,35 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
 .impact-note { padding-left:9px; border-left:2px solid #c1ae82; }
 #choice-impact form { display:flex; justify-content:flex-end; margin-top:16px; }
 #choice-impact button { padding:6px 18px; min-height:44px; }
+
+.company-worker { position:absolute; width:5.5%; aspect-ratio:3/4; transform:translate(-50%,-100%); overflow:hidden; pointer-events:none; }
+.company-worker img { width:400%; max-width:none; height:100%; animation:company-work 2.4s steps(4,end) infinite; }
+.company-worker.maker img { animation-duration:1.75s; }
+.company-worker.clerk img { animation-duration:3.1s; animation-delay:-.8s; }
+@keyframes company-work { to { transform:translateX(-100%); } }
+@media(prefers-reduced-motion:reduce) { .company-worker img {animation:none} }
+html[data-game-motion=reduced] :is(.company-worker img,.duty-walker,.duty-walker img) {animation:none}
+.estate-ledger,.estate-annex { margin:15px 0 6px; border-top:1px solid #91a9be66; padding-top:9px; }
+.estate-ledger table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+.estate-ledger :is(td,th) { padding:5px 2px; text-align:right; border-bottom:1px solid #91a9be44; }
+.estate-ledger th:first-child { text-align:left; }
+.estate-ledger th small {font-weight:normal;white-space:nowrap}
+.estate-ledger p {display:flex;justify-content:space-between;align-items:center}
+.room-health {display:inline-flex;align-items:center;gap:4px}
+.room-health meter {width:clamp(20px,4vw,50px);height:9px; }
+.room-health meter::-webkit-meter-optimum-value { background:#87b4c7; }
+.room-health meter::-moz-meter-bar { background:#87b4c7; }
+.estate-annex .annex-line {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.townhouse-purchase {width:100%;margin-top:8px}
+/* Visit cards need only an icon and one label, including the ninth destination. */
+#calendar .card-field[aria-label="자유행동"] .visit-card {
+  min-height:44px; padding:4px 6px; gap:4px; grid-template-columns:auto minmax(0,1fr);
+  align-content:center; align-items:center;
+}
+#calendar .visit-card .planner-icon { width:21px; height:21px; grid-row:auto; }
+#calendar .visit-card b { grid-column:auto; line-height:1.15; word-break:keep-all; }
+@media(max-width:620px) and (orientation:portrait) {
+  #calendar .card-field[aria-label="자유행동"] {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-content:center;gap:5px;width:100%}
+  #calendar .card-field[aria-label="자유행동"] .card-bank {display:contents}
+  #calendar .card-field[aria-label="자유행동"] .visit-card {width:100%;font-size:12px}
+}

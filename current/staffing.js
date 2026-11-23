@@ -1,13 +1,13 @@
 "use strict";
 const dutyPins = {library:[50,14], kitchen:[23,45], parlor:[74,45], garden:[19,78], guard:[79,78]};
-const dutyFloors={library:[34,64,36],kitchen:[13,35,71],parlor:[60,86,72],garden:[6,36,96],guard:[64,93,96]};
+const dutyFloors={library:[48,58,35],kitchen:[26,34,74],parlor:[61,69,72],garden:[21,30,97],guard:[77,86,97]};
 function estateWalkers(){
   const staff=peopleInHouse().filter(id=>servants[id].job);
   return Object.entries(dutyFloors).map(([room,[left,right,feet]])=>{
     const team=staff.filter(id=>state.jobs[id]===room);
     return team.map((id,i)=>{
       const width=(right-left)/team.length;
-      return '<span class="duty-lane" aria-hidden="true" style="left:'+(left+width*i)+'%;width:'+width+'%;top:'+feet+'%;--pace:'+(3+i*.6)+'s;--delay:-'+(1+i*.9)+'s"><span class="duty-walker" data-servant="'+id+'"><img alt="" src="assets/staff/'+id+'.png"></span></span>';
+      return '<span class="duty-lane" aria-hidden="true" style="left:'+(left+width*i)+'%;width:'+width+'%;top:'+feet+'%;--pace:'+(8+i*.7)+'s;--delay:-'+(Object.keys(servants).indexOf(id)*1.7)+'s"><span class="duty-walker" data-servant="'+id+'"><img alt="" src="assets/staff/'+id+'.png"></span></span>';
     }).join("");
   }).join("");
 }

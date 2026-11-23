@@ -337,8 +337,9 @@ function finish(id){
 }
 function isApprovedEnding(id){return ["title","vowTitle","releaseTitle"].includes(id);}
 // Above the title review's own will minimum so both approved endings are reachable.
+const vengeanceWill=350;
 function cielEndingId(will,approved){
-  if(will>=350)return approved?"vowTitle":"vowNoTitle";
+  if(will>=vengeanceWill)return approved?"vowTitle":"vowNoTitle";
   return approved?"releaseTitle":"releaseNoTitle";
 }
 function beginFinale(id){
@@ -453,7 +454,7 @@ function courtRows(){
       ["저택 재건",rooms>=2,"서재와 응접실, 주방을 개수하세요."],
       ["회사 기반",shopLevel>=2,"팬텀사의 시설을 증설하세요."]
     ]:[]),
-    ["왕실 신임",state.royal>=royal,"왕실 서신에 답하거나 요청을 수행"],
+    ...(!full||state.stats.의지<vengeanceWill?[["왕실 신임",state.royal>=royal,"왕실 서신에 답하거나 요청을 수행"]]:[]),
     ["가문 명성",state.renown>=renown,"접객과 팬텀사 판매로 명성 쌓기"],
     ["재정 안정",state.fund>=funds && state.debt===0,"채무를 상환하고 가문 자금을 비축하세요."]
   ];
@@ -621,8 +622,8 @@ function startTownhouseGuests(run){
 function annexDesk(){
   const locked=state.phase!=="plan";
   const rooms=Object.entries(annex).filter(([id])=>!Object.hasOwn(dutyPins,id)).map(([id,r])=>'<div class="annex-line"><div><b>'+r.name+' · Lv.'+state.annex[id]+'</b><small>'+r.desc+'</small></div>'+btn(state.annex[id]===3?"완료":money(r.cost*state.annex[id]),"annex:"+id,locked||state.annex[id]>=3||state.fund<r.cost*state.annex[id])+'</div>').join("");
-  return '<details class="annexes"><summary>부속 시설</summary>'+rooms+'</details>'+
-    '<details class="annexes"><summary>런던 타운하우스</summary><p>취득비 £250</p>'+btn(state.flags.townhouse?"보유 중":"타운하우스 취득","townhouse",!canBuyTownhouse())+'</details>';
+  return '<section class="estate-annex"><h3>부속 시설</h3>'+rooms+'</section>'+
+    btn(state.flags.townhouse?"런던 타운하우스 · 보유 중":"런던 타운하우스 취득 · £250","townhouse",!canBuyTownhouse(),"townhouse-purchase");
 
 }
 function normalizeSave(run){
@@ -862,11 +863,12 @@ function researchFee(id,level=state.shop.design){
   const base=state.unlocked.includes(id)?Math.max(40,Math.ceil(products[id].research*.65)):products[id].research;
   return Math.ceil(base*(100-researchDiscount[level])/100);
 }
-function workerSprite(image,position){
-  return '<img alt="" class="map-person" src="'+businessArt[image]+'" style="left:'+position[0]+'%;top:'+position[1]+'%">';
+function workerSprite(role,position){
+  return '<span aria-hidden="true" class="company-worker '+role+'" style="left:'+position[0]+'%;top:'+position[1]+'%"><img alt="" src="assets/staff/'+role+'.png"></span>';
 }
 function propertyMap(company){
   const rooms=company?departments:estateRooms;
+  const visibleFittings=new Set(["design3","works3","store2","store3","kitchen2","kitchen3"]);
   const levels=company?state.shop:{...state.level,...state.annex};
   let additions="",pins="";
   for(const [id,room] of Object.entries(rooms)){
@@ -874,7 +876,7 @@ function propertyMap(company){
     if(levels[id]>1){
       for(let tier=2;tier<=levels[id];tier++){
         const offset=tier===2?-10:11;
-        if(businessArt[id+tier])additions+='<img alt="" class="map-fitting" src="'+businessArt[id+tier]+'" style="left:'+(x+offset)+'%;top:'+(y-5)+'%">';
+        if(visibleFittings.has(id+tier))additions+='<img alt="" class="map-fitting" src="'+businessArt[id+tier]+'" style="left:'+(x+offset)+'%;top:'+(y-5)+'%">';
       }
       additions+='<i class="map-award award-'+levels[id]+'" aria-hidden="true" style="left:'+x+'%;top:'+y+'%"></i>';
     }
@@ -979,7 +981,7 @@ function salesBooks(){
 }
 function managementPanel(){
   const company=tab==="company",active=state.phase==="plan";
-  const nav='<div class="property-nav">'+option("저택","tab:estate",tab==="estate"||tab==="townhouse"||tab==="staffing")+(state.flags.townhouse?option("타운하우스","tab:townhouse",tab==="townhouse"):"")+option("팬텀 사(社)","tab:company",company)+'</div>';
+  const nav='<div class="property-nav">'+option("저택","tab:estate",tab==="estate"||tab==="staffing")+(state.flags.townhouse?option("타운하우스","tab:townhouse",tab==="townhouse"):"")+option("팬텀 사(社)","tab:company",company)+'</div>';
   const header='<div class="property-head">'+nav+'<div><span>'+monthText(state.month)+'</span><b>'+money(state.fund)+'</b></div></div>';
   if(tab==="townhouse"&&state.flags.townhouse)return header+londonBoard();
   if(tab==="staffing")return header+staffBoard();
@@ -991,7 +993,7 @@ function managementPanel(){
   const bottom=company?(active?businessForecast():settled&&actual?'<div class="work-ledger"><span>'+monthText(actual.month)+' 영업 수입</span><b>'+money(actual.revenue+actual.advance)+'</b></div>':'')+budget+salesBooks():budget;
   return header+
     '<div class="property-grid"><div class="property-grounds">'+propertyMap(company)+bottom+'</div>'+
-    '<section class="property-desk" aria-label="선택 시설">'+(company?companyDetail():roomDetail()+btn('<span class="staff-menu-icon" aria-hidden="true"></span><b>사용인 배치</b><span class="staff-menu-arrow" aria-hidden="true">›</span>',"tab:staffing",false,"staff-entry")+houseDesk()+facilityLedger()+annexDesk())+'</section></div>';
+    '<section class="property-desk" aria-label="선택 시설">'+(company?companyDetail():roomDetail()+btn('<span class="staff-menu-icon" aria-hidden="true"></span><b>사용인 배치</b><span class="staff-menu-arrow" aria-hidden="true">›</span>',"tab:staffing",false,"staff-entry")+houseDesk()+annexDesk()+facilityLedger())+'</section></div>';
 }
 
 const marketGoods={
@@ -1399,6 +1401,14 @@ function handleAction(key,rect,confirmed=false){
   if(action==="skip"){finishScene();respond("step",rect);return;}
   if(action==="speed"){speed=speed===1?3:1;const b=$("playback").querySelector('[data-action="speed"]');if(b)b.textContent="재생 ×"+speed;respond("step",rect);return;}
   if(action==="category"){lessonPage=Number(id);render();focusAction(key);respond("tap",rect,".lesson-index");return;}
+  if(action==="chat-follow"){
+    const spoken=state.spoken;
+    const follow=chatFollowups[spoken?.topic]?.[Number(id)];
+    if(tab==="chat"&&spoken?.turn===state.month&&spoken.replyRead&&spoken.followIndex==null&&follow){
+      spoken.followIndex=Number(id);persist();render(true);
+    }
+    return;
+  }
   if(action==="chat-reply"){
     if(tab==="chat"&&state.spoken?.turn===state.month&&state.spoken.reply){
       state.spoken.replyRead=true;persist();render(true);
@@ -1424,8 +1434,6 @@ function handleAction(key,rect,confirmed=false){
     }
     const panelScroll=$("panel").scrollTop;
     persist();render();
-    const detail=document.querySelector(action==="townhouse"?".annexes:last-child":".annexes");
-    if(detail && !(action==="annex" && Object.hasOwn(dutyPins,id)))detail.open=true;
     $("panel").scrollTop=panelScroll;
     respond("build",rect,".property-desk");
     popMoney(state.fund-fund);return;

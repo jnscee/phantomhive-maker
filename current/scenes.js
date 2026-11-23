@@ -132,11 +132,41 @@ const butlerReplies={
  business:["그럼 이 매듭을 한 손으로 풀어 보십시오. 다른 손엔 장난감을 들고 있다고 생각하시고요.","리본부터 보셨군요. 어느 끝을 당겨야 하는지 아이도 알아볼까요?","알겠습니다. 매듭만 바꾼 견본을 하나 더 가져오지요. 두 상자 중 어느 것을 먼저 집는지 보시겠습니까?","저도 뚜껑을 고쳐야겠다 싶었습니다만, 리본 하나를 빼면 그만이군요. 이번엔 도련님 안이 한 수 위였습니다."],
  tea:["한 잔 더 올리지요. 이번엔 설탕을 넣기 전에 향부터 맡아 보십시오.","조금 더 진하게 우려 보았습니다. 어느 쪽이 나은지는 도련님께서 말씀해 주시지요.","예, 같은 차로 올리겠습니다. 두 번째 잔을 청하시면 그날의 차는 합격이라고 여겨도 되겠습니까?","한 잔 더, 입니까. 그럼 저도 배운 보람이 있군요. ……예전에는 다시 우려 오라는 분부를 더 자주 내리셨거든요."]
 };
+const chatFollowups={
+  health:[
+    ["회의 서류만 두고 간다","그 빨간 봉투도. ……그렇게 보지 마. 읽을 작정이면 안경부터 가져오라고 했겠지."],
+    ["깨울 시각을 확인한다","큰 바늘이 여섯에 닿으면 깨워. 다독여 재워 놓고 한 시간 뒤에 시치미를 떼는 건 한 번이면 충분해."]
+  ],
+  business:[
+    ["견본에 가격표를 달아 본다","값이 보이면 어른 손이 먼저 가지. 아이가 먼저 고르는지 보려던 거잖아. 가격표는 뒤집어 둬."],
+    ["판매원의 의견을 받아 적는다","마지막 손님 말고, 아무것도 안 사고 나간 손님 이야기를 들어. 우리가 모르는 건 그쪽이니까."]
+  ],
+  tea:[
+    ["찻잔 옆에 레몬을 놓는다","한 조각만. ……아까 건 너무 두꺼웠어. 차를 마셨는데 레몬 맛밖에 기억이 안 나더군."],
+    ["남은 과자를 권한다","반으로 잘라. 반쪽만 먹겠다는 말이야. 나머지 반을 접시에 그대로 올려놓으라는 뜻은 아니고."]
+  ]
+};
+const chatVariations={
+  health:[
+    ["맥은 됐어. 창문부터 조금 열어. 오늘 아침엔 빗소리밖에 못 들었거든.","정원 쪽으로 열겠습니다. 서풍이라 빗물이 책상까지 들이칠 염려도 없고요."],
+    ["오늘 서명은 여기까지야. 마지막 두 줄을 세 번이나 읽었는데 무슨 말인지 모르겠어.","그럼 그 두 줄부터 내일 읽으시지요. 같은 자리에 연필을 끼워 두겠습니다."]
+  ],
+  business:[
+    ["팔린 숫자 옆에 반품도 적어. 태엽이 끊어져서 돌아온 물건까지 실적에 넣을 셈이야?","분리해 두었습니다. 그중 세 개는 같은 날 만든 물건이라, 제작실에 그날 장부도 청해 두었지요."],
+    ["상자 밑에 상호를 찍었군. 아이가 뒤집어 봐야 우리 이름을 알겠어.","뚜껑 안쪽은 어떠십니까? 장난감을 꺼내는 순간에 한 번은 눈에 들 테니까요."]
+  ],
+  tea:[
+    ["오늘은 작은 잔으로 줘. 아까부터 한 모금 마실 때마다 잉크가 손등에 묻잖아.","잉크병도 왼쪽으로 옮기겠습니다. 그래야 이번에는 어느 쪽이 범인이었는지 알겠군요."],
+    ["이 차, 지난번보다 덜 떫어. 잎을 바꿨어?","같은 잎입니다. 오늘은 도련님께서 편지를 펴시기 전에 따라 드렸거든요."]
+  ]
+};
 function chatDialogue(){
   const spoken=state.spoken?.turn===state.month?state.spoken:null;
   if(spoken){
     const end=btn("대화를 마친다","back");
-    if(spoken.replyRead&&spoken.reply)return {caption:"세바스찬 미카엘리스",line:spoken.reply,buttons:end};
+    const follow=chatFollowups[spoken.topic]||[];
+    if(spoken.followIndex!=null&&follow[spoken.followIndex])return {caption:"시엘 팬텀하이브",line:follow[spoken.followIndex][1],buttons:end};
+    if(spoken.replyRead&&spoken.reply)return {caption:"세바스찬 미카엘리스",line:spoken.reply,buttons:follow.map(([label],i)=>btn(label,"chat-follow:"+i)).join("")+end};
     return {caption:"시엘 팬텀하이브",line:spoken.line,effects:spoken.effects,buttons:spoken.reply?btn("세바스찬의 대답을 듣는다","chat-reply")+end:end};
   }
   return {caption:"세바스찬 미카엘리스",line:state.ill||state.hp<35?"차는 침실로 올리겠습니다. 오늘은 어느 서류를 물릴까요?":state.stress>60?"오늘은 찻잔이 식을 때까지 한 장도 넘기지 않으셨군요.":butlerGreetings[sebastianRegard(state.stats)],
@@ -147,7 +177,8 @@ function speak(id){
   const lines={health:["몸 상태","“내가 무리하면 먼저 눈치챌 건 너잖아. 오늘 회의는 삼십 분 늦춰.”"],business:["","“장식은 나중이야. 아이가 혼자서도 상자를 열 수 있는지부터 봐.”"],tea:["오후의 홍차","“……그래. 한 잔만 더. 그동안은 서류도 그대로 두고.”"]};
   if(!Object.hasOwn(lines,id))return;
   if(id==="tea"||id==="health")state.flags.attention=(state.flags.attention||0)+1;
-  const reply=butlerReplies[id][sebastianRegard(state.stats)];
+  const snapshot=choiceSnapshot();
+  let reply=butlerReplies[id][sebastianRegard(state.stats)];
   const before=snapStats(state);
   if(id==="health"){
     changeStat("통찰",6);
@@ -167,6 +198,13 @@ function speak(id){
   let line=usual;
   if(id==="tea"&&state.flags.teaBlend)line="“설탕은 하나. 그래, 오늘도 그걸로.” 시엘이 서류에서 눈을 떼지 않고 잔을 받습니다.";
   if(id==="health"&&state.flags.morningGloves)line="“손을 내밀기도 전에 장갑부터 챙기는 녀석이 그걸 물어?” 시엘이 반대쪽 손도 내밉니다.";
-  state.spoken={turn:state.month,title,line,reply,effects};
+  const count=state.chatCounts?.[id]||0;
+  if(count%3 || (id==="health" && (state.ill||state.hp<35))){
+    const variation=chatVariations[id][id==="health"&&(state.ill||state.hp<35)?0:(count-1)%2];
+    [line,reply]=variation;
+  }
+  state.chatCounts??={};state.chatCounts[id]=count+1;
+  state.spoken={turn:state.month,topic:id,title,line,reply,effects};
+  showChoiceImpact({health:"몸 상태를 묻는다",business:"팬텀사 이야기를 꺼낸다",tea:"차를 한 잔 더 따른다"}[id],snapshot);
   persist();render(true);
 }

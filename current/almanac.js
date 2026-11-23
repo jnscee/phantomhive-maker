@@ -132,7 +132,11 @@ function courtFolio(rows){
 }
 function familyFolio(rows,history,album,extra=""){
   const allies=peopleInHouse();
-  const relations=allies.length?allies.map(id=>'<div class="trust-entry"><b>'+servants[id].name+'</b><span>'+rank(state.people[id].toward)+'</span></div>').join(""):"아직 기록된 인물이 없습니다.";
+  const relations=allies.length?allies.map(id=>{
+    const trust=state.people[id].toward,tier=trustTier(trust);
+    const marks=[0,1,2,3].map(n=>'<i class="'+(n<=tier?'filled':'')+'"></i>').join("");
+    return '<div class="trust-entry" data-tier="'+tier+'"><img src="assets/staff/'+id+'.png" alt=""><b>'+servants[id].name+'</b><span class="trust-stage"><span aria-hidden="true">'+marks+'</span>'+rank(trust)+'</span></div>';
+  }).join(""):"아직 기록된 인물이 없습니다.";
   const fairHistory=londonFestivals.map(fairReport).filter(Boolean);
   return '<div class="family-folio">'+courtFolio(rows)+'<aside class="folio-files"><dl class="folio-finance"><div><dt>가문 자금</dt><dd>'+money(state.fund)+'</dd></div><div><dt>남은 채무</dt><dd>'+money(state.debt)+'</dd></div></dl>'+
     filedSection("인물 관계",'<p>각 인물이 시엘에게 보내는 신뢰입니다.</p>'+relations,allies.length+"명")+
