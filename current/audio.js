@@ -63,7 +63,7 @@ function recruitTrack(id,at){
 
 const endingTracks={
   vowTitle:"goodEnding",title:"goodEnding",business:"business",releaseTitle:"gloomy",releaseNoTitle:"gloomy",
-  ill:"gloomy",broke:"gloomy",defer:"manor",vowNoTitle:"manor"
+  ill:"gloomy",broke:"gloomy",defer:"manor",vowNoTitle:"goodEnding"
 };
 function trackForView(){
   if(tourSession||(tab==="plan"&&state.phase==="guide"))return "tutorial";
