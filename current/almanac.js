@@ -105,27 +105,33 @@ function courtFolio(rows){
   const complete=rows.filter(row=>row[1]).length;
   const approved=["title","vowTitle","releaseTitle"].includes(state.ending);
   const held=["business","defer","vowNoTitle","releaseNoTitle"].includes(state.ending);
-  const stage=approved||qualifies()?3:state.royal>0&&complete>=rows.length*0.7?2:state.royal>0||state.renown>0||complete>=rows.length*.4?1:0;
+  const stage=approved||complete===rows.length?3:state.royal>0&&complete>=rows.length*0.7?2:state.royal>0||state.renown>0||complete>=rows.length*.4?1:0;
   const wording=["왕실 서신에 가문의 이름이 아직 오르지 않았습니다.","궁정에서 팬텀하이브의 근황을 묻기 시작했습니다.","왕실 서기관이 가문의 증빙과 살림을 함께 검토하고 있습니다.","작위 회복에 필요한 조건을 모두 갖췄습니다."];
   const pending=rows.find(row=>!row[1]);
-  return '<section class="court-folio"><header><span>왕실 작위 심의</span><small>'+monthText(state.month)+'</small></header>'+
-    '<h3>'+(approved?"작위 회복":held?"이번 심의 유보":stages[stage])+'</h3><p>'+(approved?"왕실이 백작 작위를 승인했습니다.":held?"왕실이 이번 회차의 작위 승인을 유보했습니다.":wording[stage])+'</p>'+
-    '<ol class="court-stages">'+stages.map((label,i)=>'<li class="'+(stage>=i?"reached":"")+'" '+(stage===i?'aria-current="step"':'')+'><i aria-hidden="true"></i>'+label+'</li>').join("")+'</ol>'+
-    '<div class="court-checks">'+rows.map(([label,ok,hint])=>'<div class="'+(ok?"met":"open")+'"><b>'+label+'</b><span>'+(ok?"충족":"준비 중")+'</span>'+(ok?"":'<small>'+hint+'</small>')+'</div>').join("")+'</div>'+
-    (pending&&!state.ending?'<footer><strong>다음 준비</strong>　'+pending[2]+'</footer>':'')+'</section>';
+  const title=approved?"작위 회복":held?"이번 심의 유보":stages[stage];
+  const description=approved?"왕실이 백작 작위를 승인했습니다.":held?"이번 회차의 작위 승인이 유보되었습니다.":wording[stage];
+  const steps=stages.map((label,index)=>
+    '<li'+(index<=stage?' class="reached"':'')+(index===stage?' aria-current="step"':'')+'><i aria-hidden="true"></i>'+label+'</li>').join("");
+  const checks=rows.map(([label,ok,hint,reading])=>
+    '<li><div><b>'+label+'</b><small>'+reading+'</small></div><span class="court-status'+(ok?' met':'')+'">'+(ok?'✓ 충족':'미충족')+'</span></li>').join("");
+  return '<section class="court-folio"><div class="court-ruling"><header><span>왕실 작위 심의</span><small>'+monthText(state.month)+'</small></header>'+
+    '<h3>'+title+'</h3><p>'+description+'</p><ol class="court-stages" aria-label="왕실 평가 단계">'+steps+'</ol></div>'+
+    '<details class="court-register" open><summary><b>작위 회복 요건</b><span>'+complete+' / '+rows.length+' 충족</span></summary>'+
+    (pending&&!state.ending?'<p class="court-next"><b>다음 준비</b> '+pending[2]+'</p>':'')+
+    '<ul class="court-checks">'+checks+'</ul></details></section>';
 }
 function familyFolio(rows,history,album,extra=""){
   const allies=peopleInHouse();
   const relations=allies.length?allies.map(id=>'<div class="trust-entry"><b>'+servants[id].name+'</b><span>'+rank(state.people[id].toward)+'</span></div>').join(""):"아직 기록된 인물이 없습니다.";
   const fairHistory=londonFestivals.map(fairReport).filter(Boolean);
-  return '<div class="family-folio">'+courtFolio(rows)+'<p class="folio-finance">가문 자금 <b>'+money(state.fund)+'</b>　남은 채무 <b>'+money(state.debt)+'</b></p>'+
+  return '<div class="family-folio">'+courtFolio(rows)+'<aside class="folio-files"><dl class="folio-finance"><div><dt>가문 자금</dt><dd>'+money(state.fund)+'</dd></div><div><dt>남은 채무</dt><dd>'+money(state.debt)+'</dd></div></dl>'+
     filedSection("인물 관계",'<p>각 인물이 시엘에게 보내는 신뢰입니다.</p>'+relations,allies.length+"명")+
     filedSection("사건 기록",history||"첫 사건을 마치면 선택이 기록됩니다.",state.events.length+"건")+
     filedSection("런던 행사",fairHistory.join("")||"참가한 행사의 결과가 기록됩니다.",fairHistory.length+"건")+
-    filedSection("엔딩 도감",album,Object.keys(endingScenes).filter(hasEndingRecord).length+"개 기록")+extra+'</div>';
+    filedSection("엔딩 도감",album,Object.keys(endingScenes).filter(hasEndingRecord).length+"개 기록")+extra+'</aside></div>';
 }
 function healthNotice(run){
-  if(run.ill||run.illness)return "병중 · 무리한 일정은 요양으로 바뀝니다. 휴식·요양 또는 왕진으로 건강과 스트레스를 회복하세요.";
+  if(run.ill||run.illness)return "병중 · 수업은 요양으로 바뀌며 예약한 수업료는 전액 지불합니다.";
   if(run.hp<=42||run.stress>=70)return "병환 주의 · 다음 일정에 휴식이나 요양을 넣을 수 있습니다.";
   return "";
 }

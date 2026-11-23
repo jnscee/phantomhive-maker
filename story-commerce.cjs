@@ -257,13 +257,27 @@ console.log('PASS 35 months from the initial estate, 7 x 500, 14 portfolio exams
 for(const condition of ["state.hp=30","state.stress=100"]){
   setup(condition+';state.plan=["exercise","rest","rest"];state.visit="library";state.qty=0;execute()');
   assertOk('state.phase==="scene" && state.sequence.activity==="recovery" && state.sequence.onSickLeave');
-  assertOk('state.sequence.trainingPaid===0 && state.fund===state.sequence.opening.fund && !state.counts.exercise');
+  assertOk('state.sequence.trainingPaid===actions.exercise.cost && state.fund===state.sequence.opening.fund-actions.exercise.cost && !state.counts.exercise');
+  run('state=normalizeSave(saves.auto)');
+  assertOk('state.fund===state.sequence.opening.fund-actions.exercise.cost');
+  run('continueSequence();continueSequence();state.visit="none";continueSequence()');
+  assertOk('state.report.training===actions.exercise.cost+2*actions.rest.cost');
 }
+setup('state.hp=24;state.stress=100;state.qty=0;state.plan=["exercise","rest","recovery"];state.visit="none";state.fund=plannedTuition()-1;execute()');
+assertOk('state.phase==="plan" && state.fund===actions.exercise.cost+actions.rest.cost+actions.recovery.cost-1');
 setup('state.hp=20;state.stress=100;state.visit="library";persist()');
 assertOk('state.ill && !hasPendingVisit()');
 run('state.hp=57;state.stress=51;persist()');
 assertOk('!state.ill && hasPendingVisit()');
 
+setup('Object.assign(state.stats,{지성:420,기품:440,매력:300,통찰:340,경영:320,의지:300});Object.assign(state.level,{library:2,kitchen:2});state.shop.store=2;state.flags.deed=true;state.royal=6;state.renown=32;state.fund=1200;state.debt=0;state.hp=60;state.stats.체력=0');
+assertOk('qualifies() && courtRows().length===10 && courtFolio(courtRows()).includes("10 / 10 충족")');
+for(const change of ['stats.지성--','stats.기품--','stats.매력--','stats.통찰--','stats.경영--','stats.의지--','level.kitchen--','shop.store--','flags.deed=false','royal--','renown--','fund--','debt++','hp--']){
+  const previous=run('structuredClone(state)');
+  run('state.'+change);assertOk('!qualifies()');ctx.savedCourt=previous;run('state=savedCourt');
+}
+setup('state.duration=6;state.flags.deed=true;state.royal=2;state.renown=3;state.fund=120;state.hp=30');
+assertOk('qualifies() && courtRows().length===5');
 for(const [index,outcome] of [[0,"success"],[1,"practice"],[1,"absent"]]){
   Object.assign(ctx,{fairIndex:index,fairOutcome:outcome});
   setup('state.month=4;selectFestival(fairIndex);persist();state=normalizeSave(saves.auto);state.month=5;');
@@ -289,4 +303,4 @@ for(const index of [0,1]){
   assertOk('state.sequence.visitEvent===(replyIndex===0?"visitLibraryWax":"visitLibraryCarbon")');
 }
 assertOk('Object.keys(endingScenes).length===9 && Object.values(endingScenes).every(scene=>scene.lines.length>=48)');
-console.log('PASS illness, free sick leave, recovery, optional fair outcomes and demand, both library follow-ups after loading, one-way trust, and all nine ending scripts.');
+console.log('PASS illness, reserved tuition during sick leave, recovery, optional fair outcomes and demand, both library follow-ups after loading, one-way trust, and all nine ending scripts.');

@@ -11,17 +11,7 @@ function planReady(){
   return state.plan.length===3&&state.plan.every(id=>Object.hasOwn(actions,id))&&canVisit(state.visit);
 }
 function plannedTuition(){
-  const trial={...state,stats:{...state.stats},counts:{...state.counts},lessonKit:{...state.lessonKit}};
-  let cost=0;
-  for(const [slot,planned] of state.plan.entries()){
-    if(!actions[planned])continue;
-    updateIllness(trial);
-    const id=careActivity(trial,planned);
-    cost+=id===planned?actions[id].cost:0;
-    applyActivity(trial,id,lessonResult(trial,id,slot));
-    trial.counts[id]=(trial.counts[id]||0)+1;
-  }
-  return cost;
+  return state.plan.reduce((sum,id)=>sum+(actions[id]?.cost||0),0);
 }
 function careActivity(run,planned){return run.ill && planned!=="rest" && planned!=="recovery"?"recovery":planned;}
 function initial(){
@@ -408,20 +398,27 @@ function projectTraining(){
 }
 function courtRows(){
   const full=state.duration===35;
-  const {지성,기품,매력,경영,통찰,의지}=state.stats;
+  const royal=full?6:2, renown=full?32:3, funds=full?1200:120, health=full?60:30;
+  const rooms=Object.values(state.level).filter(level=>level>=2).length;
+  const shopLevel=Math.max(...Object.values(state.shop));
+  function statPair(label,first,a,second,b){
+    const left=state.stats[first],right=state.stats[second];
+    return [label,left>=a && right>=b,first+" "+a+" · "+second+" "+b,
+      first+" "+left+"/"+a+" · "+second+" "+right+"/"+b];
+  }
   return [
     ...(full?[
-      ["귀족 교육",지성>=420&&기품>=440,"학문과 예법을 수련하세요. 지성 420 · 기품 440"],
-      ["사교와 조사",매력>=300&&통찰>=340,"매력 300 · 통찰 340"],
-      ["사업과 결단",경영>=320&&의지>=300,"경영 320 · 의지 300"],
-      ["저택 재건",Object.values(state.level).filter(n=>n>=2).length>=2,"저택의 주요 시설 두 곳을 2단계로 개수하세요."],
-      ["회사 기반",Math.max(...Object.values(state.shop))>=2,"팬텀사 부서 한 곳을 2단계로 증설하세요."]
+      statPair("귀족 교육","지성",420,"기품",440),
+      statPair("사교와 조사","매력",300,"통찰",340),
+      statPair("사업과 결단","경영",320,"의지",300),
+      ["저택 재건",rooms>=2,"서재·응접실·주방 중 두 곳을 2단계로 개수","2단계 이상 "+rooms+"곳 / 필요 2곳"],
+      ["회사 기반",shopLevel>=2,"개발실·제작실·판매점 중 한 곳을 2단계로 증설","최고 "+shopLevel+"단계 / 필요 2단계"]
     ]:[]),
-    ["가문 증빙",Boolean(state.flags.deed),"서재에서 장부와 원본을 조사하세요."],
-    ["왕실 신임",state.royal>=(full?6:2),"왕실 서신에 답하거나 왕실 요청에 응하세요."],
-    ["가문 명성",state.renown>=(full?32:3),"손님을 접대하고 팬텀사에서 판매 실적을 쌓으세요."],
-    ["재정 안정",state.fund>=(full?1200:120)&&state.debt===0,"채무를 상환하고 "+money(full?1200:120)+"를 확보하세요."],
-    ["건강",state.hp>=(full?60:30),"건강 "+(full?60:30)+" 이상으로 회복하세요."]
+    ["가문 증빙",Boolean(state.flags.deed),"서재에서 ‘장부 복원’을 선택해 증빙 확보",state.flags.deed?"증빙 확보":"증빙 미확보"],
+    ["왕실 신임",state.royal>=royal,"왕실 서신에 답하거나 요청을 수행","신임 "+royal+" 이상"],
+    ["가문 명성",state.renown>=renown,"접객과 팬텀사 판매로 명성 쌓기","명성 "+renown+" 이상"],
+    ["재정 안정",state.fund>=funds && state.debt===0,"잔액 "+money(funds)+" 이상 · 채무 전액 상환","잔액 "+money(state.fund)+" / "+money(funds)+" · 채무 "+money(state.debt)+" / £0"],
+    ["건강",state.hp>=health,"최종 심의 때 건강 "+health+" 이상 확보","건강 "+state.hp+" / "+health]
   ];
 }
 function titleRequirements(){return courtRows().map(row=>row[1]);}

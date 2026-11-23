@@ -54,9 +54,9 @@ function startPlayback(resumeAt=0){
 function enterSlot(){
   const seq=state.sequence,planned=state.plan[seq.index];
   updateIllness(state);
-  const id=careActivity(state,planned),a=actions[id];
+  const id=careActivity(state,planned);
   seq.activity=id;seq.onSickLeave=Boolean(state.ill);
-  const paid=id===planned?a.cost:0;
+  const paid=actions[planned].cost;
   seq.trainingPaid??=state.plan.slice(0,seq.index).reduce((total,key)=>total+actions[key].cost,0);
   seq.trainingPaid+=paid;
   seq.before=snapStats(state);
@@ -66,7 +66,7 @@ function enterSlot(){
   delete seq.examNote;
   const changes=applyActivity(state,id,seq.grade);
   state.counts[id]=(state.counts[id]||0)+1;
-  if(seq.onSickLeave&&id!==planned)state.log.push(actions[planned].name+" 취소 · 요양으로 대체 (수업료 없음)");
+  if(seq.onSickLeave&&id!==planned)state.log.push(actions[planned].name+" 결석 · 요양으로 대체 · 예약 비용 "+money(paid));
   if(!seq.onSickLeave&&state.ill)state.log.push("병환 · 다음 일정부터 요양");
   if(seq.onSickLeave&&!state.ill)state.log.push("건강 회복 · 다음 순부터 일정에 복귀");
   seq.after=snapStats(state);
