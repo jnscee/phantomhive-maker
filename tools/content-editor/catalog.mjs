@@ -85,7 +85,7 @@ export function catalog(files, publishedAssets = [], version = "") {
         const parts=rows(line);
         return parts.length>=2 && parts.length<=(extra.cues?4:extra.metadata?3:2) && parts.slice(0,2).every(strings)
           && (parts.length===2 || (extra.cues&&parts.length===4&&value(parts[2])===null)
-            || (extra.metadata==="tanaka"?typeof value(parts[2])==="boolean":extra.metadata==="illustration"&&strings(parts[2])))
+            || (extra.metadata==="tanaka"?(typeof value(parts[2])==="boolean"||strings(parts[2])):extra.metadata==="illustration"&&strings(parts[2])))
           && (parts.length!==4||parts[3].type==="ObjectExpression");
       })) return;
       initial = readLines(node);
@@ -444,6 +444,7 @@ function lineValues(input, field = {}) {
       const extra=row[2];
       if(row.length===4&&extra===null)line.push(null);
       else if(field.metadata==="tanaka" && typeof extra==="boolean") line.push(extra);
+      else if(field.metadata==="tanaka" && typeof extra==="string") line.push(textValue(extra));
       else if(field.metadata==="illustration" && field.artOptions.some(([id])=>id===extra)) line.push(extra);
       else throw new Error("대사에 연결된 연출 값을 확인해 주세요.");
     }
