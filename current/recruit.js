@@ -2,8 +2,8 @@
 
 const recruitArt={
   bedroom:{bg:"assets/room-bedroom.webp"},garden:{bg:"assets/room-garden.webp"},
-  lab:{bg:"assets/prologue/cell.webp",crop:[0,0,221,145],tone:"cold"},
-  dark:{bg:"assets/prologue/cell.webp",crop:[0,0,185,115],tone:"blackout"},
+  lab:{bg:"assets/endings/black.webp",crop:[0,0,221,145],tone:"cold"},
+  dark:{bg:"assets/endings/black.webp",crop:[0,0,185,115],tone:"blackout"},
   night:{bg:"assets/room-garden.webp",tone:"night"},
   library:{bg:"assets/room-library.webp"},street:{bg:"assets/room-street.webp",tone:"night"},
   parlour:{bg:"assets/room-ballroom.webp"},study:{bg:"assets/manor.webp"},

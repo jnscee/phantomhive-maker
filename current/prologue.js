@@ -81,7 +81,10 @@ function inOpening(){return tab==="recollection"||(state.phase==="contract"&&tab
 function openingIndex(){return tab==="recollection"?recollectionLine:state.openingLine;}
 function clearOpeningTimer(){clearTimeout(openingTimer);openingTimer=0;}
 function stopOpeningAuto(){clearOpeningTimer();openingAuto=false;}
-function openingImage(scene){return "assets/"+(scene.title?"endings":"prologue")+"/"+scene.art+".webp";}
+function openingImage(scene){
+  if(!scene.title&&scene.art==="cell")return "assets/endings/black.webp";
+  return "assets/"+(scene.title?"endings":"prologue")+"/"+scene.art+".webp";
+}
 function openingArt(scene,picture){
   const frame=$("opening-picture");
   const source=picture?"assets/endings/"+picture+".webp":openingImage(scene);
@@ -89,7 +92,7 @@ function openingArt(scene,picture){
   frame.dataset.source=source;
   frame.dataset.art=scene.art;
   const img=new Image();
-  img.className="opening-cg"; img.alt=scene.alt;
+  img.className="opening-cg"; img.alt=source==="assets/endings/black.webp"?"":scene.alt;
   img.src=source;
   const old=frame.querySelector(".opening-cg:last-child");
   frame.replaceChildren(...(old?[old]:[]),img);
