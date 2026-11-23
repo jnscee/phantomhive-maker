@@ -99,7 +99,7 @@ async function preview(current,body){
   if(body.preview && !current.groups.some(group=>JSON.stringify(group.preview)===JSON.stringify(body.preview))
     && body.preview.id!=="custom-"+body.newEvent?.id)throw new Error("테스트할 장면을 찾지 못했습니다.");
   if(!navigator.serviceWorker)throw new Error("이 브라우저에서는 게임 미리보기를 열 수 없습니다.");
-  registration??=navigator.serviceWorker.register(new URL("service-worker.mjs",scope),{type:"module"});
+  registration??=navigator.serviceWorker.register(new URL("service-worker.js",scope));
   await registration;
   await navigator.serviceWorker.ready;
   const token=crypto.randomUUID();

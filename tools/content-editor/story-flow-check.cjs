@@ -2,7 +2,12 @@ const assert=require("node:assert/strict");
 const path=require("node:path");
 
 module.exports=async function checkStoryFlow(browser,base){
-  const page=await browser.newPage({viewport:{width:1050,height:800}});
+  // A fresh regular Firefox profile exercises service workers just as a normal game editor tab does.
+  const viewport={width:1050,height:800};
+  const context=browser.browserType().name()==="firefox"
+    ?await browser.browserType().launchPersistentContext("",{viewport})
+    :await browser.newContext({viewport});
+  const page=await context.newPage();
   const errors=[];
   page.on("pageerror",error=>errors.push(error.message));
   page.setDefaultTimeout(12000);
@@ -73,5 +78,8 @@ module.exports=async function checkStoryFlow(browser,base){
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
     assert.deepEqual(errors,[]);
     console.log("PASS editor story graph, condition lock, linked scene, saved expression and mobile width");
-  }finally{await page.close();}
+  }catch(error){
+    console.error("Editor feedback:",await page.locator("#status").textContent(),"Page errors:",errors);
+    throw error;
+  }finally{await context.close();}
 };

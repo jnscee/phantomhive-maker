@@ -28,6 +28,11 @@ const uiVersion=uiHash.digest("hex").slice(0,16);
 await mkdir(editor,{recursive:true});
 await cp(path.join(source,"public"),editor,{recursive:true});
 await cp(path.join(source,"web"),editor,{recursive:true});
+// The preview worker also runs in browsers which only register classic service workers.
+const storeSource=await readFile(path.join(source,"web/storage.mjs"),"utf8");
+const workerSource=await readFile(path.join(source,"web/service-worker.mjs"),"utf8");
+await writeFile(path.join(editor,"service-worker.js"),workerSource.replace('import {read} from "./storage.mjs";',
+  ()=>storeSource.replaceAll("export async function","async function")));
 await cp(path.join(source,"preview.js"),path.join(editor,"preview.js"));
 const dependencies=[
   ["acorn/dist/acorn.mjs","acorn.mjs"],
