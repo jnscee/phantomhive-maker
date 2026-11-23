@@ -772,11 +772,14 @@ function motionControls(){
 function savePanel(){
   const rows=["auto","1","2","3"].map((id,index)=>{
     const record=saves[id];
-    return '<div class="slot-save"><div><strong>'+(index?"슬롯 "+index:"자동 저장")+'</strong><br><span class="small muted">'+
-      (record?monthText(record.month)+" · "+phaseNames[record.phase]:"빈 슬롯")+'</span></div><div class="opts">'+
+    const label=index?"수첩 "+index:"자동 저장";
+    const phase=record && (phaseNames[record.phase] || "");
+    return '<div class="slot-save" data-filled="'+Boolean(record)+'"><div class="slot-info"><strong>'+label+'</strong><span>'+
+      (record?monthText(record.month)+(phase?" · "+phase:""):"빈 슬롯")+'</span></div><div class="opts">'+
       (index?btn("저장","store:"+id,false,"slot-write"):"")+btn("불러오기","load:"+id,!record,"slot-read")+'</div></div>';
   }).join("");
-  return frame("설정",audioControls()+motionControls()+instructionBook()+'<section class="notebook-slots"><h3>저장 슬롯</h3>'+rows+'</section>'+(!storageOk?'<p class="small danger">브라우저 저장소를 사용할 수 없습니다. 이 탭을 닫으면 진행 내용이 사라집니다.</p>':"")+
+  return frame("수첩 · 저장",'<section class="notebook-slots" aria-label="저장 슬롯">'+rows+'</section>'+(!storageOk?'<p class="small danger">브라우저 저장소를 사용할 수 없습니다. 이 탭을 닫으면 진행 내용이 사라집니다.</p>':"")+
+    '<div class="notebook-settings">'+audioControls()+motionControls()+'</div>'+instructionBook()+
     '<div class="notebook-actions">'+(state.phase!=="contract"?btn("프롤로그 다시 보기","recollect"):"")+btn("새 회차","reset")+btn("표지로","tab:title")+'</div>'+
     '<details class="annexes"><summary>제작 참고 · 콘텐츠 편집기</summary><p>장면 흐름도와 표정 편집은 <a href="https://x.com/Dot_teu" target="_blank" rel="noopener noreferrer">돛트(Dot-teu)</a>님의 <a href="https://github.com/Dotteu/VisualNovel-Maker" target="_blank" rel="noopener noreferrer">VisualNovel-Maker</a>를 참고했습니다. <a href="https://creativecommons.org/licenses/by-nc/4.0/deed.ko" target="_blank" rel="noopener noreferrer">참고작 라이선스 · CC BY-NC 4.0</a></p></details>');
 }
