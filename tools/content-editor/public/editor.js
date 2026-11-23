@@ -44,6 +44,7 @@ function updateToolbar() {
   $("discard").disabled=busy||!draftCount();
   $("undo").disabled=busy||!data?.canUndo||Boolean(draftCount());
   $("preview").disabled=busy||!data||Boolean(deleteEvent);
+  $("publish").disabled=busy||!data?.publishCount||Boolean(draftCount());
 }
 
 function value(field) {
@@ -457,6 +458,50 @@ if(isWeb){
   $("save").textContent="브라우저에 저장";
   $("undo").textContent="마지막 저장 되돌리기";
   $("export-edits").hidden=false;
+  $("publish").hidden=false;
+  const publishDialog=$("publish-dialog");
+  const tokenField=$("github-token");
+  const progress=$("publish-progress");
+  $("publish").addEventListener("click",()=>{
+    $("publish-summary").textContent=data.publishCount+"개 파일을 main에 올립니다. GitHub 검사 후 공개 게임이 갱신됩니다.";
+    progress.textContent="";
+    publishDialog.showModal();
+  });
+  $("publish-close").addEventListener("click",()=>publishDialog.close());
+  publishDialog.addEventListener("cancel",event=>{if(busy)event.preventDefault();});
+  publishDialog.addEventListener("close",()=>{tokenField.value="";});
+  $("publish-form").addEventListener("submit",async event=>{
+    event.preventDefault();
+    if(busy||draftCount()||!data.publishCount)return;
+    const token=tokenField.value.trim();
+    tokenField.value="";
+    busy=true;
+    $("publish-close").disabled=$("publish-submit").disabled=true;
+    updateToolbar();
+    try{
+      const result=await (await web).uploadToGitHub(token,message=>{progress.textContent=message;});
+      publishDialog.close();
+      status(result.count?"GitHub에 업로드했습니다. 공개 게임 배포 상태는 Actions에서 확인할 수 있습니다. ":"이미 GitHub에 같은 내용이 있습니다. ");
+      const link=node("a","GitHub 커밋");
+      link.href="https://github.com/jnscee/phantomhive-maker/commit/"+result.sha;
+      link.target="_blank";
+      link.rel="noopener noreferrer";
+      $("status").append(link);
+      $("status").append(document.createTextNode(" · "));
+      const actions=node("a","배포 확인");
+      actions.href="https://github.com/jnscee/phantomhive-maker/actions";
+      actions.target="_blank";
+      actions.rel="noopener noreferrer";
+      $("status").append(actions);
+    }catch(error){
+      progress.textContent=error.message;
+      tokenField.focus();
+    }finally{
+      busy=false;
+      $("publish-close").disabled=$("publish-submit").disabled=false;
+      updateToolbar();
+    }
+  });
   $("editor-note").hidden=false;
   $("export-edits").addEventListener("click",()=>void download("changes"));
   $("export-older").addEventListener("click",()=>void download("older"));

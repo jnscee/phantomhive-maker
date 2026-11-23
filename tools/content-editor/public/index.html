@@ -12,13 +12,14 @@
     <div class="brand"><span class="seal" aria-hidden="true">P</span><div><span class="imprint">EARL PHANTOMHIVE MAKER</span><h1>콘텐츠 편집기</h1></div></div>
     <div class="toolbar">
       <button id="undo" disabled>마지막 적용 되돌리기</button>
+      <button id="publish" hidden disabled>GitHub에 업로드</button>
       <button id="export-edits" hidden>변경 파일 ZIP</button>
       <button id="export-older" hidden>이전 버전 변경 ZIP</button>
       <a id="export" class="button" href="/export.zip">게임 ZIP 받기</a>
       <button class="primary" id="save" disabled>게임 파일에 적용</button>
     </div>
   </header>
-  <p id="editor-note" class="editor-note" hidden>편집 내용은 이 브라우저에 저장됩니다. <a href="https://github.com/jnscee/phantomhive-maker/blob/main/tools/content-editor/README.md#공개-게임-업데이트">공개 게임에 반영하는 방법</a></p>
+  <p id="editor-note" class="editor-note" hidden>편집 내용은 이 브라우저에 저장됩니다. 공개본을 갱신하려면 GitHub에 업로드하세요. <a href="https://github.com/jnscee/phantomhive-maker/blob/main/tools/content-editor/README.md#공개-게임-업데이트">공개 게임에 반영하는 방법</a></p>
   <main class="workspace">
     <aside class="catalog" aria-label="콘텐츠 목록">
       <label class="search">콘텐츠 검색<input id="search" type="search" placeholder="이름, 대사, 이벤트 ID" autocomplete="off"></label>
@@ -41,6 +42,17 @@
   <dialog id="game-dialog">
     <header><h2>게임 미리보기</h2><form method="dialog"><button>닫기</button></form></header>
     <iframe title="팬텀하이브 백작 메이커 테스트 플레이" sandbox="allow-scripts"></iframe>
+  </dialog>
+  <dialog id="publish-dialog" aria-labelledby="publish-title">
+    <form id="publish-form" autocomplete="off">
+      <h2 id="publish-title">GitHub에 업로드</h2>
+      <p id="publish-summary"></p>
+      <label for="github-token">GitHub Fine-grained 토큰</label>
+      <input id="github-token" type="password" autocomplete="off" spellcheck="false" required>
+      <p class="publish-help"><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">GitHub에서 토큰 만들기</a><br>저장소는 jnscee/phantomhive-maker, 권한은 Contents → Read and write를 선택하세요. 토큰은 이번 요청에만 사용합니다.</p>
+      <p id="publish-progress" role="status"></p>
+      <div class="publish-buttons"><button id="publish-close" type="button">취소</button><button id="publish-submit" class="primary" type="submit">공개 게임에 반영</button></div>
+    </form>
   </dialog>
 </body>
 </html>

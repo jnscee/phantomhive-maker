@@ -32,6 +32,8 @@
 
 ## 공개 게임 업데이트
 
-웹에서 수정한 경우 **변경 파일 ZIP**을 풀고 `current` 아래 파일을 [GitHub 저장소의 current 폴더](https://github.com/jnscee/phantomhive-maker/upload/main/current)에 같은 경로로 업로드합니다. 대사는 해당 JavaScript 파일을, 이미지나 음원은 `assets` 폴더 안의 경로를 유지합니다. GitHub에서 변경 사항을 커밋하고 `main`에 반영하면 GitHub Pages가 자동으로 게시합니다.
+웹 편집기에서 **브라우저에 저장 → GitHub에 업로드**를 누르면 저장한 대사와 교체한 리소스가 하나의 커밋으로 반영됩니다. GitHub에서 [Fine-grained 토큰](https://github.com/settings/personal-access-tokens/new)을 만든 뒤 저장소를 `jnscee/phantomhive-maker`로 제한하고 **Contents → Read and write**를 선택합니다. 토큰은 업로드 창에 입력하고 **공개 게임에 반영**을 누릅니다. 편집기는 토큰을 보관하지 않습니다. 업로드 후 **배포 확인**에서 GitHub Pages의 진행 상태를 확인할 수 있습니다.
+
+ZIP으로 수동 반영하려면 **변경 파일 ZIP**을 풀고 `current` 아래 파일을 [GitHub 저장소의 current 폴더](https://github.com/jnscee/phantomhive-maker/upload/main/current)에 같은 경로로 업로드합니다. 대사는 해당 JavaScript 파일을, 이미지나 음원은 `assets` 폴더 안의 경로를 유지합니다. GitHub에서 변경 사항을 커밋하고 `main`에 반영하면 GitHub Pages가 자동으로 게시합니다.
 
 Windows 편집기에서는 **게임 파일에 적용**으로 저장한 `current/` 변경 사항을 GitHub에 커밋합니다. 기존 ChatGPT Sites 주소는 같은 빌드를 별도로 게시합니다.

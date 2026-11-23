@@ -6,13 +6,13 @@ const scope=new URL("./",import.meta.url);
 const gameRoot=new URL("../",scope);
 const urlFor=(name,root=gameRoot)=>new URL(name.split("/").map(encodeURIComponent).join("/"),root);
 
-async function load(url,format){
-  const response=await fetch(url);
+async function load(url,format,options){
+  const response=await fetch(url,options);
   if(!response.ok)throw new Error("게임 파일을 불러오지 못했습니다. "+url.pathname);
   return response[format]();
 }
-const manifest=await load(new URL("manifest.json",scope),"json");
-const {release,files}=manifest;
+const manifest=await load(new URL("manifest.json",scope),"json",{cache:"no-cache"});
+const {release,sourceCommit,files}=manifest;
 const assetNames=files.filter(name=>name.startsWith("assets/"));
 const updatedUrl=name=>new URL("?v="+release,urlFor(name));
 const scripts=files.filter(name=>name.startsWith("js/"));
@@ -131,7 +131,7 @@ export async function api(path,body){
   const current=model();
   if(path==="/api/catalog"){
     const {groups,inventory,version,trackOptions,roomOptions}=current;
-    return {groups,inventory,version,trackOptions,roomOptions,canUndo:Boolean(saved.previous),hasOlder:hasFiles(older)};
+    return {groups,inventory,version,trackOptions,roomOptions,canUndo:Boolean(saved.previous),hasOlder:hasFiles(older),publishCount:sourceCommit?Object.keys(saved.sources).length+Object.keys(saved.media).length:0};
   }
   if(path==="/api/preview")return preview(current,body);
   if(path==="/api/save"){
@@ -171,4 +171,14 @@ export async function exportZip(kind){
   const entries=Object.fromEntries(Object.entries(workspace.sources).map(([name,source])=>["current/"+name,strToU8(source)]));
   for(const [name,blob] of Object.entries(workspace.media))entries["current/"+name]=new Uint8Array(await blob.arrayBuffer());
   return archive(entries,kind==="older"?"phantomhive-previous-changes.zip":"phantomhive-changes.zip");
+}
+
+
+export async function uploadToGitHub(token,onProgress){
+  const {publishChanges}=await import("./github.mjs");
+  const changes=Object.entries(saved.sources).map(([name,value])=>({path:"current/"+name,bytes:strToU8(value)}));
+  for(const [name,blob] of Object.entries(saved.media)){
+    changes.push({path:"current/"+name,bytes:new Uint8Array(await blob.arrayBuffer())});
+  }
+  return publishChanges({token,sourceCommit,changes,onProgress});
 }

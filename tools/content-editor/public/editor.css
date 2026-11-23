@@ -75,3 +75,11 @@ dialog iframe{display:block;width:100%;height:min(77vh,790px);border:0;backgroun
 @media(max-width:750px){.line-options{grid-column:2/-1}}
 
 .editor-note{padding:.5rem 1rem;margin:0;border-bottom:1px solid var(--edge);color:var(--muted);font-size:.85rem}.editor-note a{color:var(--gold)}
+
+#publish-dialog{width:min(460px,calc(100vw - 2rem))}
+#publish-form{display:grid;gap:.8rem;padding:1.35rem}
+#publish-form label{font-weight:650}
+.publish-help,#publish-progress{font-size:.85rem;color:var(--muted)}
+#publish-progress:empty{display:none}
+#publish-dialog a,.statusbar a{color:var(--gold)}
+.publish-buttons{display:flex;justify-content:flex-end;gap:.55rem;flex-wrap:wrap}
