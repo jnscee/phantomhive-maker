@@ -261,6 +261,8 @@ function observePortraitStage(stage){
   const observer=new ResizeObserver(([entry])=>{
     stage.style.setProperty("--portrait-scene-height",entry.contentRect.height+"px");
     stage.style.setProperty("--portrait-scene-width",entry.contentRect.width+"px");
+    const room=stage.querySelector("#playback:not([hidden]) .stage-room");
+    if(room)fitLessonRoom(room);
   });
   observer.observe(stage);
   const toggle=document.getElementById("dialogue-visibility");

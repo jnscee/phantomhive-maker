@@ -20,16 +20,25 @@ function playMarkup(){
     '<div class="stage-top"><b>'+stageNames[room]+'</b><span>'+slotNames[part]+' · '+courseName(id)+(outcome?' · '+outcome:'')+'</span></div>'+
     '<div class="stage-record">'+rows+'</div><div class="stage-foot"><p>'+stageText+'</p><div><button data-action="speed">재생 ×'+speed+'</button><button data-action="skip">이 순 마치기 ›</button></div></div>';
 }
+// Match background-size: cover, using the actual visible room even on the first frame.
+function fitLessonRoom(image){
+  const plane=image.parentElement,view=plane.parentElement.getBoundingClientRect();
+  if(!view.width||!view.height)return;
+  const aspect=image.naturalWidth/image.naturalHeight||(plane.dataset.room==="gym"?1119/630:1.5);
+  const height=Math.max(view.height,view.width/aspect);
+  plane.style.width=(height*aspect)+"px";
+  plane.style.height=height+"px";
+  plane.style.setProperty("--room-aspect",String(aspect));
+  plane.style.setProperty("--visible-width",view.width+"px");
+}
 function startPlayback(resumeAt=0){
   stopPlayback();
   const seq=state.sequence, index=seq.index, turn=state.month;
   const firstDay=index*10+1,lastDay=index===2?new Date(Date.UTC(1886,turn,0)).getUTCDate():firstDay+9;
   const actor=$("playback").querySelector(".performer"),poses=actor.dataset.frames.split(" ");
   const roomImage=actor.parentElement.querySelector(".stage-room");
-  const fitRoom=()=>{
-    if(roomImage.naturalHeight)roomImage.parentElement.style.setProperty("--room-aspect",String(roomImage.naturalWidth/roomImage.naturalHeight));
-  };
-  if(roomImage.complete)fitRoom();else roomImage.addEventListener("load",fitRoom,{once:true});
+  fitLessonRoom(roomImage);
+  if(!roomImage.complete)roomImage.addEventListener("load",()=>fitLessonRoom(roomImage),{once:true});
   const custom=illustratedActivities.includes((seq.activity||state.plan[index]));
   const frameMs=custom?((seq.activity||state.plan[index])==="exercise"?260:(seq.activity||state.plan[index])==="recovery"?950:460):
     poses[0]==="trot1"?180:poses.includes("step1")?280:poses[0]==="bowOut"?390:800;

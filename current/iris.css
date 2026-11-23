@@ -1155,7 +1155,7 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
 .lesson-plane > img.stage-room { display:block; width:100%; height:100%; object-fit:cover; object-position:center; }
 .lesson-plane .performer {
   --side:calc(25.5% / var(--room-aspect));
-  --edge:calc((100% - 100cqw) / 2 + var(--side) * .68);
+  --edge:calc((100% - var(--visible-width,100cqw)) / 2 + var(--side) * .68);
   width:var(--side); height:25.5%;
   left:clamp(var(--edge),var(--foot-x),calc(100% - var(--edge))); bottom:calc(100% - var(--foot-y));
   translate:-50% 0; transform-origin:50% 100%;
@@ -1709,4 +1709,8 @@ html[data-game-motion=reduced] :is(.company-worker img,.duty-walker,.duty-walker
 @media(max-width:599px) and (orientation:portrait) {
   .game-frame:has(#scene[data-story=true]) #system-menu:has(> #dialogue-visibility) { grid-template-columns:repeat(4,minmax(0,1fr)); }
   #system-menu > #dialogue-visibility { grid-column:span 2; }
+}
+
+@media(min-width:600px) and (max-width:960px) and (orientation:portrait), (max-width:700px) and (orientation:landscape) and (pointer:coarse) {
+  .game-frame:has(#scene[data-story=true]) #system-menu:has(> #dialogue-visibility) {grid-template-columns:repeat(7,minmax(0,1fr))}
 }
