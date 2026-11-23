@@ -38,9 +38,11 @@ const dependencies=[
   ["acorn/dist/acorn.mjs","acorn.mjs"],
   ["acorn/LICENSE","acorn-LICENSE"],
   ["fflate/esm/browser.js","fflate.mjs"],
-  ["fflate/LICENSE","fflate-LICENSE"]
+  ["fflate/LICENSE","fflate-LICENSE"],
+  ["diff/LICENSE","jsdiff-LICENSE"]
 ];
 for(const [file,target] of dependencies) await cp(path.join(source,"node_modules",file),path.join(editor,target));
+await cp(path.join(source,"node_modules/diff/libesm"),path.join(editor,"jsdiff"),{recursive:true,filter:file=>!file.includes(".d.ts")});
 const catalog=(await readFile(path.join(source,"catalog.mjs"),"utf8")).replace('from "acorn"','from "./acorn.mjs"')
   .replace('"./public/story-routes.mjs"','"./story-routes.mjs?v='+uiVersion+'"');
 await writeFile(path.join(editor,"catalog.mjs"),catalog);

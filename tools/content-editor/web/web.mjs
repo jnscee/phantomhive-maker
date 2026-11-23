@@ -133,6 +133,66 @@ export function assetUrl(filename){
   return mediaUrls.get(filename);
 }
 
+// Compare the distributable contents with the original release, including earlier browser saves.
+export async function review(body){
+  const update=edits(model(),body);
+  const proposed=catalog({...original,...update.sources},[...new Set([...assetNames,...Object.keys(update.media)])]);
+  const issues=new Set();
+  function resource(path,location){
+    if(path&&!proposed.assetSet.has(path))issues.add(location+" · 리소스 없음 · "+path);
+  }
+  for(const group of proposed.groups){
+    resource(group.asset,group.title);
+    for(const field of group.fields){
+      const v=field.value;
+      if(field.paths||field.type==="image"||field.type==="audio")resource(v,group.title);
+      if(field.type==="prologue")resource("assets/prologue/"+v+".webp",group.title);
+      if(field.type==="cast"){
+        for(const actor of v){
+          const path=proposed.inventory.standing[actor];
+          if(path)resource(path,group.title);else issues.add(group.title+" · 등장인물 참조 없음 · "+actor);
+        }
+      }
+      const map=proposed.inventory[field.type==="cue"?"track":field.media];
+      if(map&&v){
+        if(!Object.hasOwn(map,v))issues.add(group.title+" · "+field.label+" 참조 없음 · "+v);
+        else resource(map[v],group.title);
+      }
+      if(field.type==="lines"||field.type==="choices"){
+        const lists=field.type==="lines"?[v]:v.map(choice=>choice[4]??[]);
+        for(const lines of lists)lines.forEach(([,,art,cue],index)=>{
+          const where=group.title+" · "+(index+1)+"번 대사";
+          const refs=cue??{};
+          for(const [key,id] of [["ending",refs.cg||(field.metadata==="illustration"&&art)],["track",refs.bgm],
+            ["standing",refs.left||refs.standing],["standing",refs.right]]){
+            if(!id)continue;
+            const path=proposed.inventory[key]?.[id];
+            if(path)resource(path,where);else issues.add(where+" · 참조 없음 · "+id);
+          }
+          for(const side of ["left","right"]){
+            const id=refs[side+"Expression"];if(!id)continue;
+            const exp=proposed.cueFields.expressions[id];
+            if(!exp||exp.actor!==refs[side])issues.add(where+" · 표정 참조 확인 · "+id);
+            else resource(exp.file,where);
+          }
+          resource(refs.se,where);
+        });
+      }
+    }
+  }
+  const scenes=proposed.groups.filter(g=>["event","visit"].includes(g.preview?.kind)).map(g=>({
+    id:g.preview.id,linked:g.fields.some(f=>f.trigger&&f.value===0),choices:g.fields.find(f=>f.type==="choices")?.value??[]
+  }));
+  for(const issue of inspectRoutes(scenes))issues.add(issue.id+" · "+issue.message);
+  const {structuredPatch}=await import("./jsdiff/patch/create.js");
+  const changes=Object.entries(update.sources).map(([name,source])=>{
+    const path="current/"+name;
+    return {path,hunks:structuredPatch(path,path,original[name],source,undefined,undefined,{context:2}).hunks};
+  });
+  for(const [path,blob] of Object.entries(update.media))changes.push({path:"current/"+path,bytes:blob.size});
+  return {issues:[...issues],changes};
+}
+
 export async function api(path,body){
   const current=model();
   if(path==="/api/catalog"){

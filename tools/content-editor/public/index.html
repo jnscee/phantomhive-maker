@@ -13,6 +13,7 @@
     <div class="brand"><span class="seal" aria-hidden="true">P</span><div><span class="imprint">EARL PHANTOMHIVE MAKER</span><h1>콘텐츠 편집기</h1></div></div>
     <div class="toolbar">
       <button id="add-content" type="button" hidden disabled>＋ 콘텐츠 추가</button>
+      <button id="review" type="button" hidden disabled>변경 비교 · 검사</button>
       <details class="more-actions">
         <summary>파일 관리</summary>
         <div class="more-menu">
@@ -61,6 +62,10 @@
     <p id="status" role="status">게임 파일을 읽는 중입니다.</p>
     <div><button id="discard" disabled>수정 취소</button><span id="pending">변경 0건</span></div>
   </footer>
+  <dialog id="review-dialog" aria-labelledby="review-title">
+    <header><h2 id="review-title">변경 비교 · 검사</h2><form method="dialog"><button>닫기</button></form></header>
+    <div id="review-content"></div>
+  </dialog>
   <dialog id="game-dialog">
     <header><h2>게임 미리보기</h2><form method="dialog"><button>닫기</button></form></header>
     <iframe title="팬텀하이브 백작 메이커 테스트 플레이" sandbox="allow-scripts"></iframe>

@@ -16,6 +16,26 @@ module.exports=async function checkStoryFlow(browser,base){
   const saved=()=>page.getByText("이 브라우저에 저장했습니다.",{exact:true}).waitFor();
   try{
     await page.goto(new URL("editor/",base).href);
+    // Moving a dialogue must carry its direction, even across several cards and in a narrow layout.
+    await button("2번 대사 앞에 삽입").click();
+    await label("2번 대사").fill("순서를 확인합니다.");
+    await page.getByText("2번 대사 연출",{exact:true}).click();
+    await label("왼쪽 스탠딩").selectOption("seb");
+    await label("배경 음악").selectOption("romantic");
+    await label("2번 대사").press("Alt+ArrowDown");
+    assert.equal(await label("3번 대사").inputValue(),"순서를 확인합니다.");
+    await page.setViewportSize({width:390,height:844});
+    await button("3번 대사 위치 선택").click();
+    await label("옮길 위치").selectOption({index:0});
+    await button("이 위치로 이동").click();
+    assert.equal(await label("1번 대사").inputValue(),"순서를 확인합니다.");
+    await button("변경 비교 · 검사").click();
+    await page.getByText("current/prologue.js",{exact:true}).waitFor();
+    const diff=await page.locator(".diff-add").allTextContents();
+    assert(diff.some(line=>line.includes("순서를 확인합니다.")&&line.includes('"left":"seb"')&&line.includes('"bgm":"romantic"')));
+    await button("닫기").click();
+    await button("수정 취소").click();
+    await page.setViewportSize(viewport);
     await button("＋ 콘텐츠 추가").click();
     await page.locator("#add-kind").selectOption("expression");
     await label("표정을 사용할 인물").selectOption("soma");

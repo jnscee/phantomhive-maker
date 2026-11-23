@@ -57,6 +57,34 @@ function drawStoryFlow(panel,group){
   const fieldCard=(field,label,kind="dialogue")=>flowCard(kind,label,fieldText(field)||"내용 입력",()=>focusFlowField(group,field));
   function dialogue(field,lines,choice){
     const list=node("ol",undefined,"flow-lines");
+    const key=field.id+"/"+(choice??"main");
+    list.dataset.flowLines=key;
+    function save(next){
+      if(choice===undefined)modify(field,next);
+      else{
+        const updated=structuredClone(value(field));
+        updated[choice][4]=next;
+        modify(field,updated);
+      }
+    }
+    function insert(at){
+      if(lines.length>=250)return;
+      const next=lines.slice();
+      next.splice(at,0,["",""]);save(next);
+      focusFlowField(group,field,{index:at,choice,branch:choice!==undefined});
+      status((at+1)+"번째에 대사를 추가했습니다.");
+    }
+    function move(from,to){
+      if(from===to)return;
+      const next=lines.slice();
+      next.splice(to,0,next.splice(from,1)[0]);save(next);
+      drawDesk();
+      const fresh=Array.from(panel.querySelectorAll("[data-flow-lines]")).find(item=>item.dataset.flowLines===key);
+      const target=fresh?.children[to]?.querySelector(".flow-card");
+      for(let el=target;el;el=el.parentElement)if(el.tagName==="DETAILS")el.open=true;
+      target?.focus({preventScroll:true});target?.scrollIntoView({block:"nearest"});
+      status((from+1)+"번 대사를 "+(to+1)+"번째로 옮겼습니다.");
+    }
     lines.forEach(([who,text,metadata,cue],index)=>{
       const speaker=who?.trim();
       const name=speaker&&speaker!=="장면"?speaker:"내레이션";
@@ -72,7 +100,19 @@ function drawStoryFlow(panel,group){
       if(cue?.se)tags.push("효과음");
       if(cue?.fx)tags.push("화면 전환");
       if(tags.length)card.append(node("em",tags.join(" · ")));
-      row.append(card);list.append(row);
+      const tools=node("div",undefined,"flow-row-tools");
+      const grip=button("⠿ 이동",()=>chooseLinePosition(lines,index,move),"line-grip");
+      grip.setAttribute("aria-label",(index+1)+"번 대사 위치 선택");
+      lineDrop(list,row,grip,index,move);
+      tools.append(grip);
+      function addAt(at,label){
+        const add=button(label,()=>insert(at));
+        add.disabled=lines.length>=250;
+        tools.append(add);
+      }
+      if(index===0)addAt(0,"＋ 맨 앞");
+      addAt(index+1,"＋ 다음 대사");
+      row.append(card,tools);list.append(row);
     });
     return list;
   }
@@ -120,6 +160,7 @@ function drawStoryFlow(panel,group){
     const sequence=dialogue(mainLines,lines);
     if(lines.length>4){
       const fold=node("details",undefined,"flow-fold");
+      fold.open=true;
       fold.append(node("summary","장면 대사 "+lines.length+"줄 · "+(lines[0][1]||"대사 입력")),sequence);
       trunk.append(fold);
     }else trunk.append(sequence);

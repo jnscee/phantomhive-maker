@@ -53,6 +53,7 @@ function updateToolbar() {
   });
   $("save").disabled=busy||!draftCount();
   $("discard").disabled=busy||!draftCount();
+  $("review").disabled=busy||!data;
   $("undo").disabled=busy||!data?.canUndo||Boolean(draftCount());
   $("preview").disabled=busy||!data||Boolean(deleteEvent);
   $("add-content").disabled=busy||!data||Boolean(newEvent);
@@ -162,52 +163,257 @@ function assetPreview(filename, target) {
   target.append(media,node("small",filename),actions,upload);
 }
 
+function lineDrop(body,row,grip,index,move) {
+  let pointer=null,originX,originY,x,y,dragged=false,frame,marked=null,to=index;
+  let scrollArea;
+  function clearMark(){
+    if(marked)delete marked.dataset.drop;
+    marked=null;to=index;
+  }
+  function indicate(){
+    clearMark();
+    const bounds=body.getBoundingClientRect();
+    if(x<bounds.left-12||x>bounds.right+12||y<bounds.top-18||y>bounds.bottom+18)return;
+    const rows=body.children;
+    let low=0,high=rows.length;
+    while(low<high){
+      const mid=(low+high)>>>1;
+      const rect=rows[mid].getBoundingClientRect();
+      if(y<rect.top+rect.height/2)high=mid;else low=mid+1;
+    }
+    const slot=low;
+    to=slot>index?slot-1:slot;
+    if(to===index)return;
+    marked=rows[Math.min(slot,rows.length-1)];
+    marked.dataset.drop=slot===rows.length?"after":"before";
+  }
+  function scroll(){
+    const rect=scrollArea?.getBoundingClientRect();
+    const top=Math.max(0,rect?.top??0),bottom=Math.min(innerHeight,rect?.bottom??innerHeight);
+    const speed=y<top+56?-Math.ceil((top+56-y)/4):y>bottom-56?Math.ceil((y-bottom+56)/4):0;
+    if(speed){
+      (scrollArea??window).scrollBy(0,Math.max(-22,Math.min(22,speed)));
+      indicate();
+    }
+    frame=requestAnimationFrame(scroll);
+  }
+  grip.addEventListener("pointerdown",event=>{
+    if(!event.isPrimary||event.button!==0)return;
+    pointer=event.pointerId;originX=x=event.clientX;originY=y=event.clientY;
+    dragged=false;to=index;scrollArea=body.closest("dialog[open]");
+    grip.setPointerCapture(pointer);
+  });
+  grip.addEventListener("pointermove",event=>{
+    if(event.pointerId!==pointer)return;
+    x=event.clientX;y=event.clientY;
+    if(!dragged){
+      if(Math.hypot(x-originX,y-originY)<6)return;
+      dragged=true;row.classList.add("dragging");frame=requestAnimationFrame(scroll);
+    }
+    indicate();
+  });
+  function finish(event){
+    if(event.pointerId!==pointer)return;
+    pointer=null;cancelAnimationFrame(frame);
+    const target=to;
+    row.classList.remove("dragging");clearMark();
+    if(event.type==="pointerup"&&dragged)move(index,target);
+  }
+  grip.addEventListener("pointerup",finish);
+  grip.addEventListener("pointercancel",finish);
+  grip.addEventListener("lostpointercapture",finish);
+  grip.addEventListener("click",event=>{
+    if(dragged&&event.detail){event.preventDefault();event.stopImmediatePropagation();}
+    dragged=false;
+  },true);
+}
+
+function chooseLinePosition(lines,index,move) {
+  const dialog=node("dialog",undefined,"line-position");
+  const form=node("form");
+  const title=node("h2",(index+1)+"번 대사 이동");
+  dialog.setAttribute("aria-label",title.textContent);
+  const target=labeled(form,"옮길 위치",node("select"));
+  const options=document.createDocumentFragment();
+  lines.forEach(([who,line],i)=>{
+    const option=node("option",(i+1)+"번째 · "+(who||"내레이션")+" · "+line.slice(0,32));
+    option.value=String(i);
+    options.append(option);
+  });
+  target.append(options);target.value=String(index);
+  const actions=node("div",undefined,"publish-buttons");
+  const submit=node("button","이 위치로 이동","primary");
+  submit.type="submit";
+  actions.append(button("취소",()=>dialog.close()),submit);
+  form.prepend(title);form.append(actions);dialog.append(form);
+  document.body.append(dialog);
+  form.addEventListener("submit",event=>{
+    event.preventDefault();
+    const to=Number(target.value);
+    dialog.close();move(index,to);
+  });
+  dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+  dialog.showModal();target.focus();
+}
+
+// A small stage for the assets assigned in the editor. The game preview still runs the scene logic.
+function lineStage(group,field) {
+  const panel=node("aside",undefined,"line-stage");
+  const heading=node("h3");
+  const frame=node("div",undefined,"stage-frame");
+  const background=node("img",undefined,"stage-bg");
+  const left=node("img",undefined,"stage-left"),right=node("img",undefined,"stage-right");
+  const box=node("div",undefined,"stage-dialogue"),who=node("strong"),text=node("p");
+  const sound=node("p",undefined,"stage-sound"),audio=node("audio");
+  audio.controls=true;audio.preload="none";
+  background.alt="장면 배경 또는 CG";left.alt="왼쪽 스탠딩";right.alt="오른쪽 스탠딩";
+  box.append(who,text);frame.append(background,left,right,box);
+  panel.append(heading,frame,sound,audio);
+  function source(element,path){
+    const cached=path||"";
+    if(element.dataset.path===cached)return;
+    element.dataset.path=cached;element.hidden=!path;
+    if(!path){element.removeAttribute("src");return;}
+    if(assetUrls.has(path))element.src=assetUrls.get(path);
+    else if(isWeb)void web.then(adapter=>{
+      if(element.dataset.path===cached)element.src=adapter.assetUrl(path);
+    }).catch(error=>{if(element.dataset.path===cached)status(error.message,true);});
+    else element.src="/media/"+path.split("/").map(encodeURIComponent).join("/")+"?v="+encodeURIComponent(data.version);
+  }
+  const find=(test)=>group.fields.find(test);
+  const art=find(f=>f.media==="ending"||f.type==="prologue");
+  const room=find(f=>["recruitArt","room"].includes(f.media));
+  const music=find(f=>f.media==="track")??find(f=>f.type==="cue");
+  const cast=find(f=>f.type==="cast"),single=find(f=>f.media==="standing");
+  const scene=group.preview;
+  const eventCue=scene&&data.groups.find(g=>g.preview?.kind==="event"&&g.preview.id===scene.id)?.fields.find(f=>f.type==="cue");
+  const fallbackTrack=scene?.kind==="opening"?"prologue":scene?.kind==="recruit"?(eventCue&&value(eventCue))||(scene.id==="maid"?"gloomy":"daily"):null;
+  function draw(row,index,total){
+    const [name,line,legacy,cue={}]=row;
+    heading.textContent="현재 컷 · "+(index+1)+" / "+total;
+    who.textContent=name;who.hidden=!name||name==="장면";text.textContent=line||"대사를 입력하세요.";
+    const cg=cue.cg||(field.metadata==="illustration"&&(legacy||field.defaultArt));
+    const bg=(cg&&data.inventory.ending[cg])||(art&&value(art)&&getAsset(art,value(art)))||(room&&getAsset(room,value(room)));
+    source(background,bg);
+    const base=cast?value(cast):single?[value(single)].filter(Boolean):[];
+    let actors=[cue.left||cue.standing,cue.right];
+    if(!actors.some(Boolean)&&base.length){
+      actors=[];
+      base.forEach((id,i)=>actors[id==="ciel"?1:base.includes("ciel")||i===0?0:1]=id);
+    }
+    [left,right].forEach((el,i)=>{
+      const expr=field.cues?.expressions?.[cue[(i===0?"left":"right")+"Expression"]];
+      const path=expr&&expr.actor===actors[i]?expr.file:data.inventory.standing[actors[i]];
+      source(el,cue.hideCast?null:path);
+    });
+    const track=cue.bgm||(music&&value(music))||fallbackTrack;
+    sound.textContent="BGM · "+(data.trackOptions.find(([id])=>id===track)?.[1]||"게임 기본 음악");
+    source(audio,track&&getAsset({media:"track"},track));
+  }
+  return {panel,draw};
+}
+
 function linesEditor(parent,initial,onChange,field={}) {
-  let list=structuredClone(initial);
-  const body=node("div");
-  const add=button("＋ 대사 추가",()=>{
-    list.push(["",""]);
-    draw();
-    body.lastElementChild.querySelector("input").focus();
-    onChange(list);
-  },"add-line");
-  function draw() {
+  const list=structuredClone(initial);
+  const body=node("div",undefined,"dialogue-stack");
+  const layout=node("div",undefined,"dialogue-layout");
+  const toolbar=node("div",undefined,"dialogue-toolbar");
+  const total=node("strong");
+  const stage=field.id?lineStage(currentGroup(),field):null;
+  let selectedIndex=0;
+  const add=button("＋ 대사 추가",()=>insert(selectedIndex+1),"add-line");
+  add.title="선택한 대사 다음에 추가 (Ctrl+Enter)";
+  const names=node("datalist");
+  names.id="speakers-"+crypto.randomUUID();
+  for(const name of new Set([...data.recruitCastOptions.map(([,name])=>name),...list.map(line=>line[0])].filter(Boolean))){
+    const option=node("option");option.value=name;names.append(option);
+  }
+  toolbar.append(total,add,names);
+  layout.append(body);
+  if(stage){layout.classList.add("has-stage");layout.append(stage.panel);}
+  parent.append(toolbar,layout);
+  const opened=new WeakSet();
+  function selectLine(index){
+    body.children[selectedIndex]?.classList.remove("is-selected");
+    selectedIndex=index;
+    body.children[index]?.classList.add("is-selected");
+    if(list[index])stage?.draw(list[index],index,list.length);
+  }
+  function commit(index,message){
+    onChange(list);draw(index);
+    const target=body.children[index]?.querySelector("textarea");
+    target?.focus({preventScroll:true});
+    target?.scrollIntoView({block:"nearest",inline:"nearest"});
+    status(message);
+  }
+  function insert(index){
+    if(list.length>=250){status("한 장면에는 대사를 250줄까지 넣을 수 있습니다.",true);return;}
+    list.splice(index,0,["",""]);
+    commit(index,(index+1)+"번째에 대사를 추가했습니다.");
+  }
+  function move(from,to){
+    if(to<0||to>=list.length||from===to)return;
+    list.splice(to,0,list.splice(from,1)[0]);
+    commit(to,(from+1)+"번 대사를 "+(to+1)+"번째로 옮겼습니다.");
+  }
+  function draw(indexToSelect=0) {
     body.replaceChildren();
+    total.textContent="대사 "+list.length+"줄";
+    add.disabled=list.length>=250;
     list.forEach(([who,text,metadata,cue],index)=>{
-      const row=node("div",undefined,"line");
+      const row=node("div",undefined,"line dialogue-card");
       const speaker=node("input");
       speaker.value=who;
       speaker.placeholder="화자 없음";
+      speaker.setAttribute("list",names.id);
       speaker.setAttribute("aria-label",(index+1)+"번 화자");
-      speaker.addEventListener("input",()=>{list[index][0]=speaker.value;onChange(list);});
+      function update(){
+        onChange(list);
+        if(index===selectedIndex)stage?.draw(list[index],index,list.length);
+      }
+      speaker.addEventListener("input",()=>{list[index][0]=speaker.value;update();});
       const line=node("textarea");
       line.value=text;
+      line.placeholder="대사 입력";
       line.rows=2;
       line.required=Boolean(field.required);
       line.setAttribute("aria-label",(index+1)+"번 대사");
-      line.addEventListener("input",()=>{list[index][1]=line.value;onChange(list);});
+      line.addEventListener("input",()=>{list[index][1]=line.value;update();});
+      const head=node("div",undefined,"dialogue-card-head");
+      const grip=button("⠿ 이동",()=>chooseLinePosition(list,index,move),"line-grip");
+      grip.title="끌어서 옮기기 · 눌러서 위치 선택";
+      grip.setAttribute("aria-label",(index+1)+"번 대사 위치 선택");
+      lineDrop(body,row,grip,index,move);
+      const order=node("span",String(index+1).padStart(2,"0"),"line-order");
       const actions=node("div",undefined,"line-actions");
-      function move(offset) {
-        const next=index+offset;
-        [list[index],list[next]]=[list[next],list[index]];
-        onChange(list);draw();
-        body.children[next].querySelector("input").focus();
-      }
-      const up=button("↑",()=>move(-1));
+      const up=button("↑",()=>move(index,index-1));
       up.disabled=index===0;
       up.setAttribute("aria-label",(index+1)+"번 대사 위로");
-      const down=button("↓",()=>move(1));
+      const down=button("↓",()=>move(index,index+1));
       down.disabled=index===list.length-1;
       down.setAttribute("aria-label",(index+1)+"번 대사 아래로");
       const remove=button("삭제",()=>{
         list.splice(index,1);
-        onChange(list);draw();
-        body.children[Math.min(index,list.length-1)].querySelector("input").focus();
+        commit(Math.min(index,list.length-1),(index+1)+"번 대사를 삭제했습니다.");
       });
       remove.disabled=list.length===1;
       remove.setAttribute("aria-label",(index+1)+"번 대사 삭제");
       actions.append(up,down,remove);
-      row.append(node("span",String(index+1),"line-num"),speaker,line,actions);
+      head.append(grip,order,speaker,actions);
+      row.addEventListener("focusin",()=>selectLine(index));
+      row.addEventListener("pointerdown",()=>selectLine(index));
+      row.addEventListener("keydown",event=>{
+        if(event.isComposing||event.keyCode===229)return;
+        if((event.ctrlKey||event.metaKey)&&event.key==="Enter"){
+          event.preventDefault();insert(index+1);
+        }else if(event.altKey&&["ArrowUp","ArrowDown"].includes(event.key)){
+          event.preventDefault();move(index,index+(event.key==="ArrowUp"?-1:1));
+        }
+      });
+      const before=button("＋ 대사 삽입",()=>insert(index),"insert-between");
+      before.setAttribute("aria-label",(index+1)+"번 대사 앞에 삽입");
+      before.disabled=add.disabled;
+      row.append(before,head,line);
       if(field.metadata==="illustration") {
         const image=select([["","대표 CG"],...field.artOptions],metadata??"");
         image.setAttribute("aria-label",(index+1)+"번 대사의 CG");
@@ -215,15 +421,16 @@ function linesEditor(parent,initial,onChange,field={}) {
           if(image.value) list[index][2]=image.value;
           else if(list[index][3])list[index][2]=null;
           else list[index].length=2;
-          onChange(list);
+          update();
         });
         const media=node("div",undefined,"asset-preview line-media");
         function drawCG(){assetPreview(data.inventory.ending[image.value||field.defaultArt],media);}
         image.addEventListener("input",drawCG);
-        drawCG();
+        // Load the CG only when its controls are opened.
         const details=node("details",undefined,"line-options");
         details.append(node("summary","CG · "+(field.artOptions.find(([id])=>id===metadata)?.[1]??"대표 CG")),image,media);
         image.addEventListener("input",()=>{details.firstChild.textContent="CG · "+image.selectedOptions[0].textContent;});
+        details.addEventListener("toggle",()=>{if(details.open&&!media.childElementCount)drawCG();});
         row.append(details);
       }
       if(field.metadata==="tanaka" && (metadata!==undefined || field.hasTanaka)) {
@@ -235,23 +442,33 @@ function linesEditor(parent,initial,onChange,field={}) {
           if(toggle.checked) list[index][2]=true;
           else if(list[index][3])list[index][2]=null;
           else list[index].length=2;
-          onChange(list);
+          update();
         });
         option.prepend(toggle);
         row.append(option);
       }
-      if(isWeb&&field.cues)row.append(cueEditor(index,cue,field,updated=>{
-        const line=list[index];
-        const legacy=line[2];
-        line.length=2;
-        if(Object.keys(updated).length)line.push(legacy??null,updated);
-        else if(legacy!=null)line.push(legacy);
-        onChange(list);
-      }));
+      if(isWeb&&field.cues){
+        const settings=cueEditor(index,cue,field,updated=>{
+          const line=list[index];
+          const legacy=line[2];
+          line.length=2;
+          if(Object.keys(updated).length)line.push(legacy??null,updated);
+          else if(legacy!=null)line.push(legacy);
+          update();
+        });
+        const item=list[index];
+        settings.open=opened.has(item);
+        settings.addEventListener("toggle",()=>{if(settings.open)opened.add(item);else opened.delete(item);});
+        row.append(settings);
+      }
+      if(index===list.length-1){
+        const after=button("＋ 마지막에 대사 추가",()=>insert(list.length),"insert-last");
+        after.disabled=add.disabled;row.append(after);
+      }
       body.append(row);
     });
+    selectLine(indexToSelect);
   }
-  parent.append(add,body);
   draw();
 }
 
@@ -272,48 +489,51 @@ function cueEditor(index,initial,field,onChange){
     updateSummary();
     onChange({...cue});
   }
-  for(const [key,label,empty] of [
-    ["fx","화면 전환","기본"],["cg","CG 교체","장면 기본"],["bgm","배경 음악","장면 기본"],["se","효과음","없음"]
-  ]){
-    if(key==="cg"&&field.metadata==="illustration")continue;
-    const control=labeled(form,label,select([["",empty],...field.cues[key]],cue[key]??""));
-    control.addEventListener("input",()=>set(key,control.value));
-  }
-  if(!field.manual){
-    const wait=labeled(form,"자동 재생 추가 대기 (초)",node("input"));
-    wait.type="number";wait.min="0";wait.max="10";wait.step=".1";wait.value=(cue.wait??0)/1000;
-    wait.addEventListener("change",()=>{
-      const seconds=Math.min(10,Math.max(0,wait.valueAsNumber||0));
-      wait.value=seconds;
-      set("wait",Math.round(seconds*1000));
-    });
-  }
-  for(const [side,label] of [["left","왼쪽 스탠딩"],["right","오른쪽 스탠딩"]]){
-    const current=cue[side]??(side==="left"?cue.standing:"")??"";
-    const standing=labeled(form,label,select([["","미지정"],...field.cues.standing],current));
-    const expression=labeled(form,(side==="left"?"왼쪽":"오른쪽")+" 표정",node("select"));
-    function showExpressions(){
-      const options=[["","기본 표정"],...Object.entries(field.cues.expressions??{})
-        .filter(([,item])=>item.actor===standing.value).map(([id,item])=>[id,item.name])];
-      expression.replaceChildren(...Array.from(select(options,cue[side+"Expression"]??"").options));
-      expression.value=cue[side+"Expression"]??"";
-      expression.disabled=options.length===1;
+  panel.addEventListener("toggle",()=>{
+    if(!panel.open||form.childElementCount)return;
+    for(const [key,label,empty] of [
+      ["fx","화면 전환","기본"],["cg","CG 교체","장면 기본"],["bgm","배경 음악","장면 기본"],["se","효과음","없음"]
+    ]){
+      if(key==="cg"&&field.metadata==="illustration")continue;
+      const control=labeled(form,label,select([["",empty],...field.cues[key]],cue[key]??""));
+      control.addEventListener("input",()=>set(key,control.value));
     }
-    showExpressions();
-    expression.addEventListener("input",()=>set(side+"Expression",expression.value));
-    standing.addEventListener("input",()=>{
-      delete cue[side+"Expression"];
-      showExpressions();
-      if(cue.standing){
-        if(side==="right")cue.left=cue.standing;
-        delete cue.standing;
+    if(!field.manual){
+      const wait=labeled(form,"자동 재생 추가 대기 (초)",node("input"));
+      wait.type="number";wait.min="0";wait.max="10";wait.step=".1";wait.value=(cue.wait??0)/1000;
+      wait.addEventListener("change",()=>{
+        const seconds=Math.min(10,Math.max(0,wait.valueAsNumber||0));
+        wait.value=seconds;
+        set("wait",Math.round(seconds*1000));
+      });
+    }
+    for(const [side,label] of [["left","왼쪽 스탠딩"],["right","오른쪽 스탠딩"]]){
+      const current=cue[side]??(side==="left"?cue.standing:"")??"";
+      const standing=labeled(form,label,select([["","미지정"],...field.cues.standing],current));
+      const expression=labeled(form,(side==="left"?"왼쪽":"오른쪽")+" 표정",node("select"));
+      function showExpressions(){
+        const options=[["","기본 표정"],...Object.entries(field.cues.expressions??{})
+          .filter(([,item])=>item.actor===standing.value).map(([id,item])=>[id,item.name])];
+        expression.replaceChildren(...Array.from(select(options,cue[side+"Expression"]??"").options));
+        expression.value=cue[side+"Expression"]??"";
+        expression.disabled=options.length===1;
       }
-      set(side,standing.value);
-    });
-  }
-  const hide=labeled(form,"스탠딩 숨기기",node("input"));
-  hide.type="checkbox";hide.checked=Boolean(cue.hideCast);
-  hide.addEventListener("change",()=>set("hideCast",hide.checked));
+      showExpressions();
+      expression.addEventListener("input",()=>set(side+"Expression",expression.value));
+      standing.addEventListener("input",()=>{
+        delete cue[side+"Expression"];
+        showExpressions();
+        if(cue.standing){
+          if(side==="right")cue.left=cue.standing;
+          delete cue.standing;
+        }
+        set(side,standing.value);
+      });
+    }
+    const hide=labeled(form,"스탠딩 숨기기",node("input"));
+    hide.type="checkbox";hide.checked=Boolean(cue.hideCast);
+    hide.addEventListener("change",()=>set("hideCast",hide.checked));
+  });
   updateSummary();
   return panel;
 }
@@ -430,7 +650,9 @@ function choicesEditor(parent,field,initial){
             linesEditor(body,choice[4],lines=>{choice[4]=structuredClone(lines);save();},
               {cues:field.cues,manual:true});
             body.append(button("후속 장면 비우기",()=>{if(choice[5])choice[4]=null;else choice.length=4;save();drawBranch();}));
-          }else body.append(button("＋ 후속 장면 대사 추가",()=>{choice[4]=[["",""]];save();drawBranch();}));
+          }else body.append(button("＋ 후속 장면 대사 추가",()=>{
+            choice[4]=[["",""]];save();drawBranch();body.querySelector("textarea")?.focus();
+          }));
         };
         drawBranch();
         branch.append(body);
@@ -908,6 +1130,35 @@ if(isWeb){
       $("add-close").disabled=$("add-submit").disabled=addKind.disabled=false;
       updateToolbar();
     }
+  });
+  $("review").hidden=false;
+  $("review").addEventListener("click",async()=>{
+    const dialog=$("review-dialog"),body=$("review-content");
+    body.replaceChildren(node("p","원본과 비교하고 있습니다."));
+    dialog.showModal();
+    try{
+      const report=await (await web).review(payload());
+      body.replaceChildren(node("h3","리소스 경로 · 이벤트 연결"));
+      if(report.issues.length){
+        const issues=node("ul");
+        for(const issue of report.issues)issues.append(node("li",issue));
+        body.append(issues);
+      }else body.append(node("p","등록된 리소스와 이벤트 연결에서 문제를 찾지 못했습니다."));
+      body.append(node("h3","원본과 다른 파일 "+report.changes.length+"개"));
+      for(const file of report.changes){
+        const block=node("details",undefined,"file-diff");block.open=report.changes.length===1;
+        block.append(node("summary",file.path));
+        if(file.hunks){
+          for(const hunk of file.hunks){
+            const pre=node("pre");
+            pre.append(node("span","원본 "+hunk.oldStart+"행 · 수정 "+hunk.newStart+"행","diff-at"));
+            for(const line of hunk.lines)pre.append(node("span",line,line.startsWith("+")?"diff-add":line.startsWith("-")?"diff-del":""));
+            block.append(pre);
+          }
+        }else block.append(node("p","리소스 파일 · "+file.bytes.toLocaleString()+"바이트"));
+        body.append(block);
+      }
+    }catch(error){body.replaceChildren(node("p","검사를 마치려면 다음 내용을 확인해 주세요."),node("p",error.message,"danger"));}
   });
   $("save").textContent="브라우저에 저장";
   $("undo").textContent="마지막 저장 되돌리기";

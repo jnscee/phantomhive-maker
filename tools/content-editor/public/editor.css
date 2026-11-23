@@ -232,3 +232,73 @@ dialog iframe { display: block; width: 100%; height: min(77dvh, 790px); border: 
 .map-node button:hover,.map-node [aria-current] {background:#40382e;color:var(--gold)}
 .map-node button:focus-visible {outline-offset:-3px}
 .map-node .map-port {color:var(--gold);border-top:1px solid var(--edge);font-size:.85rem;text-align:right}
+
+/* Dialogue cards share their order and staging with the game source. */
+.dialogue-toolbar {display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+.dialogue-toolbar strong,.line-order {color:var(--gold);font-variant-numeric:tabular-nums}
+.dialogue-layout {display:grid;align-items:start;gap:1rem;min-width:0}
+.dialogue-stack {min-width:0}
+.dialogue-card.line {display:flex;flex-direction:column;align-items:stretch;position:relative;gap:.45rem;min-width:0;margin:.95rem 0 0;padding:.75rem;background:#262630;border:1px solid #45434e;border-radius:10px;scroll-margin-block:5rem}
+.dialogue-card.line.is-selected {border-color:#aa8c67;box-shadow:inset 3px 0 #c8a574}
+.dialogue-card-head {display:grid;grid-template-columns:auto auto minmax(3rem,1fr) auto;align-items:center;gap:.4rem;min-width:0}
+.dialogue-card-head input {font-weight:650;padding:.32rem .5rem}
+.dialogue-card .line-options {display:block;margin:0}
+.dialogue-card textarea {scroll-margin-block:5rem;line-height:1.6;background:#202028}
+.line-order {font-size:.82rem}
+.line-grip {touch-action:none;user-select:none;cursor:grab;padding:.24rem .45rem;min-width:2rem;min-height:2rem;color:var(--muted);font-size:1.12rem;line-height:1}
+.line-grip:active {cursor:grabbing}
+.dialogue-card .insert-between {align-self:center;position:absolute;top:-.98rem;z-index:1;border-radius:2rem;line-height:1.1;font-size:.76rem;padding:.17rem .63rem;color:var(--gold);background:#25232b}
+.dialogue-card.line {margin-top:1.7rem}
+.dialogue-card .insert-last {width:100%;color:var(--gold);background:transparent;border-style:dashed}
+.dialogue-card [aria-label$="삭제"] {color:var(--muted)}
+.dialogue-card.is-selected:focus-within .line-grip {color:var(--gold)}
+[data-drop="before"] {box-shadow:0 -4px #ffdb95!important}
+[data-drop="after"] {box-shadow:0 4px #ffdb95!important}
+.dragging {opacity:.58}
+.line-position {max-width:min(26rem,94vw);overflow:auto}
+.line-position form {padding:1.2rem;display:grid;gap:1.1rem}
+.line-position label {display:grid;gap:.35rem}
+.line-stage {order:-1;min-width:0;padding:.85rem;border:1px solid var(--edge);border-radius:10px;background:#1a1a21}
+.line-stage h3 {display:flex;align-items:center;margin:0 0 .65rem;color:var(--gold);font-size:.96rem}
+.stage-frame {position:relative;isolation:isolate;overflow:hidden;aspect-ratio:16/10;background:radial-gradient(ellipse at top,#35313f,#16151d);border:1px solid #504752;border-radius:6px}
+.stage-frame img {position:absolute;bottom:0;height:100%;pointer-events:none}
+.stage-bg {width:100%;object-fit:cover}
+.stage-left,.stage-right {width:53%;height:92%!important;object-fit:contain;object-position:bottom}
+.stage-left{left:0}.stage-right{right:0}
+.stage-dialogue {position:absolute;inset:auto .38rem .38rem;padding:.55rem .63rem;background:#15131de8;border:1px solid #a78f6b77;border-radius:5px;max-height:55%;overflow:auto}
+.stage-dialogue p {line-height:1.52;font-size:.93rem;overflow-wrap:anywhere;white-space:pre-wrap}
+.stage-dialogue strong {display:block;color:var(--gold);font-size:.83rem}
+.stage-sound {margin:.65rem 0 0;font-size:.84rem;color:var(--muted)}
+.line-stage audio {margin-top:.45rem;width:100%;height:2.1rem}
+.flow-row-tools {display:flex;gap:.4rem;margin:.22rem 0 .3rem}
+.flow-row-tools button {padding:.18rem .55rem;font-size:.8rem;color:var(--gold)}
+@media(min-width:1100px){
+  .desk {max-width:1460px;width:100%;padding-inline:clamp(1rem,2.2vw,2.5rem)}
+  .has-stage {grid-template-columns:minmax(0,1.5fr) minmax(15rem,1fr)}
+  .line-stage {position:sticky;top:4.5rem;order:0;margin-top:1.7rem}
+}
+@media(max-width:1099px){
+  .line-stage {max-width:37rem;width:100%;justify-self:center}
+  .stage-frame {aspect-ratio:2.65}
+}
+@media(max-width:600px){
+  .field {padding:.65rem}
+  .dialogue-card.line {padding:.55rem}
+  .dialogue-card-head {gap:.22rem}
+  .dialogue-card .line-actions {grid-column:auto;grid-row:auto}
+  .line-grip,.dialogue-card .line-actions button {min-height:2.2rem}
+  .dialogue-card .insert-between {padding:.25rem .75rem;top:-1.16rem}
+  .dialogue-card.line {margin-top:1.85rem}
+  .stage-frame {aspect-ratio:2.1}
+}
+#review-dialog {width:min(68rem,95vw);max-height:87dvh;overflow:auto}
+#review-dialog header {position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--edge)}
+#review-content {display:grid;gap:.6rem;padding:1.15rem}
+#review-content h3,#review-content ul {margin:.2rem 0}
+.file-diff {min-width:0;border:1px solid var(--edge);border-radius:.45rem;padding:.6rem}
+.file-diff summary {cursor:pointer;color:var(--gold);overflow-wrap:anywhere}
+.file-diff pre {font-size:.85rem;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;tab-size:2;background:var(--ink)}
+.file-diff pre span {display:block;padding-inline:.5rem}
+.diff-at {color:var(--muted)}.diff-add {color:#c6f0cb;background:#20382d}.diff-del {color:#ffd5cb;background:#452d31}
+#review-content .danger {color:var(--danger)}
+.dialogue-card .line-grip {white-space:nowrap;font-size:.86rem}
