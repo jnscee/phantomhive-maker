@@ -1308,3 +1308,15 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; }
 .growth-fin{padding:2rem 0 25vh;letter-spacing:.4em;color:#ebdbbe}
 .growth-credits footer{display:flex;justify-content:center;gap:.6rem;padding:.5rem 0 .8rem}
 .growth-credits footer button{font:inherit;color:#e5e8ef;background:#1c2636;border:1px solid #637186;border-radius:4px;padding:.35rem .85rem}
+
+.growth-credits{isolation:isolate;background:#101621}
+.growth-backdrop{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-2}
+.growth-credits::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(9,15,24,.12) 12%,rgba(9,15,24,.38) 38%,rgba(9,15,24,.9) 66%)}
+.growth-window,.growth-credits footer{width:54%;justify-self:end}
+.growth-roll{color:#f8f5ef;text-shadow:0 1px 5px #09101c}
+.growth-cast figure{margin:2.3rem auto 3.4rem}
+.growth-cast figure img{height:clamp(10rem,32vh,17rem);max-width:80%}
+.growth-cast figcaption{display:grid;gap:.2rem;margin-top:.7rem}
+.growth-cast small{color:#e3d7c5}
+.growth-cast strong{font-size:1.25rem;letter-spacing:.12em}
+@media(max-width:650px){.growth-window,.growth-credits footer{width:100%}.growth-credits::before{background:linear-gradient(180deg,#0b14215c,#0b1421bd 32%,#0b1421d6 90%)}}

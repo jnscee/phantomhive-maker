@@ -91,6 +91,7 @@ async function check(browserType){
           Object.assign(state.stats,Object.fromEntries(stats.map(s=>[s,500])));state.stats.의지=will;
           state.flags.deed=false;state.hp=45;state.fund=2500;state.royal=approved?15:0;state.renown=70;
           Object.assign(state.level,{parlor:3,library:3});state.shop.works=3;
+          talkTrust('mey');
           advance();
         },{will,approved});
         if(approved)await page.locator('[data-action="read-verdict"]').click();
@@ -102,7 +103,14 @@ async function check(browserType){
         await page.locator('#dialogue-visibility').click();await page.locator('#conversation .dialogue').waitFor({state:'hidden'});
         await page.locator('#dialogue-visibility').click();
         await page.locator('#conversation [data-read="skip"]').click();
-        await page.locator('#conversation [data-read="finish"]').click();assert.ok(await page.locator('#sheet').isVisible());
+        await page.locator('#conversation [data-read="finish"]').click();
+        if(id==='vowTitle'){
+          await page.locator('.growth-backdrop').evaluate(im=>im.decode());
+          assert.deepEqual(await page.locator('.growth-cast strong').allTextContents(),['메이린']);
+          await page.locator('.growth-cast img').evaluate(im=>im.decode());
+          await page.locator('.growth-end').click();
+        }
+        assert.ok(await page.locator('#sheet').isVisible());
       }
       await page.evaluate(()=>{
         state=initial();state.phase='plan';tab='record';saves.gallery={ill:'건강 악화로 종료'};

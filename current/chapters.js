@@ -771,6 +771,17 @@ function endingThumb(id){
   return '<button type="button" class="ending-thumb" data-action="ending-art:'+id+'"><img loading="lazy" src="assets/endings/'+id+'.webp" alt=""><span>'+endingLabels[id][0]+'</span></button>';
 }
 // Keep only the entries needed by the gallery when a new campaign replaces the autosave.
+function growthCast(run){
+  const visits=new Set();
+  for(const entry of run.events||[]){
+    const event=events.find(item=>item.id===entry.id);
+    if(event?.visitPlace)visits.add(event.speaker);
+  }
+  return Object.keys(servants).filter(id=>run.people?.[id]&&(
+    run.people[id].toward>2||visits.has(servants[id].name)||
+    (id==="agni"&&(run.flags?.agniTea||run.flags?.agniLesson))
+  ));
+}
 function growthRecord(run){
   const years=new Map();
   function yearFor(month){
@@ -791,11 +802,13 @@ function growthRecord(run){
     const event=events.find(item=>item.id===entry.id);
     if(event&&Number.isInteger(entry.month))yearFor(entry.month).entries.push({month:entry.month,title:event.title});
   }
-  return [...years.values()].sort((a,b)=>a.year-b.year).map(group=>({
+  const record=[...years.values()].sort((a,b)=>a.year-b.year).map(group=>({
     year:group.year,age:group.year-1876,
     plans:[...group.plans].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([name])=>name),
     entries:group.entries.sort((a,b)=>a.month-b.month)
   }));
+  record[record.length-1].cast=growthCast(run);
+  return record;
 }
 function savedGrowthRecord(id,replay){
   if(!replay||state.phase==="ending"&&state.ending===id)return growthRecord(state);
@@ -805,7 +818,7 @@ function savedGrowthRecord(id,replay){
 }
 function showGrowthCredits(host,years,onFinish){
   host.hidden=false;host.dataset.review="false";
-  host.innerHTML='<section class="growth-credits" aria-label="시엘의 성장 기록"><div class="growth-window" tabindex="0"><div class="growth-roll"><header><h2>시엘의 성장 기록</h2></header></div></div><footer><button type="button" class="growth-toggle"></button><button type="button" class="growth-end">마치기</button></footer></section>';
+  host.innerHTML='<section class="growth-credits" aria-label="시엘의 성장 기록"><img class="growth-backdrop" src="assets/endings/vowTitle.webp" alt=""><div class="growth-window" tabindex="0"><div class="growth-roll"><header><h2>시엘의 성장 기록</h2></header></div></div><footer><button type="button" class="growth-toggle"></button><button type="button" class="growth-end">마치기</button></footer></section>';
   const windowEl=host.querySelector(".growth-window"),roll=host.querySelector(".growth-roll");
   function add(parent,tag,value){
     const el=document.createElement(tag);el.textContent=value;parent.append(el);return el;
@@ -821,9 +834,24 @@ function showGrowthCredits(host,years,onFinish){
       add(row,"small",(calendarDate(entry.month).getUTCMonth()+1)+"월");add(row,"span",entry.title);
     }
   }
+  const cast=years.at(-1)?.cast||[];
+  if(cast.length){
+    const group=add(roll,"section","");group.className="growth-cast";
+    add(group,"h3","함께한 사람들");
+    const roles={tanaka:"가령",finny:"정원사",mey:"하녀",bard:"요리사",snake:"풋맨",soma:"벵골의 왕자",agni:"소마의 집사"};
+    for(const id of cast){
+      const person=servants[id];
+      if(!person||!Object.hasOwn(roles,id))continue;
+      const figure=add(group,"figure","");
+      const image=document.createElement("img");
+      image.src=portraits[person.name];image.alt="";figure.append(image);
+      const caption=add(figure,"figcaption","");
+      add(caption,"small",roles[id]);add(caption,"strong",person.name);
+    }
+  }
   add(roll,"p","끝").className="growth-fin";
   const toggle=host.querySelector(".growth-toggle");
-  let paused=matchMedia("(prefers-reduced-motion: reduce)").matches,lastTime=0,fraction=0,finished=false;
+  let paused=document.documentElement.dataset.gameMotion==="reduced"||matchMedia("(prefers-reduced-motion: reduce)").matches,lastTime=0,fraction=0,finished=false;
   function label(){toggle.textContent=paused?"자동 재생":"일시정지";}
   function finish(){if(finished||!roll.isConnected)return;finished=true;onFinish();}
   function frame(now){
