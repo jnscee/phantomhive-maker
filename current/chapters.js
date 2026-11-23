@@ -317,6 +317,7 @@ const endingScenes={
     ["세바스찬","저는—","royal-doorway"],
     ["세바스찬","어디까지나,","royal-doorway"],
     ["세바스찬","집사입니다.","royal-doorway"],
+    ["","……","royal-gallery",{"fx":"fade","hideCast":true}],
     ["세바스찬","이제 당신은 정식으로 백작이 되었습니다.","royal-gallery"],
     ["세바스찬","지위도 재산도 아름다운 약혼자도 전부 당신 것입니다.","royal-gallery"],
     ["세바스찬","어떻습니까?","royal-gallery"],
