@@ -106,7 +106,7 @@ function flagEvent(id,effect){
   state.flags[id]=true;
   effect();
 }
-const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),followupEvents(),appliedExams(),portfolioEvents(),visitorEvents(),authoredStoryEvents());
+const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),followupEvents(),appliedExams(),portfolioEvents(),visitorEvents(),authoredStoryEvents()).map(appendAuthoredOptions);
 
 function pendingEvent(){
   return events.find(event=>event.id===state.pending);
@@ -258,8 +258,8 @@ function choose(index){
   if(isRecruit)delete state.recruitPage;
   state.events.push({id:event.id,index,month:state.month,...(examNote?{examNote}:{}),...(isRecruit?{edition:"canonical",age:currentCielAge()}:{}),...(event.id==="visitPrince"?{hadTanaka:Boolean(state.people.tanaka)}:{})});
   state.log.push(examNote||choice.result);
-  if(pages){
-    state.termOutcome={id:event.id,index,note:examNote};
+  if(pages||choice.response){
+    state.termOutcome={id:event.id,index,note:choice.response?"":examNote,response:choice.response};
     state.termPage=0;persist();render(true);return;
   }
   finishEventChoice(event);
@@ -1267,7 +1267,7 @@ function handleAction(key,rect,confirmed=false){
   if(encounterAction(action,id))return;
   if(tab==="plan"&&["slotEvent","event"].includes(state.phase)&&["term-close","term-next"].includes(action)){
     const event=pendingEvent();
-    if(!event||!termPages(event))return;
+    if(!event||(!termPages(event)&&!state.termOutcome?.response))return;
     if(action==="term-close"&&state.termOutcome?.id===event.id)finishEventChoice(event);
     else if(action==="term-next"&&Number(id)===(state.termPage||0)){
       state.termPage=Number(id)+1;persist();render(true);

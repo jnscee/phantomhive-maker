@@ -242,8 +242,8 @@ function setPortraitAge(stage,age){
 }
 function framedStanding(name,src,classes,profile=name){
   const age=Number(document.getElementById("scene").dataset.castAge)||10;
-  const fit=standingFit(profile,age);
-  return '<span class="standing-window '+classes+'" style="--figure-scale:'+fit.scale+';--figure-height:'+fit.window+'"><img src="'+src+'" alt="'+name+'"></span>';
+  const fit=standingFit(Object.hasOwn(standingMeasures,profile)?profile:"세바스찬",age);
+  return '<span class="standing-window '+classes+'" style="--figure-scale:'+fit.scale+';--figure-height:'+fit.window+'"><img src="'+src+'" alt="'+String(name).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')+'"></span>';
 }
 function sceneStanding(name,side,src,age){
   if(name!=="시엘"){
@@ -265,7 +265,7 @@ function readerControls(at,last,auto){
 }
 function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers="",hasTanaka=false){
   const book=recruitScenes[id],{scene,speaker,text,withTanaka}=book.lines[at];
-  const art=recruitArt[scene.art],bg=file(art.bg),last=at===book.lines.length-1;
+  const art=scene.picture?{bg:"assets/endings/"+scene.picture+".webp"}:recruitArt[scene.art],bg=file(art.bg),last=at===book.lines.length-1;
   const backdrop=art.crop
     ? '<svg class="review-room recruit-backdrop '+art.tone+'" viewBox="'+art.crop.join(" ")+'" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><image width="680" height="380" href="'+bg+'"/></svg>'
     : '<div class="review-room '+(art.tone||'')+'" style="background-image:url(&quot;'+bg+'&quot;)"></div>';

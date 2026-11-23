@@ -1,6 +1,8 @@
-import {catalog,applyEdits} from "./catalog.mjs";
+import {catalog,applyEdits,additionPath} from "./catalog.mjs";
 import {zip,strToU8} from "./fflate.mjs";
 import {read,write} from "./storage.mjs";
+
+export {additionPath};
 
 const scope=new URL("./",import.meta.url);
 const gameRoot=new URL("../",scope);
@@ -28,7 +30,7 @@ const older=recent&&recent!==release?await read("release:"+recent):null;
 const hasFiles=workspace=>Boolean(workspace&&(Object.keys(workspace.sources).length||Object.keys(workspace.media).length));
 
 function model(){
-  return catalog({...original,...saved.sources},assetNames,release+":"+saved.revision);
+  return catalog({...original,...saved.sources},[...new Set([...assetNames,...Object.keys(saved.media)])],release+":"+saved.revision);
 }
 
 function mediaType(filename){
@@ -39,7 +41,7 @@ function mediaType(filename){
 function assetBlob(filename,encoded){
   const max=20*1024*1024;
   const type=mediaType(filename);
-  if(!type||!assetNames.includes(filename)||typeof encoded!=="string"||encoded.length>Math.ceil(max/3)*4)
+  if(!type||typeof encoded!=="string"||encoded.length>Math.ceil(max/3)*4)
     throw new Error("교체할 리소스 또는 파일 크기를 확인해 주세요. 파일당 20 MB까지 가능합니다.");
   const binary=atob(encoded);
   const data=Uint8Array.from(binary,c=>c.charCodeAt(0));
@@ -64,7 +66,11 @@ function edits(current,body){
   const changes=applyEdits(current,body);
   const sources={...saved.sources,...changes};
   for(const name of Object.keys(changes))if(sources[name]===original[name])delete sources[name];
-  const uploads=Object.fromEntries(Object.entries(body.uploads??{}).map(([name,data])=>[name,assetBlob(name,data)]));
+  const newPath=body.addition&&!["scene","fx"].includes(body.addition.kind)?additionPath(body.addition):null;
+  const uploads=Object.fromEntries(Object.entries(body.uploads??{}).map(([name,data])=>{
+    if(!current.assetSet.has(name)&&name!==newPath)throw new Error("이 파일은 등록할 수 없습니다.");
+    return [name,assetBlob(name,data)];
+  }));
   return {sources,media:{...saved.media,...uploads},files:[...Object.keys(changes),...Object.keys(uploads)]};
 }
 
@@ -130,8 +136,9 @@ export function assetUrl(filename){
 export async function api(path,body){
   const current=model();
   if(path==="/api/catalog"){
-    const {groups,inventory,version,trackOptions,roomOptions}=current;
-    return {groups,inventory,version,trackOptions,roomOptions,canUndo:Boolean(saved.previous),hasOlder:hasFiles(older),publishCount:sourceCommit?Object.keys(saved.sources).length+Object.keys(saved.media).length:0};
+    const {groups,inventory,version,trackOptions,roomOptions,artOptions,recruitCastOptions,recruitArtOptions,recruitTargets}=current;
+    const recruits=[...recruitTargets.keys()].map(id=>[id,groups.find(group=>group.key==="recruit-"+id)?.title??id]);
+    return {groups,inventory,version,trackOptions,roomOptions,artOptions,recruitCastOptions,recruitArtOptions,recruits,canUndo:Boolean(saved.previous),hasOlder:hasFiles(older),publishCount:sourceCommit?Object.keys(saved.sources).length+Object.keys(saved.media).length:0};
   }
   if(path==="/api/preview")return preview(current,body);
   if(path==="/api/save"){
@@ -159,7 +166,8 @@ async function archive(entries,filename){
 export async function exportZip(kind){
   if(kind==="game"){
     const entries={};
-    for(let i=0;i<files.length;i+=8)await Promise.all(files.slice(i,i+8).map(async name=>{
+    const allFiles=[...new Set([...files,...Object.keys(saved.media)])];
+    for(let i=0;i<allFiles.length;i+=8)await Promise.all(allFiles.slice(i,i+8).map(async name=>{
       const source=name.startsWith("js/")?saved.sources[name.slice(3)]:undefined;
       entries[name]=source!==undefined?strToU8(source)
         :new Uint8Array(await (saved.media[name]?.arrayBuffer()??load(updatedUrl(name),"arrayBuffer")));

@@ -82,13 +82,16 @@ function termPages(event){
 }
 function termDialogue(event,buttons){
   const pages=termPages(event);
-  if(!pages)return "";
-  const outcome=state.termOutcome;
-  const script=outcome?.id===event.id?(event.authored?[["",event.response]]:birthdayDialogue[event.id]?.replies[outcome.index]||[["세바스찬",examDialogue[event.slot][2+outcome.index]]]):pages;
+  const outcome=state.termOutcome?.id===event.id?state.termOutcome:null;
+  if(!pages&&!outcome?.response)return "";
+  const script=outcome?.response?[["",outcome.response]]:outcome?(event.authored?[["",event.response]]:birthdayDialogue[event.id]?.replies[outcome.index]||[["세바스찬",examDialogue[event.slot][2+outcome.index]]]):pages;
   const at=Math.min(state.termPage||0,script.length-1),[who,line]=script[at];
   const end=at===script.length-1,actions=end?(outcome?btn("기록을 덮는다","term-close"):buttons):btn("다음 ▸","term-next:"+at);
-  const room=event.room||birthdayDialogue[event.id]?.room||choreography[event.slot][0];
-  return '<div class="review-room" style="background-image:url(&quot;'+sceneArt[room]+'&quot;)"></div>'+dialogueCast("세바스찬")+
+  const room=event.room||birthdayDialogue[event.id]?.room||choreography[event.slot]?.[0]||"ballroom";
+  const art=event.picture?"assets/endings/"+event.picture+".webp":sceneArt[room];
+  const cast=event.standing&&Object.hasOwn(recruitCast,event.standing)
+    ?sceneStanding(recruitNames[event.standing],"left",recruitCast[event.standing]):event.picture?"":dialogueCast("세바스찬");
+  return '<div class="review-room" style="background-image:url(&quot;'+art+'&quot;)"></div>'+cast+
     '<article class="dialogue"><small>'+escapeHTML(who||event.title)+'</small><p>'+escapeHTML(line)+'</p>'+
-    (outcome&&end?'<small>'+escapeHTML(outcome.note)+'</small>':'')+'<div class="answers">'+actions+'</div></article>';
+    (outcome?.note&&end?'<small>'+escapeHTML(outcome.note)+'</small>':'')+'<div class="answers">'+actions+'</div></article>';
 }

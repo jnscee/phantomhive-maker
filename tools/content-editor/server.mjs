@@ -250,8 +250,8 @@ const server=http.createServer(async (req,res)=>{
     res.setHeader("Referrer-Policy","same-origin");
     res.setHeader("X-Frame-Options","SAMEORIGIN");
     if (get && urlPath==="/api/catalog") {
-      const {groups,inventory,version,trackOptions,roomOptions}=currentModel();
-      return json(res,{groups,inventory,version,trackOptions,roomOptions,canUndo:Boolean(lastSave)});
+      const {groups,inventory,version,trackOptions,roomOptions,artOptions,recruitCastOptions}=currentModel();
+      return json(res,{groups,inventory,version,trackOptions,roomOptions,artOptions,recruitCastOptions,canUndo:Boolean(lastSave)});
     }
     if (get && urlPath==="/export.zip") return exportGame(res);
     if (get && urlPath.startsWith("/game/")) return serveGame(req,res,urlPath);

@@ -11,27 +11,42 @@
   <header class="masthead">
     <div class="brand"><span class="seal" aria-hidden="true">P</span><div><span class="imprint">EARL PHANTOMHIVE MAKER</span><h1>콘텐츠 편집기</h1></div></div>
     <div class="toolbar">
-      <button id="undo" disabled>마지막 적용 되돌리기</button>
-      <button id="publish" hidden disabled>GitHub에 업로드</button>
-      <button id="export-edits" hidden>변경 파일 ZIP</button>
-      <button id="export-older" hidden>이전 버전 변경 ZIP</button>
-      <a id="export" class="button" href="/export.zip">게임 ZIP 받기</a>
+      <button id="add-content" type="button" hidden disabled>＋ 콘텐츠 추가</button>
+      <details class="more-actions">
+        <summary>파일 관리</summary>
+        <div class="more-menu">
+          <button id="undo" disabled>마지막 적용 되돌리기</button>
+          <button id="export-edits" hidden>변경 파일 ZIP</button>
+          <button id="export-older" hidden>이전 버전 변경 ZIP</button>
+          <a id="export" class="button" href="/export.zip">게임 ZIP 받기</a>
+        </div>
+      </details>
       <button class="primary" id="save" disabled>게임 파일에 적용</button>
+      <button id="publish" hidden disabled>GitHub에 업로드</button>
     </div>
   </header>
-  <p id="editor-note" class="editor-note" hidden>편집 내용은 이 브라우저에 저장됩니다. 공개본을 갱신하려면 GitHub에 업로드하세요. <a href="https://github.com/jnscee/phantomhive-maker/blob/main/tools/content-editor/README.md#공개-게임-업데이트">공개 게임에 반영하는 방법</a></p>
+  <div id="editor-note" class="editor-note" hidden>
+    <ol class="workflow" aria-label="공개 게임에 반영하는 순서">
+      <li>편집</li><li>게임 미리보기</li><li>브라우저 저장</li><li>GitHub에 업로드</li>
+    </ol>
+    <a href="https://github.com/jnscee/phantomhive-maker/blob/main/tools/content-editor/README.md#공개-게임-업데이트">업로드 도움말</a>
+  </div>
   <main class="workspace">
     <aside class="catalog" aria-label="콘텐츠 목록">
-      <label class="search">콘텐츠 검색<input id="search" type="search" placeholder="이름, 대사, 이벤트 ID" autocomplete="off"></label>
+      <button id="toggle-catalog" type="button" aria-expanded="true" aria-controls="catalog-body">콘텐츠 목록 접기 <span aria-hidden="true">⌃</span></button>
+      <div id="catalog-body">
+      <label class="search">콘텐츠 검색<input id="search" type="search" placeholder="장면 이름, 대사, 리소스" autocomplete="off"></label>
       <nav id="sections" aria-label="콘텐츠 종류"></nav>
       <div class="list-head"><h2 id="list-title">스토리</h2><button id="new-event" type="button" hidden>＋ 이벤트</button></div>
       <div class="list" id="list" aria-labelledby="list-title"></div>
+      </div>
     </aside>
     <section class="desk" aria-labelledby="entry-title">
       <header class="entry-head">
-        <div><p id="entry-detail" class="eyebrow"></p><h2 id="entry-title">게임 파일을 읽는 중</h2></div>
+        <div><p id="entry-detail" class="eyebrow"></p><h2 id="entry-title" tabindex="-1">게임 파일을 읽는 중</h2></div>
         <button id="preview" disabled>게임에서 미리보기 ↗</button>
       </header>
+      <nav id="entry-nav" aria-label="편집 항목" hidden></nav>
       <div class="fields" id="fields"></div>
     </section>
   </main>
@@ -42,6 +57,19 @@
   <dialog id="game-dialog">
     <header><h2>게임 미리보기</h2><form method="dialog"><button>닫기</button></form></header>
     <iframe title="팬텀하이브 백작 메이커 테스트 플레이" sandbox="allow-scripts"></iframe>
+  </dialog>
+  <dialog id="add-dialog" aria-labelledby="add-title">
+    <form id="add-form" class="resource-form">
+      <h2 id="add-title">콘텐츠 추가</h2>
+      <label>종류<select id="add-kind">
+        <option value="standing">스탠딩</option><option value="cg">CG</option>
+        <option value="bgm">BGM</option><option value="background">배경</option>
+        <option value="event">월말 이벤트</option><option value="fx">파티클 효과</option><option value="scene">영입 장면</option>
+      </select></label>
+      <div id="add-fields"></div>
+      <p id="add-error" role="status"></p>
+      <div class="publish-buttons"><button id="add-close" type="button">취소</button><button id="add-submit" class="primary" type="submit">추가하고 저장</button></div>
+    </form>
   </dialog>
   <dialog id="publish-dialog" aria-labelledby="publish-title">
     <form id="publish-form" autocomplete="off">

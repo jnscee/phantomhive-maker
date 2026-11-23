@@ -20,9 +20,18 @@ function effectChoice(row){
 }
 // Additional one-time campaign events from the content editor.
 const authoredEvents=[];
+const authoredOptions={};
+function appendAuthoredOptions(event){
+  if(!Object.hasOwn(authoredOptions,event.id)||visitEncounterCards.some(card=>card.id===event.id))return event;
+  const choices=authoredOptions[event.id].map(([label,response,stat,amount])=>({
+    label,result:response,response,
+    effect:()=>{if(stat)shift(stat,amount);}
+  }));
+  return {...event,choices:[...event.choices,...choices]};
+}
 function authoredStoryEvents(){
-  return authoredEvents.map(({id,month,title,room,track,lines,label,result})=>({
-    id,title,room,track,lines,authored:true,text:lines[0][1],response:result,
+  return authoredEvents.map(({id,month,title,room,track,lines,label,result,picture,standing})=>({
+    id,title,room,track,lines,picture,standing,authored:true,text:lines[0][1],response:result,
     sees:run=>run.duration===35&&run.month===month,
     choices:[choice(label,title,()=>{})]
   }));

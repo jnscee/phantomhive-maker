@@ -1,5 +1,10 @@
 "use strict";
 
+for(const card of visitEncounterCards){
+  for(const [label,response,stat,amount] of authoredOptions[card.id]??[])
+    card.choices.push({label,reply:[card.npc,response],stat,amount});
+}
+
 function visitorEvents(){
   return visitEncounterCards.map(card=>({
     id:card.id, title:card.title, speaker:card.npc, text:card.lines[0][1], visitPlace:card.place,

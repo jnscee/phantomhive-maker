@@ -5,11 +5,13 @@ const sections = {story:"스토리", events:"이벤트", dialogue:"기타 대사
 let data;
 let section = "story";
 let selected = null;
+let activePane = null;
 let changes = {};
 let uploads = {};
 let newEvent = null;
 let deleteEvent = null;
 let busy = false;
+let previewedDraft = false;
 const assetUrls = new Map();
 const isWeb = document.body.hasAttribute("data-web-editor");
 const web = isWeb ? import("./web.mjs") : null;
@@ -39,11 +41,19 @@ function draftCount() {
 }
 
 function updateToolbar() {
-  $("pending").textContent="변경 "+draftCount()+"건";
+  $("pending").textContent="저장 전 변경 "+draftCount()+"건";
+  document.body.dataset.dirty=Boolean(draftCount());
+  const workflow=Array.from(document.querySelectorAll(".workflow li"));
+  const step=draftCount()?(previewedDraft?2:1):data?.publishCount?3:0;
+  workflow.forEach((item,index)=>{
+    if(index===step)item.setAttribute("aria-current","step");
+    else item.removeAttribute("aria-current");
+  });
   $("save").disabled=busy||!draftCount();
   $("discard").disabled=busy||!draftCount();
   $("undo").disabled=busy||!data?.canUndo||Boolean(draftCount());
   $("preview").disabled=busy||!data||Boolean(deleteEvent);
+  $("add-content").disabled=busy||!data||Boolean(draftCount());
   $("publish").disabled=busy||!data?.publishCount||Boolean(draftCount());
 }
 
@@ -52,12 +62,15 @@ function value(field) {
 }
 
 function modify(field,input) {
+  previewedDraft=false;
   if(JSON.stringify(input)===JSON.stringify(field.value)) delete changes[field.id];
   else changes[field.id]=input;
   updateToolbar();
+  updatePaneCounts();
 }
 
 function clearDraft() {
+  previewedDraft=false;
   changes={};
   uploads={};
   newEvent=null;
@@ -223,7 +236,7 @@ function linesEditor(parent,initial,onChange,field={}) {
       body.append(row);
     });
   }
-  parent.append(body,add);
+  parent.append(add,body);
   draw();
 }
 
@@ -238,12 +251,96 @@ function select(options,current) {
   return control;
 }
 
+function labeled(parent,text,control){
+  const label=node("label",text);
+  control.setAttribute("aria-label",text);
+  label.append(control);
+  parent.append(label);
+  return control;
+}
+
+function choicesEditor(parent,field,initial){
+  const choices=structuredClone(initial);
+  const list=node("div",undefined,"choice-list");
+  const add=button("＋ 선택지 추가",()=>{
+    choices.push(["","","",0]);
+    draw();
+    list.lastElementChild.querySelector("input").focus();
+    save();
+  },"add-line");
+  function save(){modify(field,structuredClone(choices));}
+  function draw(){
+    list.replaceChildren();
+    add.disabled=choices.length>=20;
+    choices.forEach((choice,index)=>{
+      const row=node("fieldset",undefined,"choice-row");
+      row.append(node("legend","선택지 "+(index+1)));
+      const label=labeled(row,"버튼 문구",node("input"));
+      label.value=choice[0];
+      label.addEventListener("input",()=>{choice[0]=label.value;save();});
+      const response=labeled(row,"선택 후 대사",node("textarea"));
+      response.rows=2;
+      response.value=choice[1];
+      response.addEventListener("input",()=>{choice[1]=response.value;save();});
+      const reward=node("div",undefined,"choice-reward");
+      const stat=labeled(reward,"변화하는 수치",select(field.options,choice[2]));
+      const amount=labeled(reward,"증감량",node("input"));
+      amount.type="number";
+      amount.min=-100;
+      amount.max=100;
+      amount.value=choice[3];
+      amount.disabled=!stat.value;
+      amount.addEventListener("input",()=>{choice[3]=amount.valueAsNumber;save();});
+      stat.addEventListener("input",()=>{
+        choice[2]=stat.value;
+        amount.disabled=!stat.value;
+        if(!stat.value)choice[3]=amount.value=0;
+        save();
+      });
+      row.append(reward,button("선택지 삭제",()=>{
+        choices.splice(index,1);
+        draw();
+        save();
+        (list.children[Math.min(index,choices.length-1)]?.querySelector("input")??add).focus();
+      }));
+      list.append(row);
+    });
+  }
+  parent.append(add,list);
+  draw();
+}
+
 function fieldEditor(field) {
   const current=value(field);
   if(field.type==="lines") {
     const block=node("fieldset",undefined,"field");
     block.append(node("legend",field.label));
     linesEditor(block,current,input=>modify(field,structuredClone(input)),field);
+    return block;
+  }
+  if(["choices","cast"].includes(field.type)){
+    const block=node("fieldset",undefined,"field");
+    block.append(node("legend",field.label));
+    if(field.type==="choices")choicesEditor(block,field,current);
+    else{
+      const slots=[0,1].map(index=>labeled(block,"스탠딩 "+(index+1),
+        select([["","없음"],...field.options],current[index]??"")));
+      const media=slots.map(()=>node("div",undefined,"asset-preview"));
+      function draw(){
+        slots.forEach((slot,index)=>{
+          for(const option of slot.options)option.disabled=Boolean(option.value&&option.value===slots[1-index].value);
+          assetPreview(data.inventory.standing[slot.value],media[index]);
+        });
+      }
+      slots.forEach((slot,index)=>{
+        slot.parentElement.append(media[index]);
+        slot.addEventListener("input",()=>{
+          modify(field,slots.map(item=>item.value).filter(Boolean));
+          draw();
+        });
+      });
+      draw();
+    }
     return block;
   }
   const block=node("div",undefined,"field");
@@ -293,16 +390,22 @@ function drawList() {
   if(!data) return;
   const oldScroll=$("list").scrollTop;
   const options=filtered();
-  $("list-title").textContent=$("search").value.trim()?"검색 결과 "+options.length:sections[section];
+  const label=$("search").value.trim()?"검색 결과":sections[section];
+  $("list-title").replaceChildren(document.createTextNode(label+" "),node("span",String(options.length),"count"));
   $("new-event").hidden=section!=="events";
   $("list").replaceChildren();
   const buttons=options.map(group=>{
     const b=button(group.title,()=>{
       if(newEvent) {status("새 이벤트를 적용하거나 취소한 뒤 이동해 주세요.",true);return;}
       selected=group.key;
+      activePane=null;
       drawList();
       drawDesk();
-      $("list").querySelector('[aria-current="true"]')?.focus({preventScroll:true});
+      if(matchMedia("(max-width: 760px)").matches){
+        setCatalogExpanded(false);
+        $("entry-title").focus({preventScroll:true});
+        $("entry-title").scrollIntoView({block:"start"});
+      }else $("list").querySelector('[aria-current="true"]')?.focus({preventScroll:true});
     });
     if(group.detail) b.append(node("small",group.detail));
     if(group.key===selected&&!newEvent) b.setAttribute("aria-current","true");
@@ -314,8 +417,30 @@ function drawList() {
   for(const b of $("sections").children) b.setAttribute("aria-pressed",String(b.dataset.section===section));
 }
 
+const paneLabels={dialogue:"대사",choices:"선택지",stage:"이미지 · 소리",details:"기본 정보"};
+
+function paneFor(field){
+  if(field.type==="lines")return "dialogue";
+  if(field.type==="choices"||/^(선택지|응답)\s*\d|마무리 버튼|^마지막 대사/.test(field.label))return "choices";
+  if(field.media||field.paths||field.fixed||["cast","cue"].includes(field.type))return "stage";
+  return "details";
+}
+
+function updatePaneCounts(){
+  const group=currentGroup();
+  if(!group)return;
+  for(const tab of $("entry-nav").querySelectorAll("[data-pane]")){
+    const total=group.fields.filter(field=>paneFor(field)===tab.dataset.pane)
+      .reduce((count,field)=>count+(["lines","choices"].includes(field.type)?value(field).length:1),0);
+    tab.querySelector(".count").textContent=total;
+  }
+}
+
 function drawDesk() {
   const panel=$("fields");
+  const nav=$("entry-nav");
+  nav.replaceChildren();
+  nav.hidden=true;
   panel.replaceChildren();
   if(newEvent){drawNewEvent(panel);return;}
   const group=currentGroup();
@@ -323,13 +448,32 @@ function drawDesk() {
   $("entry-detail").textContent=group?sections[group.section]+(group.detail?" / "+group.detail:""):"";
   $("preview").textContent=group?.preview?"게임에서 미리보기 ↗":"게임 시작하기 ↗";
   if(!group) return;
-  panel.append(...group.fields.map(fieldEditor));
-  if(group.asset) {
+  const panes={dialogue:[],choices:[],stage:[],details:[]};
+  for(const field of group.fields)panes[paneFor(field)].push(field);
+  const visible=Object.keys(panes).filter(key=>panes[key].length||(key==="stage"&&group.asset));
+  if(!visible.includes(activePane))activePane=visible[0];
+  if(visible.length>1){
+    nav.hidden=false;
+    for(const key of visible){
+      const tab=button(paneLabels[key],()=>{
+        activePane=key;
+        drawDesk();
+        nav.querySelector('[aria-pressed="true"]')?.focus();
+      });
+      tab.setAttribute("aria-pressed",key===activePane);
+      tab.dataset.pane=key;
+      tab.append(node("span",undefined,"count"));
+      nav.append(tab);
+    }
+    updatePaneCounts();
+  }
+  panel.append(...(panes[activePane]??[]).map(fieldEditor));
+  if(group.asset&&activePane==="stage") {
     const media=node("div",undefined,"asset-preview");
     assetPreview(group.asset,media);
     panel.append(media);
   }
-  if(group.removable) {
+  if(group.removable&&activePane==="details") {
     const queued=deleteEvent===group.preview.id;
     const remove=button(queued?"삭제 예약 취소":"이 이벤트 삭제",()=>{
       deleteEvent=queued?null:group.preview.id;
@@ -347,21 +491,23 @@ function drawNewEvent(panel) {
   $("entry-title").textContent="새 월말 이벤트";
   $("entry-detail").textContent="이벤트 / 35개월 본편";
   $("preview").textContent="게임에서 미리보기 ↗";
-  for(const [key,label] of [["id","이벤트 ID · 영문 소문자, 숫자, 하이픈"],["title","제목"],["month","발생 월 · 1~35"],["room","배경"],["track","BGM"],["result","마지막 대사"],["label","마무리 버튼"]]) {
+  for(const [key,label] of [["id","이벤트 ID · 영문 소문자, 숫자, 하이픈"],["title","제목"],["month","발생 월 · 1~35"],["room","배경"],["track","BGM"],["picture","CG"],["standing","스탠딩"],["result","마지막 대사"],["label","마무리 버튼"]]) {
     const field=node("div",undefined,"field");
     const title=node("label",label);
-    const control=key==="room"?select(data.roomOptions,newEvent.room):key==="track"?select(data.trackOptions,newEvent.track):node("input");
+    const options={room:data.roomOptions,track:data.trackOptions,
+      picture:[["","없음"],...data.artOptions],standing:[["","없음"],...data.recruitCastOptions]};
+    const control=options[key]?select(options[key],newEvent[key]):node("input");
     if(key==="month"){control.type="number";control.min=1;control.max=35;}
     control.value=newEvent[key];
     control.id="new-"+key;
     title.htmlFor=control.id;
-    control.addEventListener("input",()=>{newEvent[key]=key==="month"?control.valueAsNumber:control.value;});
+    control.addEventListener("input",()=>{newEvent[key]=key==="month"?control.valueAsNumber:control.value;previewedDraft=false;updateToolbar();});
     field.append(title,control);
     panel.append(field);
   }
   const lines=node("fieldset",undefined,"field");
   lines.append(node("legend","대사 순서"));
-  linesEditor(lines,newEvent.lines,input=>{newEvent.lines=structuredClone(input);});
+  linesEditor(lines,newEvent.lines,input=>{newEvent.lines=structuredClone(input);previewedDraft=false;updateToolbar();});
   panel.append(lines);
   updateToolbar();
 }
@@ -379,12 +525,25 @@ async function refresh() {
   updateToolbar();
 }
 
+function setCatalogExpanded(expanded){
+  $("catalog-body").classList.toggle("collapsed",!expanded);
+  const toggle=$("toggle-catalog");
+  toggle.setAttribute("aria-expanded",String(expanded));
+  toggle.textContent=expanded?"콘텐츠 목록 접기 ⌃":"콘텐츠 목록 열기 ⌄";
+}
+$("toggle-catalog").addEventListener("click",()=>{
+  setCatalogExpanded($("toggle-catalog").getAttribute("aria-expanded")==="false");
+});
+for(const action of document.querySelectorAll(".more-menu :is(button,a)")){
+  action.addEventListener("click",()=>{action.closest("details").open=false;});
+}
 $("search").addEventListener("input",drawList);
 for(const [id,label] of Object.entries(sections)) {
   const b=button(label,()=>{
     if(!data) return;
     if(newEvent){status("새 이벤트를 적용하거나 취소한 뒤 이동해 주세요.",true);return;}
     section=id;
+    activePane=null;
     $("search").value="";
     selected=filtered()[0]?.key;
     drawList();
@@ -393,14 +552,18 @@ for(const [id,label] of Object.entries(sections)) {
   b.dataset.section=id;
   $("sections").append(b);
 }
-$("new-event").addEventListener("click",()=>{
+function openNewEvent(){
   if(newEvent) return;
   if(deleteEvent){status("이벤트 삭제를 적용하거나 취소한 뒤 추가해 주세요.",true);return;}
-  newEvent={id:"",title:"",month:1,room:"ballroom",track:"daily",lines:[["세바스찬",""]],label:"기록을 덮는다",result:""};
+  section="events";
+  $("search").value="";
+  previewedDraft=false;
+  newEvent={id:"event-"+crypto.randomUUID().slice(0,8),title:"",month:1,room:"ballroom",track:"daily",picture:"",standing:"",lines:[["세바스찬",""]],label:"기록을 덮는다",result:""};
   drawList();
   drawDesk();
-  $("new-id").focus();
-});
+  $("new-title").focus();
+}
+$("new-event").addEventListener("click",openNewEvent);
 $("preview").addEventListener("click",async()=>{
   busy=true;updateToolbar();status("게임 미리보기를 준비하고 있습니다.");
   try {
@@ -409,6 +572,7 @@ $("preview").addEventListener("click",async()=>{
     const dialog=$("game-dialog");
     dialog.querySelector("iframe").src=result.url;
     dialog.showModal();
+    previewedDraft=Boolean(draftCount());
     status("게임 미리보기를 열었습니다.");
   } catch(error){status(error.message,true);}
   finally{busy=false;updateToolbar();}
@@ -421,7 +585,7 @@ $("save").addEventListener("click",async()=>{
   busy=true;updateToolbar();status("변경 내용을 확인하고 있습니다.");
   try {
     const result=await api("/api/save",payload());
-    if(newEvent) selected="event-custom-"+newEvent.id;
+    if(newEvent){selected="event-custom-"+newEvent.id;activePane="choices";}
     clearDraft();
     await refresh();
     status(result.files.length?(isWeb?"이 브라우저에 저장했습니다.":result.files.length+"개 파일에 적용했습니다."):"파일에 반영할 차이가 없습니다.");
@@ -455,6 +619,120 @@ $("export").addEventListener("click",event=>{
 });
 
 if(isWeb){
+  const addDialog=$("add-dialog");
+  const addKind=$("add-kind");
+  let addition;
+  const extensions={standing:".webp,.png,.jpg,.jpeg",cg:".webp",bgm:".mp3,.ogg,.wav",background:".webp,.png,.jpg,.jpeg"};
+  function drawAddition(){
+    const kind=addKind.value;
+    const fields=$("add-fields");
+    fields.replaceChildren();
+    $("add-error").textContent="";
+    addition={kind};
+    function input(key,label){
+      const control=labeled(fields,label,node("input"));
+      control.required=true;
+      control.addEventListener("input",()=>{addition[key]=control.value.trim();});
+      return control;
+    }
+    $("add-submit").textContent=kind==="event"?"이벤트 작성":"추가하고 저장";
+    if(kind==="event")return;
+    if(kind!=="scene"){
+      const id=input("id","ID · 자동 생성, 수정 가능");
+      id.pattern="[a-z][a-z0-9\\-]{0,39}";
+      id.value=addition.id=kind+"-"+crypto.randomUUID().slice(0,8);
+    }
+    if(kind!=="fx")input("name","이름").maxLength=120;
+    if(kind==="fx")input("symbol","화면에 뿌릴 문자").maxLength=20;
+    if(kind==="scene"){
+      for(const [key,label,options] of [
+        ["target","영입 이벤트",data.recruits],["art","배경",data.recruitArtOptions],
+        ["music","BGM",[["","기본 음악"],...data.trackOptions]],["picture","CG",[["","사용 안 함"],...data.artOptions]]
+      ]){
+        const control=labeled(fields,label,select(options,options[0][0]));
+        addition[key]=control.value;
+        control.addEventListener("input",()=>{addition[key]=control.value;});
+      }
+      const cast=[0,1].map(index=>labeled(fields,"스탠딩 "+(index+1),select([["","없음"],...data.recruitCastOptions],"")));
+      for(const control of cast)control.addEventListener("input",()=>{
+        addition.cast=cast.map(slot=>slot.value).filter(Boolean);
+        cast.forEach((slot,index)=>{
+          for(const option of slot.options)option.disabled=Boolean(option.value&&option.value===cast[1-index].value);
+        });
+      });
+      addition.lines=[["세바스찬",""]];
+      linesEditor(fields,addition.lines,lines=>{addition.lines=structuredClone(lines);});
+    }
+    if(extensions[kind]){
+      const control=labeled(fields,"파일 · "+extensions[kind].replaceAll(",",", "),node("input"));
+      control.type="file";
+      control.required=true;
+      control.accept=extensions[kind];
+      control.id="add-file";
+    }
+  }
+  $("add-content").hidden=false;
+  $("add-content").addEventListener("click",()=>{
+    drawAddition();
+    addDialog.showModal();
+  });
+  addKind.addEventListener("input",drawAddition);
+  $("add-close").addEventListener("click",()=>addDialog.close());
+  addDialog.addEventListener("cancel",event=>{if(busy)event.preventDefault();});
+  addDialog.addEventListener("close",()=>{$("add-fields").replaceChildren();});
+  $("add-form").addEventListener("submit",async event=>{
+    event.preventDefault();
+    if(busy||draftCount())return;
+    if(addition.kind==="event"){
+      addDialog.close();
+      openNewEvent();
+      return;
+    }
+    busy=true;
+    $("add-close").disabled=$("add-submit").disabled=addKind.disabled=true;
+    updateToolbar();
+    try{
+      const adapter=await web;
+      const input={...addition};
+      const incoming={};
+      const file=$("add-file")?.files[0];
+      if(file){
+        if(file.size>20*1024*1024)throw new Error("파일당 20 MB까지 올릴 수 있습니다.");
+        input.extension=file.name.split(".").at(-1).toLowerCase();
+        const path=adapter.additionPath(input);
+        incoming[path]=await new Promise((resolve,reject)=>{
+          const reader=new FileReader();
+          reader.onload=()=>resolve(reader.result.split(",")[1]);
+          reader.onerror=()=>reject(new Error("파일을 읽지 못했습니다."));
+          reader.readAsDataURL(file);
+        });
+      }
+      await api("/api/save",{...payload(),addition:input,uploads:incoming});
+      addDialog.close();
+      if(["standing","cg","background","bgm","fx"].includes(input.kind)){
+        const destination={standing:["assets","standing"],cg:["assets","cg"],background:["assets","sceneArt"],bgm:["audio","music"],fx:["fx","fx-symbols"]}[input.kind];
+        [section,selected]=destination;
+        if(input.kind!=="fx")selected+="-extra-"+input.id;
+        activePane=null;
+        $("search").value="";
+      }
+      if(input.kind==="scene"){
+        section="story";
+        const prefix="recruit-"+input.target+"-";
+        const previous=data.groups.filter(group=>group.key.startsWith(prefix)).length;
+        selected=prefix+previous;
+        activePane="dialogue";
+        $("search").value="";
+      }
+      await refresh();
+      status("새 콘텐츠를 브라우저에 저장했습니다.");
+    }catch(error){$("add-error").textContent=error.message;}
+    finally{
+      busy=false;
+      $("add-close").disabled=$("add-submit").disabled=addKind.disabled=false;
+      updateToolbar();
+    }
+  });
   $("save").textContent="브라우저에 저장";
   $("undo").textContent="마지막 저장 되돌리기";
   $("export-edits").hidden=false;

@@ -133,7 +133,7 @@ function chooseVisitEvent(index){
  if(!choice||(choice.when&&!choice.when(state)))return;
  flagEvent(event.id,choice.effect);
  state.events.push({id:event.id,index,month:state.month});
- seq.visitReply=event.responses?.[index]||null;
+ seq.visitReply=choice.response||event.responses?.[index]||null;
  seq.replySpeaker=castName(event);
  state.log.push(choice.result);
  if(card){seq.encounterReply=card.choices[index].reply;seq.encounterPartner=card.npc;}
