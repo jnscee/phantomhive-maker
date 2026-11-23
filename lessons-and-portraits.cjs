@@ -144,6 +144,10 @@ async function check(browserType){
       await page.getByRole('button',{name:'건너뛰기'}).click();
       await owl.evaluate(im=>im.decode());
       await page.getByRole('button',{name:'영입 확정'}).click();
+      const impact=page.locator('#choice-impact');
+      assert.ok(await impact.isVisible());
+      assert.match(await impact.innerText(),/메이린 합류/);
+      await impact.getByRole('button',{name:'계속'}).click();
       assert.ok(await page.evaluate(()=>Boolean(state.people.mey)));
       await page.evaluate(()=>{state.phase='plan';state.pending=null;tab='staffing';render();});
       assert.equal(await page.locator('[data-employee=mey] img').getAttribute('src'),'assets/npc-mey.webp');
