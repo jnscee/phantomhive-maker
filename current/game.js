@@ -21,7 +21,7 @@ function initial(){
     shop:{design:1,works:1,store:1},salesBook:[],productHistory:{},fineStock:{},order:null,
     product:"toys",unlocked:["toys"],quality:"standard",price:14,qty:15,stock:Object.fromEntries(Object.keys(products).map(id=>[id,0])),
     trust:1,royal:0,renown:0,flags:{},events:[],past:[],log:[],pending:null,ending:null,
-    debt:0,unwell:0,arrears:0,usedLoan:false,counts:{}});
+    debt:0,unwell:0,relapseStage:0,arrears:0,usedLoan:false,counts:{}});
 }
 const storageKey="earl-phantomhive-maker-v1";
 let saves, storageOk=true;
@@ -163,7 +163,7 @@ function overdueArrival(run){
   return dueSnakeVisit(run);
 }
 function settleMonth(){
-  const {unit,demand,receipt=state.price,investment,opening:before}=state.sequence;
+  const {unit,demand,receipt=state.price,investment,opening:before,sickAbsence}=state.sequence;
   const trainingPaid=state.sequence.trainingPaid??state.plan.reduce((sum,id)=>sum+(actions[id]?.cost||0),0);
   const visitAdvance=state.sequence.visitAdvance||0;
   const trade=state.sequence.trade,retailSold=state.sequence.retailSold??state.sequence.sold;
@@ -179,6 +179,9 @@ function settleMonth(){
   if(state.houseCare==="repair")state.neglect=Math.max(0,state.neglect-1);
   if(state.houseCare==="guard"&&assessment.보안>=65)state.renown+=state.month%4===0?1:0;
   if((state.staff==="parlor"||shiftAssigned("parlor"))&&state.plan.includes("etiquette"))state.renown+=1;
+  if(sickAbsence && !hasPlannedCare(state) && (state.hp<=65 || state.relapseStage>0)){
+    state.relapseStage=Math.min(2,(state.relapseStage||0)+1);
+  }else state.relapseStage=0;
   const product=state.product;
   const sold=trade?retailSold:Math.min(demand,state.stock[product]+state.qty);
   if(trade)recordTrading(state,product,sold,trade);
@@ -399,7 +402,10 @@ function lessonResult(run,id,slot){
     +practice*3+preparation+(run.lessonKit?.[id]?14:0)+(room?(run.level[room]-1)*3:0)+luck;
   return score>=65?"great":score>=38?"steady":"poor";
 }
-function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0)){
+function hasPlannedCare(run){
+  return Boolean(run.flags["doctor"+run.month]) || run.plan.some(id=>actions[id]?.stress<0);
+}
+function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),planned=id){
   const a=actions[id];
   if(run.lessonKit?.[id])delete run.lessonKit[id];
   const tolerance=fatigueThreshold(run.stats.체력);
@@ -410,7 +416,11 @@ function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0))
   const hp=run.hp;
   run.stress=cap(run.stress+a.stress);
   const restBonus=(id==="rest"||id==="recovery")?(run.annex.bedroom-1)*5:0;
-  run.hp=cap(run.hp+(a.health||0)-fieldPenalty+restBonus-(run.stress>=75?6:0));
+  let healthGain=a.health||0;
+  if(id!==planned && run.relapseStage && !hasPlannedCare(run)){
+    healthGain=run.relapseStage===1?8:-6;
+  }
+  run.hp=cap(run.hp+healthGain-fieldPenalty+restBonus-(run.stress>=75?6:0));
   if(id==="walk")run.stress=cap(run.stress-(run.annex.garden-1)*5-(shiftAssigned("garden")?2:0));
   run.motivation=cap(run.motivation+(a.stress<0?8:tired?-7:-2));
   const primary=Object.keys(a.gains)[0];
@@ -440,7 +450,7 @@ function projectTraining(){
     if(!actions[id])continue;
     updateIllness(run);
     const actual=careActivity(run,id);
-    applyActivity(run,actual,lessonResult(run,actual,slot));
+    applyActivity(run,actual,lessonResult(run,actual,slot),id);
     run.counts[actual]=(run.counts[actual]||0)+1;
   }
   applyEstateTraining(run);
@@ -563,6 +573,8 @@ function plannerContents() {
       '<div class="calendar-settle">'+plannerCosts(estimate)+
       '<div class="plan-balance"><span>예상 월말 자금</span><strong>'+money(estimate.balance)+'</strong></div>'+
       btn('이달 일정 실행','execute',!planReady()||estimate.blocked,'calendar-run')+'</div>'+festivalNotice()+(healthNotice(state)?'<p class="calendar-warning">'+healthNotice(state)+'</p>':'')+
+      (state.unwell>0?'<p class="calendar-warning">위독 · 이번 월말에 건강이 18 미만이면 시엘이 숨을 거둡니다.</p>':'')+
+      (state.arrears>0?'<p class="calendar-warning">미지급금 경고 · 이번 월말까지 잔액을 £0 이상으로 회복하세요.</p>':'')+
       (estimate.blocked?'<p class="calendar-warning">준비비가 부족합니다. 활동이나 생산량을 조정하세요.</p>':'')+'</div>';
 }
 
@@ -839,7 +851,7 @@ function statusPanel(){
       value+'%"></i></span><b>'+value+'</b><em class="'+((i===1?delta>0:delta<0)?"danger":"good")+'">'+(delta?signed(delta):"–")+'</em></div>';
   }).join("");
   return frame(state.ill?"시엘 상태 · 병중":"시엘 상태",'<div class="inline"><b>시엘 팬텀하이브</b><span class="small muted">'+
-    (state.phase==="plan"?"월말 예상 변동":"이번 달 변동")+'</span></div><div class="hud-group">'+(healthNotice(state)?'<p class="condition-detail">'+healthNotice(state)+' 건강 50 이상·스트레스 60 이하에서 복귀합니다.</p>':'')+meters+
+    (state.phase==="plan"?"월말 예상 변동":"이번 달 변동")+'</span></div><div class="hud-group">'+(healthNotice(state)?'<p class="condition-detail">'+healthNotice(state)+'</p>':'')+meters+
     '</div><div class="hud-group"><div class="attributes"><div class="attribute attr-label muted"><span>능력치</span><b>현재</b><em>변동</em></div>'+
     stats.map(name=>{
       const delta=predicted?.stats?(state.phase==="plan"?predicted.stats[name]-state.stats[name]:state.stats[name]-predicted.stats[name]):0;

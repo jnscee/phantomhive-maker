@@ -144,7 +144,7 @@ const balance=run('marketStats().balance');run('execute();state=normalizeSave(sa
 assertOk('!state.order && state.stock.toys===0 && state.fineStock.toys===0 && state.productHistory.toys.units===37 && state.productHistory.toys.reputation===3 && state.report.penalty===4');
 assertOk('actualBudget().includes("거래처 납품 대금")&&salesBooks().includes("납품 5/7")');
 setup('state.stock.toys=25;state.fineStock.toys=10;state.qty=0;state.price=40;state.plan=["walk","walk","walk"];state.visit="none"');
-assert.equal(run('forecast().trade.holding'),13);
+assert.equal(run('forecast().trade.holding'),17);
 setup('state.month=33;state.unlocked.push("sweets");state.productHistory.toys={units:50,reputation:10,orders:1};state.flags.sharedReceipt=true;handleAction("order:toys",null,true);state.month++;state.stock.toys=14;state.product="sweets";state.qty=0;state.plan=["walk","walk","walk"];state.visit="none";execute();settleMonth();');
 assertOk('state.productHistory.toys.orders===2&&state.report.wholesale>0&&state.report.penalty===0');
 setup('state.phase="plan";state.productHistory.toys={units:70,reputation:8,orders:2};state.qty=0;handleAction("material:select",null,true);handleAction("lead:sales",null,true);handleAction("develop:toys",null,true)');assertOk('state.prototype.revised&&state.prototype.material==="select"&&state.prototype.lead==="sales"&&state.fund===460');
@@ -305,6 +305,25 @@ for(const condition of ["state.hp=30","state.stress=100"]){
   run('continueSequence();continueSequence();state.visit="none";continueSequence()');
   assertOk('state.report.training===actions.exercise.cost+2*actions.rest.cost');
 }
+// A warning month can be rescued by planned rest or the doctor, including after loading between slots.
+for(const care of ["none","walk","doctor"]){
+  ctx.care=care;
+  setup('state.relapseStage=2;state.unwell=1;state.hp=15;state.stress=82;state.plan=["exercise","exercise",care==="walk"?"walk":"exercise"];state.qty=0;state.visit="none"');
+  if(care==="doctor")run('handleAction("doctor",null,true)');
+  const predicted=run('projectTraining().hp');
+  run('execute();state=normalizeSave(saves.auto);continueSequence();continueSequence();continueSequence()');
+  assert.equal(run('state.hp'),predicted);
+  assert.equal(run('state.relapseStage'),care==="none"?2:0);
+  assert.equal(run('state.report.training'),run('plannedTuition()'));
+  assert.equal(run('state.hp<18'),care==="none");
+  run('state.phase="result";advance()');
+  assert.equal(run('state.ending'),care==="none"?"ill":null);
+}
+setup('delete state.relapseStage;state.hp=30;state.plan=["exercise","exercise","exercise"];state.qty=0;state.visit="none";execute()');
+assertOk('state.hp===53 && state.sequence.sickAbsence');
+setup('state.plan=["walk","walk","walk"];state.visit="none";state.price=40;state.qty=0;state.stock.toys=25;execute()');
+run('state.sequence.trade.holding=13;persist();state=normalizeSave(saves.auto);settleMonth()');
+assertOk('state.report.storage===13');
 setup('state.hp=24;state.stress=100;state.qty=0;state.plan=["exercise","rest","recovery"];state.visit="none";state.fund=plannedTuition()-1;execute()');
 assertOk('state.phase==="plan" && state.fund===actions.exercise.cost+actions.rest.cost+actions.recovery.cost-1');
 setup('state.hp=20;state.stress=100;state.visit="library";persist()');

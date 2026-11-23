@@ -33,7 +33,7 @@ function budgetTable(compact=false){
     '<div class="cash-head"><span>예상 월말 잔액</span><strong>'+money(b.closing)+'</strong><b class="cash-change">'+(change>0?'▲ '+money(change)+' 증가':change<0?'▼ '+money(-change)+' 감소':'변동 없음')+'</b></div>'+
     amountRow("현재 가용 자금",state.fund)+flow("팬텀사 예상 매출",b.revenue,false)+flow("남은 지출 합계",b.total,true)+
     (compact?'<details class="expense-details"><summary>지출 내역·시설 효과</summary>':'')+'<div class="cash-detail">'+amountRow("저택 운영 · 시설 유지",b.estate)+amountRow("팬텀사 운영 · 생산비",b.company)+
-    '<small>설비 운영 '+money(b.trade.operation)+' · 운송 '+money(b.trade.freight)+' (소매·납품 합계 '+b.trade.freightAllowance+'개 초과분은 개당 £3) · 월말 보관 '+money(b.trade.holding)+' (전 품목 8개까지 무료)'+(b.trade.order?' · 예상 납품 '+b.trade.shipped+'/'+b.trade.order.qty+'개 · 미납 부담 '+money(b.trade.penalty):'')+'</small>'+amountRow("교육·활동비",b.tuition)+
+    '<small>설비 운영 '+money(b.trade.operation)+' · 운송 '+money(b.trade.freight)+' (소매·납품 합계 '+b.trade.freightAllowance+'개 초과분은 개당 £3) · 월말 보관 '+money(b.trade.holding)+' (전 품목 합산 8개까지 무료, 초과분 개당 £1)'+(b.trade.order?' · 예상 납품 '+b.trade.shipped+'/'+b.trade.order.qty+'개 · 미납 부담 '+money(b.trade.penalty):'')+'</small>'+amountRow("교육·활동비",b.tuition)+
     (b.debt?amountRow("채무 상환",b.debt):"")+'</div>'+
     (state.accounts.estate||state.accounts.company?'<p>가용 자금에 이미 반영된 지출 · 저택 '+money(state.accounts.estate)+' / 팬텀사 '+money(state.accounts.company)+'</p>':'')+contributionNote(investmentEffect(forecast()),state.accounts.researchSaved)+(compact?'</details>':'')+'</section>';
 }
@@ -103,14 +103,19 @@ function monthlyTimeline(entries){
 function monthlyResults(){
   const before=state.accounts.stats,after=snapStats(state);
   const group=(title,keys)=>'<h4>'+title+'</h4>'+keys.map(k=>deltaRow(k,before[k],after[k])).join('');
-  const warning=state.hp<31?"건강이 낮습니다. 다음 달에는 휴식이나 왕진을 고려하세요.":state.fund<60?"다음 달 교육비와 생산비를 확인하세요.":"";
+  const healthWarning=state.hp<18
+    ?(state.unwell?"두 달 연속 건강이 18 미만입니다. 시엘이 위독합니다.":"시엘이 위독합니다. 다음 월말까지 건강을 18 이상으로 회복하세요.")
+    :relapseNotice(state)||(state.hp<31?"건강이 낮습니다. 다음 달에는 휴식이나 왕진을 고려하세요.":"");
+  const financeWarning=state.fund<0
+    ?(state.arrears?"두 달 연속 월말 잔액이 음수입니다. 파산을 피할 수 없습니다.":"월말 잔액이 음수입니다. 다음 월말에도 음수면 파산합니다.")
+    :(state.fund<60?"다음 달 교육비와 생산비를 확인하세요.":"");
+  const warnings=[healthWarning,financeWarning].filter(Boolean).map(note=>'<p class="danger">'+note+'</p>').join("");
   const best=stats.slice().sort((a,b)=>(after[b]-before[b])/statMax(b)-(after[a]-before[a])/statMax(a))[0];
   const growth=after[best]-before[best];
   const words=(growth>0?"이번 달에는 "+best+"에서 가장 진전이 컸습니다. "+before[best]+"에서 "+after[best]+"까지 올리셨군요. ":"이번 달 능력에는 큰 변동이 없었습니다. ")+(state.report?"팬텀사에서는 "+state.report.sold+"개를 판매했습니다. ":"")+"도련님께서 다음 달에 쓰실 수 있는 돈은 "+money(state.fund)+"입니다.";
-  return '<div class="month-report"><div class="butler-account"><img src="assets/sebastian.webp" alt="세바스찬"><p><b>세바스찬의 월말 보고</b><br>'+words+'</p></div><div class="report-date">'+monthText(state.month)+' 결산</div><div class="report-columns">'+
+  return '<div class="month-report"><div class="butler-account"><img src="assets/sebastian.webp" alt="세바스찬"><p><b>세바스찬의 월말 보고</b><br>'+words+'</p></div>'+warnings+'<div class="report-date">'+monthText(state.month)+' 결산</div><div class="report-columns">'+
     '<section class="stat-folio"><h3>시엘의 성장 기록</h3><div class="delta-head"><span>항목</span><span>이전</span><span>현재</span><span>변화 그래프</span><span>증감</span></div>'+
     group("능력 · 500점",stats)+group("컨디션 · 100점",["건강","스트레스","의욕"])+'</section>'+actualBudget()+'</div>'+thisMonthFairReport()+sampleReview()+
-    (warning?'<p class="danger">'+warning+'</p>':'')+
     '<details class="month-log"><summary>이달 일정·사건 기록</summary>'+monthlyTimeline(state.log)+'</details>'+
     '<div class="report-end">'+btn(state.month===state.duration?"작위 심의 확인":"다음 달로","advance",Boolean(sampleReview()),"primary")+'</div></div>';
 }

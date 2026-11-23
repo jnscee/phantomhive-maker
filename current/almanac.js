@@ -144,8 +144,17 @@ function familyFolio(rows,history,album,extra=""){
     filedSection("런던 행사",fairHistory.join("")||"참가한 행사의 결과가 기록됩니다.",fairHistory.length+"건")+
     filedSection("엔딩 도감",album,Object.keys(endingScenes).filter(hasEndingRecord).length+"개 기록")+extra+'</aside></div>';
 }
+function relapseNotice(run){
+  if(!run.relapseStage)return "";
+  if(run.phase==="plan"&&hasPlannedCare(run))return "회복 일정 확보 · 이번 달에는 병중 결석도 정상적으로 요양합니다.";
+  const advice="다음 일정에 휴식을 한 순 넣거나 저택에서 왕진을 부르세요.";
+  return run.relapseStage===1?"재발 주의 · 무리한 일정이 이어지면 결석해도 건강이 더디게 회복됩니다. "+advice
+    :"지병 악화 · 쉬지 않고 일정을 채우면 병중 결석 때도 건강이 떨어질 수 있습니다. "+advice;
+}
 function healthNotice(run){
-  if(run.ill||run.illness)return "병중 · 수업은 요양으로 바뀌며 예약한 수업료는 전액 지불합니다.";
+  const relapse=relapseNotice(run);
+  if(relapse)return relapse;
+  if(run.ill||run.illness)return "병중 · 수업은 요양으로 바뀌며 예약한 수업료는 전액 지불합니다. 건강 50 이상·스트레스 60 이하에서 복귀합니다.";
   if(run.hp<=42||run.stress>=70)return "병환 주의 · 다음 일정에 휴식이나 요양을 넣을 수 있습니다.";
   return "";
 }

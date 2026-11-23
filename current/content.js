@@ -224,7 +224,7 @@ function supplyPlan(run,shop,demand,unit,receipt){
   const sold=Math.min(demand,available);
   stock[id]-=sold;
   if(run.quality==="fine")fine[id]-=sold;
-  const holding=Math.ceil(Math.max(0,Object.values(stock).reduce((n,v)=>n+v,0)-8)*0.75);
+  const holding=Math.max(0,Object.values(stock).reduce((n,v)=>n+v,0)-8);
   const short=order?order.qty-shipped:0;
   const freightAllowance=run.flags.carrierSpace?20:16;
   const freight=Math.max(0,sold+shipped-freightAllowance)*3;

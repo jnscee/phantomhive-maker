@@ -64,7 +64,8 @@ function enterSlot(){
   seq.grade=lessonResult(state,id,seq.index);
   seq.remark=(state.counts[id]||0)%2;
   delete seq.examNote;
-  const changes=applyActivity(state,id,seq.grade);
+  if(id!==planned)seq.sickAbsence=true;
+  const changes=applyActivity(state,id,seq.grade,planned);
   state.counts[id]=(state.counts[id]||0)+1;
   if(seq.onSickLeave&&id!==planned)state.log.push(actions[planned].name+" 결석 · 요양으로 대체 · 예약 비용 "+money(paid));
   if(!seq.onSickLeave&&state.ill)state.log.push("병환 · 다음 일정부터 요양");
