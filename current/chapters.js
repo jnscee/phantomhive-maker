@@ -290,7 +290,7 @@ function appliedExams(){
     }))}));
 }
 
-const endingArtDescriptions={"royal-monologue":"회랑에서 시엘의 뒷모습을 지켜보는 세바스찬","royal-gates":"낮의 버킹엄궁 정문","royal-doorway":"녹색 앞방에서 식장을 바라보는 마담 레드와 세바스찬","royal-reply":"창가에서 안대에 손을 올리는 시엘","royal-letter":"나무 책상 위에 놓인 여왕의 봉서와 편지칼","royal-dress":"거울 앞에서 시엘의 안대를 매는 세바스찬","royal-investiture":"무릎 꿇은 시엘의 어깨에 경식을 거는 여왕","royal-gallery":"창으로 빛이 드는 회랑에 선 두 사람","royal-oath":"계약인을 드러내고 명령을 내리는 시엘","vowTitle":"시엘 앞에 무릎을 꿇고 고개를 숙인 세바스찬","letter": "은쟁반 위에 놓인 왕실 서신", "dress": "거울 앞에서 알현복을 갖춰 입는 시엘", "court": "왕실에서 작위를 돌려받는 시엘", "command": "시엘의 명을 받아 무릎을 꿇는 세바스찬", "carriage": "겨울 역 앞에 세워 둔 검은 마차", "gloves": "서재 책상에 남겨진 흰 장갑", "key": "저택 열쇠를 건네는 시엘", "butler": "긴 복도에 서서 시엘의 대답을 기다리는 세바스찬", "departure": "달리는 마차 안에서 약도를 접는 시엘과 대답을 기다리는 세바스찬"};
+const endingArtDescriptions={"black":"검은 배경 · 암전","royal-monologue":"회랑에서 시엘의 뒷모습을 지켜보는 세바스찬","royal-gates":"낮의 버킹엄궁 정문","royal-doorway":"녹색 앞방에서 식장을 바라보는 마담 레드와 세바스찬","royal-reply":"창가에서 안대에 손을 올리는 시엘","royal-letter":"나무 책상 위에 놓인 여왕의 봉서와 편지칼","royal-dress":"거울 앞에서 시엘의 안대를 매는 세바스찬","royal-investiture":"무릎 꿇은 시엘의 어깨에 경식을 거는 여왕","royal-gallery":"창으로 빛이 드는 회랑에 선 두 사람","royal-oath":"계약인을 드러내고 명령을 내리는 시엘","vowTitle":"시엘 앞에 무릎을 꿇고 고개를 숙인 세바스찬","letter": "은쟁반 위에 놓인 왕실 서신", "dress": "거울 앞에서 알현복을 갖춰 입는 시엘", "court": "왕실에서 작위를 돌려받는 시엘", "command": "시엘의 명을 받아 무릎을 꿇는 세바스찬", "carriage": "겨울 역 앞에 세워 둔 검은 마차", "gloves": "서재 책상에 남겨진 흰 장갑", "key": "저택 열쇠를 건네는 시엘", "butler": "긴 복도에 서서 시엘의 대답을 기다리는 세바스찬", "departure": "달리는 마차 안에서 약도를 접는 시엘과 대답을 기다리는 세바스찬"};
 const endingScenes={
   vowTitle:{alt:"시엘 앞에 한쪽 무릎을 꿇은 세바스찬.",lines:[
     ["세바스찬","도련님, 편지가 왔습니다.","royal-letter"],
@@ -393,7 +393,7 @@ const endingScenes={
     ["시엘","세바스찬, 인쇄소부터 들러. 이 표가 어느 역에서 팔렸는지 알아야겠어.","vowNoTitle"],
     ["세바스찬","예스, 마이 로드.","vowNoTitle"]
   ]},
-  releaseTitle:{alt:"서훈식 뒤 시엘이 안대를 건네고 세바스찬이 그의 영혼을 거둔다.",lines:[
+  releaseTitle:{alt:"달빛이 드는 창가에 시엘이 서 있고 세바스찬의 손 위로 푸른 빛이 피어오른다.",lines:[
     ["세바스찬","도련님, 편지가 왔습니다.","royal-letter"],
     ["세바스찬","이거…","royal-letter"],
     ["세바스찬","서둘러 알현복을 준비해야겠습니다.","royal-letter"],
@@ -446,8 +446,8 @@ const endingScenes={
     ["","세바스찬이 주인 앞에 무릎을 꿇었다. 늘 장화를 벗겨 주던 높이였다.","releaseTitle"],
     ["시엘","복수는 그만두겠어. 이게 내 마지막 명령이다.","royal-oath"],
     ["세바스찬","예스, 마이 로드.","releaseTitle"],
-    ["","시엘이 눈을 감기도 전에 촛불이 일제히 꺼졌다.","releaseTitle"],
-    ["","어둠 속에서 악마가 입을 열었다. 시엘의 마지막 숨을 따라 빠져나온 영혼을, 세바스찬은 남김없이 삼켰다.","releaseTitle"],
+    ["","시엘이 눈을 감기도 전에 촛불이 일제히 꺼졌다.","releaseTitle",{"cg":"black","hideCast":true}],
+    ["","어둠 속에서 악마가 입을 열었다. 시엘의 마지막 숨을 따라 빠져나온 영혼을, 세바스찬은 남김없이 삼켰다.","releaseTitle",{"cg":"black","hideCast":true}],
     ["","회랑 밖에서 의전관이 백작의 마차를 불렀다. 대답이 없어 한 번 더 불렀다.","releaseTitle"]
   ]},
   releaseNoTitle:{alt:"불탄 기록 곁에서 마지막 명령을 받아들이는 세바스찬.",lines:[
@@ -498,11 +498,11 @@ const endingScenes={
     ["","세바스찬이 주인 앞에 무릎을 꿇었다. 늘 장화를 벗겨 주던 높이였다.","releaseNoTitle"],
     ["시엘","복수는 그만두겠어. 이게 내 마지막 명령이다.","releaseNoTitle"],
     ["세바스찬","예스, 마이 로드.","releaseNoTitle"],
-    ["","시엘이 눈을 감기도 전에 촛불이 일제히 꺼졌다.","releaseNoTitle"],
-    ["","어둠 속에서 악마가 입을 열었다. 시엘의 마지막 숨을 따라 빠져나온 영혼을, 세바스찬은 남김없이 삼켰다.","releaseNoTitle"],
+    ["","시엘이 눈을 감기도 전에 촛불이 일제히 꺼졌다.","releaseNoTitle",{"cg":"black","hideCast":true}],
+    ["","어둠 속에서 악마가 입을 열었다. 시엘의 마지막 숨을 따라 빠져나온 영혼을, 세바스찬은 남김없이 삼켰다.","releaseNoTitle",{"cg":"black","hideCast":true}],
     ["","다음 심의의 날짜를 알리는 편지가 도착한 것은 이듬해였다. 편지는 수취인 부재로 궁에 돌아갔다.","releaseNoTitle"]
   ]},
-  ill:{alt:"주인 없는 침대 곁에 남은 시엘의 시계와 수첩.",lines:[
+  ill:{alt:"창가에 선 세바스찬 곁으로 시엘의 빈 의자와 수첩이 보인다.",lines:[
     ["","편지를 가져온 아이는 마차가 돌아나갈 때까지 현관 앞에서 모자를 손에 들고 있었다.","letter"],
     ["세바스찬","어디서 온 편지인지 보시겠습니까?","letter"],
     ["시엘","볕에 비춰 봐. 글자가 등까지 비쳤으면 급한 거야. 급하면 다들 눌러 쓰잖아.","letter"],
@@ -654,7 +654,7 @@ const endingScenes={
     ["세바스찬","첫 번째 청원이 벌써 도착했군요.","title"],
     ["시엘","웃고 있지 말고 마차 문이나 열어, 세바스찬.","title"]
   ]},
-  business:{alt:"팬텀사 작업대에서 시엘이 새 목제 기관차의 바퀴를 점검한다.",lines:[
+  business:{alt:"팬텀사 작업대에서 시엘이 장난감 견본을 들여다보고 세바스찬이 곁에 선다.",lines:[
     ["세바스찬","가문의 도장은 보류됐습니다. 팬텀사의 도장은 새로 넘겨받았습니다.","letter"],
     ["시엘","그쪽부터 가져와.","letter"],
     ["세바스찬","오늘 찍으면 첫 물량은 다음 주에 나갑니다.","letter"],
@@ -1063,7 +1063,16 @@ function showEndingScene(host){
   const act=londonEndingScenes[route];
   const [who,line,legacyPicture,cue]=act&&at>=scene.lines.length-act.length
     ?act[at-(scene.lines.length-act.length)]:scene.lines[at];
-  const picture=cue?.cg||legacyPicture||id,last=at===end;
+  const last=at===end;
+  const storyRooms={ill:"bedroom",broke:"office",business:"office",title:"office",defer:"library",releaseNoTitle:"library",vowNoTitle:"library"};
+  const routeAct=Boolean(act && at>=scene.lines.length-act.length);
+  const story=Object.hasOwn(storyRooms,id) && !cue?.cg && !last && (legacyPicture!==id || routeAct || at<end-3);
+  const outdoors=(routeAct && route==="broker") || legacyPicture==="carriage";
+  const room=outdoors?"street":storyRooms[id];
+  const endingPicture=last && Object.hasOwn(storyRooms,id)?id:legacyPicture||id;
+  const picture=cue?.cg || (story?"room-"+room:endingPicture);
+  const castCue=story&&!cue?.hideCast&&!cue?.left&&!cue?.right
+    ? {...cue,left:who==="세바스찬"?"seb":undefined,right:who==="시엘"?"ciel":undefined}:cue;
   clearTimeout(recruitTimer);if(last)stopRecruitAuto();
   const arrow='<button type="button" class="line-next" data-read="'+(last?'finish':'next')+'" aria-label="'+(last?'장면 마치기':'다음 대사')+'">▼</button>';
   host.hidden=false;host.dataset.review="false";
@@ -1073,10 +1082,10 @@ function showEndingScene(host){
     art.className="ending-cg";art.dataset.ending=id;
   }
   if(art.dataset.picture!==picture){
-    art.dataset.picture=picture;art.src="assets/endings/"+picture+".webp";art.alt=endingArtDescriptions[picture]||scene.alt;
+    art.dataset.picture=picture;art.src=(story?"assets/":"assets/endings/")+picture+".webp";art.alt=story?"":endingArtDescriptions[picture]||scene.alt;
   }
   host.replaceChildren(art);
-  host.insertAdjacentHTML("beforeend",(novelCast(cue,recruitArtwork(currentCielAge()))??"")+sceneLine(who,line,arrow,'data-book="ending-'+id+'" aria-live="polite" aria-atomic="true"')+readerControls(at,last,recruitAuto));
+  host.insertAdjacentHTML("beforeend",(novelCast(castCue,recruitArtwork(currentCielAge()))??"")+sceneLine(who,line,arrow,'data-book="ending-'+id+'" aria-live="polite" aria-atomic="true"')+readerControls(at,last,recruitAuto));
   playNovelCue(host,"ending:"+id+":"+at,cue);
   musicPlayer.sync(trackForView());
   bindSceneReader(host,at,end,line,to=>{
