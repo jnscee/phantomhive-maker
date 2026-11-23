@@ -19,12 +19,16 @@ async function check(browserType){
       assert.equal(await page.evaluate(()=>openingAuto),false);
       if(viewport.width===390){
         for(const [width,height,month] of [[319,866,14],[375,667,1],[390,844,26],[430,932,14]]){
-          await page.setViewportSize({width,height});
-          await page.evaluate(month=>{
+          const phone=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});
+          await phone.goto(base);
+          await phone.evaluate(month=>{
             state=initial();state.month=state.planMonth=month;state.phase='plan';tab='home';render();
           },month);
-          await page.locator('#home-standing').evaluate(im=>im.decode());
-          const geometry=await page.evaluate(()=>{
+          await phone.locator('#home-standing').evaluate(im=>im.decode());
+          await phone.locator('#nav button').first().click({trial:true});
+          const geometry=await phone.evaluate(async()=>{
+            await document.fonts.ready;
+            await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
             const box=e=>e.getBoundingClientRect();
             const scene=box(document.querySelector('#scene')),menu=box(document.querySelector('#nav'));
             const keys=[...document.querySelectorAll('#nav button')],rail=[...document.querySelectorAll('#system-menu button')];
@@ -44,8 +48,8 @@ async function check(browserType){
           assert.deepEqual(geometry.rows,[...Array(3).fill(geometry.rows[0]),...Array(3).fill(geometry.rows[5])]);
           assert.ok(geometry.rows[5]>geometry.rows[0]&&Math.max(...geometry.widths)-Math.min(...geometry.widths)<=1);
           assert.ok(geometry.smallest>=44&&geometry.rightEdge<=width);
+          await phone.close();
         }
-        await page.setViewportSize(viewport);
       }
       for(const [month,age] of [[1,10],[14,11],[26,12]]){
         await page.evaluate(month=>{state=initial();state.month=month;state.planMonth=month;state.phase='plan';tab='home';render();},month);
