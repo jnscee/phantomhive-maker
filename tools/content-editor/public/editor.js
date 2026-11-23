@@ -1,7 +1,7 @@
 "use strict";
 
 const $ = id => document.getElementById(id);
-const sections = {story:"스토리", events:"이벤트", dialogue:"기타 대사", audio:"BGM · SE", assets:"CG · 이미지", fx:"화면 효과"};
+const sections = {story:"스토리", events:"이벤트", dialogue:"기타 대사", score:"BGM 배정", audio:"BGM · SE", assets:"CG · 이미지", fx:"화면 효과"};
 let data;
 let section = "story";
 let selected = null;
@@ -101,7 +101,7 @@ function getAsset(field, input) {
   if(field.type==="ending") return "assets/endings/"+input+".webp";
   if(["audio","image"].includes(field.type)) return input;
   if(field.media==="track"||field.type==="cue") {
-    const track=data.groups.find(group=>group.key==="music-"+input);
+    const track=data.groups.find(group=>group.key==="music-"+(input||field.defaultTrack));
     return track?value(track.fields.find(row=>row.type==="audio")):null;
   }
   if(field.media==="recruitArt") {
@@ -115,7 +115,7 @@ function getAsset(field, input) {
   return data.inventory[field.media]?.[input];
 }
 
-function assetPreview(filename, target) {
+function assetPreview(filename, target, listenOnly=false) {
   target.replaceChildren();
   if (!filename) return;
   const ext=filename.split(".").pop().toLowerCase();
@@ -127,6 +127,11 @@ function assetPreview(filename, target) {
   if(localUrl)media.src=localUrl;
   else if(web)void web.then(adapter=>{media.src=adapter.assetUrl(filename);}).catch(error=>status(error.message,true));
   else media.src="/media/"+filename.split("/").map(encodeURIComponent).join("/")+"?v="+data.version;
+  if(listenOnly){
+    media.setAttribute("aria-label","배정할 BGM 미리 듣기");
+    target.append(media);
+    return;
+  }
   const upload=node("input");
   upload.type="file";
   upload.accept="."+ext;
@@ -286,8 +291,8 @@ function lineStage(group,field) {
   const music=find(f=>f.media==="track")??find(f=>f.type==="cue");
   const cast=find(f=>f.type==="cast"),single=find(f=>f.media==="standing");
   const scene=group.preview;
-  const eventCue=scene&&data.groups.find(g=>g.preview?.kind==="event"&&g.preview.id===scene.id)?.fields.find(f=>f.type==="cue");
-  const fallbackTrack=scene?.kind==="opening"?"prologue":scene?.kind==="recruit"?(eventCue&&value(eventCue))||(scene.id==="maid"?"gloomy":"daily"):null;
+  const recruitCue=scene?.kind==="recruit"&&data.groups.find(g=>g.key==="recruit-"+scene.id)?.fields.find(f=>f.assignment);
+  const fallbackTrack=scene?.kind==="opening"?"prologue":scene?.kind==="recruit"?(scene.id==="maid"?"gloomy":"daily"):null;
   function draw(row,index,total){
     const [name,line,legacy,cue={}]=row;
     heading.textContent="현재 컷 · "+(index+1)+" / "+total;
@@ -306,7 +311,7 @@ function lineStage(group,field) {
       const path=expr&&expr.actor===actors[i]?expr.file:data.inventory.standing[actors[i]];
       source(el,cue.hideCast?null:path);
     });
-    const track=cue.bgm||(music&&value(music))||fallbackTrack;
+    const track=cue.bgm||(recruitCue&&value(recruitCue))||(music&&(value(music)||music.defaultTrack))||fallbackTrack;
     sound.textContent="BGM · "+(data.trackOptions.find(([id])=>id===track)?.[1]||"게임 기본 음악");
     source(audio,track&&getAsset({media:"track"},track));
   }
@@ -733,14 +738,14 @@ function fieldEditor(field) {
     control.addEventListener("input",()=>{
       const input=field.trigger?Number(control.value):field.type==="number"?control.valueAsNumber:control.value;
       modify(field,input);
-      if(field.type==="cue") assetPreview(input?getAsset(field,input):null,media);
+      if(field.assignment) assetPreview(getAsset(field,input),media,true);
       else if(field.media||field.paths) assetPreview(getAsset(field,input),media);
     });
   }
   block.append(label);
   if(control) block.append(control);
   if(field.media||field.paths||field.fixed||field.type==="cue") {
-    assetPreview(getAsset(field,current),media);
+    assetPreview(getAsset(field,current),media,field.assignment);
     block.append(media);
   }
   return block;
@@ -748,6 +753,12 @@ function fieldEditor(field) {
 
 function filtered() {
   const q=$("search").value.trim().toLocaleLowerCase();
+  if(section==="score"){
+    const activity=$("assignment-kind").value==="activity";
+    return data.groups.filter(group=>(group.preview?.kind==="activity")===activity
+      &&group.fields.some(field=>field.assignment)
+      &&[group.title,group.detail,group.key].some(term=>term.toLocaleLowerCase().includes(q)));
+  }
   if(q) {
     const matches=data.groups.filter(group=>[group.title,group.detail,group.key,...group.fields.flatMap(field=>[field.label,JSON.stringify(value(field))])]
       .some(term=>term.toLocaleLowerCase().includes(q)));
@@ -759,6 +770,7 @@ function filtered() {
 function drawList() {
   if(!data) return;
   const oldScroll=$("list").scrollTop;
+  $("assignment-filter").hidden=section!=="score";
   const options=filtered();
   const label=$("search").value.trim()?"검색 결과":sections[section];
   $("list-title").replaceChildren(document.createTextNode(label+" "),node("span",String(options.length),"count"));
@@ -784,7 +796,10 @@ function drawList() {
   $("list").append(...buttons);
   $("list").scrollTop=oldScroll;
   if(!options.length) $("list").append(node("p","검색 결과가 없습니다.","muted"));
-  for(const b of $("sections").children) b.setAttribute("aria-pressed",String(b.dataset.section===section));
+  for(const b of $("sections").children){
+    b.disabled=false;
+    b.setAttribute("aria-pressed",String(b.dataset.section===section));
+  }
 }
 
 const paneLabels={flow:"장면 흐름도",dialogue:"대사",choices:"선택지",stage:"이미지 · 소리",details:"기본 정보"};
@@ -821,6 +836,11 @@ function drawDesk() {
   $("entry-detail").textContent=group?sections[group.section]+(group.detail?" / "+group.detail:""):"";
   $("preview").textContent=group?.preview?"게임에서 미리보기 ↗":"게임 시작하기 ↗";
   if(!group) return;
+  if(section==="score"){
+    $("entry-detail").textContent="BGM 배정 / "+(group.detail||group.title);
+    for(const field of group.fields.filter(field=>field.assignment))panel.append(fieldEditor(field));
+    return;
+  }
   const panes={dialogue:[],choices:[],stage:[],details:[]};
   for(const field of group.fields)panes[paneFor(field)].push(field);
   const visible=Object.keys(panes).filter(key=>panes[key].length||(key==="stage"&&group.asset));
@@ -904,7 +924,7 @@ async function refresh() {
   data=await api("/api/catalog");
   if(isWeb)inspectStoryRoutes=(await web).inspectRoutes;
   if(isWeb) $("export-older").hidden=!data.hasOlder;
-  if(!currentGroup()) selected=data.groups.find(group=>group.section===section)?.key;
+  if(!currentGroup()) selected=filtered()[0]?.key;
   drawList();
   drawDesk();
   updateToolbar();
@@ -923,6 +943,12 @@ for(const action of document.querySelectorAll(".more-menu :is(button,a)")){
   action.addEventListener("click",()=>{action.closest("details").open=false;});
 }
 $("search").addEventListener("input",drawList);
+$("assignment-kind").addEventListener("change",()=>{
+  $("search").value="";
+  selected=filtered()[0]?.key;
+  drawList();
+  drawDesk();
+});
 for(const [id,label] of Object.entries(sections)) {
   const b=button(label,()=>{
     if(!data) return;
@@ -935,6 +961,7 @@ for(const [id,label] of Object.entries(sections)) {
     drawDesk();
   });
   b.dataset.section=id;
+  b.disabled=!data;
   $("sections").append(b);
 }
 function openNewEvent(link){

@@ -103,12 +103,16 @@ export function catalog(files, publishedAssets = [], version = "") {
     return eventGroups.get(id);
   }
 
-  function eventOption(g,id,defaultValue) {
-    const map = variable("audio.js","eventTracks");
-    const node = prop(map,id);
-    const opts = [["","기본 음악 · "+defaultValue],...trackOptions];
-    const field = {id:"cue:"+id,label:id.startsWith("season-")?"이벤트 BGM · "+id.slice(7)+"개월차":"이벤트 BGM",type:"cue",value:value(node)??"",options:opts,file:"audio.js"};
-    fields.set(field.id, {field,node,cue:id});
+  const cueMap=variable("audio.js","bgmAssignments");
+  const eventDefaults=variable("audio.js","eventTracks");
+  function assignMusic(g,kind,id,fallback,note="") {
+    const key=kind+":"+id;
+    const node=prop(cueMap,key);
+    const title=trackOptions.find(([track])=>track===fallback)?.[1]??fallback;
+    const opts=[["","기본 음악 · "+(note||title)],...trackOptions];
+    const field={id:"cue:"+key,label:kind==="activity"?"일정 BGM":"이벤트 BGM",type:"cue",
+      value:value(node)??"",defaultTrack:fallback,options:opts,file:"audio.js",assignment:true};
+    fields.set(field.id,{field,node,cue:key});
     g.fields.push(field);
   }
 
@@ -182,6 +186,7 @@ export function catalog(files, publishedAssets = [], version = "") {
     const name=value(prop(definition,"name"));
     recruitTargets.set(id,[file,prop(definition,"scenes")]);
     const g=group("story","recruit-"+id,name+" 영입",value(prop(definition,"title")),{kind:"recruit",id,scene:0});
+    assignMusic(g,"event",id,"","영입 장면별 음악");
     add(g,file,prop(definition,"title"),"영입 제목");
     add(g,file,prop(definition,"result"),"영입 기록");
     for(const [i,scene] of rows(prop(definition,"scenes")).entries()){
@@ -278,15 +283,22 @@ export function catalog(files, publishedAssets = [], version = "") {
     const months=seasons[value(node.test.right)];
     if (!months) return;
     const [title,speaker,text,a,,b,,source]=rows(node.consequent.expression.right);
-    const g=event("season-"+months[0],value(title),"반복 발생 월 · "+months.join(", "));
+    for(const month of months){
+      const g=event("season-"+month,value(title),month+"개월차 · 계절 행사");
+      g.seasonMonth=month;
+    }
+    const g=eventGroups.get("season-"+months[0]);
     for (const [label,n] of [["제목",title],["화자",speaker],["본문",text],["선택지 1",a],["선택지 2",b],["출처",source]]) add(g,"chapters.js",n,label);
-    g.cueMonths=months;
   });
-  for (const [id,g] of eventGroups) {
-    if (g.cueMonths) g.cueMonths.forEach(month=>eventOption(g,"season-"+month,month%12===1?"newYear":month%12===9?"harvest":"cheerful"));
-    else eventOption(g,id,id.startsWith("exam-")?"test":"daily");
+  for(const row of rows(variable("chapters.js","cases"))){
+    const [id,count,text]=rows(row);
+    event(value(id),"종합 실기 · "+value(count)+"과목 합격",value(text));
   }
-
+  const ranks=rows(variable("term-events.js","portfolioRanks"));
+  for(const [i,row] of rows(variable("term-events.js","portfolios")).entries()){
+    const [,title,description]=rows(row);
+    ranks.forEach((rank,n)=>event("portfolio-"+i+"-"+n,value(title)+" · "+value(prop(rank,"name")),value(description)));
+  }
   const authored=variable("story.js","authoredEvents");
   const customIds=[];
   for (const node of rows(authored)) {
@@ -297,7 +309,8 @@ export function catalog(files, publishedAssets = [], version = "") {
     add(g,"story.js",prop(node,"title"),"제목");
     add(g,"story.js",prop(node,"month"),"발생 방식","number",undefined,{min:0,max:35,trigger:true});
     add(g,"story.js",prop(node,"room"),"배경","select",roomOptions,{media:"room"});
-    add(g,"story.js",prop(node,"track"),"BGM","select",trackOptions,{media:"track"});
+    add(g,"story.js",prop(node,"track"),"이벤트 BGM","select",[["","기본 음악 · "+(trackOptions.find(([id])=>id==="daily")?.[1]??"daily")],...trackOptions],
+      {media:"track",defaultTrack:"daily",assignment:true});
     add(g,"story.js",prop(node,"lines"),"대사 순서","lines",undefined,{cues:true,manual:true});
     add(g,"story.js",prop(node,"label"),"마무리 버튼");
     add(g,"story.js",prop(node,"result"),"마지막 대사");
@@ -315,6 +328,14 @@ export function catalog(files, publishedAssets = [], version = "") {
     g.removable=true;
   }
 
+  for (const [id,g] of eventGroups) {
+    if(customIds.includes(id)||recruitTargets.has(id))continue;
+    const month=g.seasonMonth%12;
+    const fallback=g.seasonMonth?(month===1?"newYear":month===9?"harvest":"cheerful"):
+      id.startsWith("exam-")||id.startsWith("portfolio-")?"test":"daily";
+    assignMusic(g,"event",id,value(prop(eventDefaults,id))??fallback,id==="birthday"?"생일 장면별 음악":"");
+  }
+
   const rewardOptions=[["","변화 없음"],...["지성","기품","매력","경영","통찰","의지","체력"].map(stat=>[stat,stat]),["hp","건강"],["stress","스트레스"],["motivation","의욕"]];
   function addChoices(g,id){
     const optionNode=prop(registers.authoredOptions[1],id);
@@ -327,7 +348,7 @@ export function catalog(files, publishedAssets = [], version = "") {
     fields.set(field.id,{field,node:optionNode,optionId:id});
   }
   for(const [id,g] of eventGroups){
-    if(!recruitTargets.has(id)&&!g.cueMonths)addChoices(g,id);
+    if(!recruitTargets.has(id)&&!g.seasonMonth)addChoices(g,id);
   }
 
   inventory.track=Object.fromEntries(trackRows.map(p=>[propertyName(p),value(prop(p.value,"file"))]));
@@ -359,11 +380,16 @@ export function catalog(files, publishedAssets = [], version = "") {
     g.asset=path;
   }
 
+  const categories=rows(variable("content.js","categories"));
+  const activityDefaults=variable("audio.js","activityTrackDefaults");
   for (const p of properties(variable("content.js","choreography"))) {
     const id=propertyName(p);
     const [room,,movement,fx,text]=rows(p.value);
     const title=value(prop(prop(variable("content.js","actions"),id),"name"))??value(rows(prop(variable("content.js","extraActivities"),id))[0])??id;
-    const g=group("fx","fx-"+id,title,id,{kind:"activity",id});
+    const category=categories.find(row=>rows(rows(row)[1]).some(item=>value(item)===id));
+    const categoryName=value(rows(category)[0])??"일정";
+    const g=group("fx","fx-"+id,title,categoryName,{kind:"activity",id});
+    assignMusic(g,"activity",id,value(prop(activityDefaults,id))??value(prop(activityDefaults,categoryName))??"study");
     add(g,"content.js",room,"장면 배경","select",roomOptions,{media:"room"});
     add(g,"content.js",movement,"동작 패턴","select",
       [...new Set(properties(variable("content.js","choreography")).map(row=>value(rows(row.value)[2])))].map(key=>[key,key]));
@@ -387,6 +413,7 @@ export function catalog(files, publishedAssets = [], version = "") {
   for(const card of rows(variable("visitors.js","visitEncounterCards"))){
     const id=value(prop(card,"id"));
     const g=group("events","visitor-"+id,value(prop(card,"title")),"자유행동 · "+value(prop(card,"place")),{kind:"visit",id});
+    assignMusic(g,"event",id,value(prop(eventDefaults,id))??"daily");
     add(g,"visitors.js",prop(card,"title"),"방문 사건 제목");
     add(g,"visitors.js",prop(card,"lines"),"대사 순서","lines");
     rows(prop(card,"choices")).forEach((choice,i)=>{
@@ -425,7 +452,7 @@ export function catalog(files, publishedAssets = [], version = "") {
       });
     }
   }
-  return {files,groups:groups.filter(g=>g.fields.length||g.asset),fields,inventory,version,trackOptions,roomOptions,assetSet,eventGroups,customIds,authored,openingScenes,cueFields,registers,recruitTargets,rewardOptions,recruitCastOptions,recruitArtOptions,artOptions,cueMap:variable("audio.js","eventTracks")};
+  return {files,groups:groups.filter(g=>g.fields.length||g.asset),fields,inventory,version,trackOptions,roomOptions,assetSet,eventGroups,customIds,authored,openingScenes,cueFields,registers,recruitTargets,rewardOptions,recruitCastOptions,recruitArtOptions,artOptions,cueMap};
 }
 
 function textValue(input, limit=5000) {

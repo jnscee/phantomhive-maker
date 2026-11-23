@@ -40,6 +40,10 @@
       <div id="catalog-body">
       <label class="search">콘텐츠 검색<input id="search" type="search" placeholder="장면 이름, 대사, 리소스" autocomplete="off"></label>
       <nav id="sections" aria-label="콘텐츠 종류"></nav>
+      <div class="search" id="assignment-filter" hidden>
+        <label for="assignment-kind">BGM 배정 대상</label>
+        <select id="assignment-kind"><option value="activity">수업 · 실습 · 휴식</option><option value="event">이벤트</option></select>
+      </div>
       <div class="list-head"><h2 id="list-title">스토리</h2><button id="new-event" type="button" hidden>＋ 이벤트</button></div>
       <div class="list" id="list" aria-labelledby="list-title"></div>
       </div>
