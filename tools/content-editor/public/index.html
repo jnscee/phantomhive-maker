@@ -22,6 +22,7 @@
         </div>
       </details>
       <button class="primary" id="save" disabled>게임 파일에 적용</button>
+      <button id="token-manage" hidden>토큰 관리</button>
       <button id="publish" hidden disabled>GitHub에 업로드</button>
     </div>
   </header>
@@ -76,9 +77,19 @@
     <form id="publish-form" autocomplete="off">
       <h2 id="publish-title">GitHub에 업로드</h2>
       <p id="publish-summary"></p>
-      <label for="github-token">GitHub Fine-grained 토큰</label>
-      <input id="github-token" type="password" autocomplete="off" spellcheck="false" required>
-      <p class="publish-help"><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">GitHub에서 토큰 만들기</a><br>저장소는 jnscee/phantomhive-maker, 권한은 Contents → Read and write를 선택하세요. 토큰은 이번 요청에만 사용합니다.</p>
+      <label id="token-entry">GitHub Fine-grained 토큰
+        <input id="github-token" type="password" autocomplete="off" spellcheck="false">
+      </label>
+      <p class="publish-help" id="token-help">저장소를 jnscee/phantomhive-maker로 선택하고 Contents → Read and write 권한을 주세요. <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">새 토큰 발급</a></p>
+      <label id="token-lock-entry">이 편집기의 잠금 비밀번호
+        <input id="token-password" type="password" autocomplete="off" spellcheck="false">
+      </label>
+      <p id="token-state" class="publish-help"></p>
+      <div class="publish-buttons">
+        <button id="token-store" type="button" hidden>이 브라우저에 저장</button>
+        <button id="token-unlock" type="button" hidden>잠금 해제</button>
+        <button id="token-forget" type="button" hidden>저장한 토큰 삭제</button>
+      </div>
       <p id="publish-progress" role="status"></p>
       <div class="publish-buttons"><button id="publish-close" type="button">취소</button><button id="publish-submit" class="primary" type="submit">공개 게임에 반영</button></div>
     </form>

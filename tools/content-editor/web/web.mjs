@@ -190,3 +190,49 @@ export async function uploadToGitHub(token,onProgress){
   }
   return publishChanges({token,sourceCommit,changes,onProgress});
 }
+
+export const tokenKey="phantomhive-editor:github-token:v1";
+const utf8=new TextEncoder();
+
+export function hasSavedToken(){
+  return localStorage.getItem(tokenKey)!==null;
+}
+
+async function tokenCipher(password,salt){
+  const material=await crypto.subtle.importKey("raw",utf8.encode(password),"PBKDF2",false,["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    {name:"PBKDF2",salt,iterations:600000,hash:"SHA-256"},material,
+    {name:"AES-GCM",length:256},false,["encrypt","decrypt"]
+  );
+}
+
+export async function saveToken(token,password){
+  if(!/^github_pat_[A-Za-z0-9_]+$/.test(token))throw new Error("GitHub에서 발급한 Fine-grained 토큰을 입력해 주세요.");
+  if(password.length<12)throw new Error("잠금 비밀번호를 12자 이상 입력해 주세요.");
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const key=await tokenCipher(password,salt);
+  const encrypted=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,utf8.encode(token));
+  const encode=bytes=>btoa(String.fromCharCode(...bytes));
+  localStorage.setItem(tokenKey,JSON.stringify({
+    salt:encode(salt),iv:encode(iv),encrypted:encode(new Uint8Array(encrypted))
+  }));
+}
+
+export async function unlockToken(password){
+  const saved=localStorage.getItem(tokenKey);
+  if(saved===null)throw new Error("이 브라우저에 저장한 토큰이 없습니다.");
+  try{
+    const {salt,iv,encrypted}=JSON.parse(saved);
+    const decode=value=>Uint8Array.from(atob(value),character=>character.charCodeAt(0));
+    const key=await tokenCipher(password,decode(salt));
+    const token=await crypto.subtle.decrypt({name:"AES-GCM",iv:decode(iv)},key,decode(encrypted));
+    return new TextDecoder().decode(token);
+  }catch{
+    throw new Error("잠금 비밀번호가 맞는지 확인해 주세요. 잊어버렸다면 저장한 토큰을 삭제한 뒤 다시 등록할 수 있습니다.");
+  }
+}
+
+export function forgetToken(){
+  localStorage.removeItem(tokenKey);
+}

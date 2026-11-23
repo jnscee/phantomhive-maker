@@ -754,22 +754,107 @@ if(isWeb){
   $("publish").hidden=false;
   const publishDialog=$("publish-dialog");
   const tokenField=$("github-token");
+  const passwordField=$("token-password");
   const progress=$("publish-progress");
-  $("publish").addEventListener("click",()=>{
-    $("publish-summary").textContent=data.publishCount+"개 파일을 main에 올립니다. GitHub 검사 후 공개 게임이 갱신됩니다.";
+  const manage=$("token-manage");
+  manage.hidden=false;
+  let vaultAvailable=true;
+  let tokenSaved=false;
+  let unlockedToken="";
+  let managing=false;
+
+  function renderTokenControls(){
+    $("token-entry").hidden=tokenSaved;
+    $("token-help").hidden=tokenSaved;
+    $("token-lock-entry").hidden=!vaultAvailable||Boolean(unlockedToken);
+    $("token-store").hidden=!vaultAvailable||tokenSaved;
+    $("token-unlock").hidden=!vaultAvailable||!tokenSaved||Boolean(unlockedToken);
+    $("token-forget").hidden=!vaultAvailable||!tokenSaved;
+    $("publish-submit").hidden=managing;
+    $("publish-submit").disabled=busy||tokenSaved&&!unlockedToken;
+    passwordField.placeholder=tokenSaved?"저장할 때 정한 비밀번호":"저장할 때만 사용 · 12자 이상";
+    $("token-state").textContent=!vaultAvailable?"이 브라우저에서는 토큰을 한 번씩 입력해 업로드할 수 있습니다."
+      :unlockedToken?"토큰이 잠금 해제되었습니다. 페이지를 새로 열면 다시 잠깁니다."
+      :tokenSaved?"암호화된 토큰이 이 브라우저에 저장되어 있습니다."
+      :"저장하려면 잠금 비밀번호를 12자 이상 정해 주세요. 한 번만 업로드할 때는 비워 두세요.";
+  }
+  async function openTokenDialog(isManaging){
+    try{
+      tokenSaved=(await web).hasSavedToken();
+      vaultAvailable=true;
+    }catch{
+      tokenSaved=false;
+      vaultAvailable=false;
+    }
+    if(!tokenSaved)unlockedToken="";
+    managing=isManaging;
+    $("publish-title").textContent=managing?"GitHub 토큰 관리":"GitHub에 업로드";
+    $("publish-summary").textContent=managing||!data?"":data.publishCount+"개 파일을 main에 올립니다. GitHub 검사 후 공개 게임이 갱신됩니다.";
     progress.textContent="";
+    renderTokenControls();
     publishDialog.showModal();
-  });
+  }
+  $("publish").addEventListener("click",()=>void openTokenDialog(false));
+  manage.addEventListener("click",()=>void openTokenDialog(true));
+  const tokenActions=["token-store","token-unlock","token-forget","publish-close"];
+  for(const id of tokenActions.slice(0,3)){
+    $(id).addEventListener("click",async()=>{
+      if(busy)return;
+      busy=true;
+      for(const button of tokenActions)$(button).disabled=true;
+      updateToolbar();
+      renderTokenControls();
+      progress.textContent="";
+      try{
+        const adapter=await web;
+        if(id==="token-store"){
+          const token=tokenField.value.trim();
+          await adapter.saveToken(token,passwordField.value);
+          tokenSaved=true;
+          unlockedToken=token;
+          progress.textContent="토큰을 이 브라우저에 저장했습니다.";
+        }else if(id==="token-unlock"){
+          unlockedToken=await adapter.unlockToken(passwordField.value);
+        }else{
+          adapter.forgetToken();
+          tokenSaved=false;
+          unlockedToken="";
+          progress.textContent="이 브라우저에서 저장한 토큰을 삭제했습니다.";
+        }
+        tokenField.value="";
+      }catch(error){
+        progress.textContent=error.message;
+      }finally{
+        passwordField.value="";
+        busy=false;
+        for(const button of tokenActions)$(button).disabled=false;
+        updateToolbar();
+        renderTokenControls();
+      }
+    });
+  }
   $("publish-close").addEventListener("click",()=>publishDialog.close());
   publishDialog.addEventListener("cancel",event=>{if(busy)event.preventDefault();});
-  publishDialog.addEventListener("close",()=>{tokenField.value="";});
+  publishDialog.addEventListener("close",()=>{
+    tokenField.value="";
+    passwordField.value="";
+  });
+  window.addEventListener("pagehide",()=>{unlockedToken="";renderTokenControls();});
+  window.addEventListener("storage",async event=>{
+    const adapter=await web.catch(()=>null);
+    if(!adapter||(event.key!==null&&event.key!==adapter.tokenKey))return;
+    unlockedToken="";
+    tokenSaved=adapter.hasSavedToken();
+    renderTokenControls();
+  });
   $("publish-form").addEventListener("submit",async event=>{
     event.preventDefault();
-    if(busy||draftCount()||!data.publishCount)return;
-    const token=tokenField.value.trim();
+    if(managing||busy||draftCount()||!data.publishCount||tokenSaved&&!unlockedToken)return;
+    const token=unlockedToken||tokenField.value.trim();
     tokenField.value="";
     busy=true;
-    $("publish-close").disabled=$("publish-submit").disabled=true;
+    for(const button of tokenActions)$(button).disabled=true;
+    renderTokenControls();
     updateToolbar();
     try{
       const result=await (await web).uploadToGitHub(token,message=>{progress.textContent=message;});
@@ -788,10 +873,11 @@ if(isWeb){
       $("status").append(actions);
     }catch(error){
       progress.textContent=error.message;
-      tokenField.focus();
+      (tokenSaved?$("token-forget"):tokenField).focus();
     }finally{
       busy=false;
-      $("publish-close").disabled=$("publish-submit").disabled=false;
+      for(const button of tokenActions)$(button).disabled=false;
+      renderTokenControls();
       updateToolbar();
     }
   });

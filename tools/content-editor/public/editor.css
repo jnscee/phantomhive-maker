@@ -143,7 +143,7 @@ dialog::backdrop { background: #08090dde; }
 dialog header { display: flex; align-items: center; justify-content: space-between; padding: .6rem 1rem; }
 dialog h2 { font-size: 1.19rem; }
 dialog iframe { display: block; width: 100%; height: min(77dvh, 790px); border: 0; background: var(--ink); }
-#publish-dialog { width: min(460px, calc(100vw - 2rem)); }
+#publish-dialog { width: min(460px, calc(100vw - 2rem)); max-height: 90dvh; overflow: auto; }
 #add-dialog { width: min(650px, calc(100vw - 2rem)); max-height: 90dvh; overflow: auto; }
 #publish-form, .resource-form { display: grid; gap: .75rem; padding: 1.25rem; }
 .resource-form label, .choice-row label { display: grid; gap: .3rem; margin-block: .48rem; }
@@ -174,3 +174,6 @@ dialog iframe { display: block; width: 100%; height: min(77dvh, 790px); border: 
   .line-actions { grid-column: 2; grid-row: 3; }
 }
 .workflow [aria-current="step"] { color: var(--gold); font-weight: 650; }
+
+#publish-form label { display: grid; gap: .35rem; }
+#publish-summary:empty { display: none; }
