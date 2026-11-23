@@ -286,7 +286,7 @@ function appliedExams(){
     }))}));
 }
 
-const endingArtDescriptions={"royal-gates":"낮의 버킹엄궁 정문","royal-doorway":"녹색 앞방에서 식장을 바라보는 마담 레드와 세바스찬","royal-reply":"창가에서 안대에 손을 올리는 시엘","royal-letter":"나무 책상 위에 놓인 여왕의 봉서와 편지칼","royal-dress":"거울 앞에서 시엘의 안대를 매는 세바스찬","royal-investiture":"무릎 꿇은 시엘의 어깨에 경식을 거는 여왕","royal-gallery":"창으로 빛이 드는 회랑에 선 두 사람","royal-oath":"계약인을 드러내고 명령을 내리는 시엘","vowTitle":"시엘 앞에 무릎을 꿇고 고개를 숙인 세바스찬","letter": "은쟁반 위에 놓인 왕실 서신", "dress": "거울 앞에서 알현복을 갖춰 입는 시엘", "court": "왕실에서 작위를 돌려받는 시엘", "command": "시엘의 명을 받아 무릎을 꿇는 세바스찬", "carriage": "겨울 역 앞에 세워 둔 검은 마차", "gloves": "서재 책상에 남겨진 흰 장갑", "key": "저택 열쇠를 건네는 시엘", "butler": "긴 복도에 서서 시엘의 대답을 기다리는 세바스찬", "departure": "달리는 마차 안에서 약도를 접는 시엘과 대답을 기다리는 세바스찬"};
+const endingArtDescriptions={"royal-monologue":"회랑에서 시엘의 뒷모습을 지켜보는 세바스찬","royal-gates":"낮의 버킹엄궁 정문","royal-doorway":"녹색 앞방에서 식장을 바라보는 마담 레드와 세바스찬","royal-reply":"창가에서 안대에 손을 올리는 시엘","royal-letter":"나무 책상 위에 놓인 여왕의 봉서와 편지칼","royal-dress":"거울 앞에서 시엘의 안대를 매는 세바스찬","royal-investiture":"무릎 꿇은 시엘의 어깨에 경식을 거는 여왕","royal-gallery":"창으로 빛이 드는 회랑에 선 두 사람","royal-oath":"계약인을 드러내고 명령을 내리는 시엘","vowTitle":"시엘 앞에 무릎을 꿇고 고개를 숙인 세바스찬","letter": "은쟁반 위에 놓인 왕실 서신", "dress": "거울 앞에서 알현복을 갖춰 입는 시엘", "court": "왕실에서 작위를 돌려받는 시엘", "command": "시엘의 명을 받아 무릎을 꿇는 세바스찬", "carriage": "겨울 역 앞에 세워 둔 검은 마차", "gloves": "서재 책상에 남겨진 흰 장갑", "key": "저택 열쇠를 건네는 시엘", "butler": "긴 복도에 서서 시엘의 대답을 기다리는 세바스찬", "departure": "달리는 마차 안에서 약도를 접는 시엘과 대답을 기다리는 세바스찬"};
 const endingScenes={
   vowTitle:{alt:"시엘 앞에 한쪽 무릎을 꿇은 세바스찬.",lines:[
     ["세바스찬","도련님, 편지가 왔습니다.","royal-letter"],
@@ -332,10 +332,10 @@ const endingScenes={
     ["시엘","나는 싸우기 위해 돌아왔어.","royal-reply"],
     ["시엘","시엘 팬텀하이브 백작이라는 이름을 짊어진 이상, 앞으로 나아가는 수밖에 없어.","royal-reply"],
     ["시엘","나의 악한 이름에 걸고 반드시 복수를 하고 말 거야!","royal-reply"],
-    ["세바스찬 · 독백","아아.","royal-gallery"],
-    ["세바스찬 · 독백","한 치의 망설임도 없이 빛을 등지고,","royal-gallery"],
-    ["세바스찬 · 독백","기품 있는 걸음걸이로 나락으로 돌진하는 그 모습은…","royal-gallery"],
-    ["세바스찬 · 독백","얼마나 아름답고 어리석은가.","royal-gallery"],
+    ["세바스찬 · 독백","아아.","royal-monologue"],
+    ["세바스찬 · 독백","한 치의 망설임도 없이 빛을 등지고,","royal-monologue"],
+    ["세바스찬 · 독백","기품 있는 걸음걸이로 나락으로 돌진하는 그 모습은…","royal-monologue"],
+    ["세바스찬 · 독백","얼마나 아름답고 어리석은가.","royal-monologue"],
     ["시엘","명령이다, 세바스찬.","royal-oath"],
     ["시엘","너는 나의 검이 되고 방패가 되어…","royal-oath"],
     ["시엘","나에게 승리를!","royal-oath"],
