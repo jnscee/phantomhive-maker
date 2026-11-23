@@ -32,8 +32,9 @@ function guideMenu(page){
 }
 function instructionBook(){
  const paths=["오늘 날짜 · 진행 개월 · 보유금","상·중·하순 선택 → 활동 카드","자유행동 → 방문 장소","상품 개발 → 생산량 → 판매가","시설 선택 → 개수 또는 사용인 배치","상순 → 중순 → 하순 → 자유행동(선택) → 월말 결산","화제 선택 · 건강과 능력 확인","사건 기록 · 회차 저장"];
- return '<details class="notebook-guide"><summary>세바스찬의 조작 안내</summary>'+btn("처음부터 다시 보기","open-guide")+guide.map(([title,body],i)=>
-   '<details class="guide-topic"><summary><b>'+title+'</b><small>'+paths[i]+'</small></summary><p>'+body+'</p></details>').join("")+'</details>';
+ return '<details class="notebook-guide"><summary><i class="book-spread" aria-hidden="true"></i><span><strong>튜토리얼 안내서</strong><small>세바스찬의 설명을 글로 읽기</small></span></summary>'+guide.map(([title,body],i)=>
+   '<details class="guide-topic"><summary><b>'+title+'</b><small>'+paths[i]+'</small></summary><p>'+body+'</p></details>').join("")+
+   btn("세바스찬의 안내 다시 재생","open-guide",false,"guide-replay-button")+'</details>';
 }
 const visitsVN={
  library:["archive","서가 맨 아래에 그을린 장부가 누워 있다.","가문의 장서표를 대조한다"],
