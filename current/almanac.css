@@ -5,13 +5,13 @@
 }
 #panel:has(.family-folio) {container-type:inline-size}
 .family-folio {
-  --folio-ink:#18283c;
+  --folio-ink:#26365a;
   --folio-edge:#607891;
-  --folio-line:#445a72;
+  --folio-line:#a9b8c9;
   --folio-silver:#c4d9eb;
   display:grid;
   align-items:start;
-  gap:1rem;
+  gap:clamp(.5rem,1.5cqi,.9rem);
   color:var(--text);
   font-size:1rem;
   line-height:1.5;
@@ -23,10 +23,10 @@
 .family-folio :is(.court-folio,.folio-files) {min-width:0}
 .family-folio .court-ruling {
   padding:clamp(.8rem,2.5cqi,1.3rem);
-  background:var(--hide-image);
+  background:var(--plate-image) center/100% 100%,var(--hide-image);
   border:1px solid var(--folio-edge);
   border-radius:12px 3px;
-  box-shadow:inset 0 0 0 3px #19283b,inset 0 0 0 4px #51667e;
+  box-shadow:inset 0 0 0 1px #c6d5e64d;
 }
 .court-ruling header,.court-register summary,.file-section>summary,.trust-entry {
   display:flex;align-items:center;justify-content:space-between;gap:.6rem;
@@ -47,11 +47,11 @@
 .court-stages [aria-current] {font-weight:bold;color:#fff}
 .court-stages [aria-current] i {outline:1px solid var(--folio-silver);outline-offset:2px}
 .family-folio .court-register,.family-folio .file-section {
-  padding:0;border:1px solid var(--folio-line);border-radius:5px;background:var(--folio-ink);color:var(--text);
+  padding:0;border:1px solid var(--folio-line);border-radius:5px;background:var(--paper-image);color:#25354b;
 }
 .family-folio .court-register {margin-top:.7rem}
 .family-folio :is(.court-register,.file-section)>summary {
-  min-height:2.65rem;padding:.4rem .8rem;list-style:none;cursor:pointer;color:var(--text);
+  min-height:2.65rem;padding:.4rem .8rem;list-style:none;cursor:pointer;color:var(--text);background:var(--hide-image);border-radius:4px;
 }
 .family-folio :is(.court-register,.file-section)>summary::-webkit-details-marker {display:none}
 .family-folio :is(.court-register,.file-section)>summary::after {
@@ -62,23 +62,27 @@
 .family-folio :is(.court-register,.file-section)>summary:focus-visible {outline:2px solid var(--gold);outline-offset:-3px}
 .family-folio :is(.court-register,.file-section)>summary>:first-child {margin-right:auto;font-weight:bold}
 .family-folio :is(.court-register summary span,.file-section summary small) {color:var(--folio-silver);font-size:.875rem}
-.family-folio .court-next {padding:.5rem .8rem;background:#243950;color:var(--text);border-block:1px solid var(--folio-line);font-size:.9rem}
-.court-next b {color:var(--folio-silver);margin-right:.45rem}
+.family-folio .court-next {padding:.5rem .8rem;background:#d6e1ed;color:#24364b;border-block:1px solid var(--folio-line);font-size:.9rem}
+.court-next b {color:#314b68;margin-right:.45rem}
 .family-folio .court-checks {list-style:none;padding:.15rem .8rem}
 .court-checks li {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.65rem;align-items:center;padding:.45rem 0;border-bottom:1px solid var(--folio-line)}
 .court-checks li:last-child {border-bottom:0}
-.court-checks small {display:block;color:var(--muted)}
-.court-status {color:var(--muted);font-size:.875rem}
-.court-status.met {color:#d6eaff;font-weight:bold}
+.court-checks small {display:block;color:#485b71}
+.court-status {color:#546276;font-size:.875rem}
+.court-status.met {color:#254b63;font-weight:bold}
 .folio-files {display:grid;gap:.45rem}
-.family-folio .folio-finance {padding:.65rem .85rem;border:1px solid var(--folio-edge);border-radius:8px 2px;background:var(--hide-image)}
+.family-folio .folio-finance {padding:.65rem .85rem;border:1px solid var(--folio-edge);border-radius:4px;background:var(--paper-image)}
 .folio-finance>div {display:flex;align-items:baseline;justify-content:space-between;gap:.5rem}
 .folio-finance>div+div {border-top:1px solid var(--folio-line);margin-top:.35rem;padding-top:.35rem}
-.folio-finance dt {color:var(--muted);font-size:.9rem}
-.folio-finance dd {font-size:1.1rem;color:var(--text);font-weight:bold}
+.folio-finance dt {color:#485b71;font-size:.9rem}
+.folio-finance dd {font-size:1.1rem;color:#24364b;font-weight:bold}
 .file-section>div {border-top:1px solid var(--folio-line);padding:.6rem .75rem}
 .trust-entry {padding:.3rem 0;border-bottom:1px dotted var(--folio-line)}
 .family-folio .fair-report {background:#203348;color:var(--text);border-left-color:var(--folio-edge)}
+.family-folio .file-section>div {--text:#25354b;--muted:#485b71;color:var(--text)}
+.family-folio .file-section>div details {background:transparent;color:inherit;border-color:var(--folio-line)}
+.family-folio .file-section>div .muted {color:var(--muted)}
+.family-folio .file-section .fair-report {background:#dce6ee;color:#25354b}
 @container (min-width:42rem) {
   .family-folio {grid-template-columns:minmax(0,1.65fr) minmax(14rem,1fr)}
 }
