@@ -147,7 +147,7 @@ async function check(browserType){
       const impact=page.locator('#choice-impact');
       assert.ok(await impact.isVisible());
       assert.match(await impact.innerText(),/메이린 합류/);
-      await impact.getByRole('button',{name:'계속'}).click();
+      assert.equal(await impact.getByRole('button').count(),0);
       assert.ok(await page.evaluate(()=>Boolean(state.people.mey)));
       await page.evaluate(()=>{state.phase='plan';state.pending=null;tab='staffing';render();});
       assert.equal(await page.locator('[data-employee=mey] img').getAttribute('src'),'assets/npc-mey.webp');

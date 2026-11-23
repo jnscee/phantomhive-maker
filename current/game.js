@@ -255,19 +255,27 @@ function choiceSnapshot(){
   return {values,milestones};
 }
 function showChoiceImpact(label,before){
-  const dialog=document.getElementById("choice-impact");
-  if(!dialog?.showModal)return;
+  if(!document.createElement)return;
   const after=choiceSnapshot();
   const rows=Object.entries(after.values).map(([name,value])=>({name,value,delta:value-before.values[name]})).filter(row=>row.delta);
   const notes=[...after.milestones].filter(label=>!before.milestones.has(label));
   const peak=Math.max(1,...rows.map(row=>Math.abs(row.delta)));
-  dialog.querySelector("h2").textContent=label;
-  dialog.querySelector(".impact-body").innerHTML=rows.map(({name,value,delta})=>{
+  const bars=rows.map(({name,value,delta})=>{
     const unit=name==="가문 자금"||name==="채무"?"£":"";
     const size=Math.abs(delta)/peak*50;
     return '<div class="impact-row"><span>'+escapeHTML(name)+'</span><small>'+unit+(value-delta)+' → '+unit+value+'</small><b>'+signed(delta)+unit+'</b><i aria-hidden="true" class="impact-track"><i class="'+(delta>0?'increase':'decrease')+'" style="width:'+size+'%"></i></i></div>';
   }).join("")+(rows.length?"":"<p>수치 변동 없음</p>")+notes.map(note=>'<p class="impact-note">'+escapeHTML(note)+'</p>').join("");
-  if(!dialog.open)dialog.showModal();
+  queueMicrotask(()=>{
+    document.getElementById("choice-impact")?.remove();
+    const host=document.querySelector("#conversation:not([hidden]) .dialogue, #conversation:not([hidden]) .review-slip")
+      ||document.querySelector("#sheet:not([hidden]) #panel, #nav:not([hidden]), #playback:not([hidden]) .stage-foot");
+    if(!host)return;
+    const section=document.createElement("section");
+    section.id="choice-impact";section.setAttribute("aria-label","선택 결과");section.setAttribute("aria-live","polite");
+    section.innerHTML='<header>선택 결과 · '+escapeHTML(label)+'</header><div class="impact-body">'+bars+'</div>';
+    if(host.classList.contains("dialogue")||host.classList.contains("stage-foot"))host.insertBefore(section,host.querySelector(":scope > .answers"));
+    else host.prepend(section);
+  });
 }
 function choose(index){
   const event=pendingEvent();
@@ -1405,6 +1413,7 @@ function handleAction(key,rect,confirmed=false){
     const spoken=state.spoken;
     const follow=chatFollowups[spoken?.topic]?.[Number(id)];
     if(tab==="chat"&&spoken?.turn===state.month&&spoken.replyRead&&spoken.followIndex==null&&follow){
+      showChoiceImpact(follow[0],choiceSnapshot());
       spoken.followIndex=Number(id);persist();render(true);
     }
     return;

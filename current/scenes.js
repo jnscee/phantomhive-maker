@@ -167,7 +167,7 @@ function chatDialogue(){
     const follow=chatFollowups[spoken.topic]||[];
     if(spoken.followIndex!=null&&follow[spoken.followIndex])return {caption:"시엘 팬텀하이브",line:follow[spoken.followIndex][1],buttons:end};
     if(spoken.replyRead&&spoken.reply)return {caption:"세바스찬 미카엘리스",line:spoken.reply,buttons:follow.map(([label],i)=>btn(label,"chat-follow:"+i)).join("")+end};
-    return {caption:"시엘 팬텀하이브",line:spoken.line,effects:spoken.effects,buttons:spoken.reply?btn("세바스찬의 대답을 듣는다","chat-reply")+end:end};
+    return {caption:"시엘 팬텀하이브",line:spoken.line,buttons:spoken.reply?btn("세바스찬의 대답을 듣는다","chat-reply")+end:end};
   }
   return {caption:"세바스찬 미카엘리스",line:state.ill||state.hp<35?"차는 침실로 올리겠습니다. 오늘은 어느 서류를 물릴까요?":state.stress>60?"오늘은 찻잔이 식을 때까지 한 장도 넘기지 않으셨군요.":butlerGreetings[sebastianRegard(state.stats)],
     buttons:btn("몸 상태를 묻는다","chatline:health")+btn("팬텀사 이야기를 꺼낸다","chatline:business")+btn("차를 한 잔 더 따른다","chatline:tea")+btn("다음에","back")};
