@@ -154,6 +154,16 @@ setup('delete state.fineStock;delete state.productHistory;state.salesBook=[{mont
 assertOk('orderDesk().includes("재주문") && inventoryRows().includes("누적 판매")');
 console.log('PASS townhouse invitation, trust greetings for seven characters, Sebastian growth and replies, late-save recruitment, final vow return, legacy Snake, independent gloves, 10 visit echoes and reloads, both history branches, graded inventory, cross-product deliveries, fees, cash reconciliation, upgrade and liquidation.');
 
+// A valid June save may still be waiting for Mey-Rin. Reloading preserves the draw and the October guarantee.
+setup('state.owlSeed=4055616904;state.month=state.planMonth=18;recruit("finny");persist();state=normalizeSave(saves.auto)');
+assertOk('!state.people.mey && !owlAppears(state)');
+run('state.month=state.planMonth=22;state.phase="result";persist();state=normalizeSave(saves.auto)');
+assert.equal(run('state.pending'),'maid');
+run('state.recruitPage={id:"maid",at:1,version:2};persist();state=normalizeSave(saves.auto)');
+assertOk('state.pending==="maid" && state.recruitPage.at===1');
+pick();
+assertOk('state.people.mey && !owlAppears(state) && state.events.filter(e=>e.id==="maid").length===1');
+
 const result=vm.runInContext(`(()=>{
  const all=new Set(),last={},arrivals=new Set();for(let seed=0;seed<4096;seed++){
   const run=initial();run.owlSeed=seed;run.people.finny={};const births=[];
@@ -263,6 +273,10 @@ function playCampaign(invest){
 for(const invest of [false,true]){
   const campaign=playCampaign(invest);
   assert.ok(campaign.finished);
+  if(invest){
+    assert.equal(campaign.ending,"vowTitle");
+    assert.ok(campaign.stats.some(value=>value<500));
+  }
   assert.ok(campaign.january.stats.filter(value=>value<500).length>=4);
   assert.ok(campaign.stats.some((value,i)=>value>campaign.january.stats[i]));
   assert.equal(campaign.exams,14);
@@ -316,19 +330,25 @@ for(const condition of ['state.motivation=100;state.stress=illnessLimits(state).
   run('continueSequence();continueSequence();state.visit="none";continueSequence()');
   assertOk('state.report.training===actions.exercise.cost+2*actions.rest.cost');
 }
-// A warning month can be rescued by planned rest or the doctor, including after loading between slots.
-for(const care of ["none","walk","doctor"]){
-  ctx.care=care;
-  setup('state.relapseStage=2;state.unwell=1;state.hp=15;state.stress=82;state.plan=["exercise","exercise",care==="walk"?"walk":"exercise"];state.qty=0;state.visit="none"');
-  if(care==="doctor")run('handleAction("doctor",null,true)');
+// A single rest can succeed or fail according to condition. Stronger care restores the full effect of sick leave.
+for(const [hp,stress,plan,doctor,stage,ending] of [
+  [15,82,["exercise","exercise","exercise"],false,2,"ill"],
+  [15,82,["rest","riding","exercise"],false,2,"ill"],
+  [60,46,["rest","exercise","exercise"],false,0,null],
+  [15,82,["rest","rest","exercise"],false,0,null],
+  [15,82,["recovery","exercise","exercise"],false,0,null],
+  [15,82,["exercise","exercise","exercise"],true,0,null]
+]){
+  Object.assign(ctx,{hp,stress,plan});
+  setup('state.relapseStage=2;state.unwell=1;state.hp=hp;state.stress=stress;state.plan=structuredClone(plan);state.qty=0;state.visit="none"');
+  if(doctor)run('handleAction("doctor",null,true)');
   const predicted=run('projectTraining().hp');
   run('execute();state=normalizeSave(saves.auto);continueSequence();continueSequence();continueSequence()');
   assert.equal(run('state.hp'),predicted);
-  assert.equal(run('state.relapseStage'),care==="none"?2:0);
+  assert.equal(run('state.relapseStage'),stage);
   assert.equal(run('state.report.training'),run('plannedTuition()'));
-  assert.equal(run('state.hp<18'),care==="none");
   run('state.phase="result";advance()');
-  assert.equal(run('state.ending'),care==="none"?"ill":null);
+  assert.equal(run('state.ending'),ending);
 }
 setup('delete state.relapseStage;state.hp=30;state.stress=illnessLimits(state).onset;state.plan=["exercise","exercise","exercise"];state.qty=0;state.visit="none";execute()');
 assertOk('state.hp===53 && state.sequence.sickAbsence');

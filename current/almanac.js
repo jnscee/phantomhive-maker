@@ -146,10 +146,11 @@ function familyFolio(rows,history,album,extra=""){
 }
 function relapseNotice(run){
   if(!run.relapseStage)return "";
-  if(run.phase==="plan"&&hasPlannedCare(run))return "회복 일정 확보 · 이번 달에는 병중 결석도 정상적으로 요양합니다.";
-  const advice="다음 일정에 휴식을 한 순 넣거나 저택에서 왕진을 부르세요.";
+  const care=plannedCareLevel(run);
+  if(run.phase==="plan"&&care===2)return "회복 일정 확보 · 이번 달에는 병중 결석도 정상적으로 요양합니다.";
+  const advice="스트레스가 10 이상 오르는 수업은 건강을 더 소모합니다. 건강이 50 미만이면 휴식 한 순으로는 부족할 수 있습니다. 두 순을 쉬거나 요양 한 순 또는 왕진을 선택하세요.";
   return run.relapseStage===1?"재발 주의 · 무리한 일정이 이어지면 결석해도 건강이 더디게 회복됩니다. "+advice
-    :"지병 악화 · 쉬지 않고 일정을 채우면 병중 결석 때도 건강이 떨어질 수 있습니다. "+advice;
+    :"지병 악화 · 지병이 깊어져 병중 결석 때도 건강이 떨어질 수 있습니다. "+advice;
 }
 function healthNotice(run){
   const relapse=relapseNotice(run);

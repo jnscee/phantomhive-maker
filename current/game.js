@@ -56,7 +56,7 @@ function btn(label,action,disabled=false,style=""){
 function lessonGain(key,current,base,month){
   const rate=1.1+Math.min(month-1,12)*0.065;
   const max=statMax(key);
-  const mastery=Math.max(.20,1-Math.max(0,current-280)/235);
+  const mastery=Math.max(.14,1-Math.max(0,current-280)/235);
   return Math.min(max-current,Math.round(base*rate*mastery*max/abilityMax));
 }
 function scheduleNote(id){
@@ -184,7 +184,10 @@ function settleMonth(){
   if(state.houseCare==="repair")state.neglect=Math.max(0,state.neglect-1);
   if(state.houseCare==="guard"&&assessment.보안>=65)state.renown+=state.month%4===0?1:0;
   if((state.staff==="parlor"||shiftAssigned("parlor"))&&state.plan.includes("etiquette"))state.renown+=1;
-  if(sickAbsence && !hasPlannedCare(state) && (state.hp<=65 || state.relapseStage>0)){
+  const care=plannedCareLevel(state);
+  const stillFrail=state.relapseStage>0 && state.hp<50;
+  const vulnerable=care===0 ? state.hp<=65 || state.relapseStage>0 : state.hp<50;
+  if(care<2 && (stillFrail || (sickAbsence && vulnerable))){
     state.relapseStage=Math.min(2,(state.relapseStage||0)+1);
   }else state.relapseStage=0;
   const product=state.product;
@@ -407,8 +410,9 @@ function lessonResult(run,id,slot){
     +practice*3+preparation+(run.lessonKit?.[id]?14:0)+(room?(run.level[room]-1)*3:0)+luck;
   return score>=65?"great":score>=38?"steady":"poor";
 }
-function hasPlannedCare(run){
-  return Boolean(run.flags["doctor"+run.month]) || run.plan.some(id=>actions[id]?.stress<0);
+function plannedCareLevel(run){
+  if(run.flags["doctor"+run.month] || run.plan.includes("recovery"))return 2;
+  return Math.min(2,run.plan.filter(id=>actions[id]?.stress<0).length);
 }
 function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),planned=id){
   const a=actions[id];
@@ -422,10 +426,10 @@ function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),
   run.stress=cap(run.stress+a.stress);
   const restBonus=(id==="rest"||id==="recovery")?(run.annex.bedroom-1)*5:0;
   let healthGain=a.health||0;
-  if(id!==planned && run.relapseStage && !hasPlannedCare(run)){
-    healthGain=run.relapseStage===1?8:-6;
-  }
-  run.hp=cap(run.hp+healthGain-fieldPenalty+restBonus-(run.stress>=75?6:0));
+  const relapse=plannedCareLevel(run)<2 ? run.relapseStage||0 : 0;
+  if(id!==planned && relapse)healthGain=relapse===1?8:-6;
+  const strain=a.stress>=10 ? 3*relapse : 0;
+  run.hp=cap(run.hp+healthGain-strain-fieldPenalty+restBonus-(run.stress>=75?6:0));
   if(id==="walk")run.stress=cap(run.stress-(run.annex.garden-1)*5-(shiftAssigned("garden")?2:0));
   run.motivation=cap(run.motivation+(a.stress<0?8:tired?-7:-2));
   const primary=Object.keys(a.gains)[0];
