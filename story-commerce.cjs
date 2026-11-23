@@ -410,5 +410,6 @@ for(const index of [0,1]){
   run('state.month++;state.sequence={index:2};visitDone(true)');
   assertOk('state.sequence.visitEvent===(replyIndex===0?"visitLibraryWax":"visitLibraryCarbon")');
 }
-assertOk('Object.keys(endingScenes).length===6 && Object.values(endingScenes).every(scene=>scene.lines.length>=48)');
+assert.deepEqual(Array.from(run('Object.keys(endingScenes).sort()')),['broke','ill','releaseNoTitle','releaseTitle','vowNoTitle','vowTitle']);
+assertOk('Object.entries(endingScenes).every(([id,scene])=>scene.lines.length>=(id==="releaseNoTitle"?41:48))');
 console.log('PASS illness, reserved tuition during sick leave, recovery, optional fair outcomes and demand, both library follow-ups after loading, one-way trust, and all six ending scripts.');

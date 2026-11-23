@@ -96,6 +96,7 @@ async function check(browserType){
         },{will,approved});
         if(approved)await page.locator('[data-action="read-verdict"]').click();
         assert.equal(await page.locator('.ending-cg').getAttribute('data-ending'),id);
+        assert.equal(await page.locator('.ending-cg').getAttribute('src'),'assets/endings/royal-letter.webp');
         await page.locator('.ending-cg').evaluate(im=>im.decode());
         await page.locator('#conversation [data-read="next"]').click();
         const line=await page.locator('#conversation .dialogue p').textContent();
@@ -103,6 +104,7 @@ async function check(browserType){
         await page.locator('#dialogue-visibility').click();await page.locator('#conversation .dialogue').waitFor({state:'hidden'});
         await page.locator('#dialogue-visibility').click();
         await page.locator('#conversation [data-read="skip"]').click();
+        if(id==="releaseNoTitle"||id==="releaseTitle")assert.equal(await page.locator('.ending-cg').getAttribute('src'),'assets/endings/black.webp');
         await page.locator('#conversation [data-read="finish"]').click();
         const farewell=page.locator('.ending-farewells');
         assert.equal(await farewell.locator('.farewell-bubble strong').textContent(),'타나카');
