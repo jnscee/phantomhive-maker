@@ -2,6 +2,12 @@
 const {chromium,firefox}=require('playwright');
 const assert=require('node:assert/strict');
 const base='http://127.0.0.1:4173/';
+async function openGame(page){
+  // Exercise the bundled assets and fallback fonts without depending on a public font service.
+  await page.route(/^https:\/\/fonts\.(?:googleapis|gstatic)\.com\//,route=>route.abort());
+  await page.goto(base,{waitUntil:"domcontentloaded"});
+}
+
 async function checkNotebook(page){
   await page.locator('#system-save').click();
   assert.equal(await page.locator('#sheet-title').innerText(),'저장 · 설정');
@@ -98,7 +104,7 @@ async function check(browserType){
       const page=await browser.newPage({viewport,reducedMotion:'reduce'});
       const errors=[];page.on('pageerror',error=>{errors.push(error.message);console.error('Browser error:',error.message);});
       page.setDefaultTimeout(12000); console.log(browserType.name(),viewport.width);
-      await page.goto(base);
+      await openGame(page);
       assert.ok(await page.locator('.book-cover').isVisible());
       assert.equal(await page.locator('#overture').isVisible(),false);
       await page.locator('.book-cover [data-action="reset"]').click();
@@ -111,7 +117,7 @@ async function check(browserType){
       if(viewport.width===390){
         for(const [width,height,month] of [[319,866,14],[375,667,1],[390,844,26],[430,932,14]]){
           const phone=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});
-          await phone.goto(base);
+          await openGame(phone);
           await phone.evaluate(month=>{
             state=initial();state.month=state.planMonth=month;state.phase='plan';tab='home';render();
           },month);
