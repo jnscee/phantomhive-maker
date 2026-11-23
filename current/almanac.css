@@ -31,9 +31,17 @@
 .court-ruling header,.court-register summary,.file-section>summary,.trust-entry {
   display:flex;align-items:center;justify-content:space-between;gap:.6rem;
 }
-.family-folio .court-ruling header {padding:.55rem 1rem;border-radius:4px 4px 0 0;background:var(--hide-image);color:#eef4fb;font-weight:bold;flex-wrap:wrap}
+.family-folio .court-ruling header {
+  position:static; padding:.7rem 1rem .4rem; margin:0;
+  border:0; border-radius:0; box-shadow:none; background:none;
+  color:#485d75; font-weight:bold; flex-wrap:wrap;
+}
+.family-folio .court-ruling header small {font-weight:normal}
+.family-folio .court-ruling {border:1px solid #a9b8c9;border-radius:5px;background:var(--paper-image);box-shadow:none}
+.family-folio .court-ruling::before,.family-folio .court-ruling::after,
+.family-folio .court-ruling header::before,.family-folio .court-ruling header::after {content:none}
 .family-folio small {font-size:.875rem}
-.family-folio .court-ruling h3 {font-size:clamp(1.4rem,4cqi,1.85rem);line-height:1.25;margin:.85rem 1rem .25rem;color:#24364b}
+.family-folio .court-ruling h3 {font-size:clamp(1.4rem,4cqi,1.85rem);line-height:1.25;margin:.1rem 1rem .25rem;color:#24364b}
 .family-folio .court-ruling>p {margin:0 1rem;color:#43566c;line-height:1.55}
 .family-folio .court-stages {
   list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:.75rem .25rem .85rem;margin:.8rem .75rem 0;border-top:1px solid #a9b8c9;
@@ -83,6 +91,14 @@
 .family-folio .file-section>div details {background:transparent;color:inherit;border-color:var(--folio-line)}
 .family-folio .file-section>div .muted {color:var(--muted)}
 .family-folio .file-section .fair-report {background:#dce6ee;color:#25354b}
+@container (max-width:24rem) {
+  .family-folio .court-stages {display:flex;flex-direction:column;gap:0;padding:.5rem .25rem}
+  .family-folio .court-stages li {display:flex;align-items:center;gap:.75rem;text-align:left;padding:.28rem .4rem;line-height:1.45}
+  .family-folio .court-stages i {margin:0;flex:none}
+  .family-folio .court-stages li::before {top:0;bottom:0;left:.69rem;right:auto;border:0;border-left:1px solid var(--folio-line)}
+  .family-folio .court-stages li:first-child::before {top:50%}
+  .family-folio .court-stages li:last-child::before {bottom:50%}
+}
 @container (min-width:42rem) {
   .family-folio {grid-template-columns:minmax(0,1.65fr) minmax(14rem,1fr)}
 }
