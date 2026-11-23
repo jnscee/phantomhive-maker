@@ -27,7 +27,7 @@
 <dialog id="choice-impact" aria-labelledby="impact-heading">
   <header><small>선택 결과</small><h2 id="impact-heading"></h2></header>
   <div class="impact-body"></div>
-  <form method="dialog"><button autofocus>계속</button></form>
+  <form method="dialog"><button type="button" autofocus onclick="this.closest('dialog').close()">계속</button></form>
 </dialog>
 <aside id="launch-help" role="status">
 <strong>팬텀하이브 백작 메이커</strong>
