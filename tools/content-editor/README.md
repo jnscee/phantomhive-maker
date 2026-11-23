@@ -1,6 +1,16 @@
 # 팬텀하이브 백작 메이커 콘텐츠 편집기
 
-## Windows에서 열기
+## 웹에서 열기
+
+[팬텀하이브 웹 편집기](https://jnscee.github.io/phantomhive-maker/editor/)를 브라우저에서 엽니다. 프로그램 설치 없이 공개 게임 버전을 불러옵니다.
+
+1. 콘텐츠를 수정하고 **게임에서 미리보기**로 확인합니다. 미리보기는 플레이 중인 저장 데이터와 분리됩니다.
+2. **브라우저에 저장**을 누릅니다. 같은 브라우저에서 다시 열면 저장한 편집을 이어갈 수 있습니다.
+3. **변경 파일 ZIP**은 배포할 원본 파일을, **게임 ZIP 받기**는 수정이 반영된 전체 플레이용 빌드를 내려받습니다.
+
+새 버전이 공개되면 편집기는 최신 게임으로 시작합니다. 이전 버전의 수정본은 **이전 버전 변경 ZIP**으로 내려받을 수 있습니다. 공개판을 업데이트하기 전 작업은 변경 ZIP으로 따로 보관해 두세요.
+
+## Windows 프로그램으로 열기
 
 1. 저장소 전체를 ZIP으로 내려받아 압축을 풉니다. `current` 폴더와 루트의 `game-part-*.zip` 파일이 필요합니다.
 2. [Node.js 22 이상](https://nodejs.org/)과 [Python 3](https://www.python.org/downloads/windows/)을 설치합니다. Python 설치 중 Windows용 `py` 실행기를 포함합니다.
@@ -22,6 +32,6 @@
 
 ## 공개 게임 업데이트
 
-GitHub에서 이 저장소를 내려받아 편집한 경우 **게임 파일에 적용**을 누른 뒤, GitHub Desktop에서 이 저장소의 변경 사항을 커밋하고 브랜치를 푸시합니다. 변경 사항을 `main`에 병합하면 GitHub Actions가 편집기와 같은 방식으로 게임을 빌드하고 GitHub Pages에 게시합니다. 변경된 게임 파일은 `current/` 아래에 있습니다.
+웹에서 수정한 경우 **변경 파일 ZIP**을 풀고 `current` 아래 파일을 [GitHub 저장소의 current 폴더](https://github.com/jnscee/phantomhive-maker/upload/main/current)에 같은 경로로 업로드합니다. 대사는 해당 JavaScript 파일을, 이미지나 음원은 `assets` 폴더 안의 경로를 유지합니다. GitHub에서 변경 사항을 커밋하고 `main`에 반영하면 GitHub Pages가 자동으로 게시합니다.
 
-ChatGPT Sites에 게시된 기존 게임도 같은 빌드로 업데이트할 수 있습니다. 그 주소를 갱신하려면 `main` 반영 뒤 같은 빌드를 Sites에 게시합니다.
+Windows 편집기에서는 **게임 파일에 적용**으로 저장한 `current/` 변경 사항을 GitHub에 커밋합니다. 기존 ChatGPT Sites 주소는 같은 빌드를 별도로 게시합니다.

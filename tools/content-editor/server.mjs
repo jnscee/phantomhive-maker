@@ -5,7 +5,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { tmpdir } from "node:os";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { applyEdits, catalog } from "./catalog.mjs";
@@ -48,9 +48,8 @@ const assets = readdirSync(path.join(base,"assets"),{recursive:true,withFileType
 function currentModel() {
   const files=Object.fromEntries(readdirSync(source).filter(file=>file.endsWith(".js")).sort()
     .map(file=>[file,readFileSync(path.join(source,file),"utf8")]));
-  const model=catalog(files,assets);
-  model.version+=":"+revision;
-  return model;
+  const version=createHash("sha256").update(JSON.stringify(files)).digest("hex")+":"+revision;
+  return catalog(files,assets,version);
 }
 
 function assetBytes(filename, encoded) {

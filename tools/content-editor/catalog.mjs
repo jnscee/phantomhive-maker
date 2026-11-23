@@ -1,5 +1,4 @@
 import { parse } from "acorn";
-import { createHash } from "node:crypto";
 
 const propertyName = property => property.key?.name ?? property.key?.value;
 const prop = (node, key) => node?.properties?.find(row => propertyName(row) === key)?.value;
@@ -8,7 +7,6 @@ const properties = node => node?.properties ?? [];
 const strings = node => node?.type === "Literal" && typeof node.value === "string";
 const value = node => node?.value;
 const hangul = /[가-힣]/;
-const hash = data => createHash("sha256").update(data).digest("hex");
 const quoted = input => JSON.stringify(input).replaceAll("\u2028","\\u2028").replaceAll("\u2029","\\u2029");
 
 function walk(node, ancestors, visit) {
@@ -21,7 +19,7 @@ function walk(node, ancestors, visit) {
   }
 }
 
-export function catalog(files, publishedAssets = []) {
+export function catalog(files, publishedAssets = [], version = "") {
   const groups = [];
   const fields = new Map();
   const roots = {};
@@ -338,7 +336,6 @@ export function catalog(files, publishedAssets = []) {
       });
     }
   }
-  const version = hash(JSON.stringify(files));
   return {files,groups:groups.filter(g=>g.fields.length||g.asset),fields,inventory,version,trackOptions,roomOptions,assetSet,eventGroups,customIds,authored,cueMap:variable("audio.js","eventTracks")};
 }
 

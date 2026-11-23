@@ -73,3 +73,5 @@ dialog iframe{display:block;width:100%;height:min(77vh,790px);border:0;backgroun
 .line-options select{margin:.5rem 0}
 .line-options input{width:auto;margin-right:.5rem}
 @media(max-width:750px){.line-options{grid-column:2/-1}}
+
+.editor-note{padding:.5rem 1rem;margin:0;border-bottom:1px solid var(--edge);color:var(--muted);font-size:.85rem}.editor-note a{color:var(--gold)}

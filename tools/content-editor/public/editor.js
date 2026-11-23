@@ -11,6 +11,9 @@ let newEvent = null;
 let deleteEvent = null;
 let busy = false;
 const assetUrls = new Map();
+const isWeb = document.body.hasAttribute("data-web-editor");
+const web = isWeb ? import("./web.mjs") : null;
+void web?.catch(()=>{});
 
 function node(tag, text, className) {
   const element=document.createElement(tag);
@@ -63,6 +66,7 @@ function clearDraft() {
 }
 
 async function api(path, body) {
+  if(web) return (await web).api(path,body);
   const reply=await fetch(path,body===undefined?{}:{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const payload=await reply.json();
   if(!reply.ok) throw new Error(payload.error || "편집기와 연결할 수 없습니다.");
@@ -100,7 +104,10 @@ function assetPreview(filename, target) {
   const media=node(audio?"audio":"img");
   if(audio){media.controls=true;media.preload="none";}
   else {media.alt="리소스 미리보기";media.loading="lazy";}
-  media.src=assetUrls.get(filename)||"/media/"+filename.split("/").map(encodeURIComponent).join("/")+"?v="+data.version;
+  const localUrl=assetUrls.get(filename);
+  if(localUrl)media.src=localUrl;
+  else if(web)void web.then(adapter=>{media.src=adapter.assetUrl(filename);}).catch(error=>status(error.message,true));
+  else media.src="/media/"+filename.split("/").map(encodeURIComponent).join("/")+"?v="+data.version;
   const upload=node("input");
   upload.type="file";
   upload.accept="."+ext;
@@ -364,6 +371,7 @@ function payload() {
 
 async function refresh() {
   data=await api("/api/catalog");
+  if(isWeb) $("export-older").hidden=!data.hasOlder;
   if(!currentGroup()) selected=data.groups.find(group=>group.section===section)?.key;
   drawList();
   drawDesk();
@@ -404,7 +412,10 @@ $("preview").addEventListener("click",async()=>{
   } catch(error){status(error.message,true);}
   finally{busy=false;updateToolbar();}
 });
-$("game-dialog").addEventListener("close",()=>$("game-dialog").querySelector("iframe").removeAttribute("src"));
+$("game-dialog").addEventListener("close",()=>{
+  $("game-dialog").querySelector("iframe").removeAttribute("src");
+  if(web)void web.then(adapter=>adapter.closePreview()).catch(()=>{});
+});
 $("save").addEventListener("click",async()=>{
   busy=true;updateToolbar();status("변경 내용을 확인하고 있습니다.");
   try {
@@ -412,7 +423,7 @@ $("save").addEventListener("click",async()=>{
     if(newEvent) selected="event-custom-"+newEvent.id;
     clearDraft();
     await refresh();
-    status(result.files.length?result.files.length+"개 파일에 적용했습니다.":"파일에 반영할 차이가 없습니다.");
+    status(result.files.length?(isWeb?"이 브라우저에 저장했습니다.":result.files.length+"개 파일에 적용했습니다."):"파일에 반영할 차이가 없습니다.");
   } catch(error){status(error.message,true);}
   finally{busy=false;updateToolbar();}
 });
@@ -421,17 +432,35 @@ $("undo").addEventListener("click",async()=>{
   try {
     const result=await api("/api/undo",{});
     await refresh();
-    status(result.files.length+"개 파일을 되돌렸습니다.");
+    status(isWeb?"마지막 저장을 되돌렸습니다.":result.files.length+"개 파일을 되돌렸습니다.");
   } catch(error){status(error.message,true);}
   finally{busy=false;updateToolbar();}
 });
 $("discard").addEventListener("click",()=>{
   clearDraft();drawList();drawDesk();status("적용 대기 중인 수정을 취소했습니다.");
 });
+async function download(kind){
+  if(busy||draftCount()){status("편집 내용을 저장한 뒤 ZIP을 받아 주세요.",true);return;}
+  busy=true;updateToolbar();status("ZIP을 만드는 중입니다.");
+  try{await (await web).exportZip(kind);status("ZIP 다운로드를 시작했습니다.");}
+  catch(error){status(error.message,true);}
+  finally{busy=false;updateToolbar();}
+}
+
 $("export").addEventListener("click",event=>{
-  if(draftCount()||busy){event.preventDefault();status("게임 파일에 적용한 뒤 ZIP을 받아 주세요.",true);}
+  if(web){event.preventDefault();void download("game");}
+  else if(draftCount()||busy){event.preventDefault();status("게임 파일에 적용한 뒤 ZIP을 받아 주세요.",true);}
   else status("게임 ZIP을 만들고 있습니다. 완료되면 다운로드가 시작됩니다.");
 });
+
+if(isWeb){
+  $("save").textContent="브라우저에 저장";
+  $("undo").textContent="마지막 저장 되돌리기";
+  $("export-edits").hidden=false;
+  $("editor-note").hidden=false;
+  $("export-edits").addEventListener("click",()=>void download("changes"));
+  $("export-older").addEventListener("click",()=>void download("older"));
+}
 window.addEventListener("beforeunload",event=>{
   if(draftCount()) event.preventDefault();
 });

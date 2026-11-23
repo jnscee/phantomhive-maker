@@ -22,6 +22,8 @@ jobs:
       - name: Prepare game files
         run: |
           python3 current/build.py site
+          npm ci --prefix tools/content-editor
+          node tools/content-editor/build-web.mjs site
           for script in site/js/*.js; do node --check "$script"; done
           node story-commerce.cjs site
       - name: Check animation and portrait interaction in Chromium and Firefox

@@ -12,10 +12,13 @@
     <div class="brand"><span class="seal" aria-hidden="true">P</span><div><span class="imprint">EARL PHANTOMHIVE MAKER</span><h1>콘텐츠 편집기</h1></div></div>
     <div class="toolbar">
       <button id="undo" disabled>마지막 적용 되돌리기</button>
+      <button id="export-edits" hidden>변경 파일 ZIP</button>
+      <button id="export-older" hidden>이전 버전 변경 ZIP</button>
       <a id="export" class="button" href="/export.zip">게임 ZIP 받기</a>
       <button class="primary" id="save" disabled>게임 파일에 적용</button>
     </div>
   </header>
+  <p id="editor-note" class="editor-note" hidden>편집 내용은 이 브라우저에 저장됩니다. <a href="https://github.com/jnscee/phantomhive-maker/blob/main/tools/content-editor/README.md#공개-게임-업데이트">공개 게임에 반영하는 방법</a></p>
   <main class="workspace">
     <aside class="catalog" aria-label="콘텐츠 목록">
       <label class="search">콘텐츠 검색<input id="search" type="search" placeholder="이름, 대사, 이벤트 ID" autocomplete="off"></label>
