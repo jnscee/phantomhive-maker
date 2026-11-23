@@ -770,12 +770,91 @@ function hasEndingRecord(id){
 function endingThumb(id){
   return '<button type="button" class="ending-thumb" data-action="ending-art:'+id+'"><img loading="lazy" src="assets/endings/'+id+'.webp" alt=""><span>'+endingLabels[id][0]+'</span></button>';
 }
+// Keep only the entries needed by the gallery when a new campaign replaces the autosave.
+function growthRecord(run){
+  const years=new Map();
+  function yearFor(month){
+    const date=calendarDate(month),year=date.getUTCFullYear();
+    if(!years.has(year))years.set(year,{year,plans:new Map(),entries:[]});
+    return years.get(year);
+  }
+  yearFor(1);
+  for(const entry of run.past||[]){
+    if(!Number.isInteger(entry.month))continue;
+    const group=yearFor(entry.month);
+    for(const id of entry.plan||[]){
+      const name=actions[id]?.name;
+      if(name)group.plans.set(name,(group.plans.get(name)||0)+1);
+    }
+  }
+  for(const entry of run.events||[]){
+    const event=events.find(item=>item.id===entry.id);
+    if(event&&Number.isInteger(entry.month))yearFor(entry.month).entries.push({month:entry.month,title:event.title});
+  }
+  return [...years.values()].sort((a,b)=>a.year-b.year).map(group=>({
+    year:group.year,age:group.year-1876,
+    plans:[...group.plans].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([name])=>name),
+    entries:group.entries.sort((a,b)=>a.month-b.month)
+  }));
+}
+function savedGrowthRecord(id,replay){
+  if(!replay||state.phase==="ending"&&state.ending===id)return growthRecord(state);
+  if(saves.growthGallery?.[id])return saves.growthGallery[id];
+  const run=[saves.auto,saves[1],saves[2],saves[3]].find(r=>r?.phase==="ending"&&r.ending===id);
+  return run?growthRecord(run):null;
+}
+function showGrowthCredits(host,years,onFinish){
+  host.hidden=false;host.dataset.review="false";
+  host.innerHTML='<section class="growth-credits" aria-label="시엘의 성장 기록"><div class="growth-window" tabindex="0"><div class="growth-roll"><header><h2>시엘의 성장 기록</h2></header></div></div><footer><button type="button" class="growth-toggle"></button><button type="button" class="growth-end">마치기</button></footer></section>';
+  const windowEl=host.querySelector(".growth-window"),roll=host.querySelector(".growth-roll");
+  function add(parent,tag,value){
+    const el=document.createElement(tag);el.textContent=value;parent.append(el);return el;
+  }
+  for(const {year,age,plans,entries} of years){
+    const section=add(roll,"section","");
+    const portrait=document.createElement("img");
+    portrait.src=cielArt(age);portrait.alt="";section.append(portrait);
+    add(section,"h3",year+"년");
+    if(plans.length)add(section,"p","주요 일정　"+plans.join(" · "));
+    for(const entry of entries){
+      const row=add(section,"div","");row.className="growth-entry";
+      add(row,"small",(calendarDate(entry.month).getUTCMonth()+1)+"월");add(row,"span",entry.title);
+    }
+  }
+  add(roll,"p","끝").className="growth-fin";
+  const toggle=host.querySelector(".growth-toggle");
+  let paused=matchMedia("(prefers-reduced-motion: reduce)").matches,lastTime=0,fraction=0,finished=false;
+  function label(){toggle.textContent=paused?"자동 재생":"일시정지";}
+  function finish(){if(finished||!roll.isConnected)return;finished=true;onFinish();}
+  function frame(now){
+    if(finished||!roll.isConnected)return;
+    if(!paused&&!document.hidden&&lastTime){
+      fraction+=Math.min(100,now-lastTime)*0.027;
+      const pixels=Math.floor(fraction);fraction-=pixels;windowEl.scrollTop+=pixels;
+      if(windowEl.scrollTop+windowEl.clientHeight>=windowEl.scrollHeight-1){finish();return;}
+    }
+    lastTime=now;requestAnimationFrame(frame);
+  }
+  toggle.onclick=()=>{paused=!paused;label();};
+  windowEl.addEventListener("wheel",()=>{paused=true;label();},{passive:true});
+  windowEl.addEventListener("touchstart",()=>{paused=true;label();},{passive:true});
+  host.querySelector(".growth-end").onclick=finish;
+  label();requestAnimationFrame(frame);
+}
 function showEndingScene(host){
   const replay=tab==="endingMemory"?endingReplay:null;
   const live=tab==="plan"&&state.phase==="ending"&&Number.isInteger(state.endingBeat);
   if(!replay&&!live)return false;
   const id=replay?replay.id:state.ending,scene=endingScenes[id];
   if(!scene)return false;
+  function finishScene(){
+    if(replay){endingReplay=null;tab=replay.origin;}
+    else {delete state.growthCredits;delete state.endingBeat;persist();}
+    render(true);
+  }
+  if(id==="vowTitle"&&(replay?replay.credits:state.growthCredits)){
+    showGrowthCredits(host,savedGrowthRecord(id,replay)||[],finishScene);return true;
+  }
   const end=scene.lines.length-1,at=Math.min(end,Math.max(0,replay?replay.at:state.endingBeat));
   const [who,line,legacyPicture,cue]=scene.lines[at];
   const picture=cue?.cg||legacyPicture||id,last=at===end;
@@ -799,9 +878,12 @@ function showEndingScene(host){
     showEndingScene(host);host.querySelector(".line-next").focus({preventScroll:true});
   },()=>{
     stopRecruitAuto();
-    if(replay){endingReplay=null;tab=replay.origin;}
-    else {delete state.endingBeat;persist();}
-    render(true);
+    const years=id==="vowTitle"?savedGrowthRecord(id,replay):null;
+    if(years){
+      if(replay)replay.credits=true;else {state.growthCredits=true;persist();}
+      render(true);return;
+    }
+    finishScene();
   },cue?.wait);
   return true;
 }

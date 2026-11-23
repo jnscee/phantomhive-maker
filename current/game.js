@@ -297,6 +297,7 @@ function finish(id){
   state.ending=id;state.endingBeat=0;state.phase="ending";
   saves.gallery??={};
   saves.gallery[id]=endingLabels[id][0];
+  if(id==="vowTitle"){saves.growthGallery??={};saves.growthGallery[id]=growthRecord(state);}
   persist();render(true);
 }
 function isApprovedEnding(id){return ["title","vowTitle","releaseTitle"].includes(id);}

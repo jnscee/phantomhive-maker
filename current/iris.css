@@ -1291,3 +1291,20 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; }
   .london-board > .staff-roster { order:0; }
   .london-board .london-rooms > * { width:auto; }
 }
+
+#scene #conversation:has(.growth-credits){position:absolute;inset:0;display:block;padding:0;z-index:12;pointer-events:auto}
+#scene:has(.growth-credits) :is(#date,#money){visibility:hidden}
+.growth-credits{position:absolute;inset:0;display:grid;grid-template-rows:minmax(0,1fr) auto;background:radial-gradient(ellipse at 50% 38%,#202b40,#0c1019 78%);color:#ede6dd;text-align:center;font-family:"Gowun Batang",serif}
+.growth-window{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;mask-image:linear-gradient(transparent,#000 7%,#000 94%,transparent)}
+.growth-roll{padding:clamp(3rem,12vh,7rem) 1rem 0;margin:auto;max-width:29rem}
+.growth-roll h2,.growth-roll h3{color:#e7d4ac;letter-spacing:.08em}
+.growth-roll h2{font-size:clamp(1.35rem,4vw,2rem)}
+.growth-roll section{margin:3rem auto 5rem}
+.growth-roll img{display:block;height:clamp(8rem,26vh,14rem);width:auto;max-width:100%;object-fit:contain;margin:auto;mask-image:linear-gradient(#000 87%,transparent)}
+.growth-roll h3{margin:1rem auto;font-size:1.35rem}
+.growth-roll p{font-size:.93rem;line-height:1.8}
+.growth-entry{display:grid;grid-template-columns:3em 1fr;gap:1em;text-align:left;align-items:baseline;padding:.55em 0;border-bottom:1px solid #b4bfcc26}
+.growth-entry small{text-align:right;color:#c1af91}
+.growth-fin{padding:2rem 0 25vh;letter-spacing:.4em;color:#ebdbbe}
+.growth-credits footer{display:flex;justify-content:center;gap:.6rem;padding:.5rem 0 .8rem}
+.growth-credits footer button{font:inherit;color:#e5e8ef;background:#1c2636;border:1px solid #637186;border-radius:4px;padding:.35rem .85rem}
