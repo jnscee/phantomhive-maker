@@ -90,7 +90,7 @@ function termDialogue(event,buttons){
   if(!pages&&!outcome?.response)return "";
   const script=outcome?.responseLines??(outcome?.response?[["",outcome.response]]:outcome?(event.authored?[["",event.response]]:birthdayDialogue[event.id]?.replies[outcome.index]||[["세바스찬",examDialogue[event.slot][2+outcome.index]]]):pages);
   const at=Math.min(state.termPage||0,script.length-1),[who,line]=script[at];
-  const end=at===script.length-1,actions=end?(outcome?btn("기록을 덮는다","term-close"):buttons):btn("다음 ▸","term-next:"+at);
+  const end=at===script.length-1,actions=end?(outcome?btn(outcome.nextScene?"다음 장면":"기록을 덮는다","term-close"):buttons):btn("다음 ▸","term-next:"+at);
   const room=event.room||birthdayDialogue[event.id]?.room||choreography[event.slot]?.[0]||"ballroom";
   const cue=termCue(event),picture=cue?.cg||event.picture;
   const art=picture?"assets/endings/"+picture+".webp":sceneArt[room];

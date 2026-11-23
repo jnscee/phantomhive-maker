@@ -278,7 +278,7 @@ const server=http.createServer(async (req,res)=>{
         return json(res,{url:"/game/"+token+"/index.html"});
       }
     }
-    const staticFiles={"/":"index.html","/editor.js":"editor.js","/editor.css":"editor.css"};
+    const staticFiles={"/":"index.html","/story-flow.js":"story-flow.js","/editor.js":"editor.js","/editor.css":"editor.css"};
     if(get && Object.hasOwn(staticFiles,urlPath)) {
       const file=staticFiles[urlPath];
       res.setHeader("Content-Security-Policy","default-src 'self'; img-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'none'");

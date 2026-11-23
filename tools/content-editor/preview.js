@@ -42,6 +42,7 @@ if(editorPreview?.kind==="opening"){
   state.phase="visit";
   state.visit=card.place;
   state.sequence={index:2,visitEvent:card.id,visitBefore:snapStats(state)};
+  finishVisit=()=>{state.phase="plan";tab="home";render(true);};
 }else if(editorPreview?.kind==="fair"){
   state.phase="plan";
   state.month=state.planMonth=editorPreview.month;

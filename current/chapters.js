@@ -139,6 +139,13 @@ function chooseVisitEvent(index){
  if(card){seq.encounterReply=card.choices[index].reply;seq.encounterPartner=card.npc;}
  delete seq.encounterPage;
  delete seq.visitEvent;
+ if(choice.responseLines||choice.nextScene){
+   seq.readingVisitOutcome=true;
+   state.phase="event";
+   state.pending=event.id;
+   state.termPage=0;
+   state.termOutcome={id:event.id,index,response:choice.response,responseLines:choice.responseLines,nextScene:choice.nextScene};
+ }
  persist();render(true);
 }
 function finishVisit(){

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>팬텀하이브 콘텐츠 편집기</title>
   <link rel="stylesheet" href="/editor.css">
+  <script src="/story-flow.js" defer></script>
   <script src="/editor.js" defer></script>
 </head>
 <body>
@@ -51,6 +52,11 @@
       <div class="fields" id="fields"></div>
     </section>
   </main>
+  <aside class="editor-credits" aria-label="편집기 제작 참고">
+    장면 흐름도와 표정 편집은 <a href="https://x.com/Dot_teu" target="_blank" rel="noopener noreferrer">돛트(Dot-teu)</a>님의
+    <a href="https://github.com/Dotteu/VisualNovel-Maker" target="_blank" rel="noopener noreferrer">VisualNovel-Maker</a>를 참고해 이 게임에 맞춰 새로 구현했습니다.
+    <a href="https://creativecommons.org/licenses/by-nc/4.0/deed.ko" target="_blank" rel="noopener noreferrer">참고작 라이선스 · CC BY-NC 4.0</a>
+  </aside>
   <footer class="statusbar">
     <p id="status" role="status">게임 파일을 읽는 중입니다.</p>
     <div><button id="discard" disabled>수정 취소</button><span id="pending">변경 0건</span></div>
@@ -64,7 +70,7 @@
       <h2 id="add-title">콘텐츠 추가</h2>
       <label>종류<select id="add-kind">
         <option value="opening">프롤로그 장면</option><option value="scene">영입 장면</option><option value="event">월말 스토리 이벤트</option>
-        <option value="standing">스탠딩</option><option value="cg">CG</option>
+        <option value="standing">스탠딩</option><option value="expression">인물 표정</option><option value="cg">CG</option>
         <option value="bgm">BGM</option><option value="background">배경</option>
         <option value="fx">파티클 효과</option>
       </select></label>

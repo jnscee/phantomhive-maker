@@ -1,8 +1,8 @@
-import {catalog,applyEdits,additionPath} from "./catalog.mjs";
+import {catalog,applyEdits,additionPath,inspectRoutes} from "./catalog.mjs";
 import {zip,strToU8} from "./fflate.mjs";
 import {read,write} from "./storage.mjs";
 
-export {additionPath};
+export {additionPath,inspectRoutes};
 
 const scope=new URL("./",import.meta.url);
 const gameRoot=new URL("../",scope);

@@ -1,8 +1,10 @@
 "use strict";
 
 for(const card of visitEncounterCards){
-  for(const [label,response,stat,amount] of authoredOptions[card.id]??[])
-    card.choices.push({label,reply:[card.npc,response],stat,amount});
+  for(const row of authoredOptions[card.id]??[]){
+    const authored=authoredChoice(row);
+    card.choices.push({label:authored.label,reply:[card.npc,authored.response],authored});
+  }
 }
 
 function visitorEvents(){
@@ -11,7 +13,7 @@ function visitorEvents(){
     visitOnly:true, source:"저택과 런던의 방문 기록",
     sees:run=>run.visit===card.place && card.condition(run) &&
       (card.place!=="quarters" || visitName(visitPerson("quarters"))===card.npc),
-    choices:card.choices.map(answer=>({
+    choices:card.choices.map(answer=>answer.authored??({
       label:answer.label, result:answer.reply[1],
       effect(){
         if(answer.trust)talkTrust(answer.trust);
@@ -26,7 +28,10 @@ function encounterPage(seq,room){
   const page=Math.min(seq.encounterPage||0,card.lines.length-1);
   const [who,line]=card.lines[page];
   const controls=page===card.lines.length-1
-    ?card.choices.map((answer,index)=>btn(answer.label,"visit-choice:"+index)).join("")
+    ?card.choices.map((answer,index)=>{
+      const locked=answer.authored?.when&&!answer.authored.when(state);
+      return btn(answer.label+(locked?" · "+answer.authored.hint:""),"visit-choice:"+index,Boolean(locked));
+    }).join("")
     :btn("다음 대사","encounter-next:"+page);
   return staged(who,card.title,line,controls,"자유행동",room,card.npc);
 }

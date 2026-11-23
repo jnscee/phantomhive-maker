@@ -5,6 +5,7 @@ const base='http://127.0.0.1:4173/';
 async function check(browserType){
   const browser=await browserType.launch({headless:true,...(browserType===chromium&&process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
   try{
+    await require("./tools/content-editor/story-flow-check.cjs")(browser,base);
     for(const viewport of [{width:1280,height:800},{width:390,height:844}]){
       const page=await browser.newPage({viewport,reducedMotion:'reduce'});
       const errors=[];page.on('pageerror',error=>{errors.push(error.message);console.error('Browser error:',error.message);});

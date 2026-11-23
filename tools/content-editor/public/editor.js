@@ -12,6 +12,8 @@ let newEvent = null;
 let deleteEvent = null;
 let busy = false;
 let previewedDraft = false;
+let inspectStoryRoutes;
+let cancelLinkedScene=null;
 const assetUrls = new Map();
 const isWeb = document.body.hasAttribute("data-web-editor");
 const web = isWeb ? import("./web.mjs") : null;
@@ -75,6 +77,7 @@ function clearDraft() {
   changes={};
   uploads={};
   newEvent=null;
+  cancelLinkedScene=null;
   deleteEvent=null;
   for (const url of assetUrls.values()) URL.revokeObjectURL(url);
   assetUrls.clear();
@@ -288,7 +291,19 @@ function cueEditor(index,initial,field,onChange){
   for(const [side,label] of [["left","왼쪽 스탠딩"],["right","오른쪽 스탠딩"]]){
     const current=cue[side]??(side==="left"?cue.standing:"")??"";
     const standing=labeled(form,label,select([["","미지정"],...field.cues.standing],current));
+    const expression=labeled(form,(side==="left"?"왼쪽":"오른쪽")+" 표정",node("select"));
+    function showExpressions(){
+      const options=[["","기본 표정"],...Object.entries(field.cues.expressions??{})
+        .filter(([,item])=>item.actor===standing.value).map(([id,item])=>[id,item.name])];
+      expression.replaceChildren(...Array.from(select(options,cue[side+"Expression"]??"").options));
+      expression.value=cue[side+"Expression"]??"";
+      expression.disabled=options.length===1;
+    }
+    showExpressions();
+    expression.addEventListener("input",()=>set(side+"Expression",expression.value));
     standing.addEventListener("input",()=>{
+      delete cue[side+"Expression"];
+      showExpressions();
       if(cue.standing){
         if(side==="right")cue.left=cue.standing;
         delete cue.standing;
@@ -320,6 +335,10 @@ function labeled(parent,text,control){
   label.append(control);
   parent.append(label);
   return control;
+}
+
+function storyTrigger(current){
+  return select([["0","선택지에서 연결될 때"],...Array.from({length:35},(_,i)=>[String(i+1),(i+1)+"개월차 월말"])],String(current));
 }
 
 function choicesEditor(parent,field,initial){
@@ -362,6 +381,46 @@ function choicesEditor(parent,field,initial){
       });
       row.append(reward);
       if(isWeb&&field.cues){
+        const route=choice[5]??{};
+        function updateRoute(){
+          if(Object.keys(route).length){
+            choice[4]??=null;
+            choice[5]={...route};
+          }else choice.length=choice[4]?.length?5:4;
+          save();
+        }
+        const routing=node("div",undefined,"choice-routing");
+        const targets=storyRouteScenes().filter(scene=>scene.linked&&scene.id!==currentGroup()?.preview?.id);
+        const options=[["","이벤트 마치기"],...targets.map(scene=>[scene.id,scene.title])];
+        if(route.next&&!options.some(([id])=>id===route.next))options.push([route.next,"연결 확인 필요 · "+route.next]);
+        const target=labeled(routing,"다음 장면",select(options,route.next??""));
+        target.addEventListener("input",()=>{
+          if(target.value)route.next=target.value;else delete route.next;
+          updateRoute();
+        });
+        routing.append(button("새 장면을 만들어 연결",()=>{
+          if(deleteEvent){status("삭제 예약을 먼저 적용하거나 취소해 주세요.",true);return;}
+          const previous=route.next;
+          openNewEvent(id=>{
+            route.next=id;updateRoute();
+            return ()=>{
+              if(previous)route.next=previous;else delete route.next;
+              updateRoute();
+            };
+          });
+        }));
+        const gate=labeled(routing,"선택 조건",select([["","항상 선택 가능"],...["지성","기품","매력","경영","통찰","의지","체력"].map(stat=>[stat,stat])],route.stat??""));
+        const minimum=labeled(routing,"필요 수치 이상",node("input"));
+        minimum.type="number";minimum.min=0;minimum.max=500;minimum.step=1;
+        minimum.value=route.min??0;minimum.disabled=!route.stat;
+        gate.addEventListener("input",()=>{
+          minimum.disabled=!gate.value;
+          if(gate.value){route.stat=gate.value;route.min=minimum.valueAsNumber;}
+          else{delete route.stat;delete route.min;}
+          updateRoute();
+        });
+        minimum.addEventListener("input",()=>{route.min=minimum.valueAsNumber;updateRoute();});
+        row.append(routing);
         const branch=node("details",undefined,"cue-editor");
         branch.append(node("summary","선택지 후속 장면"));
         const body=node("div");
@@ -370,7 +429,7 @@ function choicesEditor(parent,field,initial){
           if(choice[4]?.length){
             linesEditor(body,choice[4],lines=>{choice[4]=structuredClone(lines);save();},
               {cues:field.cues,manual:true});
-            body.append(button("후속 장면 비우기",()=>{choice.length=4;save();drawBranch();}));
+            body.append(button("후속 장면 비우기",()=>{if(choice[5])choice[4]=null;else choice.length=4;save();drawBranch();}));
           }else body.append(button("＋ 후속 장면 대사 추가",()=>{choice[4]=[["",""]];save();drawBranch();}));
         };
         drawBranch();
@@ -427,7 +486,8 @@ function fieldEditor(field) {
   const label=node("label",field.label);
   const media=node("div",undefined,"asset-preview");
   let control;
-  if (field.options || field.paths) {
+  if(field.trigger){control=storyTrigger(current);}
+  else if (field.options || field.paths) {
     const options=field.options??field.paths.map(path=>[path,path]);
     control=select(options,current);
   } else if (!field.fixed) {
@@ -441,7 +501,7 @@ function fieldEditor(field) {
     control.id="field-"+field.id;
     label.htmlFor=control.id;
     control.addEventListener("input",()=>{
-      const input=field.type==="number"?control.valueAsNumber:control.value;
+      const input=field.trigger?Number(control.value):field.type==="number"?control.valueAsNumber:control.value;
       modify(field,input);
       if(field.type==="cue") assetPreview(input?getAsset(field,input):null,media);
       else if(field.media||field.paths) assetPreview(getAsset(field,input),media);
@@ -497,7 +557,7 @@ function drawList() {
   for(const b of $("sections").children) b.setAttribute("aria-pressed",String(b.dataset.section===section));
 }
 
-const paneLabels={dialogue:"대사",choices:"선택지",stage:"이미지 · 소리",details:"기본 정보"};
+const paneLabels={flow:"장면 흐름도",dialogue:"대사",choices:"선택지",stage:"이미지 · 소리",details:"기본 정보"};
 
 function paneFor(field){
   if(field.type==="lines")return "dialogue";
@@ -510,6 +570,7 @@ function updatePaneCounts(){
   const group=currentGroup();
   if(!group)return;
   for(const tab of $("entry-nav").querySelectorAll("[data-pane]")){
+    if(tab.dataset.pane==="flow")continue;
     const total=group.fields.filter(field=>paneFor(field)===tab.dataset.pane)
       .reduce((count,field)=>count+(["lines","choices"].includes(field.type)?value(field).length:1),0);
     tab.querySelector(".count").textContent=total;
@@ -517,6 +578,7 @@ function updatePaneCounts(){
 }
 
 function drawDesk() {
+  flowMapResize?.disconnect();
   const panel=$("fields");
   $("add-story").hidden=!isWeb||section!=="story"||Boolean(newEvent);
   const nav=$("entry-nav");
@@ -532,6 +594,8 @@ function drawDesk() {
   const panes={dialogue:[],choices:[],stage:[],details:[]};
   for(const field of group.fields)panes[paneFor(field)].push(field);
   const visible=Object.keys(panes).filter(key=>panes[key].length||(key==="stage"&&group.asset));
+  if(!visible.includes(activePane)&&activePane!=="flow")activePane=visible[0];
+  if(isWeb&&["opening","ending","recruit","event","visit"].includes(group.preview?.kind))visible.unshift("flow");
   if(!visible.includes(activePane))activePane=visible[0];
   if(visible.length>1){
     nav.hidden=false;
@@ -543,12 +607,17 @@ function drawDesk() {
       });
       tab.setAttribute("aria-pressed",key===activePane);
       tab.dataset.pane=key;
-      tab.append(node("span",undefined,"count"));
+      if(key!=="flow")tab.append(node("span",undefined,"count"));
       nav.append(tab);
     }
     updatePaneCounts();
   }
-  panel.append(...(panes[activePane]??[]).map(fieldEditor));
+  if(activePane==="flow")drawStoryFlow(panel,group);
+  for(const field of panes[activePane]??[]){
+    const block=fieldEditor(field);
+    block.dataset.field=field.id;
+    panel.append(block);
+  }
   if(group.asset&&activePane==="stage") {
     const media=node("div",undefined,"asset-preview");
     assetPreview(group.asset,media);
@@ -569,20 +638,24 @@ function drawDesk() {
 }
 
 function drawNewEvent(panel) {
-  $("entry-title").textContent="새 월말 이벤트";
+  $("entry-title").textContent=newEvent.month===0?"새 연결 장면":"새 월말 이벤트";
+  if(cancelLinkedScene)panel.append(button("원래 선택지로 돌아가기",()=>{
+    cancelLinkedScene();cancelLinkedScene=null;newEvent=null;
+    section=currentGroup().section;activePane="choices";drawList();drawDesk();
+  }));
   $("entry-detail").textContent="이벤트 / 35개월 본편";
   $("preview").textContent="게임에서 미리보기 ↗";
-  for(const [key,label] of [["id","이벤트 ID · 영문 소문자, 숫자, 하이픈"],["title","제목"],["month","발생 월 · 1~35"],["room","배경"],["track","BGM"],["picture","CG"],["standing","스탠딩"],["result","마지막 대사"],["label","마무리 버튼"]]) {
+  for(const [key,label] of [["id","이벤트 ID · 영문 소문자, 숫자, 하이픈"],["title","제목"],["month","발생 방식"],["room","배경"],["track","BGM"],["picture","CG"],["standing","스탠딩"],["result","마지막 대사"],["label","마무리 버튼"]]) {
     const field=node("div",undefined,"field");
     const title=node("label",label);
     const options={room:data.roomOptions,track:data.trackOptions,
       picture:[["","없음"],...data.artOptions],standing:[["","없음"],...data.recruitCastOptions]};
-    const control=options[key]?select(options[key],newEvent[key]):node("input");
-    if(key==="month"){control.type="number";control.min=1;control.max=35;}
+    const control=key==="month"?storyTrigger(newEvent.month):options[key]?select(options[key],newEvent[key]):node("input");
     control.value=newEvent[key];
+    if(cancelLinkedScene&&(key==="id"||key==="month"))control.disabled=true;
     control.id="new-"+key;
     title.htmlFor=control.id;
-    control.addEventListener("input",()=>{newEvent[key]=key==="month"?control.valueAsNumber:control.value;previewedDraft=false;updateToolbar();});
+    control.addEventListener("input",()=>{newEvent[key]=key==="month"?Number(control.value):control.value;previewedDraft=false;updateToolbar();});
     field.append(title,control);
     panel.append(field);
   }
@@ -599,6 +672,7 @@ function payload() {
 
 async function refresh() {
   data=await api("/api/catalog");
+  if(isWeb)inspectStoryRoutes=(await web).inspectRoutes;
   if(isWeb) $("export-older").hidden=!data.hasOlder;
   if(!currentGroup()) selected=data.groups.find(group=>group.section===section)?.key;
   drawList();
@@ -633,13 +707,17 @@ for(const [id,label] of Object.entries(sections)) {
   b.dataset.section=id;
   $("sections").append(b);
 }
-function openNewEvent(){
+function openNewEvent(link){
   if(newEvent) return;
   if(deleteEvent){status("이벤트 삭제를 적용하거나 취소한 뒤 추가해 주세요.",true);return;}
   section="events";
   $("search").value="";
   previewedDraft=false;
   newEvent={id:"event-"+crypto.randomUUID().slice(0,8),title:"",month:1,room:"ballroom",track:"daily",picture:"",standing:"",lines:[["세바스찬",""]],label:"기록을 덮는다",result:""};
+  if(typeof link==="function"){
+    newEvent.month=0;
+    cancelLinkedScene=link("custom-"+newEvent.id);
+  }
   drawList();
   drawDesk();
   $("new-title").focus();
@@ -703,7 +781,7 @@ if(isWeb){
   const addDialog=$("add-dialog");
   const addKind=$("add-kind");
   let addition;
-  const extensions={standing:".webp,.png,.jpg,.jpeg",cg:".webp",bgm:".mp3,.ogg,.wav",background:".webp,.png,.jpg,.jpeg"};
+  const extensions={expression:".webp,.png,.jpg,.jpeg,.gif",standing:".webp,.png,.jpg,.jpeg",cg:".webp",bgm:".mp3,.ogg,.wav",background:".webp,.png,.jpg,.jpeg"};
   function drawAddition(){
     const kind=addKind.value;
     const fields=$("add-fields");
@@ -723,7 +801,12 @@ if(isWeb){
       id.pattern="[a-z][a-z0-9\\-]{0,39}";
       id.value=addition.id=kind+"-"+crypto.randomUUID().slice(0,8);
     }
-    if(kind!=="fx")input("name","이름").maxLength=120;
+    if(kind==="expression"){
+      const actor=labeled(fields,"표정을 사용할 인물",select(data.recruitCastOptions,data.recruitCastOptions[0][0]));
+      addition.actor=actor.value;
+      actor.addEventListener("input",()=>{addition.actor=actor.value;});
+    }
+    if(kind!=="fx")input("name",kind==="expression"?"표정 이름":"이름").maxLength=120;
     if(kind==="fx")input("symbol","화면에 뿌릴 문자").maxLength=20;
     if(["scene","opening"].includes(kind)){
       fields.append(node("p",kind==="opening"?"프롤로그 마지막에 이어집니다.":"고른 영입 이벤트의 마지막 장면 뒤에 이어집니다.","muted"));
@@ -796,8 +879,8 @@ if(isWeb){
       await api("/api/save",{...payload(),addition:input,uploads:{...uploads,...incoming}});
       clearDraft();
       addDialog.close();
-      if(["standing","cg","background","bgm","fx"].includes(input.kind)){
-        const destination={standing:["assets","standing"],cg:["assets","cg"],background:["assets","sceneArt"],bgm:["audio","music"],fx:["fx","fx-symbols"]}[input.kind];
+      if(["standing","expression","cg","background","bgm","fx"].includes(input.kind)){
+        const destination={expression:["assets","expression"],standing:["assets","standing"],cg:["assets","cg"],background:["assets","sceneArt"],bgm:["audio","music"],fx:["fx","fx-symbols"]}[input.kind];
         [section,selected]=destination;
         if(input.kind!=="fx")selected+="-extra-"+input.id;
         activePane=null;

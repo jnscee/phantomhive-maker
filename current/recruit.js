@@ -294,6 +294,7 @@ function sceneLine(speaker,text,next,attributes="",heading=""){
   return '<article class="dialogue" '+attributes+'>'+(name?'<small>'+name+'</small>':'')+heading+
     '<p>'+text+' '+next+'</p></article>';
 }
+const novelExpressions={};
 const recruitNames={ciel:"시엘",seb:"세바스찬",finny:"피니안",mey:"메이린",owl:"올빼미",bard:"바르도",tanaka:"타나카",snake:"스네이크",soma:"소마",agni:"아그니"};
 function readerControls(at,last,auto){
   return '<div class="opening-top recruit-controls" role="group" aria-label="대사 재생">'+
@@ -326,7 +327,10 @@ function novelCast(cue,file=x=>x){
   if(!cue?.left&&!cue?.right)return null;
   return ["left","right"].map(side=>{
     const id=cue[side];
-    return Object.hasOwn(recruitCast,id)?sceneStanding(recruitNames[id],side,file(recruitCast[id])):"";
+    if(!Object.hasOwn(recruitCast,id))return "";
+    const expression=novelExpressions[cue[side+"Expression"]];
+    const art=expression?.actor===id?expression.file:recruitCast[id];
+    return sceneStanding(recruitNames[id],side,file(art));
   }).join("");
 }
 function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers="",hasTanaka=false){

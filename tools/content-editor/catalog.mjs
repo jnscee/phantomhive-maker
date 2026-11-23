@@ -1,3 +1,5 @@
+import {inspectRoutes} from "./public/story-routes.mjs";
+export {inspectRoutes};
 import { parse } from "acorn";
 
 const propertyName = property => property.key?.name ?? property.key?.value;
@@ -52,6 +54,7 @@ export function catalog(files, publishedAssets = [], version = "") {
     recruitNames:["recruit.js",variable("recruit.js","recruitNames")],endingArtDescriptions:["chapters.js",variable("chapters.js","endingArtDescriptions")],
     sceneArt:["content.js",variable("content.js","sceneArt")],stageNames:["content.js",variable("content.js","stageNames")],
     recruitArt:["recruit.js",variable("recruit.js","recruitArt")],motionObjects:["scenes.js",variable("scenes.js","motionObjects")],
+    novelExpressions:["recruit.js",variable("recruit.js","novelExpressions")],
     authoredOptions:["story.js",variable("story.js","authoredOptions")]};
   const recruitTargets=new Map();
 
@@ -155,6 +158,16 @@ export function catalog(files, publishedAssets = [], version = "") {
     return [id,value(prop(variable("recruit.js","recruitNames"),id))??id];
   });
   cueFields.standing=recruitCastOptions;
+  cueFields.expressions=Object.fromEntries(properties(registers.novelExpressions[1]).map(property=>{
+    const id=propertyName(property);
+    const actor=value(prop(property.value,"actor"));
+    const name=value(prop(property.value,"name"));
+    const path=value(prop(property.value,"file"));
+    const owner=recruitCastOptions.find(([key])=>key===actor)?.[1]??actor;
+    const entry=group("assets","expression-"+id,owner+" · "+name,"표정 스탠딩");
+    entry.asset=path;
+    return [id,{actor,name,file:path}];
+  }));
   inventory.standing=Object.fromEntries(recruitCast.map(p=>[propertyName(p),value(p.value)]));
   for(const [id,title] of recruitCastOptions){
     if(!id.startsWith("extra-"))continue;
@@ -278,9 +291,9 @@ export function catalog(files, publishedAssets = [], version = "") {
   for (const node of rows(authored)) {
     const id=value(prop(node,"id"));
     customIds.push(id);
-    const g=event(id,value(prop(node,"title")),"추가한 월말 이벤트");
+    const g=event(id,value(prop(node,"title")),value(prop(node,"month"))===0?"선택지 연결 전용 장면":"추가한 월말 이벤트");
     add(g,"story.js",prop(node,"title"),"제목");
-    add(g,"story.js",prop(node,"month"),"발생 월","number",undefined,{min:1,max:35});
+    add(g,"story.js",prop(node,"month"),"발생 방식","number",undefined,{min:0,max:35,trigger:true});
     add(g,"story.js",prop(node,"room"),"배경","select",roomOptions,{media:"room"});
     add(g,"story.js",prop(node,"track"),"BGM","select",trackOptions,{media:"track"});
     add(g,"story.js",prop(node,"lines"),"대사 순서","lines",undefined,{cues:true,manual:true});
@@ -301,11 +314,12 @@ export function catalog(files, publishedAssets = [], version = "") {
   }
 
   const rewardOptions=[["","변화 없음"],...["지성","기품","매력","경영","통찰","의지","체력"].map(stat=>[stat,stat]),["hp","건강"],["stress","스트레스"],["motivation","의욕"]];
-  function addChoices(g,id,branch=true){
+  function addChoices(g,id){
     const optionNode=prop(registers.authoredOptions[1],id);
     const field={id:"options:"+id,label:"추가 선택지",type:"choices",file:"story.js",options:rewardOptions,
-      cues:branch?cueFields:undefined,
-      value:rows(optionNode).map(row=>rows(row).map((part,index)=>index===4?readLines(part):
+      cues:cueFields,
+      value:rows(optionNode).map(row=>rows(row).map((part,index)=>index===4?(part.type==="ArrayExpression"?readLines(part):null):
+        index===5?Object.fromEntries(properties(part).map(p=>[propertyName(p),value(p.value)])):
         part.type==="UnaryExpression"?-value(part.argument):value(part)))};
     g.fields.push(field);
     fields.set(field.id,{field,node:optionNode,optionId:id});
@@ -377,7 +391,7 @@ export function catalog(files, publishedAssets = [], version = "") {
       add(g,"visitors.js",prop(choice,"label"),"선택지 "+(i+1));
       add(g,"visitors.js",rows(prop(choice,"reply"))[1],"응답 "+(i+1));
     });
-    addChoices(g,id,false);
+    addChoices(g,id);
   }
   for(const entry of rows(variable("festivals.js","londonFestivals"))){
     const id=value(prop(entry,"id"));
@@ -436,8 +450,10 @@ function lineValues(input, field = {}) {
       if(!cue||typeof cue!=="object"||Array.isArray(cue))throw new Error("연출 설정을 확인해 주세요.");
       const entries=Object.entries(cue);
       for(const [key,setting] of entries){
-        const valid=key==="wait"?Number.isInteger(setting)&&setting>=0&&setting<=10000
-          :key==="hideCast"?setting===true:field.cues[["left","right"].includes(key)?"standing":key]?.some?.(([id])=>id===setting);
+        const side=key==="leftExpression"?"left":key==="rightExpression"?"right":null;
+        const valid=side?Boolean(cue[side]&&field.cues.expressions?.[setting]?.actor===cue[side])
+          :key==="wait"?Number.isInteger(setting)&&setting>=0&&setting<=10000
+          :key==="hideCast"?setting===true:["left","right","standing","fx","cg","bgm","se"].includes(key)&&field.cues[["left","right"].includes(key)?"standing":key]?.some(([id])=>id===setting);
         if(!valid)throw new Error("연출 항목이나 리소스가 유효하지 않습니다.");
       }
       if(entries.length)line.push(Object.fromEntries(entries));
@@ -465,13 +481,31 @@ function statementValue(field, input, assetSet) {
       return input;
     case "choices":
       if(!Array.isArray(input)||input.length>20)throw new Error("추가 선택지는 최대 20개까지 만들 수 있습니다.");
-      return input.map(([label,response,stat,amount,branch])=>{
+      return input.map(([label,response,stat,amount,branch,route])=>{
         if(!field.options.some(([key])=>key===stat)||!Number.isInteger(amount)||Math.abs(amount)>100)
           throw new Error("선택지 효과는 −100에서 100 사이의 정수로 입력해 주세요.");
         const result=[textValue(label,120),textValue(response),stat,stat?amount:0];
         if(branch?.length){
           if(!field.cues)throw new Error("이 선택지에는 후속 장면을 연결할 수 없습니다.");
           result.push(lineValues(branch,field));
+        }
+        if(route!=null){
+          if(!field.cues||typeof route!=="object"||Array.isArray(route))throw new Error("선택지 연결 방식을 확인해 주세요.");
+          const checked={};
+          if(route.next){
+            if(typeof route.next!=="string"||!/^custom-[a-z0-9][a-z0-9-]{0,47}$/.test(route.next))throw new Error("다음 장면을 다시 선택해 주세요.");
+            checked.next=route.next;
+          }
+          if(route.stat){
+            if(!["지성","기품","매력","경영","통찰","의지","체력"].includes(route.stat)||!Number.isInteger(route.min)||route.min<0||route.min>500)
+              throw new Error("선택지 조건에는 0~500 사이의 정수가 필요합니다.");
+            checked.stat=route.stat;
+            checked.min=route.min;
+          }
+          if(Object.keys(checked).length){
+            if(result.length===4)result.push(null);
+            result.push(checked);
+          }
         }
         return result;
       });
@@ -543,7 +577,7 @@ export function applyEdits(model, request) {
       const input=request.newEvent;
       const id="custom-"+input.id;
       if(!/^[a-z0-9][a-z0-9-]{0,47}$/.test(input.id)||model.eventGroups.has(id)) throw new Error("영문 소문자·숫자·하이픈으로 고유한 이벤트 ID를 입력해 주세요.");
-      if(!Number.isInteger(input.month)||input.month<1||input.month>35) throw new Error("발생 월은 1~35 사이여야 합니다.");
+      if(!Number.isInteger(input.month)||input.month<0||input.month>35) throw new Error("발생 방식에서 연결 전용 또는 1~35개월을 골라 주세요.");
       const row={
         id,month:input.month,title:textValue(input.title,200),
         room:statementValue({type:"select",label:"배경",options:model.roomOptions},input.room),
@@ -589,6 +623,10 @@ export function applyEdits(model, request) {
         const path=additionPath(addition);
         if(model.assetSet.has(path)||!Object.hasOwn(request.uploads??{},path))throw new Error("새 이름과 등록할 파일을 확인해 주세요.");
         if(kind==="bgm")insertProperty("musicTracks",key,{title,file:path});
+        if(kind==="expression"){
+          if(!model.recruitCastOptions.some(([actor])=>actor===addition.actor))throw new Error("표정을 사용할 인물을 선택해 주세요.");
+          insertProperty("novelExpressions",key,{actor:addition.actor,name:title,file:path});
+        }
         if(kind==="standing"){
           insertProperty("recruitCast",key,path);
           insertProperty("recruitNames",key,title);
@@ -614,12 +652,21 @@ export function applyEdits(model, request) {
     parse(text,{ecmaVersion:"latest"});
     output[file]=text;
   }
+  if(output["story.js"]){
+    const updated=catalog({...model.files,...output},[...model.assetSet]);
+    const routes=updated.groups.filter(group=>["event","visit"].includes(group.preview?.kind)).map(group=>({
+      id:group.preview.id,title:group.title,linked:group.fields.some(field=>field.trigger&&field.value===0),
+      choices:group.fields.find(field=>field.type==="choices")?.value??[]
+    }));
+    const issue=inspectRoutes(routes).find(item=>item.level==="error");
+    if(issue)throw new Error((routes.find(scene=>scene.id===issue.id)?.title??issue.id)+" · 추가 선택지 "+(issue.index+1)+" · "+issue.message);
+  }
   return output;
 }
 
 
 export function additionPath({kind,id,extension}){
-  const locations={bgm:["audio",/^(mp3|ogg|wav)$/],standing:["portraits",/^(webp|png|jpg|jpeg)$/],
+  const locations={bgm:["audio",/^(mp3|ogg|wav)$/],expression:["expressions",/^(webp|png|jpg|jpeg|gif)$/],standing:["portraits",/^(webp|png|jpg|jpeg)$/],
     cg:["endings",/^webp$/],background:["backgrounds",/^(webp|png|jpg|jpeg)$/]};
   const spec=locations[kind];
   if(!spec||!/^([a-z][a-z0-9-]{0,39})$/.test(id??"")||!spec[1].test(extension??""))

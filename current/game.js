@@ -259,7 +259,7 @@ function choose(index){
   state.events.push({id:event.id,index,month:state.month,...(examNote?{examNote}:{}),...(isRecruit?{edition:"canonical",age:currentCielAge()}:{}),...(event.id==="visitPrince"?{hadTanaka:Boolean(state.people.tanaka)}:{})});
   state.log.push(examNote||choice.result);
   if(pages||choice.response){
-    state.termOutcome={id:event.id,index,note:choice.response?"":examNote,response:choice.response,responseLines:choice.responseLines};
+    state.termOutcome={id:event.id,index,note:choice.response?"":examNote,response:choice.response,responseLines:choice.responseLines,nextScene:choice.nextScene};
     state.termPage=0;persist();render(true);return;
   }
   finishEventChoice(event);
@@ -267,6 +267,10 @@ function choose(index){
 function finishEventChoice(event){
   delete state.termPage;delete state.termOutcome;
   state.pending=null;
+  if(state.sequence?.readingVisitOutcome){
+    delete state.sequence.readingVisitOutcome;
+    state.phase="visit";finishVisit();return;
+  }
   if(event.id==="visitPrince"&&state.recruitReturn==="estate"){
     delete state.recruitReturn;state.phase="plan";tab="estate";persist();render(true);return;
   }
@@ -766,7 +770,8 @@ function savePanel(){
       (index?btn("저장","store:"+id,false,"slot-write"):"")+btn("불러오기","load:"+id,!record,"slot-read")+'</div></div>';
   }).join("");
   return frame("설정",audioControls()+motionControls()+instructionBook()+'<section class="notebook-slots"><h3>저장 슬롯</h3>'+rows+'</section>'+(!storageOk?'<p class="small danger">브라우저 저장소를 사용할 수 없습니다. 이 탭을 닫으면 진행 내용이 사라집니다.</p>':"")+
-    '<div class="notebook-actions">'+(state.phase!=="contract"?btn("프롤로그 다시 보기","recollect"):"")+btn("새 회차","reset")+btn("표지로","tab:title")+'</div>');
+    '<div class="notebook-actions">'+(state.phase!=="contract"?btn("프롤로그 다시 보기","recollect"):"")+btn("새 회차","reset")+btn("표지로","tab:title")+'</div>'+
+    '<details class="annexes"><summary>제작 참고 · 콘텐츠 편집기</summary><p>장면 흐름도와 표정 편집은 <a href="https://x.com/Dot_teu" target="_blank" rel="noopener noreferrer">돛트(Dot-teu)</a>님의 <a href="https://github.com/Dotteu/VisualNovel-Maker" target="_blank" rel="noopener noreferrer">VisualNovel-Maker</a>를 참고했습니다. <a href="https://creativecommons.org/licenses/by-nc/4.0/deed.ko" target="_blank" rel="noopener noreferrer">참고작 라이선스 · CC BY-NC 4.0</a></p></details>');
 }
 function statusPanel(){
   const predicted=state.phase==="plan"?projectTraining():state.report?.before;
@@ -1267,7 +1272,15 @@ function handleAction(key,rect,confirmed=false){
   if(tab==="plan"&&["slotEvent","event"].includes(state.phase)&&["term-close","term-next"].includes(action)){
     const event=pendingEvent();
     if(!event||(!termPages(event)&&!state.termOutcome?.response))return;
-    if(action==="term-close"&&state.termOutcome?.id===event.id)finishEventChoice(event);
+    if(action==="term-close"&&state.termOutcome?.id===event.id){
+      const next=state.termOutcome.nextScene;
+      if(next&&events.some(scene=>scene.id===next&&scene.linkedOnly)){
+        state.pending=next;
+        delete state.termOutcome;
+        state.termPage=0;
+        persist();render(true);
+      }else finishEventChoice(event);
+    }
     else if(action==="term-next"&&Number(id)===(state.termPage||0)){
       state.termPage=Number(id)+1;persist();render(true);
     }

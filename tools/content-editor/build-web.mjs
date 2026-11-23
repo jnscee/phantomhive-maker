@@ -36,7 +36,8 @@ const dependencies=[
   ["fflate/LICENSE","fflate-LICENSE"]
 ];
 for(const [file,target] of dependencies) await cp(path.join(source,"node_modules",file),path.join(editor,target));
-const catalog=(await readFile(path.join(source,"catalog.mjs"),"utf8")).replace('from "acorn"','from "./acorn.mjs"');
+const catalog=(await readFile(path.join(source,"catalog.mjs"),"utf8")).replace('from "acorn"','from "./acorn.mjs"')
+  .replace('"./public/story-routes.mjs"','"./story-routes.mjs?v='+uiVersion+'"');
 await writeFile(path.join(editor,"catalog.mjs"),catalog);
 const adapter=await readFile(path.join(editor,"web.mjs"),"utf8");
 await writeFile(path.join(editor,"web.mjs"),adapter.replace('"./catalog.mjs"','"./catalog.mjs?v='+uiVersion+'"'));
@@ -44,6 +45,7 @@ const html=(await readFile(path.join(editor,"index.html"),"utf8"))
   .replace("<body>",'<body data-web-editor>')
   .replace('sandbox="allow-scripts"','sandbox="allow-scripts allow-same-origin"')
   .replace('href="/editor.css"',`href="./editor.css?v=${uiVersion}"`)
+  .replace('src="/story-flow.js"',`src="./story-flow.js?v=${uiVersion}"`)
   .replace('src="/editor.js"',`src="./editor.js?v=${uiVersion}"`);
 await writeFile(path.join(editor,"index.html"),html);
 const app=(await readFile(path.join(editor,"editor.js"),"utf8")).replace('import("./web.mjs")',`import("./web.mjs?v=${uiVersion}")`);
