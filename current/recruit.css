@@ -55,9 +55,9 @@
 }
 #dialogue-visibility:focus-visible {outline:2px solid white;outline-offset:2px}
 
-/* Match the softer ink shadows and restrained colors of the original cast. */
+/* The painted cutouts share the stage lighting used by the other portraits. */
 img:is([src$="/soma.webp"],[src$="/agni.webp"],[src$="/mey-owl.webp"]) {
-  filter:saturate(.80) contrast(.90) brightness(1.03) var(--standing-glow,drop-shadow(0 0 0 transparent));
+  filter:var(--standing-glow,drop-shadow(0 0 0 transparent));
 }
 
 body.guiding #scene #dialogue-visibility {display:none}
