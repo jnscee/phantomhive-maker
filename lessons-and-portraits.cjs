@@ -17,6 +17,36 @@ async function check(browserType){
       await page.locator('#dialogue-visibility').click();
       assert.equal(await page.locator('#opening-line').textContent(),prologue);
       assert.equal(await page.evaluate(()=>openingAuto),false);
+      if(viewport.width===390){
+        for(const [width,height,month] of [[319,866,14],[375,667,1],[390,844,26],[430,932,14]]){
+          await page.setViewportSize({width,height});
+          await page.evaluate(month=>{
+            state=initial();state.month=state.planMonth=month;state.phase='plan';tab='home';render();
+          },month);
+          await page.locator('#home-standing').evaluate(im=>im.decode());
+          const geometry=await page.evaluate(()=>{
+            const box=e=>e.getBoundingClientRect();
+            const scene=box(document.querySelector('#scene')),menu=box(document.querySelector('#nav'));
+            const keys=[...document.querySelectorAll('#nav button')],rail=[...document.querySelectorAll('#system-menu button')];
+            const rects=rail.map(box),portrait=box(document.querySelector('#home-standing'));
+            const centerHits=keys.every(key=>{
+              const b=box(key);return document.elementFromPoint(b.x+b.width/2,b.y+b.height/2)?.closest('button')===key;
+            });
+            return {
+              left:menu.left-scene.left,right:scene.right-menu.right,join:portrait.bottom-menu.top,
+              centerHits,rows:rects.map(b=>Math.round(b.top)),widths:rects.map(b=>Math.round(b.width)),
+              smallest:Math.min(...[...keys,...rail].map(b=>box(b).height)),rightEdge:Math.max(...rects.map(r=>r.right))
+            };
+          });
+          assert.ok(Math.abs(geometry.left-geometry.right)<2&&geometry.left>=0&&geometry.left<12,JSON.stringify(geometry));
+          assert.ok(geometry.join>=-1&&geometry.join<=10&&geometry.centerHits,JSON.stringify(geometry));
+          assert.equal(geometry.rows.length,6);
+          assert.deepEqual(geometry.rows,[...Array(3).fill(geometry.rows[0]),...Array(3).fill(geometry.rows[5])]);
+          assert.ok(geometry.rows[5]>geometry.rows[0]&&Math.max(...geometry.widths)-Math.min(...geometry.widths)<=1);
+          assert.ok(geometry.smallest>=44&&geometry.rightEdge<=width);
+        }
+        await page.setViewportSize(viewport);
+      }
       for(const [month,age] of [[1,10],[14,11],[26,12]]){
         await page.evaluate(month=>{state=initial();state.month=month;state.planMonth=month;state.phase='plan';tab='home';render();},month);
         const portrait=page.locator('#ciel-greet > #home-standing');
