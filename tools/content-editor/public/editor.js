@@ -285,13 +285,20 @@ function cueEditor(index,initial,field,onChange){
       set("wait",Math.round(seconds*1000));
     });
   }
-  if(field.castCue){
-    const standing=labeled(form,"스탠딩 교체",select([["","장면 기본"],...field.cues.standing],cue.standing??""));
-    standing.addEventListener("input",()=>set("standing",standing.value));
-    const hide=labeled(form,"스탠딩 숨기기",node("input"));
-    hide.type="checkbox";hide.checked=Boolean(cue.hideCast);
-    hide.addEventListener("change",()=>set("hideCast",hide.checked));
+  for(const [side,label] of [["left","왼쪽 스탠딩"],["right","오른쪽 스탠딩"]]){
+    const current=cue[side]??(side==="left"?cue.standing:"")??"";
+    const standing=labeled(form,label,select([["","미지정"],...field.cues.standing],current));
+    standing.addEventListener("input",()=>{
+      if(cue.standing){
+        if(side==="right")cue.left=cue.standing;
+        delete cue.standing;
+      }
+      set(side,standing.value);
+    });
   }
+  const hide=labeled(form,"스탠딩 숨기기",node("input"));
+  hide.type="checkbox";hide.checked=Boolean(cue.hideCast);
+  hide.addEventListener("change",()=>set("hideCast",hide.checked));
   updateSummary();
   return panel;
 }
@@ -362,7 +369,7 @@ function choicesEditor(parent,field,initial){
           body.replaceChildren();
           if(choice[4]?.length){
             linesEditor(body,choice[4],lines=>{choice[4]=structuredClone(lines);save();},
-              {cues:field.cues,manual:true,castCue:true});
+              {cues:field.cues,manual:true});
             body.append(button("후속 장면 비우기",()=>{choice.length=4;save();drawBranch();}));
           }else body.append(button("＋ 후속 장면 대사 추가",()=>{choice[4]=[["",""]];save();drawBranch();}));
         };
@@ -581,7 +588,7 @@ function drawNewEvent(panel) {
   }
   const lines=node("fieldset",undefined,"field");
   lines.append(node("legend","대사 순서"));
-  linesEditor(lines,newEvent.lines,input=>{newEvent.lines=structuredClone(input);previewedDraft=false;updateToolbar();},{cues:data.cueFields,manual:true,castCue:true});
+  linesEditor(lines,newEvent.lines,input=>{newEvent.lines=structuredClone(input);previewedDraft=false;updateToolbar();},{cues:data.cueFields,manual:true});
   panel.append(lines);
   updateToolbar();
 }
@@ -737,7 +744,7 @@ if(isWeb){
       });
       addition.lines=[["세바스찬",""]];
       fields.append(node("p","대사를 한 줄 이상 입력해 주세요. 화자는 비워 둘 수 있습니다.","muted"));
-      linesEditor(fields,addition.lines,lines=>{addition.lines=structuredClone(lines);},{required:true,cues:data.cueFields,castCue:kind==="scene"});
+      linesEditor(fields,addition.lines,lines=>{addition.lines=structuredClone(lines);},{required:true,cues:data.cueFields});
     }
     if(extensions[kind]){
       const control=labeled(fields,"파일 · "+extensions[kind].replaceAll(",",", "),node("input"));

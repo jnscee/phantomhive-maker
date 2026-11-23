@@ -122,7 +122,10 @@ function drawOpening(focus=false){
   surface.dataset.establish=String(!signing&&!scene.title&&entry.beat===0&&["fire","manor"].includes(scene.art));
   surface.dataset.signing=String(signing);
   const cue=signing?null:entry.cue;
-  const voiceOnly=!cue?.cg&&!scene.title&&scene.art==="cell"&&entry.speaker==="악마";
+  const actors=novelCast(cue,recruitArtwork(currentCielAge()))??"";
+  const cast=$("opening-cast");
+  if(cast.innerHTML!==actors)cast.innerHTML=actors;
+  const voiceOnly=!actors&&!cue?.cg&&!scene.title&&scene.art==="cell"&&entry.speaker==="악마";
   surface.dataset.voiceOnly=String(voiceOnly);
   $("opening-dialogue").classList.toggle("dialogue",!voiceOnly);
   const reader=$("opening-read");
@@ -139,8 +142,9 @@ function drawOpening(focus=false){
   musicPlayer.sync(trackForView());
   const thought=!signing&&entry.speaker==="독백";
   surface.dataset.voice=thought?"thought":"speech";
-  $("opening-speaker").hidden=thought;
-  $("opening-speaker").textContent=thought?"":signing?"세바스찬":entry.speaker;
+  const speaker=signing?"세바스찬":thought?"":novelSpeakerName(entry.speaker);
+  $("opening-speaker").hidden=!speaker;
+  $("opening-speaker").textContent=speaker;
   $("opening-line").textContent=signing?"왕실은 작위 승인을 보류했습니다. 금고에 남은 돈은 "+money(state.fund)+". 도련님, 가문의 첫 장부는 어느 수첩에 보관하면 되겠습니까?":entry.text;
   $("opening-slots").hidden=!signing;
   if(signing)$("opening-slots").innerHTML=[1,2,3].map(n=>btn("수첩 "+n+" · "+(saves[n]?monthText(saves[n].month):"빈 슬롯"),"contract-slot:"+n)).join("");

@@ -195,7 +195,7 @@ export function catalog(files, publishedAssets = [], version = "") {
         value:rows(cast).map(value),options:recruitCastOptions,file};
       fields.set(field.id,{field,node:cast??scene,insert:cast?undefined:"cast"});
       sceneGroup.fields.push(field);
-      add(sceneGroup,file,prop(scene,"lines"),"대사 순서","lines",undefined,{metadata:"tanaka",hasTanaka:id==="visitPrince",cues:true,castCue:true});
+      add(sceneGroup,file,prop(scene,"lines"),"대사 순서","lines",undefined,{metadata:"tanaka",hasTanaka:id==="visitPrince",cues:true});
     }
   }
   for (const p of recruitArt) {
@@ -283,7 +283,7 @@ export function catalog(files, publishedAssets = [], version = "") {
     add(g,"story.js",prop(node,"month"),"발생 월","number",undefined,{min:1,max:35});
     add(g,"story.js",prop(node,"room"),"배경","select",roomOptions,{media:"room"});
     add(g,"story.js",prop(node,"track"),"BGM","select",trackOptions,{media:"track"});
-    add(g,"story.js",prop(node,"lines"),"대사 순서","lines",undefined,{cues:true,manual:true,castCue:true});
+    add(g,"story.js",prop(node,"lines"),"대사 순서","lines",undefined,{cues:true,manual:true});
     add(g,"story.js",prop(node,"label"),"마무리 버튼");
     add(g,"story.js",prop(node,"result"),"마지막 대사");
     for(const [key,label,options,media] of [
@@ -423,7 +423,7 @@ function lineValues(input, field = {}) {
   return input.map(row=>{
     if(!Array.isArray(row)||row.length<2||row.length>(field.cues?4:field.metadata?3:2))
       throw new Error("화자와 대사를 입력해 주세요.");
-    const line=[row[0]===""?"":textValue(row[0],80),textValue(row[1])];
+    const line=[typeof row[0]==="string"&&!row[0].trim()?"":textValue(row[0],80),textValue(row[1])];
     if(row.length>=3){
       const extra=row[2];
       if(row.length===4&&extra===null)line.push(null);
@@ -437,7 +437,7 @@ function lineValues(input, field = {}) {
       const entries=Object.entries(cue);
       for(const [key,setting] of entries){
         const valid=key==="wait"?Number.isInteger(setting)&&setting>=0&&setting<=10000
-          :key==="hideCast"?setting===true:field.cues[key]?.some?.(([id])=>id===setting);
+          :key==="hideCast"?setting===true:field.cues[["left","right"].includes(key)?"standing":key]?.some?.(([id])=>id===setting);
         if(!valid)throw new Error("연출 항목이나 리소스가 유효하지 않습니다.");
       }
       if(entries.length)line.push(Object.fromEntries(entries));

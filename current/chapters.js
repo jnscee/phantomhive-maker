@@ -784,7 +784,7 @@ function showEndingScene(host){
     art.dataset.picture=picture;art.src="assets/endings/"+picture+".webp";art.alt=endingArtDescriptions[picture]||scene.alt;
   }
   host.replaceChildren(art);
-  host.insertAdjacentHTML("beforeend",sceneLine(who,line,arrow,'data-book="ending-'+id+'" aria-live="polite" aria-atomic="true"')+readerControls(at,last,recruitAuto));
+  host.insertAdjacentHTML("beforeend",(novelCast(cue,recruitArtwork(currentCielAge()))??"")+sceneLine(who,line,arrow,'data-book="ending-'+id+'" aria-live="polite" aria-atomic="true"')+readerControls(at,last,recruitAuto));
   playNovelCue(host,"ending:"+id+":"+at,cue);
   musicPlayer.sync(trackForView());
   bindSceneReader(host,at,end,line,to=>{

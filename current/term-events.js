@@ -95,9 +95,10 @@ function termDialogue(event,buttons){
   const cue=termCue(event),picture=cue?.cg||event.picture;
   const art=picture?"assets/endings/"+picture+".webp":sceneArt[room];
   const standing=cue?.standing||event.standing;
-  const cast=cue?.hideCast?"":standing&&Object.hasOwn(recruitCast,standing)
-    ?sceneStanding(recruitNames[standing],"left",recruitCast[standing]):picture?"":dialogueCast("세바스찬");
+  const cast=novelCast(cue,recruitArtwork(currentCielAge()))??(standing&&Object.hasOwn(recruitCast,standing)
+    ?sceneStanding(recruitNames[standing],"left",recruitCast[standing]):picture?"":dialogueCast("세바스찬"));
+  const speaker=novelSpeakerName(who);
   return '<div class="review-room" style="background-image:url(&quot;'+art+'&quot;)"></div>'+cast+
-    '<article class="dialogue"><small>'+escapeHTML(who||event.title)+'</small><p>'+escapeHTML(line)+'</p>'+
+    '<article class="dialogue">'+(speaker?'<small>'+escapeHTML(speaker)+'</small>':"")+'<p>'+escapeHTML(line)+'</p>'+
     (outcome?.note&&end?'<small>'+escapeHTML(outcome.note)+'</small>':'')+'<div class="answers">'+actions+'</div></article>';
 }

@@ -285,8 +285,13 @@ function sceneStanding(name,side,src,age){
   }
   return '<img class="butler cast cast-'+side+'" alt="'+name+'" src="'+src+'">';
 }
+function novelSpeakerName(speaker){
+  const name=speaker?.trim();
+  return name&&name!=="장면"?name:"";
+}
 function sceneLine(speaker,text,next,attributes="",heading=""){
-  return '<article class="dialogue" '+attributes+'>'+(speaker?'<small>'+speaker+'</small>':'')+heading+
+  const name=novelSpeakerName(speaker);
+  return '<article class="dialogue" '+attributes+'>'+(name?'<small>'+name+'</small>':'')+heading+
     '<p>'+text+' '+next+'</p></article>';
 }
 const recruitNames={ciel:"시엘",seb:"세바스찬",finny:"피니안",mey:"메이린",owl:"올빼미",bard:"바르도",tanaka:"타나카",snake:"스네이크",soma:"소마",agni:"아그니"};
@@ -316,6 +321,14 @@ function playNovelCue(host,key,cue){
     playback.animation=host.animate(novelEffects[cue.fx],{duration:cue.fx==="shake"?320:500,easing:"ease-out"});
   if(cue?.se&&typeof playNovelSound==="function")playback.sound=playNovelSound(cue.se);
 }
+function novelCast(cue,file=x=>x){
+  if(cue?.hideCast)return "";
+  if(!cue?.left&&!cue?.right)return null;
+  return ["left","right"].map(side=>{
+    const id=cue[side];
+    return Object.hasOwn(recruitCast,id)?sceneStanding(recruitNames[id],side,file(recruitCast[id])):"";
+  }).join("");
+}
 function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers="",hasTanaka=false){
   const book=recruitScenes[id],{scene,speaker,text,withTanaka,cue}=book.lines[at];
   const picture=cue?.cg||scene.picture;
@@ -323,8 +336,8 @@ function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers="",hasT
   const backdrop=art.crop
     ? '<svg class="review-room recruit-backdrop '+art.tone+'" viewBox="'+art.crop.join(" ")+'" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><image width="680" height="380" href="'+bg+'"/></svg>'
     : '<div class="review-room '+(art.tone||'')+'" style="background-image:url(&quot;'+bg+'&quot;)"></div>';
-  const cast=cue?.hideCast?[]:cue?.standing?[cue.standing]:scene.castBySpeaker?.[speaker]||scene.cast||[];
-  const actors=cast.map((person,i)=>{
+  const cast=cue?.standing?[cue.standing]:scene.castBySpeaker?.[speaker]||scene.cast||[];
+  const actors=novelCast(cue,file)??cast.map((person,i)=>{
     const side=person==="ciel"?"right":cast.includes("ciel")||i===0?"left":"right";
     return sceneStanding(recruitNames[person],side,file(recruitCast[person]));
   }).join("");
@@ -332,7 +345,7 @@ function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers="",hasT
   const arrow=answers?'':'<button type="button" class="line-next" data-read="'+(last?'finish':'next')+'" aria-label="'+label+'">▼</button>';
   const controls=readerControls(at,last,auto);
   const props=scene.prop?'<img class="recruit-tea" alt="닐기리 홍차" src="'+file(recruitProps[scene.prop])+'">':'';
-  return backdrop+actors+props+sceneLine(speaker==="장면"?"":speaker,hasTanaka&&withTanaka?withTanaka:text,arrow,
+  return backdrop+actors+props+sceneLine(speaker,hasTanaka&&withTanaka?withTanaka:text,arrow,
     'data-book="'+id+'" data-leaf="'+at+'" aria-live="polite" aria-atomic="true"')+answers+controls;
 }
 let recruitTimer=0,recruitAuto=false;

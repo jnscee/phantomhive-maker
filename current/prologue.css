@@ -147,3 +147,14 @@
 @media(pointer:coarse) {
   :is(#overture,#conversation) .opening-top button {min-height:44px}
 }
+
+#opening-cast { position:absolute; inset:0; z-index:1; pointer-events:none; }
+#scene #opening-cast > .cast {
+  position:absolute; bottom:1%; width:44%; max-width:44%; translate:-50% 0;
+}
+#scene #opening-cast > img.cast { height:var(--portrait-height); object-fit:contain; object-position:center bottom; }
+#scene #opening-cast > .cast-left { left:33%; right:auto; }
+#scene #opening-cast > .cast-right { left:67%; right:auto; }
+@media (orientation:portrait) {
+  #scene #opening-cast > .cast { bottom:24%; }
+}

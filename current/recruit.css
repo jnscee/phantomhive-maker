@@ -119,3 +119,5 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
 @keyframes ciel-small-hop {0%,100%{transform:none}45%{transform:translateY(-4px)}}
 
 #scene[data-art-only=true] #conversation :is(.dialogue,.answers,.opening-top,.review-bubble,.review-slip){display:none!important}
+
+#scene #conversation:has(.ending-cg) > .cast { z-index:1; }
