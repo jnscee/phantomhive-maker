@@ -88,7 +88,7 @@ async function check(browserType){
           state=initial();state.month=state.planMonth=35;state.phase='result';tab='plan';
           for(const person of ['finny','mey','bard','tanaka','snake'])recruit(person);
           Object.assign(state.stats,Object.fromEntries(stats.map(s=>[s,500])));state.stats.의지=will;
-          state.flags.deed=approved;state.hp=90;state.fund=2500;state.royal=15;state.renown=70;
+          state.flags.deed=false;state.hp=45;state.fund=2500;state.royal=approved?15:0;state.renown=70;
           Object.assign(state.level,{parlor:3,library:3});state.shop.works=3;
           advance();
         },{will,approved});
