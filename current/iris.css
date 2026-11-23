@@ -1422,7 +1422,7 @@ html[data-game-motion=reduced] :is(.company-worker img,.duty-walker,.duty-walker
 .estate-annex .annex-line {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
 .townhouse-purchase {width:100%;margin-top:8px}
 /* Courses and visits share the same card banks, icon size and row height. */
-#calendar .card-bank .lesson { box-sizing:border-box; block-size:clamp(64px,6.7cqw,80px);min-height:0;padding:4px 7px;align-content:center; }
+#calendar .card-bank .lesson { box-sizing:border-box; block-size:clamp(60px,6.1cqw,74px);min-height:0;padding:4px 7px;align-content:center; }
 #calendar .visit-card .planner-icon {justify-self:center}
 #calendar .lesson-index:has(+ [aria-label="자유행동"]) {min-height:38px;align-items:center;box-sizing:border-box}
 @media (orientation:portrait) and (max-width:700px) {
