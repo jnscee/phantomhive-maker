@@ -47,7 +47,8 @@ async function checkNotebook(page){
   assert.equal(await page.locator('[data-action="motion:reduced"]').getAttribute('aria-pressed'),'true');
   const book=page.locator('.notebook-guide');
   await book.locator(':scope > summary').click();
-  assert.equal(await book.locator('.guide-topic').count(),8);
+  assert.equal(await book.locator('.guide-topic').count(),9);
+  assert.equal(await book.getByText('왕실 심의와 교육',{exact:true}).count(),1);
   await book.locator('.guide-topic > summary').first().click();
   assert.ok(await book.locator('.guide-topic p').first().isVisible());
   const saved=await page.evaluate(()=>localStorage.getItem(storageKey));
