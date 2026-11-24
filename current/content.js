@@ -269,7 +269,11 @@ function supplyPlan(run,shop,demand,unit,receipt){
   const short=order?order.qty-shipped:0;
   const freightAllowance=run.flags.carrierSpace?20:16;
   const freight=Math.max(0,sold+shipped-freightAllowance)*3;
-  const trade={holding,freight,freightAllowance,operation:operatingCost(shop),penalty:short*(order?.shortFee??2),wholesale:order?shipped*order.rate:0,shipped,short,order,stock,fine};
+  const expanded=Object.values(shop).reduce((sum,level)=>sum+level-1,0);
+  const reserve=Math.min(330,expanded*100);
+  const opening=run.accounts?.opening??run.fund;
+  const guaranteeFee=expanded?Math.ceil(Math.max(0,reserve-Math.max(0,opening))/3):0;
+  const trade={holding,freight,freightAllowance,guaranteeFee,operation:operatingCost(shop)+guaranteeFee,penalty:short*(order?.shortFee??2),wholesale:order?shipped*order.rate:0,shipped,short,order,stock,fine};
   const revenue=sold*receipt+trade.wholesale,cost=run.qty*unit,expenses=holding+freight+trade.penalty+trade.operation;
   return {unit,demand,receipt,sold,available,cost,revenue,expenses,margin:revenue-cost-expenses,trade};
 }

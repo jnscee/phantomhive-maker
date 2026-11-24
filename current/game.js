@@ -281,7 +281,7 @@ function settleMonth(){
   state.fund+=income-cost-bills-expenses;
   // Paid sales and supply contracts belong to Funtom. Scheduled work only trains Ciel.
   state.salesBook.push({month:state.month,product,sold,revenue:income,cost,advance:visitAdvance,investment,expenses,wholesale:trade?.wholesale||0,delivery:trade?.order?{...(trade.order.tradeMonth?{tradeMonth:trade.order.tradeMonth}:{}),id:trade.order.id,shipped:trade.shipped,qty:trade.order.qty}:null});
-  state.report={weather:state.weather,income,festivalIncome,cost,expenses,storage:trade?.holding||0,freight:trade?.freight||0,operating:trade?.operation||0,penalty:trade?.penalty||0,wholesale:trade?.wholesale||0,advance:visitAdvance,bills,debtPayment,sold,before,investment,training:trainingPaid};
+  state.report={weather:state.weather,income,festivalIncome,cost,expenses,storage:trade?.holding||0,freight:trade?.freight||0,operating:trade?.operation||0,guaranteeFee:trade?.guaranteeFee||0,penalty:trade?.penalty||0,wholesale:trade?.wholesale||0,advance:visitAdvance,bills,debtPayment,sold,before,investment,training:trainingPaid};
   if(sold>=14&&income>cost+expenses+25)state.renown+=1;
   if(tradeNews(state))state.log.push(tradeNews(state));
   state.log.push(products[product].name+" "+sold+"개 소매 · 매출 "+money(sold*receipt)+" / 생산비 "+money(cost)+" / 재고 "+state.stock[product]+"개");
@@ -455,7 +455,7 @@ function finish(id){
 }
 function isApprovedEnding(id){return id==="vowTitle"||id==="releaseTitle";}
 // Above the title review's own will minimum so both approved endings are reachable.
-const vengeanceWill=350;
+const vengeanceWill=420;
 function cielEndingId(will,approved){
   if(will>=vengeanceWill)return approved?"vowTitle":"vowNoTitle";
   return approved?"releaseTitle":"releaseNoTitle";
@@ -474,16 +474,20 @@ function startFinnyAtTurn(run){
   if(run.month<13&&!previouslyEligible)return;
   run.pending="gardener";run.recruitReturn="plan";run.phase="event";
 }
+function criticalHealth(run){
+  return run.hp<25||(run.month>3&&run.hp<67&&run.stress>=70);
+}
 function advance(){
   if(state.phase!=="result")return;
   const late=overdueArrival(state);
   if(late){state.pending=late;state.phase="event";tab="plan";persist();render(true);return;}
   if(sampleReview())return;
-  state.unwell=state.hp<18?state.unwell+1:0;
+  state.unwell=criticalHealth(state)?state.unwell+1:0;
   state.poverty=povertyAfterClosing(state);
+  const creditExhausted=state.fund<=-144;
   state.arrears=state.fund<0?state.arrears+1:0;
   if(state.unwell>=2){finish("ill");return;}
-  if(state.arrears>=2){finish("broke");return;}
+  if(creditExhausted||state.arrears>=2){finish("broke");return;}
   if(state.month===state.duration){beginFinale(cielEndingId(state.stats.의지,qualifies()));return;}
   if(state.prototype?.approved){
     const p=state.prototype;if(!state.unlocked.includes(p.product))state.unlocked.push(p.product);state.productNotes??={};state.productNotes[p.product]=p;delete state.prototype;

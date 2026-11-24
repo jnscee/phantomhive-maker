@@ -466,7 +466,7 @@ function playCampaign(invest){
   state=initial();state.owlSeed=0;state.phase="plan";tab="plan";
   for(const [a,b,c,price,qty] of campaignSchedule){
     if(state.phase!=="plan")throw Error("Could not enter calendar at "+state.month);
-    state.plan=[a,b,c];state.visit="town";state.price=price;state.qty=qty;
+    state.plan=state.unwell?["recovery",b,"rest"]:[a,b,c];state.visit="town";state.price=price;state.qty=qty;
     if(invest)for(const action of facilityPurchases[state.month]||[])handleAction(action,null,true);
     if(cashNeeded()>state.fund)state.qty=Math.max(0,Math.min(qty,Math.floor((state.fund-plannedTuition())/forecast().unit)));
     execute();

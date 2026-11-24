@@ -25,7 +25,7 @@ function tradeCosts(trade){
   function fee(label,value,note=""){
     return '<div><dt>'+label+'</dt><dd>'+money(value)+'</dd>'+(note?'<dd class="fee-rule">'+note+'</dd>':'')+'</div>';
   }
-  return '<dl class="trade-fees">'+fee("설비 운영",trade.operation)+
+  return '<dl class="trade-fees">'+fee("설비 운영",trade.operation-(trade.guaranteeFee||0))+(trade.guaranteeFee?fee("거래 보증료",trade.guaranteeFee):"")+
     fee("운송",trade.freight,"소매·납품 합계 "+trade.freightAllowance+"개까지 무료<br>초과 1개당 £3")+
     fee("월말 보관",trade.holding,"전 품목 합산 8개까지 무료<br>초과 1개당 £1")+
     (trade.order?fee("미납 부담",trade.penalty,"예상 납품 "+trade.shipped+" / "+trade.order.qty+"개"):"")+'</dl>';
@@ -74,7 +74,7 @@ function actualBudget(){
   const debt=r.debtPayment||0;
   const expenseRows=[
     [r.debtPayment==null?"저택 유지·채무 합산":"저택 유지",r.bills-debt-(weather?.fee||0)],[weather?.charge,weather?.fee],["돌발 사건 지출",a.setbacks],["저택 개수·지원",a.estate],
-    ["생산비",r.cost],["투자·사업 지출",a.company],["설비 운영",r.operating],["운송",r.freight],
+    ["생산비",r.cost],["투자·사업 지출",a.company],["설비 운영",r.operating-(r.guaranteeFee||0)],["거래 보증료",r.guaranteeFee||0],["운송",r.freight],
     ["보관",r.storage],["미납 부담",r.penalty],["교육·활동비",r.training],["채무 상환",debt]
   ];
   const otherFees=(r.expenses||0)-(r.operating||0)-(r.freight||0)-(r.storage||0)-(r.penalty||0);
@@ -141,10 +141,10 @@ function monthlyTimeline(entries){
 function monthlyResults(){
   const before=state.accounts.stats,after=snapStats(state);
   const group=(title,keys)=>'<h4>'+title+'</h4>'+keys.map(k=>deltaRow(k,before[k],after[k])).join('');
-  const healthWarning=state.hp<18
+  const healthWarning=criticalHealth(state)
     ?(state.unwell?"시엘은 아직 병상에서 일어나지 못하고 있습니다.":"시엘이 위독합니다. 곁에서 돌볼 사람이 필요합니다.")
     :relapseNotice(state)||(state.hp<31?"컨디션이 좋지 않습니다. 다음 달에는 휴식이나 왕진을 고려하세요.":"");
-  const financeWarning=state.fund<0
+  const financeWarning=state.fund<=-144?"신용 한도를 넘겨 채권단이 가문의 결산을 요구했습니다.":state.fund<0
     ?(state.arrears?"두 달 연속 월말 잔액이 음수입니다. 파산을 피할 수 없습니다.":"월말 잔액이 음수입니다. 다음 월말에도 음수면 파산합니다.")
     :(state.fund<60?"다음 달 교육비와 생산비를 확인하세요.":"");
   const povertyNext=povertyAfterClosing(state);
