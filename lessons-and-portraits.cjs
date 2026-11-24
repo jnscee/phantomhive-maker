@@ -393,12 +393,16 @@ async function check(browserType){
       await page.reload();
       assert.equal(await page.locator('html').getAttribute('data-game-motion'),'reduced');
       // Enter the normal last month at either side of the will boundary and with either royal verdict.
-      for(const [will,approved,id] of [[419,true,'releaseTitle'],[420,true,'vowTitle'],[419,false,'releaseNoTitle'],[420,false,'vowNoTitle']]){
+      const vowThreshold=await page.evaluate(()=>vengeanceWill);
+      for(const [will,approved,id] of [
+        [vowThreshold-1,true,'releaseTitle'],[vowThreshold,true,'vowTitle'],
+        [vowThreshold-1,false,'releaseNoTitle'],[vowThreshold,false,'vowNoTitle']
+      ]){
         await page.evaluate(({will,approved})=>{
           state=initial();state.month=state.planMonth=35;state.phase='result';tab='plan';
           for(const person of ['finny','mey','bard','tanaka','snake'])recruit(person);
           Object.assign(state.stats,Object.fromEntries(stats.map(s=>[s,500])));state.stats.의지=will;state.advancedStudy={study:2,social:2,accounts:2};
-          state.flags.deed=false;state.hp=45;state.fund=2500;state.royal=will<420&&approved?15:0;state.renown=approved?70:0;
+          state.flags.deed=false;state.hp=45;state.fund=2500;state.motivation=50;state.renown=approved?70:0;
           Object.assign(state.level,{parlor:3,library:3});state.shop.works=3;state.royal=approved?12:0;state.salesBook=Array.from({length:8},()=>({revenue:50,cost:10}));
           talkTrust('mey');
           advance();
