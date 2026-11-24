@@ -65,7 +65,14 @@ const bgmAssignments={
   "event:visitCompanyBox": "extra-bgm-23734dde",
   "event:visitTownRain": "extra-bgm-23734dde",
   "event:visitTownhouseChess": "extra-bgm-23734dde",
-  "event:visitTownhouseKnock": "extra-bgm-23734dde"
+  "event:visitTownhouseKnock": "extra-bgm-23734dde",
+  "event:finnyRoseLabel": "extra-bgm-23734dde",
+  "event:bardSupper": "extra-bgm-23734dde",
+  "event:linenMarks": "extra-bgm-23734dde",
+  "event:supplierReply": "extra-bgm-23734dde",
+  "event:postalReply": "extra-bgm-23734dde",
+  "event:snakeReturn": "extra-bgm-23734dde",
+  "event:unasked": "extra-bgm-23734dde"
 };
 const activityTrackDefaults={etiquette:"etiquette",dance:"dance",music:"violin","현장 실습":"business","휴식":"manor"};
 function activityTrack(id){
