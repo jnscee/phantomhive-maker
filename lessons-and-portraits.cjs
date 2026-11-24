@@ -395,6 +395,11 @@ async function check(browserType){
       await page.locator('[data-action="shop-qty:all"]').click();
       await page.getByRole('button',{name:'£18에 판매',exact:true}).click();
       assert.ok(await page.getByText('창고에 남은 상품이 없습니다.').isVisible());
+      await page.locator('[data-action="shop-stock:birds"]').click();
+      await page.getByRole('button',{name:'£22에 판매',exact:true}).click();
+      assert.equal(await page.evaluate(()=>state.fund),beforeSale+24+22);
+      assert.equal(await page.evaluate(()=>state.stats.매력),charmBefore+6);
+      assert.equal(await page.locator('[data-action="shop-stock:tea"]').count(),0);
       await page.locator('[data-action="shop-mode:buy"]').click();
       assert.ok(await page.locator('[data-action="goods:tea"]').isVisible());
       await page.evaluate(()=>{tab='plan';state.plan=['exercise','study','walk'];state.visit='none';execute();});

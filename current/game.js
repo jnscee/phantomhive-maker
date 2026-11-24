@@ -37,7 +37,7 @@ function initial(){
     planMonth:1,plan:emptyPlan(),visit:null,level:{library:1,parlor:1,kitchen:1},staff:null,
     shop:{design:1,works:1,store:1},salesBook:[],productHistory:{},fineStock:{},order:null,
     product:"toys",unlocked:["toys"],quality:"standard",price:14,qty:15,stock:Object.fromEntries(Object.keys(products).map(id=>[id,0])),
-    trust:1,royal:0,renown:0,flags:{},events:[],past:[],log:[],pending:null,ending:null,elizabethMeetings:[],lauPurchases:0,
+    trust:1,royal:0,renown:0,flags:{},events:[],past:[],log:[],pending:null,ending:null,elizabethMeetings:[],lauPurchases:0,usedBooks:{},
     debt:0,unwell:0,relapseStage:0,arrears:0,poverty:false,usedLoan:false,counts:{},advancedStudy:{},linkFrom:null,linkMonth:0});
 }
 const previewQuery=new URL(document.baseURI).searchParams;
@@ -304,6 +304,7 @@ function settleMonth(){
   state.log.push("저택 유지·채무 상환 "+money(bills));
   if(trade?.contribution)state.log.push("수익 분담금 "+money(trade.contribution));
   if(state.accounts.lauSales)state.log.push("라우 상점 재고 매각 "+money(state.accounts.lauSales));
+  if(state.accounts.lauBookSales)state.log.push("라우 상점 중고 교본 매각 "+money(state.accounts.lauBookSales));
   if(trade?.order)state.log.push(tradeBuyer(trade.order)+" 납품 "+trade.shipped+"/"+trade.order.qty+"개 · "+money(trade.wholesale)+(trade.short?" · 미납 부담금 "+money(trade.penalty):""));
   if(state.flags.market&&state.marketMonth!==state.month){state.flags.market=false;state.renown+=1;}
   scheduleSnakeVisit(state);
@@ -926,6 +927,8 @@ function normalizeSave(run){
   for(const rel of Object.values(copy.people))delete rel.from;
   copy.shop={...defaults.shop,...copy.shop};
   copy.stock={...defaults.stock,...copy.stock};
+  copy.usedBooks=Object.fromEntries(Object.entries(copy.usedBooks||{}).filter(([id,count])=>
+    Object.hasOwn(marketGoods,id)&&marketGoods[id].raise&&Number.isSafeInteger(count)&&count>0));
   copy.salesBook=copy.salesBook||[];
   restoreTrading(copy);
   const oldResults=new Map();
@@ -1341,6 +1344,15 @@ function lauStockQuote(run,id){
   const reserved=run.order?.id===id&&run.order.due>=run.month?Math.min(stock,run.order.qty):0;
   return {stock,reserved,available:stock-reserved,unit:Math.floor(products[id].unit/2)};
 }
+function lauSaleQuote(run,id){
+  if(Object.hasOwn(products,id)){
+    return {...lauStockQuote(run,id),name:products[id].name,icon:businessArt["cart-"+id],book:false};
+  }
+  if(!Object.hasOwn(marketGoods,id)||!marketGoods[id].raise)return null;
+  const {name,cost,icon}=marketGoods[id];
+  const stock=run.usedBooks?.[id]||0;
+  return {stock,reserved:0,available:stock,unit:Math.floor(cost/2),name,icon:"assets/planner-icons/"+icon+".png",book:true};
+}
 function shopPurse(){
   return '<div class="shop-purse"><span>보유금</span><strong>'+money(state.fund)+'</strong></div>';
 }
@@ -1355,31 +1367,39 @@ function saleQuantity(available){
   return Math.max(1,Math.min(stockQuantity,available));
 }
 function lauSalesPanel(){
-  const stocked=Object.keys(products).filter(id=>state.stock[id]>0);
-  if(!stocked.includes(selectedStock))selectedStock=stocked.find(id=>lauStockQuote(state,id).available>0)??stocked[0]??null;
-  const cards=stocked.map(id=>{
-    const {available,unit}=lauStockQuote(state,id);
-    return '<button type="button" class="goods-ticket" data-action="shop-stock:'+id+'" aria-pressed="'+(selectedStock===id)+'">'+
-      '<b>'+products[id].name+'</b><img src="'+businessArt["cart-"+id]+'" alt=""><strong>'+
-      (available?money(unit)+' · '+available+'개':'납품 예약')+'</strong></button>';
+  const groups=[
+    ["팬텀사 창고",Object.keys(products)],
+    ["사용한 교본",Object.keys(marketGoods).filter(id=>marketGoods[id].raise)]
+  ].map(([label,ids])=>[label,ids.map(id=>[id,lauSaleQuote(state,id)]).filter(([,quote])=>quote.stock>0)]);
+  const stocked=groups.flatMap(([,items])=>items);
+  if(!stocked.some(([id])=>id===selectedStock)){
+    selectedStock=(stocked.find(([,quote])=>quote.available>0)??stocked[0])?.[0]??null;
+  }
+  const sections=groups.map(([label,items])=>{
+    const cards=items.map(([id,{available,unit,name,icon}])=>
+      '<button type="button" class="goods-ticket" data-action="shop-stock:'+id+'" aria-pressed="'+(selectedStock===id)+'">'+
+      '<b>'+name+'</b><img src="'+icon+'" alt=""><strong>'+
+      (available?money(unit)+' · '+available+'개':'납품 예약')+'</strong></button>').join("");
+    const empty=label==="팬텀사 창고"?"창고에 남은 상품이 없습니다.":"구매해 사용한 교본이 여기에 표시됩니다.";
+    return '<section class="goods-section"><h4>'+label+'</h4>'+
+      (cards?'<div class="goods-shelf">'+cards+'</div>':'<p class="shop-empty">'+empty+'</p>')+'</section>';
   }).join("");
   const details=selectedStock?lauSaleDetails(selectedStock):"";
   return '<div class="lau-counter">'+framedStanding("라우","assets/npc-lau.webp","lau-standing")+shopModes()+shopPurse()+
-    '<div class="goods-list" role="group" aria-label="매각할 팬텀사 재고"><section class="goods-section"><h4>팬텀사 창고</h4>'+
-    (cards?'<div class="goods-shelf">'+cards+'</div>':'<p class="shop-empty">창고에 남은 상품이 없습니다.</p>')+
-    '</section></div><div class="shop-details">'+shopDialogue("창고에 남는 물건이 있으면 가져와. 여기서 현금으로 쳐 줄게.")+
+    '<div class="goods-list" role="group" aria-label="판매할 물품">'+sections+'</div>'+
+    '<div class="shop-details">'+shopDialogue("창고에 남는 물건도, 다 읽은 책도 가져와. 여기서 현금으로 쳐 줄게.")+
     details+'</div></div>';
 }
 function lauSaleDetails(id){
-  const {stock,reserved,available,unit}=lauStockQuote(state,id);
+  const {stock,reserved,available,unit,name,book}=lauSaleQuote(state,id);
   const qty=saleQuantity(available);
   const locked=state.phase!=="plan";
   const reason=locked?"일정 편성 중에 판매할 수 있습니다.":available?"":"납품에 예약된 재고만 남았습니다.";
-  return '<section class="shop-purchase shop-sale" aria-label="재고 판매"><header><b>'+products[id].name+'</b><strong>개당 '+money(unit)+'</strong></header>'+
-    '<small>창고 '+stock+'개'+(reserved?' · 납품 예약 '+reserved+'개':'')+'</small>'+
+  return '<section class="shop-purchase shop-sale" aria-label="물품 판매"><header><b>'+name+'</b><strong>'+(book?"중고가 ":"개당 ")+money(unit)+'</strong></header>'+
+    '<small>'+(book?'보유 ':'창고 ')+stock+(book?'권':'개')+(reserved?' · 납품 예약 '+reserved+'개':'')+'</small>'+
     (available?'<div class="shop-sale-qty" role="group" aria-label="판매 수량">'+
     '<button type="button" data-action="shop-qty:down" aria-label="판매 수량 줄이기"'+(locked||qty<=1?' disabled':'')+'>−</button>'+
-    '<output aria-live="polite">'+qty+'개</output>'+
+    '<output aria-live="polite">'+qty+(book?'권':'개')+'</output>'+
     '<button type="button" data-action="shop-qty:up" aria-label="판매 수량 늘리기"'+(locked||qty>=available?' disabled':'')+'>+</button>'+
     btn("전부","shop-qty:all",locked||qty>=available)+'</div>':'')+
     btn(available?money(unit*qty)+"에 판매":"판매", "shop-sell:"+id+":"+qty,Boolean(reason),"shop-buy shop-sell")+
@@ -1426,7 +1446,7 @@ function marketPanel(){
     '<section class="shop-purchase" aria-label="상품 구매"><header><b>'+g.name+'</b>'+
     btn(money(g.cost)+" 구매","buy:"+selectedGood,Boolean(reason),"shop-buy")+'</header>'+
     '<dl class="shop-effects">'+effects+'</dl>'+
-    (exchange?'<small>교본 전체 중 매월 1개 · 즉시 사용</small>':'')+
+    (exchange?'<small>매월 1권 · 즉시 사용 · 중고 판매 가능</small>':'')+
     (reason?'<p class="shop-unavailable">'+reason+'</p>':'')+'</section></div></div>';
 }
 const panels={market:marketPanel,title:titlePanel,continue:coverPanel,album:coverPanel,settings:coverPanel,exit:coverPanel,plan:planPanel,status:statusPanel,estate:managementPanel,townhouse:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
@@ -1839,11 +1859,11 @@ function handleAction(key,rect,confirmed=false){
     if(action==="goods"&&shopMode==="buy"&&Object.hasOwn(marketGoods,id)){
       selectedGood=id;redrawShop();focusAction(key);respond("choose",rect);return;
     }
-    if(action==="shop-stock"&&shopMode==="sell"&&Object.hasOwn(products,id)&&state.stock[id]>0){
+    if(action==="shop-stock"&&shopMode==="sell"&&lauSaleQuote(state,id)?.stock>0){
       selectedStock=id;stockQuantity=1;redrawShop();focusAction(key);return;
     }
     if(action==="shop-qty"&&shopMode==="sell"&&state.phase==="plan"&&selectedStock){
-      const {available}=lauStockQuote(state,selectedStock);
+      const {available}=lauSaleQuote(state,selectedStock);
       if(!available||!["down","up","all"].includes(id))return;
       stockQuantity=id==="all"?available:Math.max(1,Math.min(available,saleQuantity(available)+(id==="up"?1:-1)));
       redrawShop();
@@ -2077,17 +2097,23 @@ function handleAction(key,rect,confirmed=false){
   }else{
     if(state.phase!=="plan")return;
     if(action==="shop-sell"){
-      if(tab!=="market"||shopMode!=="sell"||id!==selectedStock||!Object.hasOwn(products,id))return;
-      const qty=Number(value),{stock,available,unit}=lauStockQuote(state,id);
-      if(!Number.isSafeInteger(qty)||qty<1||qty>available)return;
-      state.stock[id]=stock-qty;
-      // Sell standard stock first, retaining any remaining fine items.
-      state.fineStock[id]=Math.min(state.fineStock[id]||0,state.stock[id]);
-      const proceeds=qty*unit;
+      if(tab!=="market"||shopMode!=="sell"||id!==selectedStock)return;
+      const quote=lauSaleQuote(state,id),qty=Number(value);
+      if(!quote||!Number.isSafeInteger(qty)||qty<1||qty>quote.available)return;
+      const {stock,unit,book,name}=quote;
+      if(book){
+        if(stock===qty)delete state.usedBooks[id];
+        else state.usedBooks[id]=stock-qty;
+      }else{
+        state.stock[id]=stock-qty;
+        // Sell standard stock first, retaining any remaining fine items.
+        state.fineStock[id]=Math.min(state.fineStock[id]||0,state.stock[id]);
+      }
+      const proceeds=qty*unit, account=book?"lauBookSales":"lauSales";
       state.fund+=proceeds;
-      state.accounts.lauSales=(state.accounts.lauSales||0)+proceeds;
+      state.accounts[account]=(state.accounts[account]||0)+proceeds;
       stockQuantity=1;
-      message=products[id].name+" "+qty+"개 판매 · "+money(proceeds)+" 입금";
+      message=name+" "+qty+(book?"권":"개")+" 판매 · "+money(proceeds)+" 입금";
     }else if(action==="buy"){
       const g=marketGoods[id];
       if(tab!=="market"||!Object.hasOwn(marketGoods,id)||state.fund<g.cost)return;
@@ -2097,6 +2123,7 @@ function handleAction(key,rect,confirmed=false){
         state.stats[g.raise]+=quote.gain;
         state.stats[g.lower]-=exchangeAmount;
         state.flags.lauExchangeMonth=state.month;
+        state.usedBooks[id]=(state.usedBooks[id]||0)+1;
         message=g.name+" · "+statLabel(g.raise)+" "+signed(quote.gain)+" / "+statLabel(g.lower)+" −"+exchangeAmount;
       }else{
         const after=cap(state[g.stat]+g.amount);
