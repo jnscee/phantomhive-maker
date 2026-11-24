@@ -498,3 +498,15 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 #live-budget .forecast {margin-inline:0;width:100%;box-sizing:border-box}
 #live-budget .expense-details {border-top:1px solid #8fabc34d;margin-top:8px;padding-top:6px}
 #live-budget .expense-details>summary {cursor:pointer;font-weight:600}
+
+#scene #conversation:not([data-review=true]) > article#impact-summary {
+  background:linear-gradient(114deg,#d9efff22,transparent 36%,#b7d8f010),linear-gradient(165deg,#324a60da,#142a3dcc);
+  border:1px solid #a7bdd4bb;border-radius:8px;
+  box-shadow:inset 0 1px #effaff80,inset 0 -1px #cedfff38,0 4px 12px #101d3255;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)
+}
+#impact-summary header {display:flex;align-items:center;gap:.65em;color:#f3e5c7;font-family:var(--serif)}
+#impact-summary header::after {content:"";flex:1;height:1px;background:linear-gradient(90deg,#c9b99699,transparent)}
+#impact-summary .impact-scroll .affinity-rise {display:block;border:0;padding:.18em 0;color:#c4eddf;line-height:1.4}
+#impact-summary .impact-notes {display:flex;flex-wrap:wrap;gap:.25em .45em;margin-top:.35em}
+#impact-summary .impact-notes span {padding:.12em .58em;border:1px solid #a3b6cd66;border-radius:4px;color:#e6edf6;background:#273e526e;font-size:.84em}

@@ -375,6 +375,10 @@ function impactMarkup(impact){
   }
   const lines=[...changes.values()].filter(row=>row.before!==row.value).map(({name,before,value})=>{
     const delta=value-before;
+    if(delta>0 && name.endsWith("의 신뢰")){
+      const label=name.slice(0,-"의 신뢰".length)+"의 호감도 ↑";
+      return '<li class="affinity-rise"><span>'+escapeHTML(label)+'</span></li>';
+    }
     const cash=name==="가문 자금"||name==="채무";
     const limit=stats.includes(name)?abilityMax:Math.max(100,Math.abs(before),Math.abs(value));
     const low=Math.max(0,Math.min(before,value))/limit*100;
@@ -382,7 +386,8 @@ function impactMarkup(impact){
     const unit=cash?"£":"";
     return '<li class="'+deltaTone(name,delta)+'"><span>'+escapeHTML(statLabel(name))+'</span><small>'+unit+before+' → '+unit+value+'</small><strong>'+signed(delta)+'</strong><i class="impact-track" aria-hidden="true" style="--low:'+low+'%;--high:'+high+'%"></i></li>';
   }).join("");
-  const blocks='<ul>'+lines+'</ul>'+[...notes].map(n=>'<p>'+escapeHTML(n)+'</p>').join("")+(!lines&&!notes.size?'<p>능력치 변화 없음</p>':'');
+  const milestones=notes.size?'<div class="impact-notes">'+[...notes].map(n=>'<span>'+escapeHTML(n)+'</span>').join("")+'</div>':"";
+  const blocks='<ul>'+lines+'</ul>'+milestones+(!lines&&!notes.size?'<p>능력치 변화 없음</p>':'');
   const heading=impact.setback?"사건 결과":"선택 결과";
   return '<article id="impact-summary" class="dialogue" aria-label="'+heading+'"><header>'+heading+'</header><div class="impact-scroll">'+blocks+'</div>'+btn("확인","impact-close",false,"primary")+'</article>';
 }
