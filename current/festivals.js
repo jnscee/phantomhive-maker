@@ -94,6 +94,95 @@ const annualContests = [
   }
 ];
 
+// Company judging dialogue varies by the event and year, including archived competitions.
+const companyContestDialogue={
+  "kensington1886":{
+    invitation:"사우스켄싱턴에서 식민지·인도 박람회가 열렸습니다. 런던 상인들도 그 주에 맞춰 별도의 견본 품평회를 엽니다. 팬텀사가 이곳에 낼 물건을 준비했습니다.",
+    quote:"첫 바퀴는 어느 집의 물건이나 잘 굴러갑니다. 저희 것은 세 바퀴째를 봐 주십시오.",
+    speeches:[
+      "잠깐, 내가 놓을게. ……견본은 두고 그 밑을 잡아. 받침대가 흔들리잖아.",
+      "좀 더 가까이서 보시죠. 진열장에서 보신 것과 같은 물건입니다.",
+      "어느 걸로 보시겠습니까? 팬텀사의 상표를 달려면 저것들도 이 견본과 같은 검사를 통과해야 하거든요."
+    ]
+  },
+  "royalWarrant-1886":{
+    invitation:"수확제 장터 한쪽에 왕실 납품 심사대가 들어섰습니다. 팬텀사 제품을 한 점 고르세요. 담당관은 견본 옆에 그 품목의 납품 장부를 펴 놓고 심사합니다.",
+    quote:"지난 주문서도 가져왔습니다. 장부부터 보셔도 좋습니다.",
+    speeches:[
+      "전표는 이게 다야? ……됐어. 있는 만큼만 올려.",
+      "이쪽이 견본입니다. 실제 납품분의 치수는 바로 옆에 적어 뒀습니다.",
+      "첫 주문서부터 가져왔습니다. 상자는 담당관께서 골라 주시죠. 어느 걸 여셔도 장부와 맞을 겁니다."
+    ]
+  },
+  "warrant-1886":{
+    invitation:"왕실 납품 담당관이 견본을 받아 들고 거래 장부를 요청합니다. 대결에서 이기면 출품한 품목이 왕실 납품 인증을 받습니다.",
+    quote:"주문하신 물건을 주문하신 대로 보내 드렸습니다. 지난 전표를 보시면 아실 겁니다.",
+    speeches:[
+      "그건 다른 품목이야. 이 물건을 보낸 전표만 추려. 몇 장뿐이어도 그대로 올려.",
+      "이 줄을 보시죠. 지난번에 출고한 물건도 오늘 내놓은 견본과 같은 규격입니다.",
+      "첫 납품 날짜를 짚으셨군요. 좋습니다. 그날의 물건에도 오늘과 같은 기준을 썼습니다. 대조해 보시죠."
+    ]
+  },
+  "jubilee1887":{
+    invitation:"여왕의 즉위 50주년을 맞아 런던 상인들이 기념품 경연을 엽니다. 팬텀사가 내놓은 선물에도 기념 리본을 달았습니다.",
+    quote:"리본을 푸는 시간도 선물을 받는 즐거움에 넣어 주시면 좋겠습니다.",
+    speeches:[
+      "……리본이 걸렸군. 실례합니다. 잠깐 제가 풀어도 될까요?",
+      "이쪽 끝을 잡아당겨 보시죠. 예, 그렇게요. 안쪽도 보시겠습니까?",
+      "칼은 두셔도 됩니다. 선물을 받는 분이 칼부터 찾으셔야 쓰겠습니까. 리본 끝만 살짝 당겨 보시죠."
+    ]
+  },
+  "royalWarrant-1887":{
+    invitation:"수확제 장터에 왕실 담당관이 자리를 잡았습니다. 출품할 팬텀사 제품 한 점을 고르세요. 견본과 그 품목의 납품 기록이 함께 심사대에 오릅니다.",
+    quote:"담당관님, 찾으시는 날짜가 있으십니까? 지난 주문서까지 날을 맞춰 꽂아 뒀습니다.",
+    speeches:[
+      "이 품목의 전표는 몇 장 없겠군. 다른 전표로 두께를 늘릴 생각은 마. 그대로 올려.",
+      "견본의 치수와 납품한 치수를 한 줄에 적었습니다. 이쪽입니다.",
+      "견본은 제가 골랐으니 납품 상자는 그쪽에서 골라 보시죠. 첫 주문부터 기록을 다 가져왔습니다."
+    ]
+  },
+  "warrant-1887":{
+    invitation:"왕실 담당관이 팬텀사의 견본과 장부를 나란히 놓았습니다. 이번 대결에서 이긴 품목은 왕실 납품 인증을 받습니다.",
+    quote:"견본은 오늘 만든 물건이고 장부는 지난 납품 때 쓴 겁니다. 함께 봐 주십시오.",
+    speeches:[
+      "저분이 묻는 건 이 물건을 몇 번 납품했느냐는 거야. 전표를 줘. 내가 보여 드리지.",
+      "보시다시피 지난 납품 때와 규격이 같습니다. 견본의 치수도 여기에 적었습니다.",
+      "그 상자도 여셔도 됩니다. 납품 날짜를 짚어 주시면 그날의 기록도 펴 드리지요. 첫 주문부터 기록이 여기에 다 있으니까요."
+    ]
+  },
+  "earlsCourt1888":{
+    invitation:"얼스 코트 이탈리아 박람회가 열리는 달입니다. 인근 상인회의 공예품 품평회에 팬텀사와 모레티 공방이 견본을 내놓았습니다.",
+    quote:"손잡이를 한 번 돌려 보십시오. 자, 이제 제가 인사를 올리는 동안 얼마나 부드럽게 도는지 봐 주시지요.",
+    speeches:[
+      "잠깐. 그늘에서는 잘 안 보이잖아. 견본을 빛이 드는 자리로 좀 옮겨 줘.",
+      "손끝으로 가장자리를 따라가 보십시오. 거기까지 손으로 마감했습니다.",
+      "출품할 물건만 골라 손을 봤을까 싶으십니까? 마침 납품 상자가 있습니다. 하나를 꺼내 보시죠."
+    ]
+  },
+  "royalWarrant-1888":{
+    invitation:"수확제 장터에 올해의 왕실 납품 심사대가 섰습니다. 팬텀사 제품 가운데 출품할 한 점을 고르세요. 담당관은 그 물건을 지금까지 어떻게 납품해 왔는지도 살핍니다.",
+    quote:"오늘 보신 견본을 내일 주문하셔도 그대로 보내 드립니다. 지난 주문서를 보시지요.",
+    speeches:[
+      "전표까지 올려. 몇 장이냐고? 보시면 아실 텐데 굳이 우리가 먼저 말할 건 없지.",
+      "치수를 따로 재 보시겠습니까? 여기를 보십시오. 납품 장부에도 같은 수치가 적혀 있습니다.",
+      "첫 주문서부터 마지막 상자까지 가져왔습니다. 제가 고른 것만 보시고 결정을 내리실 필요는 없지요."
+    ]
+  },
+  "warrant-1888":{
+    invitation:"왕실 납품 담당관이 심사대 앞에 앉았습니다. 견본과 거래 장부를 함께 심사하며, 대결에서 이긴 품목에 왕실 납품 인증을 내립니다.",
+    quote:"주문서마다 받아 가신 분의 서명이 있습니다. 필요하신 날짜를 말씀해 주십시오.",
+    speeches:[
+      "……견본은 그쯤 닦아 두고. 지금 보여 드려야 할 건 이 품목의 납품 기록이야.",
+      "견본의 치수는 여기에 적었습니다. 지난번 납품 기록을 곁에 놓으면 그대로 맞을 겁니다.",
+      "어느 날의 물건을 보시겠습니까? 저희는 첫 납품분부터 같은 규격에 가문의 이름을 걸었습니다."
+    ]
+  }
+};
+function withCompanyInvitation(fair){
+  const invitation=companyContestDialogue[fair.id]?.invitation;
+  return invitation?{...fair,invitation}:fair;
+}
+
 const historicalContests = [
   {id:"kensington1886",month:5,date:"1886년 5월 4일 박람회 개막",
     title:"사우스켄싱턴 박람회 · 팬텀사 출품전", track:"companyFair", room:"street", company:true,
@@ -116,7 +205,7 @@ const historicalContests = [
 const oldContests = annualContests.flatMap(fair=>[0,1,2].map(year=>({
   ...fair, id:fair.id+"-"+(1886+year), month:fair.month+12*year, year,
   warrant:fair.id==="warrant"
-}))).concat(historicalContests).sort((a,b)=>a.month-b.month);
+}))).concat(historicalContests).map(withCompanyInvitation).sort((a,b)=>a.month-b.month);
 
 const easterFair={
   id:"easter", month:4, title:"부활절 가든파티", track:"sakura", room:"garden",
@@ -137,7 +226,7 @@ const harvestWarrant={...annualContests.find(f=>f.id==="warrant"),
   invitation:"수확제 장터에 왕실 납품 심사대가 섰습니다. 팬텀사에서 만든 제품 한 점을 골라 출품하세요. 담당관이 견본과 지금까지의 납품 장부를 살핍니다."};
 const contests=[annualContests[0],easterFair,harvestWarrant].flatMap(fair=>
   (fair.id==="newYear"?[1,2]:[0,1,2]).map(year=>({...fair,id:fair.id+"-"+(1886+year),month:fair.month+12*year,year}))
-).sort((a,b)=>a.month-b.month);
+).map(withCompanyInvitation).sort((a,b)=>a.month-b.month);
 // Completed pages and previously booked invitations retain their original rules and dates.
 const retiredContests=oldContests.filter(f=>!contests.some(active=>active.id===f.id));
 const contestArchive=[...contests,...retiredContests].sort((a,b)=>a.month-b.month);
@@ -153,7 +242,11 @@ const contestOpponents={
   earlsCourt1888:{name:"모레티 공방",quote:"손잡이를 한번 돌려 보시지요. 인사가 끝날 때까지요.",role:"기계 인형 제작소",actor:"designer",product:"plush"},
   warrant:{name:"휘트컴 상회",quote:"지난 주문서까지 가져왔습니다. 어느 쪽이든 먼저 보시지요.",role:"왕실 납품 후보",actor:"clerk",product:"game"}
 };
-function contestOpponent(fair){return contestOpponents[fair.warrant?"warrant":fair.id.split("-")[0]];}
+function contestOpponent(fair){
+  const opponent=contestOpponents[fair.warrant?"warrant":fair.id.split("-")[0]];
+  const quote=companyContestDialogue[fair.id]?.quote;
+  return quote?{...opponent,quote}:opponent;
+}
 
 // Dialogue reflects three levels of performance before the verdict.
 const contestSpeeches={
@@ -179,5 +272,5 @@ const contestSpeeches={
   earlsCourt1888:[["잠깐. 견본을 빛 쪽으로 좀 옮겨 주겠어?","가장자리까지 손으로 마감했습니다. 가까이서 보시지요.","심사대의 것만 고른 솜씨라고요? 납품 상자에서도 하나 꺼내 보시겠습니까?"]]
 };
 function contestSpeech(fair,ticket,rank){
-  return contestSpeeches[fair.warrant?"warrant":fair.id.split("-")[0]][fair.company?0:ticket.index][rank];
+  return companyContestDialogue[fair.id]?.speeches[rank]??contestSpeeches[fair.warrant?"warrant":fair.id.split("-")[0]][fair.company?0:ticket.index][rank];
 }
