@@ -202,3 +202,40 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
   #scene #conversation:not([data-review=true]) > .cast-left { justify-self:start; }
   #scene #conversation:not([data-review=true]) > .cast-right { justify-self:end; }
 }
+
+/* Let choice lists and outcome cards share the stage with the standing art. */
+@media (max-width:960px) and (orientation:portrait), (max-height:540px) and (orientation:landscape) {
+  #scene #conversation:not([hidden]):not([data-review=true]):has(> .answers:not([hidden])) {
+    display:grid; grid-template:minmax(0,1fr) auto / minmax(0,1fr);
+    gap:6px; padding:8px 3% 10px; box-sizing:border-box;
+  }
+  #scene #conversation:not([data-review=true]):has(> .answers:not([hidden])) > .cast {
+    grid-area:1/1/3/2; align-self:end; pointer-events:none;
+  }
+  #scene #conversation:not([data-review=true]):has(> .answers:not([hidden])) > .answers {
+    grid-area:1/1; align-self:end; width:min(100%,32rem); padding:3px;
+    grid-auto-rows:max-content; gap:5px; z-index:4;
+  }
+  #scene #conversation:not([data-review=true]):has(> .answers:not([hidden])) > article.dialogue {
+    grid-area:2/1; height:auto; min-height:0; max-height:none; width:100%;
+  }
+  #scene #conversation:not([hidden]):not([data-review=true]):has(> #impact-summary) {
+    display:grid; grid-template:minmax(0,1fr) / minmax(0,1fr);
+    padding:8px 3% 10px; box-sizing:border-box;
+  }
+  #scene #conversation:not([data-review=true]):has(> #impact-summary) > .cast,
+  #scene #conversation:not([data-review=true]):has(> #impact-summary) > article#impact-summary {
+    grid-area:1/1; align-self:end;
+  }
+  #scene #conversation:not([data-review=true]):has(> #impact-summary) > article#impact-summary {
+    position:relative; inset:auto; width:min(100%,30rem); height:auto; max-height:100%;
+    min-height:0; margin:0 auto; padding:10px 14px; gap:5px; z-index:4;
+  }
+  #impact-summary .impact-scroll li {padding:3px 0;row-gap:1px}
+}
+@media (max-height:540px) and (orientation:landscape) {
+  #scene #conversation:not([data-review=true]):has(> #impact-summary) > article#impact-summary {width:min(100%,42rem)}
+  #impact-summary .impact-scroll li {padding-block:1px}
+  #impact-summary .impact-scroll ul {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px}
+  #impact-summary .impact-scroll p {margin:4px 0;line-height:1.2}
+}
