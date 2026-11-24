@@ -958,51 +958,59 @@ function growthRecord(run){
     if(!years.has(year))years.set(year,{year,plans:new Map(),entries:[]});
     return years.get(year);
   }
+  const lastMonth=Number.isInteger(run.month)?run.month:35;
   yearFor(1);
+  yearFor(lastMonth);
   for(const entry of run.past||[]){
-    if(!Number.isInteger(entry.month))continue;
+    if(!Number.isInteger(entry.month)||entry.month<1||entry.month>lastMonth)continue;
     const group=yearFor(entry.month);
-    for(const id of entry.plan||[]){
+    for(const [slot,id] of (entry.plan||[]).entries()){
+      if(entry.contest&&slot===contestSlot)continue;
       const name=actions[id]?.name;
       if(name)group.plans.set(name,(group.plans.get(name)||0)+1);
     }
   }
   for(const entry of run.events||[]){
     const event=events.find(item=>item.id===entry.id);
-    if(event&&Number.isInteger(entry.month))yearFor(entry.month).entries.push({month:entry.month,title:event.title});
+    if(event&&Number.isInteger(entry.month)&&entry.month>0&&entry.month<=lastMonth)yearFor(entry.month).entries.push({month:entry.month,title:event.title});
   }
   const record=[...years.values()].sort((a,b)=>a.year-b.year).map(group=>({
     year:group.year,age:group.year-1876,
     plans:[...group.plans].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([name])=>name),
     entries:group.entries.sort((a,b)=>a.month-b.month)
   }));
-  if(run.ending==="vowTitle" && stats.every(key=>run.stats[key]===abilityMax))record.at(-1).allMastered=true;
+  record.at(-1).lastMonth=lastMonth;
+  if(run.ending==="vowTitle" && stats.every(key=>run.stats?.[key]===abilityMax))record.at(-1).allMastered=true;
   return record;
 }
 function savedGrowthRecord(id,replay){
   if(!replay||state.phase==="ending"&&state.ending===id)return growthRecord(state);
-  if(saves.growthGallery?.[id])return saves.growthGallery[id];
+  if(saves.growthGallery?.[id]?.length)return saves.growthGallery[id];
   const run=[saves.auto,saves[1],saves[2],saves[3]].find(r=>r?.phase==="ending"&&r.ending===id);
   return run?growthRecord(run):null;
 }
-function showGrowthCredits(host,years,onFinish){
+function showGrowthCredits(host,id,years,onFinish){
   host.hidden=false;host.dataset.review="false";
-  host.innerHTML='<section class="growth-credits" aria-label="시엘의 성장 기록"><img class="growth-backdrop" src="assets/endings/vowTitle.webp" alt=""><div class="growth-window" tabindex="0"><div class="growth-roll"><header><h2>시엘의 성장 기록</h2></header></div></div><footer><button type="button" class="growth-toggle"></button><button type="button" class="growth-end">마치기</button></footer></section>';
+  host.innerHTML='<section class="growth-credits" aria-label="시엘의 성장 기록"><img class="growth-backdrop" src="assets/endings/'+id+'.webp" alt=""><div class="growth-window" tabindex="0"><div class="growth-roll"><header><h2>시엘의 성장 기록</h2></header></div></div><footer><button type="button" class="growth-toggle"></button><button type="button" class="growth-end">마치기</button></footer></section>';
   const windowEl=host.querySelector(".growth-window"),roll=host.querySelector(".growth-roll");
   function add(parent,tag,value){
     const el=document.createElement(tag);el.textContent=value;parent.append(el);return el;
   }
+  add(roll.querySelector("header"),"p",endingLabels[id][0]);
+  if(!years.length)add(roll,"p","이 회차의 세부 장부는 남아 있지 않습니다.");
   for(const {year,age,plans,entries} of years){
     const section=add(roll,"section","");
     const portrait=document.createElement("img");
     portrait.src=cielArt(age);portrait.alt="";section.append(portrait);
     add(section,"h3",year+"년");
-    if(plans.length)add(section,"p","주요 일정　"+plans.join(" · "));
+    if(plans.length)add(section,"p","주요 편성　"+plans.map(statResultText).join(" · "));
     for(const entry of entries){
       const row=add(section,"div","");row.className="growth-entry";
       add(row,"small",(calendarDate(entry.month).getUTCMonth()+1)+"월");add(row,"span",entry.title);
     }
   }
+  const lastMonth=years.at(-1)?.lastMonth;
+  if(lastMonth)add(roll,"p",monthText(lastMonth)+" · 마지막 기록");
   if(years.at(-1)?.allMastered){
     const section=add(roll,"section","");
     add(section,"h3","일곱 과목 만점");
@@ -1042,7 +1050,6 @@ function showEndingScene(host){
     render(true);
   }
   function afterFarewells(){
-    if(id!=="vowTitle"||!savedGrowthRecord(id,replay)){finishScene();return;}
     if(replay){delete replay.farewell;replay.credits=true;}
     else {delete state.endingFarewell;state.growthCredits=true;persist();}
     render(true);
@@ -1056,8 +1063,8 @@ function showEndingScene(host){
     },afterFarewells);
     return true;
   }
-  if(id==="vowTitle"&&(replay?replay.credits:state.growthCredits)){
-    showGrowthCredits(host,savedGrowthRecord(id,replay)||[],finishScene);return true;
+  if(replay?replay.credits:state.growthCredits){
+    showGrowthCredits(host,id,savedGrowthRecord(id,replay)||[],finishScene);return true;
   }
   const end=scene.lines.length-1,at=Math.min(end,Math.max(0,replay?replay.at:state.endingBeat));
   // The last act of this ending follows the career earned in the finished run.

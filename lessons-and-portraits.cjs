@@ -371,15 +371,16 @@ async function check(browserType){
         assert.equal(await farewell.locator('.farewell-bubble p').textContent(),farewellLine);
         await farewell.locator('.farewell-person').evaluate(im=>im.decode());
         await farewell.locator('[data-farewell="skip"]').click();
-        if(id==='vowTitle'){
-          await page.locator('.growth-backdrop').evaluate(im=>im.decode());
-          await page.locator('.growth-end').click();
-        }
+        const backdrop=page.locator('.growth-backdrop');
+        assert.equal(await backdrop.getAttribute('src'),'assets/endings/'+id+'.webp');
+        await backdrop.evaluate(im=>im.decode());
+        await page.locator('.growth-end').click();
         assert.ok(await page.locator('#sheet').isVisible());
       }
       await page.evaluate(()=>{
         state=initial();state.phase='plan';tab='record';saves.gallery={ill:'건강 악화로 종료'};
-        saves[1]={...initial(),phase:'ending',ending:'broke'};delete saves.auto;delete saves[2];delete saves[3];render();
+        delete saves.growthGallery.ill;
+        saves[1]={...initial(),month:4,phase:'ending',ending:'broke',past:[{month:4,plan:['accounts','walk','rest']}]};delete saves.auto;delete saves[2];delete saves[3];render();
       });
       assert.equal(await page.locator('.ending-thumb').count(),2);
       const gallery=page.locator('.file-section').filter({has:page.getByText('엔딩 도감',{exact:true})});
@@ -396,7 +397,10 @@ async function check(browserType){
             if(beat<lines.length-1)host.querySelector('[data-read="next"]').click();
           }
         },ending);
-        await page.locator('#system-back').click();
+        await page.locator('#conversation [data-read="finish"]').click();
+        assert.equal(await page.locator('.growth-backdrop').getAttribute('src'),'assets/endings/'+ending+'.webp');
+        assert.match(await page.locator('.growth-roll').innerText(),ending==='ill'?/세부 장부는 남아 있지 않습니다/:/팬텀사 회계/);
+        await page.locator('.growth-end').click();
         assert.equal(await page.evaluate(()=>tab),'record');
         if(await gallery.locator('summary').evaluate(el=>!el.parentElement.open))await gallery.locator('summary').click();
       }

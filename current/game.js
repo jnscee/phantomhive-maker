@@ -409,7 +409,8 @@ function finish(id){
   saves.farewellGallery??={};
   saves.farewellGallery[id]=endingFarewellRecord(state);
   if(id==="vowNoTitle")saves.londonCareer=londonCareer(state);
-  if(id==="vowTitle"){saves.growthGallery??={};saves.growthGallery[id]=growthRecord(state);}
+  saves.growthGallery??={};
+  saves.growthGallery[id]=growthRecord(state);
   persist();render(true);
 }
 function isApprovedEnding(id){return id==="vowTitle"||id==="releaseTitle";}
@@ -1199,6 +1200,14 @@ function marketPanel(){
 }
 const panels={market:marketPanel,title:titlePanel,continue:coverPanel,album:coverPanel,settings:coverPanel,exit:coverPanel,plan:planPanel,status:statusPanel,estate:managementPanel,townhouse:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
 state=normalizeSave(state);
+// Keep a recoverable old ending before its autosave or manual slot is reused.
+for(const run of [saves.auto,saves[1],saves[2],saves[3]]){
+  if(run?.phase!=="ending" || !Object.hasOwn(endingScenes,run.ending) || saves.growthGallery?.[run.ending]?.length)continue;
+  if(!run.past?.length && !run.events?.length)continue;
+  saves.growthGallery??={};
+  saves.growthGallery[run.ending]=growthRecord(run);
+}
+
 restoreCGRecords();
 
 function sheetTitle(){
