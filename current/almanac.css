@@ -441,3 +441,10 @@ html[data-fair-preview] #conversation .contest-screen {padding-block-start:.6rem
 @media (prefers-reduced-motion:no-preference) {
   :root:not([data-game-motion="reduced"]):not([data-game-motion="gentle"]) .duel-screen .line-next span {display:inline-block;pointer-events:none;animation:float-next 1.45s ease-in-out infinite}
 }
+
+.plan-effect b > [role="img"],
+.hud-group em > [role="img"] {
+  font-size:max(9px,.75em);
+  letter-spacing:0;
+  white-space:nowrap;
+}
