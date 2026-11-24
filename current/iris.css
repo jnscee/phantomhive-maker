@@ -1364,18 +1364,38 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
   }
 }
 
-.london-board .london-rooms { padding:0; overflow:hidden; border-radius:8px; }
-#scene .london-map button.map-pin { display:grid; place-items:center; gap:1px; padding:4px 7px; transform:translate(-50%,-50%); }
-.london-map .map-pin em { font:normal 11px/1.2 var(--serif); color:inherit; }
+.london-board .property-grounds { overflow:hidden; }
+#scene .london-map { border:0; border-radius:0; }
+#scene .london-map button.map-pin { transform:translate(-50%,-50%); max-width:none; }
+.london-map .map-pin em { font-style:normal; }
 .london-map .map-pin:is(:focus-visible,.drop-active) { outline:2px solid #efd699; }
 .london-map .duty-walker img { max-width:100%; }
-.london-duty-info { display:grid; grid-template-columns:1fr auto; align-items:baseline; gap:4px 8px; padding:10px 12px; background:#24374b; color:#ecf2f7; }
-.london-duty-info span { grid-column:1/-1; grid-row:2; color:#c5d5e1; }
-.london-duty-info strong,.london-request b { color:#efd599; }
-.london-request,.london-book { grid-column:1/-1; }
-@media(max-width:640px) {
-  .property-grid.london-board { display:grid; grid-template-columns:minmax(0,1fr); }
-  .london-board > * { min-width:0; }
+.london-duty-info { margin:10px 0 12px; }
+.london-desk { min-width:0; }
+.london-roster { display:grid; gap:6px; margin:6px 0; }
+.london-roster .staff-card { width:100%; min-width:0; justify-content:flex-start; }
+.london-roster .staff-card span { min-width:0; }
+#scene .london-roster .staff-card[aria-pressed=true] { outline:2px solid #426789; background:#d4e5f3; color:#203852; }
+.london-desk .london-off { margin-top:4px; }
+.london-request { margin-top:12px; }
+.london-request .work-title { align-items:baseline; padding:0 0 5px; border-bottom-width:1px; }
+.london-request .work-title h4 { margin:0; }
+.london-request .work-title b { flex:none; }
+.london-request ul { list-style:none; margin:5px 0; padding:0; }
+.london-request li { display:flex; justify-content:space-between; gap:8px; padding:3px 0; font-size:13px; }
+#panel .london-book { margin:0; }
+.london-month { padding:7px 0; border-top:1px solid #94a9be52; overflow-wrap:anywhere; }
+.london-month h4 { margin:0 0 4px; font-size:14px; color:#ead4a8; }
+.london-month p { margin:3px 0; font-size:13px; color:#c8d5e0; }
+@media (max-width:960px) and (orientation:portrait), (max-width:540px) {
+  .london-board .property-grounds { overflow:visible; }
+  .london-board .work-figures { order:1; }
+  .london-board .london-desk { order:2; }
+  .london-board .london-book { order:3; }
+}
+@media(max-width:380px) {
+  #scene .london-map button.map-pin { display:grid; gap:2px; padding:4px 6px; font-size:12px; }
+  #scene .london-map button.map-pin small { padding:0; border:0; }
 }
 
 #scene #conversation:has(.growth-credits){position:absolute;inset:0;display:block;padding:0;z-index:12;pointer-events:auto}
