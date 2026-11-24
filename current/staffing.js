@@ -70,15 +70,16 @@ function londonBoard(){
   const ids=londonResidents(state);
   const jobs=state.london?.jobs||{};
   const locked=state.phase!=="plan";
+  const teams=Object.fromEntries(Object.keys(londonRooms).map(room=>[room,ids.filter(id=>jobs[id]===room)]));
   const roomButtons=Object.entries(londonRooms).map(([id,room])=>{
     const {pin:[x,y],floor:[left,right,feet]}=londonLayout[id];
-    const team=ids.filter(person=>jobs[person]===id);
+    const team=teams[id];
     const walkers=team.map((person,i)=>{
       const span=(right-left)/team.length;
       return '<span aria-hidden="true" class="duty-lane" style="left:'+(left+i*span)+'%;width:'+span+'%;top:'+feet+'%;--pace:11s;--delay:-'+(i+1)*3+'s"><span class="duty-walker" data-servant="'+person+'"><img alt="" src="assets/staff/'+person+'.png"></span></span>';
     }).join("");
     const names=team.map(person=>londonHosts[person].name).join(" · ")||"미배치";
-    return walkers+'<button type="button" class="map-pin" data-duty="'+id+'" style="left:'+x+'%;top:'+y+'%" aria-pressed="'+(selectedLondonRoom===id)+'"><b>'+room.name+'</b><em>'+names+'</em></button>';
+    return walkers+'<button type="button" class="map-pin" data-duty="'+id+'" style="left:'+x+'%;top:'+y+'%" aria-pressed="'+(selectedLondonRoom===id)+'">'+room.name+' <small><em>'+names+'</em></small></button>';
   }).join("");
   const room=londonRooms[selectedLondonRoom];
   const roster=ids.map(id=>{
@@ -86,14 +87,28 @@ function londonBoard(){
     const skill=state.london?.skill?.[id]||0;
     return staffCard(id,host.name,host.role+" · "+(londonRooms[jobs[id]]?.name||"대기")+" · 숙련도 "+skill+"/30","특기 "+londonRooms[host.specialty].name+" +1 · 숙련 보너스 +"+Math.floor(skill/10),locked);
   }).join("");
-  const records=(state.london?.book||[]).slice().reverse().map(entry=>'<p><b>'+monthText(entry.month)+'</b><br>'+statResultText(entry.summary)+(entry.story?'<br>'+entry.story:'')+'</p>').join("");
-  return '<div class="property-grid staff-board london-board"><section class="property-grounds london-rooms"><div class="property-map staff-map london-map" role="group" aria-label="런던 타운하우스 근무지"><img alt="" class="map-base" src="assets/map-london.webp">'+roomButtons+'</div><div class="london-duty-info" aria-live="polite"><b>'+room.name+'</b><span>'+room.work+'</span><strong>'+room.effect+' +'+power[selectedLondonRoom]+room.unit+'</strong></div></section>'+
-    '<section class="property-desk staff-roster"><div class="work-title"><h3>이번 달 배치</h3></div>'+
-    (ids.length?'<p>'+(locked?'일정을 마치면 다음 달 배치를 바꿀 수 있습니다.':'인물을 누른 뒤 방을 선택하세요. 두 사람이 한 방을 맡으면 효과가 합산됩니다.')+'</p>':'')+roster+
-    (ids.length?'<button type="button" data-duty="off" '+(locked?'disabled':'')+'>대기 배치</button>':'')+
-    '<p>배치한 달마다 숙련도 +1. 숙련도 10마다 맡은 업무의 효과가 1씩 늘어납니다.</p>'+
-    '<section class="budget-book london-request"><h3>'+request.name+'</h3><p>'+request.rooms.map(id=>londonRooms[id].name).join(" + ")+'에 각각 한 명을 배치하면 월말에 가문 명성 +1</p><b>'+(ready?'준비 완료':'준비 중')+'</b></section>'+
-    '<details class="annexes london-book"><summary>런던 운영 일지</summary>'+(records||'<p>첫 근무를 마치면 여기에 결과가 기록됩니다.</p>')+'</details></section></div>';
+  const records=(state.london?.book||[]).slice().reverse().map(entry=>
+    '<article class="london-month"><h4>'+monthText(entry.month)+'</h4><p>'+statResultText(escapeHTML(entry.summary))+'</p>'+
+    (entry.story?'<p>'+escapeHTML(entry.story)+'</p>':'')+'</article>').join("");
+  const figures=tile("배치 인원",Object.values(teams).flat().length+" / "+ids.length+"명")+
+    tile("팬텀사 소매 수요","+"+power.salon+"개")+tile("시엘 컨디션","+"+power.kitchen)+tile("시엘 통찰","+"+power.post);
+  const names=teams[selectedLondonRoom].map(id=>londonHosts[id].name).join(" · ")||"배치된 인원 없음";
+  const requestRooms=request.rooms.map(id=>'<li><span>'+londonRooms[id].name+'</span><b>'+
+    (teams[id].length?teams[id].map(person=>londonHosts[person].name).join(" · "):"미배치")+'</b></li>').join("");
+  return '<div class="property-grid staff-board london-board"><div class="property-grounds">'+
+    '<div class="property-map staff-map london-map" role="group" aria-label="런던 타운하우스 근무지"><img alt="" class="map-base" src="assets/map-london.webp">'+roomButtons+'</div>'+
+    '<div class="work-figures" aria-label="타운하우스 배치 효과">'+figures+'</div>'+
+    '<details class="sales-books london-book"><summary>런던 운영 일지</summary>'+
+    (records||'<p>첫 근무를 마치면 여기에 결과가 기록됩니다.</p>')+'</details></div>'+
+    '<section class="property-desk london-desk" aria-label="선택 근무지와 인원 배치"><div class="work-title"><h3>'+room.name+'</h3><b>'+teams[selectedLondonRoom].length+'명 배치</b></div>'+
+    '<dl class="facility-data london-duty-info" aria-live="polite"><dt>담당 업무</dt><dd>'+room.work+'</dd><dt>담당자</dt><dd>'+names+'</dd>'+
+    '<dt>배치 효과</dt><dd>'+room.effect+' +'+power[selectedLondonRoom]+room.unit+'</dd></dl>'+
+    '<h4>이번 달 배치</h4>'+
+    (!ids.length?'<p>현재 배치할 인원이 없습니다.</p>':'<p>'+(locked?'다음 달 계획에서 배치를 바꿀 수 있습니다.':'인원을 선택하거나 끌어서 원하는 방에 배치하세요. 같은 방의 업무 효과는 합산됩니다.')+'</p>')+
+    (ids.length?'<div class="london-roster">'+roster+'</div><button type="button" class="london-off" data-duty="off" '+(locked?'disabled':'')+'>대기 배치</button>'+
+      '<p>근무한 달마다 숙련도 +1. 숙련도 10마다 업무 효과 +1.</p>':'')+
+    '<section class="expansion-quote london-request"><div class="work-title"><h4>'+request.name+'</h4><b>'+ (ready?'준비 완료':'준비 중')+'</b></div>'+
+    '<ul>'+requestRooms+'</ul><p>두 근무지를 모두 맡기면 월말에 가문 명성 +1</p></section></section></div>';
 }
 function staffBoard(){
   const staff=peopleInHouse().filter(id=>servants[id].job);
