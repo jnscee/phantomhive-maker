@@ -448,3 +448,4 @@ html[data-fair-preview] #conversation .contest-screen {padding-block-start:.6rem
   letter-spacing:0;
   white-space:nowrap;
 }
+.hud-group em > [role="img"] {font-size:.4375rem}
