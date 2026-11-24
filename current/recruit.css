@@ -239,3 +239,30 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
   #impact-summary .impact-scroll ul {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:16px}
   #impact-summary .impact-scroll p {margin:4px 0;line-height:1.2}
 }
+
+/* Leave the floral corners clear around the stock and purchase controls. */
+@media (min-width:651px) and (min-height:531px) {
+  #scene[data-mode=market] .lau-counter {
+    padding:10px 9% clamp(28px,3cqw,42px);
+    grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);
+  }
+  #scene[data-mode=market] .shop-talk {max-width:21rem;justify-self:start}
+}
+#scene[data-mode=market] .shop-talk {padding:6px 9px}
+#scene[data-mode=market] .shop-talk h3 {font-size:15px;line-height:1.2}
+#scene[data-mode=market] .shop-talk p {font-size:14px;line-height:1.35;margin:3px 0 5px}
+#scene[data-mode=market] .shop-talk small {font-size:12px;line-height:1.3;margin:3px 0 0}
+#scene[data-mode=market] .shop-trade {gap:4px 8px;padding-top:4px}
+#scene[data-mode=market] .shop-trade .shop-buy {width:auto;max-width:none;white-space:nowrap;padding-inline:9px}
+@media (orientation:portrait) and (max-width:650px) {
+  #scene[data-mode=market] .lau-counter {padding-inline:7%;padding-bottom:20px}
+}
+@media (orientation:landscape) and (max-height:530px) {
+  #scene[data-mode=market] .lau-counter {padding-inline:6%;padding-bottom:11px}
+  #scene[data-mode=market] .shop-talk {padding:3px 6px}
+  #scene[data-mode=market] .shop-talk p {font-size:12px;margin:2px 0}
+}
+@media (orientation:landscape) and (max-height:530px) {
+  #scene[data-mode=market] .lau-counter {grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+  #scene[data-mode=market] .stat-preview {flex-basis:7rem}
+}
