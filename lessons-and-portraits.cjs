@@ -334,6 +334,8 @@ async function check(browserType){
         await page.locator('#system-status').click();
         assert.ok((await page.locator('#sheet').innerText()).includes('편성한 일정의 예상 변동'));
         assert.equal(await page.locator('.attributes .attribute:not(.attr-label)').count(),7);
+        const changes=await page.locator('#sheet .meter em, #sheet .attribute:not(.attr-label) em').allTextContents();
+        assert.ok(changes.some(value=>/[▲▼]/.test(value))&&changes.every(value=>/^(▲{1,3}|▼{1,3}|–)$/.test(value)),JSON.stringify(changes));
         await page.locator('#system-back').click();
         assert.equal(await page.evaluate(()=>tab),'plan');
         assert.equal(await page.evaluate(()=>JSON.stringify(state.plan)),planned);
