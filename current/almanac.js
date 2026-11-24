@@ -56,7 +56,7 @@ function festivalNotice(){
   const selected=ticket?fair.options[ticket.index]:null;
   const buttons=fair.options.map((o,index)=>option(o.label,"fair-entry:"+index,ticket?.index===index,false,"option")).join("");
   return '<details class="fair-notice"><summary><small>'+(state.month===fair.month?"이달 행사":"다음 달 행사")+' · '+(selected?"신청 완료":"참가 접수 중")+'</small><b>'+fair.title+'</b><span>'+(selected?"신청 내용 보기":"참가 종목 보기")+'</span></summary><div>'+
-    '<small>'+fair.date+'</small><p>'+fair.historical+'</p><p><b>팬텀사 행사</b>　'+fair.invitation+'</p><div class="fair-options">'+buttons+'</div>'+
+    '<small>'+fair.date+'</small><p>'+fair.historical+'</p><p class="invite-intro"><b>팬텀사 행사</b>　'+fair.invitation+'</p><div class="fair-options">'+buttons+'</div>'+
     (selected?'<p><b>준비 과목</b>　'+actions[selected.prep].name+' · 신청 후 한 번 수료하거나 '+selected.stat+' '+fairTarget(fair)+' 이상이면 호평을 받습니다.</p>'+btn("참가 취소","fair-entry:cancel"):'<p>종목을 고르면 준비 과목을 확인할 수 있습니다.</p>')+'</div></details>';
 }
 function fairTarget(fair){return fair.month===5?32:fair.month===18?90:140;}

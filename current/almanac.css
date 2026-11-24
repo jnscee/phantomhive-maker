@@ -118,3 +118,12 @@
 .trust-stage>span {display:flex;gap:2px}
 .trust-stage i {width:7px;height:3px;background:#607182}
 .trust-stage i.filled {background:var(--stage)}
+
+#calendar .fair-notice .invite-intro {
+  padding:.35rem .55rem;color:#30261f;background:#fff5dded;border-radius:3px;
+  line-height:1.65;word-break:keep-all;overflow-wrap:anywhere;text-shadow:none;
+}
+#calendar details.fair-notice > summary small {
+  justify-self:start;padding:.15rem .45rem;border-radius:3px;
+  color:#493020;background:#ead5ae;font-weight:700;text-shadow:none;
+}
