@@ -5,7 +5,7 @@ function recruit(id){
   if(servants[id].job)
     state.jobs[id]=servants[id].job;
 }
-function choice(label,result,effect,when,hint){return {label,result,effect,when,hint};}
+function choice(label,result,effect,when,hint){return {label,result:statResultText(result),effect,when,hint};}
 function shift(key,n){if(stats.includes(key))changeStat(key,n);else if(["hp","stress","motivation"].includes(key))state[key]=cap(state[key]+n);else state[key]+=n;}
 function effectChoice(row){
   const [label,result,changes,gate,hint]=row;
@@ -24,7 +24,7 @@ const authoredOptions={};
 function authoredChoice([label,response,stat,amount,responseLines,route]){
   return {label,result:response,response,responseLines:responseLines?.length?responseLines:undefined,nextScene:route?.next,
     when:route?.stat?run=>run.stats[route.stat]>=route.min:undefined,
-    hint:route?.stat?route.stat+" "+route.min+" 이상":"",
+    hint:route?.stat?statLabel(route.stat)+" "+route.min+" 이상":"",
     effect:()=>{if(stat)shift(stat,amount);}
   };
 }

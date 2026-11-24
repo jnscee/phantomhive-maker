@@ -32,8 +32,8 @@ function encounterPage(seq,room){
       const locked=answer.authored?.when&&!answer.authored.when(state);
       return btn(answer.label+(locked?" · "+answer.authored.hint:""),"visit-choice:"+index,Boolean(locked));
     }).join("")
-    :btn("다음 대사","encounter-next:"+page);
-  return staged(who,card.title,line,controls,"자유행동",room,card.npc);
+    :"";
+  return staged(who,"",line,controls,"",room,card.npc,"encounter-next:"+page);
 }
 function encounterAction(action,argument){
   if(action!=="encounter-next")return false;

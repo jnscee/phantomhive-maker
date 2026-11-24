@@ -22,7 +22,7 @@ function staffCard(id,name,assignment,bonus,locked){
 const londonHosts={soma:{name:"소마",role:"왕자",specialty:"salon"},agni:{name:"아그니",role:"집사",specialty:"kitchen"}};
 const londonRooms={
   salon:{name:"응접실",work:"팬텀사 견본 소개",effect:"소매 수요",unit:"개",image:"room-ballroom.webp"},
-  kitchen:{name:"주방",work:"본저택으로 보낼 식사 준비",effect:"시엘 건강",unit:"",image:"goods-tea.webp"},
+  kitchen:{name:"주방",work:"본저택으로 보낼 식사 준비",effect:"시엘 컨디션",unit:"",image:"goods-tea.webp"},
   post:{name:"서신실",work:"시엘에게 보낼 런던 소식 정리",effect:"시엘 통찰",unit:"",image:"room-office.webp"}
 };
 const londonRequests=[
@@ -59,7 +59,7 @@ function settleLondon(run){
   if(ready)run.renown++;
   office.skill??={};
   for(const id of working)office.skill[id]=Math.min(30,(office.skill[id]||0)+1);
-  const summary=[power.salon?"팬텀사 소매 수요 +"+power.salon+"개":"",power.kitchen?"건강 +"+health:"",power.post?"통찰 +"+insight:"",ready?request.name+" · 가문 명성 +1":""].filter(Boolean).join(" / ");
+  const summary=[power.salon?"팬텀사 소매 수요 +"+power.salon+"개":"",power.kitchen?"컨디션 +"+health:"",power.post?"통찰 +"+insight:"",ready?request.name+" · 가문 명성 +1":""].filter(Boolean).join(" / ");
   (office.book??=[]).push({month:run.month,summary,story:ready?request.result:""});
   run.log.push("타운하우스 · "+summary);
 }
@@ -86,7 +86,7 @@ function londonBoard(){
     const skill=state.london?.skill?.[id]||0;
     return staffCard(id,host.name,host.role+" · "+(londonRooms[jobs[id]]?.name||"대기")+" · 숙련도 "+skill+"/30","특기 "+londonRooms[host.specialty].name+" +1 · 숙련 보너스 +"+Math.floor(skill/10),locked);
   }).join("");
-  const records=(state.london?.book||[]).slice().reverse().map(entry=>'<p><b>'+monthText(entry.month)+'</b><br>'+entry.summary+(entry.story?'<br>'+entry.story:'')+'</p>').join("");
+  const records=(state.london?.book||[]).slice().reverse().map(entry=>'<p><b>'+monthText(entry.month)+'</b><br>'+statResultText(entry.summary)+(entry.story?'<br>'+entry.story:'')+'</p>').join("");
   return '<div class="property-grid staff-board london-board"><section class="property-grounds london-rooms"><div class="property-map staff-map london-map" role="group" aria-label="런던 타운하우스 근무지"><img alt="" class="map-base" src="assets/map-london.webp">'+roomButtons+'</div><div class="london-duty-info" aria-live="polite"><b>'+room.name+'</b><span>'+room.work+'</span><strong>'+room.effect+' +'+power[selectedLondonRoom]+room.unit+'</strong></div></section>'+
     '<section class="property-desk staff-roster"><div class="work-title"><h3>이번 달 배치</h3></div>'+
     (ids.length?'<p>'+(locked?'일정을 마치면 다음 달 배치를 바꿀 수 있습니다.':'인물을 누른 뒤 방을 선택하세요. 두 사람이 한 방을 맡으면 효과가 합산됩니다.')+'</p>':'')+roster+

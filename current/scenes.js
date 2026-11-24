@@ -14,7 +14,7 @@ function playMarkup(){
   const outcome=lessonGrades[seq.grade]?.label;
   const stageText=(advancedCourse(state,id)?advancedLessons[id]+" ":"")+(outcome?lessonPlayback(id,seq.grade,seq.remark):line);
   const all=Object.keys(seq.after).filter(k=>seq.before[k]!==seq.after[k]);
-  let rows=all.map(k=>'<div class="stage-stat"><span>'+k+'</span><em data-stat="'+k+'">'+seq.before[k]+'</em><i><b></b></i><small>'+signed(seq.after[k]-seq.before[k])+'</small></div>').join("");
+  let rows=all.map(k=>'<div class="stage-stat"><span>'+statLabel(k)+'</span><em data-stat="'+k+'">'+seq.before[k]+'</em><i><b></b></i><small>'+signed(seq.after[k]-seq.before[k])+'</small></div>').join("");
   return '<div class="lesson-art"><div class="lesson-plane" data-room="'+room+'"><img class="stage-room" src="'+sceneArt[room]+'" alt="">'+
     '<div class="performer '+movement+'" data-frames="'+pose.join(" ")+'"><img src="'+actors[pose[0]]+'" alt="'+courseName(id)+' 중인 시엘"><span class="motion-object '+prop+'" aria-hidden="true">'+motionObjects[prop]+'</span></div></div></div>'+
     '<div class="stage-top"><b>'+stageNames[room]+'</b><span>'+slotNames[part]+' · '+courseName(id)+(outcome?' · '+outcome:'')+'</span></div>'+
@@ -81,7 +81,7 @@ function enterSlot(){
   state.counts[id]=(state.counts[id]||0)+1;
   if(seq.onSickLeave&&id!==planned)state.log.push(actions[planned].name+" 결석 · 요양으로 대체 · 예약 비용 "+money(paid));
   if(!seq.onSickLeave&&state.ill)state.log.push("병환 · 다음 일정부터 요양");
-  if(seq.onSickLeave&&!state.ill)state.log.push("건강 회복 · 다음 순부터 일정에 복귀");
+  if(seq.onSickLeave&&!state.ill)state.log.push("컨디션 회복 · 다음 순부터 일정에 복귀");
   seq.after=snapStats(state);
   state.log.push(slotNames[seq.index]+" · "+courseName(id)+" · "+(seq.grade?lessonGrades[seq.grade].label+" · ":"")+changes.join(" / "));
   state.phase="scene";tab="plan";persist();render(true);
@@ -99,15 +99,16 @@ function continueSequence(){
     settleMonth();
   }
 }
+function matchesSlot(event,id){
+  return Boolean(id&&(event.slot===id||event.examSubjects?.includes(id)));
+}
 function finishScene(){
   if(state.phase!=="scene")return;
   stopPlayback();
   const id=state.sequence.activity||state.plan[state.sequence.index];
-  const eligible=state.duration===35&&!state.sequence.onSickLeave&&!state.ill?events.filter(e=>(e.slot===id||e.statExam)&&!state.flags[e.id]&&e.sees(state)):[];
-  if(eligible.length){
-    state.sequence.slotQueue=eligible.map(e=>e.id);
-    state.pending=state.sequence.slotQueue.shift();state.phase="slotEvent";persist();render(true);}
-  else openReview();
+  const eligible=state.duration===35&&!state.sequence.onSickLeave&&!state.ill?events.filter(e=>matchesSlot(e,id)&&!state.flags[e.id]&&e.sees(state)):[];
+  state.sequence.slotQueue=eligible.map(e=>e.id);
+  nextSlotEvent(state);persist();render(true);
 }
 function faceDialogue(){
   const con=$("conversation"),event=["slotEvent","event"].includes(state.phase)&&tab==="plan"?pendingEvent():null;
@@ -127,7 +128,7 @@ function faceDialogue(){
   con.hidden=false;
   if(event){
     const buttons=event.choices.map((c,i)=>btn(c.label+(c.when&&!c.when(state)?' · '+c.hint:""),"choose:"+i,Boolean(c.when&&!c.when(state)),"vn-choice")).join("");
-    con.innerHTML=termDialogue(event,buttons)||staged(castName(event),"",storyLine(event),buttons,"",event.slot?choreography[event.slot][0]:event.id.startsWith("season-")&&event.speaker==="엘리자베스"?"garden":"ballroom");
+    con.innerHTML=termDialogue(event,buttons)||staged(castName(event),"",storyLine(event),buttons,"",event.examSubjects?choreography[state.sequence.activity||state.plan[state.sequence.index]][0]:event.slot?choreography[event.slot][0]:event.id.startsWith("season-")&&event.speaker==="엘리자베스"?"garden":"ballroom");
     const cue=termCue(event);
     playNovelCue(con,cue?"event:"+event.id+":"+(state.termPage||0):null,cue);
     return true;
@@ -213,7 +214,7 @@ function speak(id){
   }
   const after=snapStats(state);
   const effects=Object.keys(after).filter(k=>before[k]!==after[k])
-    .map(k=>k+" "+signed(after[k]-before[k])).join(" · ")||"수치 변동 없음";
+    .map(k=>statLabel(k)+" "+signed(after[k]-before[k])).join(" · ")||"수치 변동 없음";
   const [title,usual]=lines[id];
   let line=usual;
   if(id==="tea"&&state.flags.teaBlend)line="“설탕은 하나. 그래, 오늘도 그걸로.” 시엘이 서류에서 눈을 떼지 않고 잔을 받는다.";

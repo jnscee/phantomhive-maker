@@ -100,7 +100,7 @@ run('placeEmployee("soma","off")');assert.equal(run('forecast().demand'),demandW
 run('placeEmployee("soma","salon");state.london.skill={soma:9,agni:9};state.hp=99;state.phase="scene"');
 run('placeEmployee("agni","post");settleLondon(state);settleLondon(state);state=normalizeSave(state)');
 assertOk('state.london.book.length===1 && state.london.jobs.agni==="kitchen" && state.london.skill.agni===10 && state.hp===100 && state.renown===1');
-assertOk('londonPlan(state).power.salon===4 && state.london.book[0].summary.includes("건강 +1")');
+assertOk('londonPlan(state).power.salon===4 && state.london.book[0].summary.includes("컨디션 +1")');
 run('state.month=2;state.phase="plan";placeEmployee("agni","post");state.stats.통찰=499;settleLondon(state)');
 assertOk('state.stats.통찰===500 && state.renown===2 && state.london.book.length===2');
 run('state.month=3;placeEmployee("agni","off");placeEmployee("soma","off");settleLondon(state)');
@@ -237,8 +237,8 @@ ctx.campaignSchedule=[
   ["recovery", "recovery", "developToy", 15, 19],
   ["recovery", "walk", "walk", 13, 15],
   ["rest", "rest", "rest", 14, 19],
-  ["rest", "rest", "rest", 14, 17],
-  ["rest", "rest", "rest", 15, 21],
+  ["dance", "exercise", "language", 14, 17],
+  ["casework", "accounts", "social", 15, 21],
   ["rest", "rest", "rest", 15, 19]
 ];
 ctx.facilityPurchases={3:["expand:store"],5:["expand:design"],7:["upgrade:parlor"],10:["expand:works"],
@@ -320,11 +320,26 @@ for(const [id,cost,account] of [['winterAxles',180,'company'],['carrierPlace',48
 }
 setup('state.month=25;state.fund=3000;for(const key of stats)state.stats[key]=500;state=normalizeSave(state)');
 assertOk('state.fund===3000 && stats.every(key=>state.stats[key]===500)');
-setup('state.month=25;state.stats.지성=375;state.flags["portfolio-0-0"]=true;state.sequence={activity:"rest"}');
-assertOk('!events.find(e=>e.id==="portfolio-0-1").sees(state)');
-run('state.sequence.activity="study"');assertOk('events.find(e=>e.id==="portfolio-0-1").sees(state)');
-run('events.find(e=>e.id==="portfolio-0-1").choices[0].effect()');assert.equal(run('state.stats.지성'),393);
-
+// Each practical, including one already queued in an old notebook, follows the activity actually completed.
+for(const [activity,index] of [["language",0],["dance",1],["letters",2],["accounts",3],["casework",4],["music",5],["exercise",6],["study",null],["rest",null],["walk",null],["recovery",null]]){
+  for(const rank of [0,1]){
+    Object.assign(ctx,{activity,index,rank});
+    setup('state.month=25;state.phase="scene";state.plan=["music","dance","exercise"];state.sequence={activity,index:1};for(const k of stats)state.stats[k]=400;if(rank)for(let i=0;i<7;i++)state.flags["portfolio-"+i+"-0"]=true;finishScene()');
+    const queued=run('[state.pending,...state.sequence.slotQueue].filter(id=>id?.startsWith("portfolio-"))');
+    assert.deepEqual(Array.from(queued),index==null?[]:["portfolio-"+index+"-"+rank],activity);
+  }
+}
+setup('state.phase="slotEvent";state.pending="portfolio-5-0";state.sequence={index:0,activity:"accounts",slotQueue:["portfolio-1-0","portfolio-3-0"]};state=normalizeSave(state)');
+assertOk('state.pending==="portfolio-3-0" && !state.flags["portfolio-5-0"] && !state.sequence.slotQueue.length');
+run('state.sequence.activity="rest";state=normalizeSave(state)');assertOk('state.phase==="review" && !state.pending');
+setup('state.month=25;state.stats.지성=375;events.find(e=>e.id==="portfolio-0-1").choices[0].effect()');
+assert.equal(run('state.stats.지성'),393);
+setup('state.phase="scene";state.plan=["exercise","exercise","exercise"];state.sequence={activity:"recovery",index:0,onSickLeave:true};state.stats.체력=400;finishScene()');
+assertOk('state.phase==="review" && !state.pending');
+setup('state.plan=["exercise","rest","walk"];state.visit="none"');
+assertOk('statusPanel().includes("컨디션") && statusPanel().includes("지구력") && scheduleNote("exercise").includes("컨디션") && scheduleNote("exercise").includes("지구력")');
+run('state.accounts.opening=483;state.fund=410;state.accounts.company=80;state.report={income:240,cost:135,bills:48,expenses:10,operating:10,training:40,debtPayment:0}');
+assertOk('actualBudget().includes("−£73") && actualBudget().includes("£313") && actualBudget().includes("£410") && !actualBudget().includes("내역 외 잔액 변동")');
 // Only the part of a training gain above 485 slows down before the second applied exam.
 setup('state.month=25;state.stats.지성=484');
 assertOk('lessonGain("지성",440,20,25,{})===lessonGain("지성",440,20,25,{lateDispatch:true})');

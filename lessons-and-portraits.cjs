@@ -92,7 +92,8 @@ async function checkRoomCamera(page,activity){
     assert.ok(Math.abs(lesson.art[axis]-box[axis])<2,JSON.stringify({activity,lesson,review,axis}));
   }
   const paintedHeight=Math.max(box.height,box.width/lesson.aspect);
-  assert.ok(Math.abs(lesson.actor.height/paintedHeight-.255)<.01,JSON.stringify({activity,lesson,review}));
+  const actorRatio=activity==="exercise" ? .42 : .255;
+  assert.ok(Math.abs(lesson.actor.height-Math.min(paintedHeight*actorRatio,lesson.crop.width*.82))<2,JSON.stringify({activity,lesson,review}));
   assert.ok(lesson.actor.left>=lesson.crop.left-1&&lesson.actor.right<=lesson.crop.right+1);
 }
 

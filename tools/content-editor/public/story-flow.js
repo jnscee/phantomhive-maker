@@ -197,7 +197,7 @@ function drawStoryFlow(panel,group){
     branch.append(flowCard("choice","추가 선택지 "+(i+1),label||"버튼 문구 입력",jump));
     if(route?.stat){
       const edit=go('select[aria-label="선택 조건"]');
-      branch.append(flowCard("condition","선택 조건",route.stat+" "+(route.min??"…")+" 이상",edit));
+      branch.append(flowCard("condition","선택 조건",(route.stat==="체력"?"지구력":route.stat)+" "+(route.min??"…")+" 이상",edit));
       if(!Number.isInteger(route.min)||route.min<0||route.min>500)check("조건 수치는 0~500 사이의 정수여야 합니다.",edit);
     }
     if(lines?.length)branch.append(dialogue(choicesField,lines,i));

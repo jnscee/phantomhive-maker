@@ -642,7 +642,7 @@ function choicesEditor(parent,field,initial){
             };
           });
         }));
-        const gate=labeled(routing,"선택 조건",select([["","항상 선택 가능"],...["지성","기품","매력","경영","통찰","의지","체력"].map(stat=>[stat,stat])],route.stat??""));
+        const gate=labeled(routing,"선택 조건",select([["","항상 선택 가능"],...field.options.filter(([key])=>key&&!["hp","stress","motivation"].includes(key))],route.stat??""));
         const minimum=labeled(routing,"필요 수치 이상",node("input"));
         minimum.type="number";minimum.min=0;minimum.max=500;minimum.step=1;
         minimum.value=route.min??0;minimum.disabled=!route.stat;

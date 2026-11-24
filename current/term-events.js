@@ -62,11 +62,16 @@ const portfolioRanks=[
   {threshold:120,reward:35,name:"응용 실기"},
   {threshold:375,reward:18,name:"최종 실기"}
 ];
+// A practical belongs to the lesson in its script, even when other activities raise the same stat.
+const practicalSubjects={
+  지성:["language"], 기품:["dance"], 매력:["letters","social","reception"],
+  경영:["accounts","practicum"], 통찰:["casework","developToy"], 의지:["music"], 체력:["exercise"]
+};
 function portfolioEvents(){
   return portfolios.flatMap(([stat,title,scenes],i)=>portfolioRanks.map(({threshold,reward,name},rank)=>({
-    id:"portfolio-"+i+"-"+rank,statExam:true,exam:true,speaker:"세바스찬",title:title+" · "+name,
+    id:"portfolio-"+i+"-"+rank,examSubjects:practicalSubjects[stat],exam:true,speaker:"세바스찬",title:title+" · "+name,
     text:scenes[rank][0],
-    sees:run=>run.stats[stat]>=threshold && (!rank||(run.month>=25&&run.flags["portfolio-"+i+"-0"]&&actions[run.sequence?.activity]?.gains[stat]>0)),
+    sees:run=>run.stats[stat]>=threshold && (!rank||(run.month>=25&&run.flags["portfolio-"+i+"-0"])),
     choices:[
       choice(scenes[rank][1],name+" 통과",()=>changeStat(stat,reward)),
       choice(scenes[rank][2],name+" 보충",()=>{changeStat(stat,Math.ceil(reward*.7));shift("stress",-15);})
@@ -135,5 +140,5 @@ function termDialogue(event,buttons){
   const speaker=novelSpeakerName(who);
   return '<div class="review-room" style="background-image:url(&quot;'+art+'&quot;)"></div>'+cast+
     '<article class="dialogue">'+(speaker?'<small>'+escapeHTML(speaker)+'</small>':"")+'<p>'+escapeHTML(line)+'</p>'+
-    (outcome?.note&&end&&!state.choiceImpact?'<small>'+escapeHTML(outcome.note)+'</small>':'')+'<div class="answers">'+actions+'</div></article>';
+    (outcome?.note&&end&&!state.choiceImpact?'<small>'+escapeHTML(statResultText(outcome.note))+'</small>':'')+'<div class="answers">'+actions+'</div></article>';
 }

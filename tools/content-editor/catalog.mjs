@@ -360,7 +360,7 @@ export function catalog(files, publishedAssets = [], version = "") {
     assignMusic(g,"event",id,value(prop(eventDefaults,id))??fallback,id==="birthday"?"생일 장면별 음악":"");
   }
 
-  const rewardOptions=[["","변화 없음"],...["지성","기품","매력","경영","통찰","의지","체력"].map(stat=>[stat,stat]),["hp","건강"],["stress","스트레스"],["motivation","의욕"]];
+  const rewardOptions=[["","변화 없음"],...["지성","기품","매력","경영","통찰","의지","체력"].map(stat=>[stat,stat==="체력"?"지구력":stat]),["hp","컨디션"],["stress","스트레스"],["motivation","의욕"]];
   function addChoices(g,id){
     const optionNode=prop(registers.authoredOptions[1],id);
     const field={id:"options:"+id,label:"추가 선택지",type:"choices",file:"story.js",options:rewardOptions,

@@ -8,10 +8,10 @@ function dialogueCast(speaker){
   return [left,"시엘"].map((name,index)=>
     sceneStanding(name,index?"right":"left",portraits[name],name==="엘리자베스"?elizabethAge():undefined)).join("");
 }
-function staged(who,title,line,buttons,caption="",room="library",partner=who){
+function staged(who,title,line,buttons,caption="",room="library",partner=who,advance="intro-next"){
   const start='<div class="review-room" style="background-image:url(&quot;'+sceneArt[room]+'&quot;)"></div>'+dialogueCast(partner);
   const speaker=(caption?caption+'　·　':'')+who,heading=title?'<h2>'+title+'</h2>':'';
-  if(!buttons)return start+sceneLine(speaker,line,'<button type="button" class="line-next" aria-label="다음 대사" data-action="intro-next">▼</button>',"",heading);
+  if(!buttons)return start+sceneLine(speaker,line,'<button type="button" class="line-next" aria-label="다음 대사" data-action="'+advance+'">▼</button>',"",heading);
   return start+'<article class="dialogue"><small>'+speaker+'</small>'+heading+'<p>'+line+'</p><div class="answers">'+buttons+'</div></article>';
 }
 const guide=[
@@ -21,7 +21,7 @@ const guide=[
  ["팬텀사","‘관리 · 경영’에서 ‘팬텀 사(社)’를 여십시오. 개발실에서는 상품을, 제작실에서는 수량을, 판매점에서는 값을 정하시면 됩니다. 수업료가 모자라겠다면 이번 생산량을 조금 줄이는 편이 좋겠습니다."],
  ["저택","‘관리 · 경영’의 지도에서 방을 짚으시면 시설과 근무지를 살필 수 있습니다. 개수를 명하시기 전에 비용과 이달의 관리 상태를 보십시오. 간식이 필요하시면 저택 메뉴의 ‘상점’으로 모시겠습니다."],
  ["실행","명하신 대로 준비했습니다. 저택의 ‘실행’이나 일정표의 ‘이달 일정 실행’을 고르시면 상순부터 시작하겠습니다. 매 순의 성과는 제가 보고드리겠습니다. 하순 강평 뒤에는 정해 두신 곳을 방문하고, 돌아오시면 결산을 보고드리겠습니다."],
- ["대화와 상태","저택에서 ‘대화’로 부르시면 제가 듣겠습니다. ‘상태’에서는 도련님의 건강과 능력을 보실 수 있습니다. 피곤하시면 다음 한 순은 비워 둘까요?"],
+ ["대화와 상태","저택에서 ‘대화’로 부르시면 제가 듣겠습니다. ‘상태’에서는 도련님의 컨디션과 능력을 보실 수 있습니다. 피곤하시면 다음 한 순은 비워 둘까요?"],
  ["가문 장부와 수첩","지나간 사건은 아래의 ‘가문 장부’에 적어 두었습니다. ‘저장 · 설정’에서는 저장 칸과 음량을 고르실 수 있습니다. 음악만 잠시 끄시려면 BGM 버튼을, 돌아가시려면 ‘뒤로’를 눌러 주십시오."]
 ];
 function guideMenu(page){
@@ -38,7 +38,7 @@ function instructionBook(){
    ["팬텀사","상품·생산량·판매가 설정","‘관리 · 경영’에서 ‘팬텀 사(社)’를 엽니다. 개발실에서 상품을 개발하고, 제작실에서 생산량을, 판매점에서 판매가를 정합니다. ‘이달 자금 예상’에서 수업료를 포함한 월말 잔액을 확인할 수 있습니다."],
    ["저택","시설 개수와 사용인 배치","‘관리 · 경영’의 저택 지도에서 방을 누르면 개수 효과와 비용을 확인할 수 있습니다. ‘사용인 배치’에서 인물을 고르고 근무할 방을 누릅니다."],
    ["실행","일정 진행과 월말 결산","세 순의 활동과 자유행동을 정한 뒤 ‘이달 일정 실행’을 누릅니다. 저택 메인 화면의 ‘실행’으로도 시작할 수 있습니다. 상순부터 차례로 성과를 확인하고, 하순이 끝나면 선택한 방문지를 거쳐 월말 결산을 봅니다."],
-   ["대화와 상태","화제 선택과 능력 확인","저택 메인 화면의 ‘대화’에서 화제를 고르면 시엘의 반응을 볼 수 있습니다. ‘상태’에서는 건강·스트레스와 각 능력치를 확인할 수 있습니다."],
+   ["대화와 상태","화제 선택과 능력 확인","저택 메인 화면의 ‘대화’에서 화제를 고르면 시엘의 반응을 볼 수 있습니다. ‘상태’에서는 컨디션·스트레스와 각 능력치를 확인할 수 있습니다."],
    ["가문 장부와 수첩","사건 기록과 저장","하단의 ‘가문 장부’에는 지난 사건과 엔딩이 기록됩니다. ‘저장 · 설정’에서 회차를 저장하거나 불러오고 음량을 조절할 수 있습니다. 하단의 BGM 버튼을 누르면 배경음악이 켜지거나 꺼집니다."]
  ];
  return '<details class="notebook-guide"><summary><i class="book-spread" aria-hidden="true"></i><strong>튜토리얼 안내서</strong></summary>'+topics.map(([title,subject,body])=>
@@ -98,10 +98,10 @@ function visitScene(){
  if(seq.visitBefore){
    if(seq.encounterReply){
      const [speaker,line]=seq.encounterReply;
-     return staged(speaker,"",line,btn(seq.index===0?"상순으로":seq.contest?"하순 경연으로":"월말 결산으로","visit-finish"),"방문 기록",room,seq.encounterPartner);
+     return staged(speaker,"",line,btn(seq.index===0?"상순으로":seq.contest?"하순 경연으로":"월말 결산으로","visit-finish"),"",room,seq.encounterPartner);
    }
    return staged(seq.visitReply?seq.replySpeaker:visitName(visitPerson(id)),"",seq.visitReply || "방문을 마치고 마차로 돌아왔다.",
-     btn(seq.index===0?"상순으로":seq.contest?"하순 경연으로":"월말 결산으로","visit-finish"),visits[id]+" · 자유행동 결과",room);
+     btn(seq.index===0?"상순으로":seq.contest?"하순 경연으로":"월말 결산으로","visit-finish"),"",room);
  }
  const person=visitPerson(id);
  const memory=visitMemory(id,person);

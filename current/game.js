@@ -85,7 +85,7 @@ function scheduleNote(id){
   const effects=Object.entries(a.gains).map(([k,v])=>[k,lessonGain(k,state.stats[k],v+(advancedCourse(state,id)?3:0),state.month)]);
   if(a.health)effects.push(["건강",a.health]);
   effects.push(["스트레스",a.stress]);
-  const markers=effects.map(([name,delta])=>'<span class="plan-effect">'+escapeHTML(name)+' <b class="'+deltaTone(name,delta)+'">'+signed(delta)+'</b></span>');
+  const markers=effects.map(([name,delta])=>'<span class="plan-effect">'+escapeHTML(statLabel(name))+' <b class="'+deltaTone(name,delta)+'">'+signed(delta)+'</b></span>');
   const basis=a.stress>0?'<small class="plan-basis">그럭저럭 기준</small> ':'';
   return basis+'<span class="plan-effects">'+markers.join(" ")+'</span>';
 }
@@ -243,7 +243,7 @@ function settleMonth(){
   if(trade?.order)state.log.push(productBuyers[trade.order.id]+" 납품 "+trade.shipped+"/"+trade.order.qty+"개 · "+money(trade.wholesale)+(trade.short?" · 미납 부담금 "+money(trade.penalty):""));
   if(state.flags.market&&state.marketMonth!==state.month){state.flags.market=false;state.renown+=1;}
   scheduleSnakeVisit(state);
-  const candidates=events.filter(e=>!e.authored&&!e.slot&&!e.statExam&&!e.season&&!e.household&&!e.visitOnly&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
+  const candidates=events.filter(e=>!e.authored&&!e.slot&&!e.examSubjects&&!e.season&&!e.household&&!e.visitOnly&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
   const event=state.duration===35?(candidates.find(e=>birthdayDialogue[e.id]&&[12,24].includes(state.month))||candidates.find(e=>e.chapter)||candidates[0]):candidates.find(e=>!e.chapter);
   const seasonal=state.duration===35?events.find(e=>e.season&&e.sees(state)&&!state.flags[e.id]):null;
   const queue=[contest&&"contest-"+contest.id,event?.id,seasonal?.id].filter(Boolean);
@@ -325,7 +325,7 @@ function impactMarkup(impact){
     const low=Math.max(0,Math.min(before,value))/limit*100;
     const high=Math.max(0,Math.max(before,value))/limit*100;
     const unit=cash?"£":"";
-    return '<li class="'+deltaTone(name,delta)+'"><span>'+escapeHTML(name)+'</span><small>'+unit+before+' → '+unit+value+'</small><strong>'+signed(delta)+'</strong><i class="impact-track" aria-hidden="true" style="--low:'+low+'%;--high:'+high+'%"></i></li>';
+    return '<li class="'+deltaTone(name,delta)+'"><span>'+escapeHTML(statLabel(name))+'</span><small>'+unit+before+' → '+unit+value+'</small><strong>'+signed(delta)+'</strong><i class="impact-track" aria-hidden="true" style="--low:'+low+'%;--high:'+high+'%"></i></li>';
   }).join("");
   const blocks='<ul>'+lines+'</ul>'+[...notes].map(n=>'<p>'+escapeHTML(n)+'</p>').join("")+(!lines&&!notes.size?'<p>능력치 변화 없음</p>':'');
   return '<article id="impact-summary" class="dialogue" aria-label="선택 결과"><header>선택 결과</header><div class="impact-scroll">'+blocks+'</div>'+btn("확인","impact-close",false,"primary")+'</article>';
@@ -347,7 +347,7 @@ function choose(index){
   if(examBefore){
     const after=snapStats(state);
     const changes=Object.keys(after).filter(k=>examBefore[k]!==after[k])
-      .map(k=>k+" "+signed(after[k]-examBefore[k]));
+      .map(k=>statLabel(k)+" "+signed(after[k]-examBefore[k]));
     examNote=choice.result+" · "+(changes.join(" / ")||"이미 상한에 도달했습니다.");
     if(state.sequence)state.sequence.examNote=examNote;
   }
@@ -375,8 +375,7 @@ function finishEventChoice(event){
     delete state.recruitReturn;state.phase="plan";tab="home";persist();render(true);return;
   }
   if(state.phase==="slotEvent"){
-    const next=state.sequence.slotQueue?.shift();
-    if(next){state.pending=next;persist();render(true);}else openReview();
+    nextSlotEvent(state);persist();render(true);
     return;
   }
   state.pending=state.eventQueue?.shift()||null;
@@ -483,10 +482,10 @@ function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),
     const secondary=name!==primary;
     const gain=grade==="poor"&&secondary?-1:lessonGain(name,before,(value+(advancedCourse(run,id)?3:0)+(room?(run.level[room]-1)*4:0))*(grade?lessonGrades[grade].factor:1)*(run.neglect>=2?.85:1),run.month,run.flags);
     run.stats[name]=cap(before+gain,statMax(name));
-    return name+" "+signed(run.stats[name]-before);
+    return statLabel(name)+" "+signed(run.stats[name]-before);
   });
   changes.push("스트레스 "+signed(run.stress-stress));
-  if(run.hp!==hp)changes.push("건강 "+signed(run.hp-hp));
+  if(run.hp!==hp)changes.push("컨디션 "+signed(run.hp-hp));
   updateIllness(run);
   return changes;
 }
@@ -691,7 +690,7 @@ function epilogue(){
   const allies=peopleInHouse().filter(k=>state.people[k].toward>=5).map(k=>servants[k].name);
   const top=Object.keys(state.stats).sort((a,b)=>state.stats[b]/statMax(b)-state.stats[a]/statMax(a))[0];
   const route=state.ending==="vowNoTitle"?(londonCareer(state)==="merchant"?"런던의 사업가로 자리 잡았습니다. ":londonCareer(state)==="broker"?"정보상의 연락망을 얻었습니다. ":"마차를 타고 옛 흔적을 좇습니다. "):"";
-  return route+(allies.length&&!["releaseTitle","releaseNoTitle","ill","broke"].includes(state.ending)?allies.join("·")+"은 다음 겨울에도 도련님의 지시를 따르겠다고 전했습니다. ":"")+"가장 단련된 능력은 "+top+"이었습니다. 팬텀사의 개발품은 "+state.unlocked.length+"종, 저택에 합류한 고용인은 "+peopleInHouse().filter(id=>servants[id].job).length+"명입니다.";
+  return route+(allies.length&&!["releaseTitle","releaseNoTitle","ill","broke"].includes(state.ending)?allies.join("·")+"은 다음 겨울에도 도련님의 지시를 따르겠다고 전했습니다. ":"")+"가장 단련된 능력은 "+statLabel(top)+"이었습니다. 팬텀사의 개발품은 "+state.unlocked.length+"종, 저택에 합류한 고용인은 "+peopleInHouse().filter(id=>servants[id].job).length+"명입니다.";
 }
 function canBuyTownhouse(){return state.phase==="plan" && !state.flags.townhouse && state.fund>=250;}
 function startTownhouseGuests(run){
@@ -818,6 +817,18 @@ function normalizeSave(run){
     const eligible=copy.past.some(e=>e.month<=copy.month&&e.plan?.includes("casework"));
     if(!eligible){copy.pending=copy.eventQueue?.shift()||null;copy.phase=copy.pending?"event":"result";}
   }
+  if(copy.phase==="slotEvent"&&copy.sequence){
+    const seq=copy.sequence,activity=seq.activity||copy.plan[seq.index];
+    const fits=id=>{
+      const event=events.find(e=>e.id===id);
+      return !event?.examSubjects||(!seq.onSickLeave&&!copy.ill&&matchesSlot(event,activity));
+    };
+    if(seq.slotQueue)seq.slotQueue=seq.slotQueue.filter(fits);
+    if(!fits(copy.pending)&&!copy.flags[copy.pending]&&!copy.termOutcome&&!copy.choiceImpact?.next){
+      delete copy.termPage;
+      nextSlotEvent(copy);
+    }
+  }
   // Older releases could queue a staff event before the new prerequisites.
   scheduleSnakeVisit(copy);
   const allowed=id=>{
@@ -894,7 +905,7 @@ function recordPanel(){
       return '<details><summary>'+monthText(record.month||state.month)+' · '+event.title+'</summary><p>'+note+'</p>'+btn('영입 장면 다시 보기','recruit-memory:'+event.id)+'</details>';
     }
     const choice=event.choices[record.index];
-    return '<details><summary>'+(record.month?monthText(record.month)+' · ':'')+escapeHTML(event.title)+'</summary>'+(sourceNote(event)?'<small>'+sourceNote(event)+'</small>':'')+'<p>'+storyLine(event)+'</p><p class="small muted">'+(choice?choice.label+" · "+(record.examNote||choice.result):"처리 완료")+'</p></details>';
+    return '<details><summary>'+(record.month?monthText(record.month)+' · ':'')+escapeHTML(event.title)+'</summary>'+(sourceNote(event)?'<small>'+sourceNote(event)+'</small>':'')+'<p>'+storyLine(event)+'</p><p class="small muted">'+(choice?choice.label+" · "+statResultText(record.examNote||choice.result):"처리 완료")+'</p></details>';
   }).join("");
   const album='<div class="ending-album">'+(Object.keys(endingScenes).filter(hasEndingRecord).map(endingThumb).join("")||"아직 기록된 엔딩이 없습니다.")+'</div>';
   return frame("가문 장부",familyFolio(courtRows(),history,album));
@@ -935,7 +946,7 @@ function statusPanel(){
   const predicted=state.phase==="plan"?projectTraining():state.report?.before;
   const current=[state.hp,state.stress,state.motivation];
   const properties=["hp","stress","motivation"];
-  const conditions=["건강","스트레스","의욕"];
+  const conditions=["컨디션","스트레스","의욕"];
   const styles=["health","stress","drive"];
   const meters=current.map((value,i)=>{
     const forecast=predicted?.[properties[i]];
@@ -948,14 +959,14 @@ function statusPanel(){
     '</div><div class="hud-group"><div class="attributes"><div class="attribute attr-label muted"><span>능력치</span><b>현재</b><em>변동</em></div>'+
     stats.map(name=>{
       const delta=predicted?.stats?(state.phase==="plan"?predicted.stats[name]-state.stats[name]:state.stats[name]-predicted.stats[name]):0;
-      return '<div class="attribute"><span>'+name+'</span><span class="gauge"><i style="width:'+(state.stats[name]/statMax(name)*100)+'%"></i></span><b>'+state.stats[name]+'</b><em>'+(delta?signed(delta):"–")+'</em></div>';
+      return '<div class="attribute"><span>'+statLabel(name)+'</span><span class="gauge"><i style="width:'+(state.stats[name]/statMax(name)*100)+'%"></i></span><b>'+state.stats[name]+'</b><em>'+(delta?signed(delta):"–")+'</em></div>';
     }).join("")+'</div></div>');
 }
 const businessArt={"estate": "assets/map-estate.png", "design2": "assets/map-design2.png", "library2": "assets/map-library2.png", "parlor2": "assets/map-parlor2.png", "designer": "assets/map-designer.png", "cart-candy": "assets/map-cart-candy.png", "kitchen3": "assets/map-kitchen3.png", "store2": "assets/map-store2.png", "maker": "assets/map-maker.png", "cart-sweets": "assets/map-cart-sweets.png", "cart-hamper": "assets/map-cart-hamper.png", "parlor3": "assets/map-parlor3.png", "cart-toys": "assets/map-cart-toys.png", "clerk": "assets/map-clerk.png", "works2": "assets/map-works2.png", "store3": "assets/map-store3.png", "kitchen2": "assets/map-kitchen2.png", "library3": "assets/map-library3.png", "cart-plush": "assets/map-cart-plush.png", "design3": "assets/map-design3.png", "works3": "assets/map-works3.png", "company": "assets/map-company.png", "steward": "assets/map-steward.png", "cart-game": "assets/map-cart-game.png"};
 const departments = {
-  design:{name:"개발실",cost:65,benefit:"단계마다 도안 수익 +£1 · 개발비 할인 · 월 운영비 Lv.2 £5 / Lv.3 £16"},
-  works:{name:"제작실",cost:75,benefit:"단계마다 개당 원가 최대 £1 절감 · 월 운영비 Lv.2 £5 / Lv.3 £16"},
-  store:{name:"판매점",cost:80,benefit:"단계마다 수요 +2개 · 판매품당 포장 수익 +£1 · 월 운영비 Lv.2 £5 / Lv.3 £16"}
+  design:{name:"개발실",cost:65,benefit:"단계마다 도안 수익 +£1 · 개발비 할인"},
+  works:{name:"제작실",cost:75,benefit:"단계마다 개당 원가 최대 £1 절감"},
+  store:{name:"판매점",cost:80,benefit:"단계마다 수요 +2개 · 판매품당 포장 수익 +£1"}
 };
 const mapPositions = {
   library:[51,30], parlor:[72,69], kitchen:[22,68],
@@ -1012,7 +1023,7 @@ function roomDetail(){
     '<dl class="facility-data"><dt>시설 효과</dt><dd>'+room.desc+'</dd><dt>월 유지비</dt><dd>'+money(auxiliary?(level-1)*2:level*4)+(level<3?' → '+money(auxiliary?level*2:(level+1)*4):'')+'</dd></dl>'+
     btn(level===3?"개수 완료":"시설 개수 · "+money(room.cost*level),(auxiliary?"annex:":"upgrade:")+id,!active||level===3||state.fund<room.cost*level,"work-order")+
     '<h4>저택 지원</h4><div class="work-actions">'+btn("왕진 · £55","doctor",!active||state.fund<55||state.flags["doctor"+state.month])+
-    btn("대출 · £144","loan",!active||state.usedLoan)+'</div><small>왕진 시 건강 +24 · 대출은 월 £24씩 상환</small>';
+    btn("대출 · £144","loan",!active||state.usedLoan)+'</div><small>왕진 시 컨디션 +24 · 대출은 월 £24씩 상환</small>';
 }
 function inventoryRows(){
   return state.unlocked.map(id=>{
@@ -1051,25 +1062,29 @@ function companyDetail(){
       '<h4>상품 장부</h4>'+inventoryRows()+orderDesk();
   }
   return '<div class="work-title"><h3>'+room.name+'</h3><b>Lv. '+level+' / 3</b></div>'+controls+
-    '<section class="expansion-quote"><h4>사업 확장</h4><p>'+room.benefit+'</p><div id="investment-quote">'+expansionQuote(id)+'</div></section>'+btn(level===3?"최대 규모":"증설 · "+money(room.cost*level),"expand:"+id,!active||level===3||state.fund<room.cost*level,"work-order")+(level>1?btn("설비 매각 · "+money(Math.floor(room.cost*(level-1)*.5)),"liquidate:"+id,!active):"");
+    '<section class="expansion-quote"><h4>사업 확장</h4><p class="facility-benefit"><b>'+room.benefit+'</b><small>월 운영비　Lv.2 £5 · Lv.3 £16</small></p><div id="investment-quote">'+expansionQuote(id)+'</div></section><div class="facility-actions">'+btn(level===3?"최대 규모":"증설 · "+money(room.cost*level),"expand:"+id,!active||level===3||state.fund<room.cost*level,"work-order")+(level>1?btn("설비 매각 · "+money(Math.floor(room.cost*(level-1)*.5)),"liquidate:"+id,!active):"")+"</div>";
 }
 function expansionQuote(id){
   const level=state.shop[id], next=Math.min(3,level+1);
   const now=forecast(), after=forecast({...state.shop,[id]:next});
-  function compare(label,a,b){
-    return '<div class="quote-row"><span>'+label+'</span><b>'+a+(next>level?' → '+b:'')+'</b></div>';
+  function compare(label,before,after,format,lowerIsBetter=false){
+    const change=after-before;
+    const tone=change===0?"":(lowerIsBetter?change<0:change>0)?"gain":"loss";
+    const result=next>level?' → <strong class="'+tone+'">'+format(after)+'</strong>':'';
+    return '<div class="quote-row"><span>'+label+'</span><b>'+format(before)+result+'</b></div>';
   }
+  const units=n=>n+"개",percent=n=>n+"%";
   let rows="";
-  if(id==="works")rows+=compare("개당 생산 원가",money(now.unit),money(after.unit));
-  if(id==="store")rows+=compare("구매 수요",now.demand+"개",after.demand+"개")+compare("현재 물량으로 판매",now.sold+"개",after.sold+"개");
-  if(id==="design")rows+=compare("개당 도안 웃돈",money((level-1)),money((next-1)))+compare("신상품 개발비 할인",researchDiscount[level]+"%",researchDiscount[next]+"%");
+  if(id==="works")rows+=compare("개당 생산 원가",now.unit,after.unit,money,true);
+  if(id==="store")rows+=compare("구매 수요",now.demand,after.demand,units)+compare("현재 물량으로 판매",now.sold,after.sold,units);
+  if(id==="design")rows+=compare("개당 도안 웃돈",level-1,next-1,money)+compare("신상품 개발비 할인",researchDiscount[level],researchDiscount[next],percent);
   if(state.phase!=="plan")return rows;
-  rows+=compare("이달 영업이익",money(now.margin),money(after.margin));
+  rows+=compare("이달 영업이익",now.margin,after.margin,money);
   if(next===level)return rows;
   const gain=after.margin-now.margin, cost=departments[id].cost*level;
   let detail=gain<0?'현재 물량에서는 증설 뒤 비용이 더 큽니다.':gain>0?'같은 물량·가격·수요라면 '+Math.ceil(cost/gain)+'개월에 증설비 회수':id==="store"?"팔 수 있는 물량이 부족해 이달 추가 매출은 £0입니다.":"현재 생산·판매 조건에서는 이달 추가 이익이 없습니다.";
   if(id==="design")detail+=' · 개발비 할인 별도';
-  rows+='<p class="quote-summary">증설비 '+money(cost)+' · 이달 영업이익 변화 '+money(gain)+'</p><small>'+detail+'</small>';
+  rows+='<p class="quote-summary">증설비 '+money(cost)+' · 이달 영업이익 <strong class="'+(gain>0?"gain":gain<0?"loss":"")+'">'+(gain>0?"+":gain<0?"−":"")+money(Math.abs(gain))+'</strong></p><small>'+detail+'</small>';
   const neededAfter=cashNeeded()+(after.unit-now.unit)*state.qty;
   if(state.fund>=cost&&state.fund-cost<neededAfter)rows+='<p class="danger">증설하면 이번 달 준비비가 '+money(neededAfter-(state.fund-cost))+' 부족합니다.</p>';
   return rows;
@@ -1123,14 +1138,14 @@ function managementPanel(){
 
 const marketGoods={
   cocoa:{name:"핫초콜릿",cost:22,stat:"motivation",amount:12,label:"의욕",line:"카카오를 진하게 풀었어. 숟가락을 세워 볼 생각이라면 조금 더 식혀야겠지만."},
-  broth:{name:"따뜻한 콘소메",cost:24,stat:"hp",amount:13,label:"건강",line:"기름은 걷어 냈어. 입맛이 없는 날에는 한 컵만 마셔도 괜찮지."},
+  broth:{name:"따뜻한 콘소메",cost:24,stat:"hp",amount:13,label:"컨디션",line:"기름은 걷어 냈어. 입맛이 없는 날에는 한 컵만 마셔도 괜찮지."},
   lavender:{name:"라벤더 향주머니",cost:20,stat:"stress",amount:-12,label:"스트레스",line:"서랍에 넣어 두면 장부를 펼칠 때마다 향이 날 거야."},
   tart:{name:"체리 타르트",cost:14,stat:"motivation",amount:6,label:"의욕",line:"가장자리가 조금 깨진 건 내가 먹었어. 이건 마차로 가져가도 멀쩡할걸."},
-  ginger:{name:"생강 당과",cost:10,stat:"hp",amount:4,label:"건강",line:"설탕을 두 번 입혔지. 그래도 마지막엔 생강 맛이 남아."},
+  ginger:{name:"생강 당과",cost:10,stat:"hp",amount:4,label:"컨디션",line:"설탕을 두 번 입혔지. 그래도 마지막엔 생강 맛이 남아."},
   biscuit:{name:"버터 비스킷 한 봉",cost:8,stat:"stress",amount:-3,label:"스트레스",line:"깨지기 전에 하나 집어. 봉투는 책갈피로 써도 돼."},
   novel:{name:"주머니판 모험소설",icon:"reading",cost:17,stat:"motivation",amount:8,label:"의욕",line:"책갈피가 붙어 있네. 집사가 부르면 거기까지만 읽으면 되겠지."},
   tea:{name:"홍차 한 잔",cost:12,stat:"stress",amount:-5,label:"스트레스",line:"마침 차가 잘 우러났어. 한 잔 하겠어?"},
-  scone:{name:"버터 스콘",cost:15,stat:"hp",amount:6,label:"건강",line:"스콘은 따뜻할 때 반으로 갈라야 버터가 스며들지."},
+  scone:{name:"버터 스콘",cost:15,stat:"hp",amount:6,label:"컨디션",line:"스콘은 따뜻할 때 반으로 갈라야 버터가 스며들지."},
   birds:{name:"새소리 악보집",cost:44,icon:"music",raise:"매력",lower:"의지",line:"이 곡은 끝까지 밀어붙이면 새가 날아가 버려. 한 소절쯤은 쉬어도 좋아, 백작."},
   puzzles:{name:"상아색 칠교판",cost:44,icon:"study",raise:"의지",lower:"매력",line:"일곱 조각이면 학 한 마리가 돼. 손님이 와도 자리를 뜨기 싫어질걸."},
   samples:{name:"비단 견본장",cost:44,icon:"supplier",raise:"경영",lower:"기품",line:"소매를 걷고 천 끝을 비벼 봐. 장갑 낀 손으로는 올이 풀리는지 모르거든."},
@@ -1146,8 +1161,8 @@ function exchangeQuote(g){
   const limit=state.flags.lateDispatch?exchangeAmount:Math.max(0,masteryThreshold-current)+1;
   const gain=Math.min(exchangeAmount,statMax(g.raise)-current,limit);
   const reason=state.flags.lauExchangeMonth===state.month?"이달의 교본은 이미 사용했습니다.":
-    gain<=0?g.raise+" 수치가 이미 한도에 도달했습니다.":
-    state.stats[g.lower]<exchangeAmount?g.lower+" 수치가 "+exchangeAmount+" 이상 필요합니다.":"";
+    gain<=0?statLabel(g.raise)+" 수치가 이미 한도에 도달했습니다.":
+    state.stats[g.lower]<exchangeAmount?statLabel(g.lower)+" 수치가 "+exchangeAmount+" 이상 필요합니다.":"";
   return {gain,reason};
 }
 function marketPanel(){
@@ -1158,7 +1173,7 @@ function marketPanel(){
   const exchange=g.raise?exchangeQuote(g):null;
   const reason=state.phase!=="plan"?"일정 편성 중에 구매할 수 있습니다.":state.fund<g.cost?"보유금이 부족합니다.":
     exchange?exchange.reason:after===before?g.label+" 수치가 이미 한도에 도달했습니다.":"";
-  const preview=exchange?'<div class="stat-preview"><b>'+g.raise+' '+state.stats[g.raise]+' → '+(state.stats[g.raise]+exchange.gain)+'</b><br>'+g.lower+' '+state.stats[g.lower]+' → '+Math.max(0,state.stats[g.lower]-exchangeAmount)+'<br><small>교본 전체 중 매월 1개 · 즉시 사용</small></div>':
+  const preview=exchange?'<div class="stat-preview"><b>'+statLabel(g.raise)+' '+state.stats[g.raise]+' → '+(state.stats[g.raise]+exchange.gain)+'</b><br>'+statLabel(g.lower)+' '+state.stats[g.lower]+' → '+Math.max(0,state.stats[g.lower]-exchangeAmount)+'<br><small>교본 전체 중 매월 1개 · 즉시 사용</small></div>':
     '<div class="stat-preview"><div class="stat-values"><span>'+g.label+'</span><b>'+before+' → '+after+'</b><strong>'+signed(after-before)+'</strong></div>'+
     '<div class="stat-track" aria-hidden="true"><i style="width:'+Math.min(before,after)+'%"></i><i class="stat-change" style="width:'+Math.abs(after-before)+'%"></i></div></div>';
   return '<div class="lau-counter">'+framedStanding("라우","assets/npc-lau.webp","lau-standing")+
@@ -1783,7 +1798,7 @@ function handleAction(key,rect,confirmed=false){
         state.stats[g.raise]+=quote.gain;
         state.stats[g.lower]-=exchangeAmount;
         state.flags.lauExchangeMonth=state.month;
-        message=g.name+" · "+g.raise+" "+signed(quote.gain)+" / "+g.lower+" −"+exchangeAmount;
+        message=g.name+" · "+statLabel(g.raise)+" "+signed(quote.gain)+" / "+statLabel(g.lower)+" −"+exchangeAmount;
       }else{
         const after=cap(state[g.stat]+g.amount);
         if(after===state[g.stat])return;
@@ -1814,7 +1829,7 @@ function handleAction(key,rect,confirmed=false){
       if(state.fund<55||state.flags[marker])return;
       const before=state.hp;
       flagEvent(marker,()=>{state.fund-=55;state.hp=cap(state.hp+24);});
-      message="왕진 완료 · 건강 +"+(state.hp-before);
+      message="왕진 완료 · 컨디션 +"+(state.hp-before);
     }else if(action==="loan"){
       if(state.usedLoan)return;
       state.usedLoan=true;state.debt=144;state.fund+=144;

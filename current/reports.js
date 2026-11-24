@@ -44,7 +44,7 @@ function budgetTable(compact=false){
     (compact?'<details class="expense-details"><summary>지출 내역·시설 효과</summary>':'')+'<div class="cash-detail">'+amountRow("저택 운영 · 시설 유지",b.estate)+amountRow("팬텀사 운영 · 생산비",b.company)+
     tradeCosts(b.trade)+amountRow("교육·활동비",b.tuition)+
     (b.debt?amountRow("채무 상환",b.debt):"")+'</div>'+
-    (state.accounts.estate||state.accounts.company?'<p>가용 자금에 이미 반영된 지출 · 저택 '+money(state.accounts.estate)+' / 팬텀사 '+money(state.accounts.company)+'</p>':'')+contributionNote(investmentEffect(forecast()),state.accounts.researchSaved)+(compact?'</details>':'')+'</section>';
+    contributionNote(investmentEffect(forecast()),state.accounts.researchSaved)+(compact?'</details>':'')+'</section>';
 }
 function contributionNote(investment,research){
   if(!(investment?.total||research))return "";
@@ -61,33 +61,54 @@ function contributionNote(investment,research){
     return '<div><dt>'+label+'</dt><dd class="'+tone+'">'+(value>0?"+":"−")+money(Math.abs(value))+'</dd></div>';
   }).join("");
   return '<aside class="investment-result"><b>기본 시설 대비 '+money((investment?.total||0)+(research||0))+'</b>'+
-    (rows?'<dl>'+rows+'</dl>':'')+'<small>같은 달·가격·물량에서의 차이로, 위 수입과 지출에 반영되어 있습니다.</small></aside>';
+    (rows?'<dl>'+rows+'</dl>':'')+'</aside>';
 }
 function actualBudget(){
   const r=state.report,a=state.accounts;
   if(!r)return "";
-  const legacy=r.debtPayment==null;
-  const expenses=a.estate+a.company+r.training+r.cost+r.bills+(r.expenses||0);
-  return '<section class="budget-book"><h3>가문 회계</h3>'+
-    amountRow(a.partial?"기록 시작 잔액":"월초 잔액",a.opening)+
-    amountRow("팬텀사 소매 매출",r.income-(r.wholesale||0))+(r.wholesale?amountRow("거래처 납품 대금",r.wholesale):"")+(a.divest?amountRow("설비 매각 대금",a.divest):"")+(r.advance?amountRow("납품 선금",r.advance):"")+
-    (r.festivalIncome?amountRow("경연 상금",r.festivalIncome):"")+
-    (a.borrowed?amountRow("대출 입금",a.borrowed):"")+
-    amountRow(legacy?"저택 유지·채무 합산":"저택 운영",r.bills-(r.debtPayment||0)+a.estate)+
-    (a.estate?'<p>유지 '+money(r.bills-(r.debtPayment||0))+' · 개수·지원 등 '+money(a.estate)+'</p>':'')+
-    amountRow("팬텀사 운영",r.cost+a.company+(r.expenses||0))+(r.expenses?'<p>설비 운영 '+money(r.operating)+(r.freight?' · 운송 '+money(r.freight):'')+' · 보관 '+money(r.storage)+' · 미납 부담 '+money(r.penalty)+'</p>':"")+
-    (a.company?'<p>생산 '+money(r.cost)+' · 투자·사업 지출 '+money(a.company)+'</p>':'')+
-    amountRow("교육·활동비",r.training)+(r.debtPayment?amountRow("채무 상환",r.debtPayment):"")+
-    amountRow("지출 합계",expenses,"subtotal")+amountRow("월말 잔액",state.fund,"balance")+
-    '<p>기간 중 자금 변동　'+signed(state.fund-a.opening)+' £</p>'+
-    contributionNote(r.investment,a.researchSaved)+(a.partial?'<p>이전 저장본은 복원 가능한 시점부터 집계합니다.</p>':'')+'</section>';
+  const incomeRows=[
+    ["팬텀사 소매 매출",r.income-(r.wholesale||0)],["거래처 납품 대금",r.wholesale],
+    ["설비 매각 대금",a.divest],["납품 선금",r.advance],["경연 상금",r.festivalIncome],["대출 입금",a.borrowed]
+  ];
+  const debt=r.debtPayment||0;
+  const expenseRows=[
+    [r.debtPayment==null?"저택 유지·채무 합산":"저택 유지",r.bills-debt],["저택 개수·지원",a.estate],
+    ["생산비",r.cost],["투자·사업 지출",a.company],["설비 운영",r.operating],["운송",r.freight],
+    ["보관",r.storage],["미납 부담",r.penalty],["교육·활동비",r.training],["채무 상환",debt]
+  ];
+  const otherFees=(r.expenses||0)-(r.operating||0)-(r.freight||0)-(r.storage||0)-(r.penalty||0);
+  if(otherFees)expenseRows.push(["기타 운영비",otherFees]);
+  const total=rows=>rows.reduce((sum,[,amount])=>sum+(amount||0),0);
+  const income=total(incomeRows),expense=total(expenseRows),change=state.fund-a.opening;
+  const limit=Math.max(1,income,expense);
+  function flow(title,amount,kind){
+    return '<div class="ledger-flow '+kind+'"><span>'+title+'</span><strong>'+money(amount)+'</strong>'+
+      '<i aria-hidden="true"><i style="width:'+100*amount/limit+'%"></i></i></div>';
+  }
+  function ledgerRows(label,items){
+    const rows=items.filter(([,amount])=>amount);
+    return rows.length?'<h4>'+label+'</h4><dl>'+rows.map(([name,amount])=>'<div><dt>'+name+'</dt><dd>'+money(amount)+'</dd></div>').join("")+'</dl>':"";
+  }
+  const signedMoney=n=>(n>0?"+":n<0?"−":"")+money(Math.abs(n));
+  const other=change-(income-expense);
+  const effect=contributionNote(r.investment,a.researchSaved);
+  return '<section class="budget-book settlement-ledger"><h3>가문 회계</h3>'+
+    '<div class="ledger-close"><span>월말 잔액</span><strong>'+money(state.fund)+'</strong></div>'+
+    '<div class="ledger-opening"><span>'+(a.partial?"기록 시작 잔액":"월초 잔액")+' '+money(a.opening)+'</span>'+
+    '<b class="'+(change>0?'gain':change<0?'loss':'flat')+'">'+signedMoney(change)+'</b></div>'+
+    '<div class="ledger-flows">'+flow("입금",income,"income")+flow("지출",expense,"expense")+'</div>'+
+    (other?'<div class="ledger-other"><span>내역 외 잔액 변동</span><b>'+signedMoney(other)+'</b></div>':'')+
+    '<details class="ledger-fold"><summary>입출금 내역</summary>'+ledgerRows("입금",incomeRows)+ledgerRows("지출",expenseRows)+
+    (!income&&!expense?'<p>이번 달 입출금이 없습니다.</p>':'')+'</details>'+
+    (effect?'<details class="ledger-fold"><summary>시설 효과 <b>'+signedMoney((r.investment?.total||0)+(a.researchSaved||0))+'</b></summary>'+effect+'</details>':'')+
+    (a.partial?'<p>기록 시작 시점부터 집계했습니다.</p>':'')+'</section>';
 }
 function deltaRow(key,before,after){
   const scale=statMax(key);
   const change=after-before, direction=change>0?"▲":change<0?"▼":"—";
   const tone=change===0?"flat":(key==="스트레스"?change<0:change>0)?"gain":"loss";
-  return '<div class="delta-row '+tone+'" aria-label="'+key+' '+before+'에서 '+after+'로, 변화 '+signed(change)+'">'+
-    '<span>'+key+'</span><small>'+before+'</small><b>'+after+'</b>'+
+  return '<div class="delta-row '+tone+'" aria-label="'+statLabel(key)+' '+before+'에서 '+after+'로, 변화 '+signed(change)+'">'+
+    '<span>'+statLabel(key)+'</span><small>'+before+'</small><b>'+after+'</b>'+
     '<i class="delta-meter" aria-hidden="true" style="--from:'+before/scale*100+'%;--to:'+after/scale*100+'%"><i></i><b></b></i>'+
     '<strong>'+direction+' '+(change===0?'0':signed(change))+'</strong></div>';
 }
@@ -98,13 +119,13 @@ function logEffect(text){
     return cash[1]+' <strong class="log-'+tone+'">'+cash[2]+'</strong>';
   }
   const match=/^(.*?) ([+−-]?\d+|상승|하락)$/.exec(text);
-  if(!match)return escapeHTML(text);
+  if(!match)return escapeHTML(statResultText(text));
   const [,label,value]=match;
-  if(![...stats,"건강","의욕","스트레스","가문 명성"].includes(label))return escapeHTML(text);
+  if(![...stats,"지구력","컨디션","건강","의욕","스트레스","가문 명성"].includes(label))return escapeHTML(statResultText(text));
   const change=value==="상승"?1:value==="하락"?-1:Number(value.replace("−","-"));
   const benefit=label==="스트레스"?-change:change;
-  if(!benefit)return escapeHTML(text);
-  return '<span class="log-'+(benefit>0?"gain":"loss")+'">'+escapeHTML(text)+'</span>';
+  if(!benefit)return escapeHTML(statResultText(text));
+  return '<span class="log-'+(benefit>0?"gain":"loss")+'">'+escapeHTML(statResultText(text))+'</span>';
 }
 function monthlyTimeline(entries){
   const items=entries.map(entry=>String(entry).split(' · ').filter(part=>!/^타나카 (?:협력 상승|신뢰 [+-]\d+)$/.test(part)).join(' · ')).filter(Boolean).map(entry=>{
@@ -121,17 +142,17 @@ function monthlyResults(){
   const group=(title,keys)=>'<h4>'+title+'</h4>'+keys.map(k=>deltaRow(k,before[k],after[k])).join('');
   const healthWarning=state.hp<18
     ?(state.unwell?"시엘은 아직 병상에서 일어나지 못하고 있습니다.":"시엘이 위독합니다. 곁에서 돌볼 사람이 필요합니다.")
-    :relapseNotice(state)||(state.hp<31?"건강이 낮습니다. 다음 달에는 휴식이나 왕진을 고려하세요.":"");
+    :relapseNotice(state)||(state.hp<31?"컨디션이 좋지 않습니다. 다음 달에는 휴식이나 왕진을 고려하세요.":"");
   const financeWarning=state.fund<0
     ?(state.arrears?"두 달 연속 월말 잔액이 음수입니다. 파산을 피할 수 없습니다.":"월말 잔액이 음수입니다. 다음 월말에도 음수면 파산합니다.")
     :(state.fund<60?"다음 달 교육비와 생산비를 확인하세요.":"");
   const warnings=[healthWarning,financeWarning].filter(Boolean).map(note=>'<p class="danger">'+note+'</p>').join("");
   const best=stats.slice().sort((a,b)=>(after[b]-before[b])/statMax(b)-(after[a]-before[a])/statMax(a))[0];
   const growth=after[best]-before[best];
-  const words=(growth>0?"이번 달에는 "+best+"에서 가장 진전이 컸습니다. "+before[best]+"에서 "+after[best]+"까지 올리셨군요. ":"이번 달 능력에는 큰 변동이 없었습니다. ")+(state.report?"팬텀사에서는 "+state.report.sold+"개를 판매했습니다. ":"")+"도련님께서 다음 달에 쓰실 수 있는 돈은 "+money(state.fund)+"입니다.";
+  const words=(growth>0?"이번 달에는 "+statLabel(best)+"에서 가장 진전이 컸습니다. "+before[best]+"에서 "+after[best]+"까지 올리셨군요. ":"이번 달 능력에는 큰 변동이 없었습니다. ")+(state.report?"팬텀사에서는 "+state.report.sold+"개를 판매했습니다. ":"")+"도련님께서 다음 달에 쓰실 수 있는 돈은 "+money(state.fund)+"입니다.";
   return '<div class="month-report"><div class="butler-account"><img src="assets/sebastian.webp" alt="세바스찬"><p><b>세바스찬의 월말 보고</b><br>'+words+'</p></div>'+warnings+'<div class="report-date">'+monthText(state.month)+' 결산</div><div class="report-columns">'+
     '<section class="stat-folio"><h3>시엘의 성장 기록</h3><div class="delta-head"><span>항목</span><span>이전</span><span>현재</span><span>변화 그래프</span><span>증감</span></div>'+
-    group("능력 · 500점",stats)+group("컨디션 · 100점",["건강","스트레스","의욕"])+'</section>'+actualBudget()+'</div>'+thisMonthFairReport()+sampleReview()+
+    group("능력 · 500점",stats)+group("현재 상태 · 100점",["건강","스트레스","의욕"])+'</section>'+actualBudget()+'</div>'+thisMonthFairReport()+sampleReview()+
     '<details class="month-log"><summary>이달 일정·사건 기록</summary>'+monthlyTimeline(state.log)+'</details>'+
     '<div class="report-end">'+btn(state.month===state.duration?"작위 심의 확인":"다음 달로","advance",Boolean(sampleReview()),"primary")+'</div></div>';
 }
@@ -160,11 +181,12 @@ const reviewLines={
   recovery:"오늘 들어온 서류는 서재에 두었습니다. 차는 침실로 올리지요.",
   outing:"길 건너 완구점에서 한참을 머무셨군요. 다음 외출 때도 들르시겠습니까?"
 };
-function openReview(){
-  if(finnyMissing(state)&&!state.sequence.onSickLeave&&(state.sequence.activity||state.plan[state.sequence.index])==="casework"){
-    state.pending="gardener";state.phase="slotEvent";
-  }else state.phase="review";
-  persist();render(true);
+function nextSlotEvent(run){
+  const seq=run.sequence;
+  run.pending=seq.slotQueue?.shift()||null;
+  if(!run.pending&&finnyMissing(run)&&!seq.onSickLeave&&(seq.activity||run.plan[seq.index])==="casework")
+    run.pending="gardener";
+  run.phase=run.pending?"slotEvent":"review";
 }
 // On a successful lesson the same achievement draws a different response as Ciel grows.
 const butlerLessonPraise={
@@ -185,14 +207,14 @@ function reviewMarkup(){
   if(!changed.length&&!seq.grade)line="오늘 기록은 지난 순과 같군요. 다음에는 다른 과목을 편성해 보시겠습니까, 도련님?";
   if(seq.onSickLeave)line=state.ill?"체온계를 여기 두겠습니다. 오늘 남은 일은 제가 물리겠습니다.":"열이 내렸습니다. 다음 일정은 아침 식사 뒤에 시작하지요.";
   else if(state.ill)line="오늘 수업은 여기까지입니다. 다음 선생님께는 제가 편지를 보내지요.";
-  const note=lead?lead+' '+seq.before[lead]+' → '+after[lead]+' ('+signed(after[lead]-seq.before[lead])+')':"이번 순에는 수치 변화가 없습니다.";
+  const note=lead?statLabel(lead)+' '+seq.before[lead]+' → '+after[lead]+' ('+signed(after[lead]-seq.before[lead])+')':"이번 순에는 수치 변화가 없습니다.";
   const rows=changed.map(k=>deltaRow(k,seq.before[k],after[k])).join('');
   const lastLesson=seq.index===(seq.contest?contestSlot-1:2);
   const next=lastLesson?(hasPendingVisit()?"자유행동으로":seq.contest?"하순 경연으로":"월말로"):slotNames[seq.index+1]+"으로";
   return '<div class="review-room" style="background-image:url(&quot;'+sceneArt[choreography[id][0]]+'&quot;)"></div>'+
-    framedStanding("세바스찬","assets/sebastian.webp","review-butler")+'<article class="review-bubble"><small>세바스찬</small><h2>'+a.name+' · '+(lessonGrades[seq.grade]?.label||'강평')+'</h2><p>'+line+'</p><b>'+note+'</b>'+(seq.examNote?'<p>'+seq.examNote+'</p>':'')+'</article>'+
+    framedStanding("세바스찬","assets/sebastian.webp","review-butler")+'<article class="review-bubble"><small>세바스찬</small><h2>'+a.name+' · '+(lessonGrades[seq.grade]?.label||'강평')+'</h2><p>'+line+'</p><b>'+note+'</b>'+(seq.examNote?'<p>'+escapeHTML(statResultText(seq.examNote))+'</p>':'')+'</article>'+
     '<section class="review-slip"><h3>'+slotNames[seq.index]+' 성과 <small>'+a.name+'</small></h3>'+rows+
-    '<div>'+btn(next+'　›','next-turn:'+state.month+':'+seq.index,false,'primary')+'</div></section>';
+    '<div>'+btn(next,'next-turn:'+state.month+':'+seq.index,false,'primary')+'</div></section>';
 }
 
 // Each subject has another excellent result, two ordinary attempts and two setbacks.
