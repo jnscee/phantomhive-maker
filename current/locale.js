@@ -7,6 +7,7 @@ const gameText = {
     title:"팬텀하이브 백작 메이커", menu:"표지 메뉴", start:"게임 시작", continue:"이어하기",
     fanGame:"『흑집사』 비공식 2차 창작 팬게임",
     alternateStory:"원작과 다른 IF 세계관을 다룹니다.",
+    aiNotice:"이 게임의 리소스 제작에 생성형 AI를 사용했습니다.",
     fictionNotice:"게임 속 사건과 인물의 행적은 허구이며 현실과 무관합니다.",
     album:"앨범 기록", settings:"설정", exit:"나가기", backToCover:"표지로 돌아가기",
     autoSave:"자동 저장", notebook:"수첩 {number}", noSave:"저장 기록 없음",
