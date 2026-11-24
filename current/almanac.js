@@ -59,9 +59,9 @@ function reservedContest(run){
   return openContests(run).find(fair=>fair.month===run.month&&contestTicket(run,fair));
 }
 function contestRivalAbility(fair){
-  if(fair.warrant)return [82,90,96][fair.year];
-  if(fair.company)return Math.max(fair.month===5?62:fair.month===18?76:84,...(fair.exhibitors||[]).map(entrant=>entrant.score));
-  const levels={1:[22,195,365],4:[73,230,390],9:[115,275,420]};
+  if(fair.warrant)return [104,124,140][fair.year];
+  if(fair.company)return Math.max(fair.month===5?76:fair.month===18?108:124,...(fair.exhibitors||[]).map(entrant=>entrant.score));
+  const levels={1:[22,225,440],4:[84,300,465],9:[130,335,475]};
   return levels[(fair.month-1)%12+1][fair.year];
 }
 function winningPurse(fair){return fair.warrant?65:fair.company?55:36+fair.year*10;}
@@ -173,8 +173,9 @@ function judgeContest(run,fair,ticket){
     if(fair.warrant&&history.units<18)condition="누적 판매·납품 18개 미달";
   }
   const strength=factors.reduce((n,[,factor])=>n*factor,basis[1]);
-  const ratio=strength/contestRivalAbility(fair),weight=Math.pow(ratio,1.6);
-  const chance=condition?0:Math.max(.03,Math.min(.97,weight/(1+weight)));
+  const ratio=strength/contestRivalAbility(fair),weight=Math.pow(ratio,2.25);
+  // Equal performance is even odds. Exceptional preparation still leaves room for an upset.
+  const chance=condition?0:Math.min(.85,weight/(1+weight));
   return {...base,score:Math.round(strength),chance,speechTier:ratio<.7?0:ratio<1.1?1:2,
     scoreParts:[basis],factors,scoreCondition:condition};
 }
@@ -190,7 +191,7 @@ function settleFestival(run,duel){
   const won=!assessment.reason&&Math.random()<assessment.chance;
   const rank=won?2:0;
   const entry={...assessment,rank,purse:won?winningPurse(fair):0,prize:won?fair.prize:""};
-  if(duel&&!entry.reason){entry.duel={rivalScore:contestRivalAbility(fair)};entry.revealed=true;}
+  if(duel&&!entry.reason){entry.duel={rivalScore:duel.rivalScore??contestRivalAbility(fair)};entry.revealed=true;}
   if(fair.company&&!fair.warrant&&!entry.reason)entry.demand=[0,2,4][rank];
   if(!entry.reason)run.renown+=rank;
   if(fair.warrant&&rank===2){
@@ -321,7 +322,7 @@ function duelScene(fair,ticket,duel,entry){
   return '<section class="contest-screen duel-screen'+(done?' duel-result':'')+'" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+
     '<header><span>'+monthText(fair.month)+' · '+(fair.company?'출품 심사':option.label)+'</span><h2 id="contest-title">'+fair.title+'</h2></header>'+
     '<div class="duel-stage'+(fair.exhibitors?" exhibition-stage":"")+(done?' is-revealed':'')+'">'+
-    side(rival.name,fair.company?products[rival.product].name:rival.role,rivalArtwork(rival)+(fair.company?sample(rival.product):''),(entry?duel.rivalScore:contestRivalAbility(fair))+"점",!turn&&!done)+
+    side(rival.name,fair.company?products[rival.product].name:rival.role,rivalArtwork(rival)+(fair.company?sample(rival.product):''),(duel.rivalScore??contestRivalAbility(fair))+"점",!turn&&!done)+
     (fair.exhibitors?exhibition:'<b class="duel-vs" lang="en">vs.</b>')+
     side(fair.entrant||"시엘 팬텀하이브",fair.company?products[ticket.product].name:"팬텀하이브의 당주",actor+(fair.company?sample(ticket.product):''),done?entry.score+"점":"심사 중",turn&&!done)+'</div>'+
     slip+'</section>';

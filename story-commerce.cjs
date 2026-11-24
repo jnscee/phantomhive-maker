@@ -69,11 +69,11 @@ for(const fairId of run('contests.map(f=>f.id)')){
 // A real manual slot saved on the last line can be replayed. Once awarded, the saved result is final.
 setup('state.fairTickets={"newYear-1886":{index:0}};state.plan=["study","study","study"];state.visit="none";state=normalizeSave(state)');
 assertOk('!reservedContest(state)&&openContests(state).length===0&&scheduledActivities(state).length===3&&settleFestival(state)===null');
-for(const [index,stat,low,high] of [[0,"기품",.31,.34],[1,"매력",.15,.18]]){
+for(const [index,stat,low,high] of [[0,"기품",.20,.23],[1,"매력",.06,.08]]){
   setup('tab="plan";state.month=state.planMonth=13;state.stats.기품=124;state.stats.매력=71;state.fairTickets={"newYear-1887":{index:'+index+'}};state.sequence={contest:"newYear-1887"};prepareContest(state)');
   const chance=run('state.sequence.duel.judgment.chance');
   assert.ok(chance>low&&chance<high);
-  assert.equal(run('state.sequence.duel.rivalScore'),195);
+  assert.equal(run('state.sequence.duel.rivalScore'),225);
   run('state.sequence.duel.page=2;handleAction("store:1",null,true)');
   const before=run('JSON.stringify([state.fund,state.renown,state.stats])');
   for(const won of [false,true]){
@@ -101,6 +101,15 @@ for(const [index,stat,low,high] of [[0,"기품",.31,.34],[1,"매력",.15,.18]]){
   run('state.stats[statKey]+=12');assert.ok(odds()>baseline);
   run('state.stats[statKey]-=12;state.stress+=20');assert.ok(odds()<baseline);
 }
+// Even a fully prepared entry can lose the final competition.
+setup('state.month=33;state.quality="fine";state.qty=1;state.shop.design=state.shop.works=3;state.productNotes={toys:{material:"select",reworked:true}};state.productHistory={toys:{reputation:20,units:240,orders:12}}');
+assertOk('(()=>{const fair=contests.find(f=>f.id==="royalWarrant-1888");const j=judgeContest(state,fair,{product:"toys"});return contestRivalAbility(fair)===140&&j.chance>.50&&j.chance<.60;})()');
+run('state.productHistory.toys.units=17');
+assertOk('judgeContest(state,contests.find(f=>f.id==="royalWarrant-1888"),{product:"toys"}).chance===0');
+setup('state.month=13;state.stats.기품=124;state.fairTickets={"newYear-1887":{index:0}};state.sequence={contest:"newYear-1887"};prepareContest(state);state.sequence.duel.rivalScore=195;state.sequence.duel.judgment.chance=.32;persist();state=normalizeSave(saves.auto)');
+assertOk('contestScene(pendingEvent()).includes("195점")&&matchAssessment(state,contests[2],{index:0},state.sequence.duel).chance===.32');
+run('settleFestival(state,state.sequence.duel)');
+assertOk('state.fairBook["newYear-1887"].duel.rivalScore===195&&state.fairBook["newYear-1887"].chance===.32');
 // Preview, execution and save/load use the same course tradeoff for each of the three grades.
 for(const id of run('[...categories[0][1],...categories[2][1]]')){
   ctx.subject=id;
