@@ -1168,8 +1168,8 @@ function roomDetail(){
     '<div class="facility-steps" aria-hidden="true">'+steps+'</div>'+
     '<dl class="facility-data"><dt>시설 효과</dt><dd>'+room.desc+'</dd><dt>월 유지비</dt><dd>'+money(auxiliary?(level-1)*2:level*4)+(level<3?' → '+money(auxiliary?level*2:(level+1)*4):'')+'</dd></dl>'+
     btn(level===3?"개수 완료":"시설 개수 · "+money(room.cost*level),(auxiliary?"annex:":"upgrade:")+id,!active||level===3||state.fund<room.cost*level,"work-order")+
-    '<h4>저택 지원</h4><div class="work-actions">'+btn("왕진 · £55","doctor",!active||state.fund<55||state.flags["doctor"+state.month])+
-    btn("대출 · £144","loan",!active||state.usedLoan)+'</div><small>왕진 시 컨디션 +24 · 대출은 월 £24씩 상환</small>';
+    '<h4>저택 지원</h4><div class="work-actions estate-support">'+btn("왕진 · £55","doctor",!active||state.fund<55||state.flags["doctor"+state.month])+
+    btn("대출 · £144","loan",!active||state.usedLoan)+'</div><small class="estate-support-note">왕진 시 컨디션 +24 · 대출은 월 £24씩 상환</small>';
 }
 function ledgerFigure(label,value){
   return '<div><dt>'+label+'</dt><dd>'+value+'</dd></div>';

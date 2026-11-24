@@ -609,3 +609,9 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 .facility-pairs li header {padding-bottom:.25rem;margin-bottom:.2rem;border-bottom:1px solid #c3d1db}
 .facility-pairs li b {font-variant-numeric:tabular-nums}
 .lesson-plane[data-room=street] .performer.walk {translate:-50% clamp(2px,.8cqh,5px)}
+
+#panel .estate-support-note {display:block;font-size:.68rem;line-height:1.4}
+#panel .estate-support button {display:inline-flex;align-items:center;justify-content:center;gap:.28rem}
+.estate-support button::before {content:"";width:16px;height:16px;flex:none;background-size:contain;background-repeat:no-repeat;image-rendering:pixelated}
+.estate-support button[data-action="doctor"]::before {background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAhElEQVR4nGNkQAPOZob/kfl7T51nRFeDonh6jj9cw/Qc///oBjCha1pz6hFWNgzArUM3CR3AnMYCUxxiJodPPQMDA8P/vafOM2I4iYGBgSGuspQhrrIUqy4MDXGVpQybkzoZNid1YtWE1QZ8gAVdYFF7N0PcvHI4m6AGXAphgORgJRkAAF3pLV4AskjrAAAAAElFTkSuQmCC)}
+.estate-support button[data-action="loan"]::before {background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAhUlEQVR4nGNgIBEw4pJIctf/j8yft/MiIwMDAwMLLsVthWoM4vreDAwMDAwvL25lYGBg+D9v50VGrBoYGBgYDu19ysCwdxaGOFwDuhPsnKVRFO64dAuhAZsTqvpvMXjoceO2AZsTkG1BsQGXEw7tfUrABjRAsg1V/bfgfFg8wCMOV0RRDABxfjq4WAcQHQAAAABJRU5ErkJggg==)}
