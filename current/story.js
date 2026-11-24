@@ -227,11 +227,11 @@ const visitRecollections={
     "오늘은 돌아가며 보실 필요 없어요. 제 쪽에서 제가 바로 읽어 드릴게요!",
     "장부의 네 번째 줄이 바로 여기예요. 비가 와도 번호는 그대로라서 금방 찾았어요!"]},
   bardSupper:{place:"kitchen",person:"bard",lines:[
-    "오늘도 한 숟갈 덜어 놨습니다. 간 보실 주인님이 계시니까요.",
-    "도련님 접시는 바로 이 뚜껑 밑에 있습니다. 오늘은 식지 않고 따뜻할 겁니다."]},
+    "오늘도 불 끄기 전에 한 숟갈 빼 놨습니다!",
+    "도련님 접시는 요 뚜껑 밑에! 탄내 없이 따끈합니다."]},
   linenMarks:{place:"quarters",person:"mey",lines:[
-    "파란 실은 손님방, 흰 실은 도련님 방! 이번엔 수건이 딱 제자리를 찾아갔다요!",
-    "개킨 쪽으로 손을 넣으면 작은 수건부터 쏙 잡힌다요! 도련님이 보신 그대로예요!"]}
+    "파란 실은 손님방, 흰 실은 도련님 방. 이번엔 수건이 제자리에 갔습니다요!",
+    "개킨 쪽으로 손을 넣으면 작은 수건부터 잡힙니다요. 도련님이 보신 그대로입니다요."]}
 };
 function followupEvents(){
   const after=(s,id)=>s.events.some(e=>e.id===id&&(e.month==null||e.month<s.month));
@@ -243,15 +243,15 @@ function followupEvents(){
      choices:[choice("네 글씨대로 둬. 화분을 돌리면 되잖아.","표찰의 방향을 피니안에게 맡겼다.",()=>{}),
               choice("화분 번호를 장부에도 적어 두지.","장미의 번호를 정원 장부에 옮겼다.",()=>{})]},
     {id:"bardSupper",visitOnly:true,visitPlace:"kitchen",title:"식기 전에",speaker:"바르도",
-     text:"수프는 다 끓었는데 은쟁반이 아직 안 왔군요. 손님 몫을 다시 끓일까요, 도련님?",
+     text:"젠장, 은쟁반이 안 오네! 화력 올려서 새로 끓일까요?",
      sees:s=>s.visit==="kitchen"&&!!s.people.bard,
-     responses:["그럼 여기, 제일 작은 숟가락입니다. 냄비 위에서 드셨단 말은 입 밖에도 안 내겠습니다.","뚜껑이 꼭 맞는 그릇이라…… 과연. 불을 다시 지필 필요도 없겠군요."],
+     responses:["자, 작은 숟가락 여기 있습니다.","오호, 뚜껑 있는 그릇 좋네! 주방 날릴 일도 없겠는데요."],
      choices:[choice("내가 먼저 간을 보지.","바르도가 맛볼 몫을 덜어 두었다.",()=>talkTrust("bard")),
               choice("한 그릇 덜어서 덮어 둬.","바르도가 시엘의 접시를 따로 덮었다.",()=>shift("hp",2))]},
     {id:"linenMarks",visitOnly:true,visitPlace:"quarters",title:"리넨장 맨 윗칸",speaker:"메이린",
-     text:"으아앗, 손님방 수건이 또 도련님 방에 들어갔습니다요! 글씨가 어찌나 비슷한지 도통…….",
+     text:"손님방 수건이 또 도련님 방에 들어갔습니다요. 글씨가 어찌나 비슷한지…….",
      sees:s=>s.visit==="quarters"&&!!s.people.mey&&(!s.people.snake||s.month%2===1),
-     responses:["실 색깔이야 저도 금방 알아봅니다요! 얼른 바느질 상자를 가져올게요!","아! 손끝만으로도 크기를 딱 알겠다요! 맨 윗칸부터 죄다 다시 개겠습니다요!"],
+     responses:["실 색깔은 저도 금방 알아봅니다요. 바느질 상자를 가져올게요!","아, 손으로도 크기를 알겠습니다요. 맨 윗칸부터 다시 개겠습니다요."],
      choices:[choice("가장자리에 다른 색 실을 달아.","메이린이 두 색의 실로 수건을 표시했다.",()=>talkTrust("mey")),
               choice("접는 방향을 달리해 봐.","메이린이 손으로 수건을 구분하게 됐다.",()=>changeStat("통찰",2))]},
     {id:"supplierReply",chapter:true,speaker:"세바스찬",title:"인수증의 두 번째 장",text:"공장에서 회신이 왔습니다.",

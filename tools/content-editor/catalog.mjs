@@ -282,6 +282,9 @@ export function catalog(files, publishedAssets = [], version = "") {
     for (const [key,label] of [["title","제목"],["speaker","화자"],["text","이벤트 본문"],["source","출처"]]) add(g,file,prop(node,key),label);
     add(g,file,prop(node,"lines"),"대사 순서","lines",undefined,{cues:true});
     literalChoices(g,file,prop(node,"choices"));
+    if(value(prop(node,"visitOnly"))===true){
+      rows(prop(node,"responses")).forEach((response,i)=>add(g,file,response,"응답 "+(i+1)));
+    }
     const prompt=rows(prop(node,"prompt"));
     add(g,file,prompt[0],"마지막 화자");
     add(g,file,prompt[1],"마지막 대사");
@@ -457,7 +460,7 @@ export function catalog(files, publishedAssets = [], version = "") {
     });
   }
   const extraDialogue = {
-    "chapters.js":["visitsVN","examEvents","guide","trustedGreetings","visitRecollections"], "term-events.js":["examDialogue","portfolios"],
+    "chapters.js":["visitsVN","examEvents","guide","trustedGreetings"], "story.js":["visitRecollections"], "term-events.js":["examDialogue","portfolios"],
     "scenes.js":["lines","butlerGreetings","butlerReplies"], "game.js":["homeRemarks","marketGoods"],
     "content.js":["visiting"], "reports.js":["reviewLines"]
   };
