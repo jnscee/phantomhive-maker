@@ -1711,3 +1711,16 @@ html[data-game-motion=reduced] :is(.company-worker img,.duty-walker,.duty-walker
 @media(min-width:600px) and (max-width:960px) and (orientation:portrait), (max-width:700px) and (orientation:landscape) and (pointer:coarse) {
   .game-frame:has(#scene[data-story=true]) #system-menu:has(> #dialogue-visibility) {grid-template-columns:repeat(7,minmax(0,1fr))}
 }
+
+#conversation .review-slip button[data-action^="next-turn:"] {
+  box-sizing:border-box;width:fit-content;max-width:100%;height:auto;
+  min-height:2.75rem;padding:.5em 1.45em;line-height:1.35;
+  white-space:normal;word-break:keep-all;overflow-wrap:anywhere;
+}
+
+#scene #conversation[data-review=true] .standing-window.review-butler {
+  left:55%;right:auto;width:27%;translate:none;
+}
+@media(max-width:700px) and (orientation:portrait) {
+  #scene #conversation[data-review=true] .standing-window.review-butler {left:69%;width:30%}
+}

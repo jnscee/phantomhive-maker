@@ -1228,7 +1228,7 @@ function render(focus=false,playbackOffset=0){
   if(home){
     const runLabel={contract:"계약 계속",guide:"안내 계속",visit:"방문 계속",review:"강평 보기",plan:"실행",scene:"일정 재개",slotEvent:"사건 확인",vow:"심의 확인",investiture:"왕실 서신",event:"사건 확인",result:"결산 확인",ending:"결과 확인"}[state.phase];
     const opening=["contract","guide"].includes(state.phase);
-    const menu=opening?[["run",runLabel],["tab:save","수첩 · 저장"]]:commands;
+    const menu=opening?[["run",runLabel],["tab:save","저장 · 설정"]]:commands;
     $("nav").innerHTML='<div class="command-grid">'+menu.map(([action,label],index)=>
       btn(action==="run"?runLabel:label,action,false,(index<2?"hero-action ":"")+(index===1?"primary":""))
         .replace("data-action=", 'aria-keyshortcuts="'+(index+1)+'" data-action=')).join("")+'</div>';
