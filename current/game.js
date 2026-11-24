@@ -458,7 +458,7 @@ function finish(id){
 }
 function isApprovedEnding(id){return id==="vowTitle"||id==="releaseTitle";}
 // Above the title review's own will minimum so both approved endings are reachable.
-const vengeanceWill=420;
+const vengeanceWill=482;
 function cielEndingId(will,approved){
   if(will>=vengeanceWill)return approved?"vowTitle":"vowNoTitle";
   return approved?"releaseTitle":"releaseNoTitle";
@@ -478,7 +478,7 @@ function startFinnyAtTurn(run){
   run.pending="gardener";run.recruitReturn="plan";run.phase="event";
 }
 function criticalHealth(run){
-  return run.hp<25||(run.month>3&&run.hp<67&&run.stress>=70);
+  return run.hp<25||(run.month>3&&run.hp<69&&run.stress>=70);
 }
 function advance(){
   if(state.phase!=="result")return;
@@ -609,7 +609,7 @@ function educationRecord(run){
 }
 const courtEducation={
   지성:[485,"서재 수업"],기품:[495,"귀족 예법"],매력:[470,"사교 수업"],
-  통찰:[480,"가문 기록 조사"],경영:[480,"팬텀사 회계"],의지:[300,"사건 조사"],체력:[420,"승마"]
+  통찰:[480,"가문 기록 조사"],경영:[480,"팬텀사 회계"],의지:[475,"사건 조사"],체력:[420,"승마"]
 };
 function courtEducationPriority(keys=Object.keys(courtEducation)){
   return keys.filter(k=>state.stats[k]<courtEducation[k][0])

@@ -521,7 +521,7 @@ for(const invest of [false,true]){
   const campaign=playCampaign(invest);
   assert.ok(campaign.finished);
   if(invest){
-    assert.equal(campaign.ending,"vowNoTitle");
+    assert.equal(campaign.ending,"releaseNoTitle");
     assert.ok(campaign.stats.some(value=>value<500));
   }
   assert.ok(campaign.january.stats.filter(value=>value<500).length>=4);
@@ -529,7 +529,6 @@ for(const invest of [false,true]){
   assert.equal(campaign.exams,invest?13:12);
   assert.deepEqual(Array.from(campaign.birthdays),[12,24]);
   assert.deepEqual(Array.from(campaign.decisions),[26,29,32]);
-  if(invest)assert.equal(campaign.ending,"vowNoTitle");
   console.log('PASS 35-month campaign',invest?'expanded estate':'starting facilities',
     'January',JSON.stringify(campaign.january),'final funds',campaign.fund);
 }
@@ -669,6 +668,8 @@ assertOk('!state.ill && hasPendingVisit()');
 
 setup('for(const [key,[target]] of Object.entries(courtEducation))state.stats[key]=target;Object.assign(state.level,{library:2,kitchen:2});state.salesBook=Array.from({length:8},()=>({revenue:30,cost:15}));state.royal=6;state.renown=32;state.fund=1200;state.debt=0;state.advancedStudy={study:2,etiquette:2,accounts:2}');
 assertOk('qualifies() && courtRows().length===10');
+assertOk('cielEndingId(481,true)==="releaseTitle" && cielEndingId(482,true)==="vowTitle"');
+assertOk('cielEndingId(481,false)==="releaseNoTitle" && cielEndingId(482,false)==="vowNoTitle"');
 for(const change of ['stats.지성--','stats.기품--','stats.매력--','stats.통찰--','stats.경영--','stats.의지--','stats.체력--','advancedStudy.study--','level.kitchen--','salesBook.pop()','royal--','renown--','fund--','debt++']){
   const previous=run('structuredClone(state)');
   run('state.'+change);assertOk('!qualifies()');ctx.savedCourt=previous;run('state=savedCourt');
