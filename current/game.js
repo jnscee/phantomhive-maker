@@ -492,6 +492,7 @@ function advance(){
   if(state.phase!=="result")return;
   const late=overdueArrival(state);
   if(late){state.pending=late;state.phase="event";tab="plan";persist();render(true);return;}
+  if(startTownhouseGuests(state)){tab="plan";persist();render(true);return;}
   if(sampleReview())return;
   state.unwell=criticalHealth(state)?state.unwell+1:0;
   state.poverty=povertyAfterClosing(state);
@@ -506,6 +507,7 @@ function advance(){
   state.month++;state.marketShift=rollMarketShift(state);state.weather=rollSeasonWeather(state.month);state.planMonth=state.month;state.plan=emptyPlan();editingVisit=false;lessonPage=0;startAccounts(state);state.phase="plan";state.visit=null;selectedSlot=0;
   if(state.weather)state.phase="weatherBriefing";
   startFinnyAtTurn(state);
+  startTownhouseGuests(state);
   tab=state.phase==="plan"?"home":"plan";persist();render(true);
 }
 function fatigueThreshold(stamina){
@@ -1274,7 +1276,12 @@ function managementPanel(){
   const company=tab==="company",active=state.phase==="plan";
   const nav='<div class="property-nav">'+option("저택","tab:estate",tab==="estate"||tab==="staffing")+(state.flags.townhouse?option("타운하우스","tab:townhouse",tab==="townhouse"):"")+option("팬텀 사(社)","tab:company",company)+'</div>';
   const header='<div class="property-head">'+nav+'<div><span>'+monthText(state.month)+'</span><b>'+money(state.fund)+'</b></div></div>';
-  if(tab==="townhouse"&&state.flags.townhouse)return header+londonBoard();
+  if(tab==="townhouse"&&state.flags.townhouse){
+    const guests=townhouseGuestsDue(state);
+    const resume=state.phase==="event"&&state.pending==="visitPrince";
+    const canStart=!state.pending&&["plan","result"].includes(state.phase);
+    return header+(guests&&(resume||canStart)?btn(resume?"손님 접견 계속하기":"런던 집의 손님 맞이","receive-guests",false,"townhouse-entry"):"")+londonBoard();
+  }
   if(tab==="staffing")return header+staffBoard();
   const actual=state.salesBook.at(-1);
   const settled=["event","result","vow","investiture","ending"].includes(state.phase);
@@ -1648,9 +1655,16 @@ function askConfirmation(key,title,description,label,rect,extra=""){
 function handleAction(key,rect,confirmed=false){
   if(previewLesson)return;
   const [action,id,value]=key.split(":");
+  if(action==="receive-guests"&&tab==="townhouse"){
+    if(startTownhouseGuests(state)||(state.phase==="event"&&state.pending==="visitPrince")){
+      tab="plan";persist();render(true);
+    }
+    return;
+  }
   if(action==="weather-close"&&state.phase==="weatherBriefing"){
     state.phase="plan";
     startFinnyAtTurn(state);
+    startTownhouseGuests(state);
     tab=state.phase==="plan"?"home":"plan";
     persist();render(true);return;
   }
