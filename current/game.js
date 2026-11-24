@@ -458,7 +458,7 @@ function finish(id){
 }
 function isApprovedEnding(id){return id==="vowTitle"||id==="releaseTitle";}
 // Above the title review's own will minimum so both approved endings are reachable.
-const vengeanceWill=460;
+const vengeanceWill=459;
 function cielEndingId(will,approved){
   if(will>=vengeanceWill)return approved?"vowTitle":"vowNoTitle";
   return approved?"releaseTitle":"releaseNoTitle";

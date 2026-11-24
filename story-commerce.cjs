@@ -668,8 +668,8 @@ assertOk('!state.ill && hasPendingVisit()');
 
 setup('for(const [key,[target]] of Object.entries(courtEducation))state.stats[key]=target;Object.assign(state.level,{library:2,kitchen:2});state.salesBook=Array.from({length:8},()=>({revenue:30,cost:15}));state.royal=6;state.renown=32;state.fund=1200;state.debt=0;state.advancedStudy={study:2,etiquette:2,accounts:2}');
 assertOk('qualifies() && courtRows().length===10');
-assertOk('cielEndingId(459,true)==="releaseTitle" && cielEndingId(460,true)==="vowTitle"');
-assertOk('cielEndingId(459,false)==="releaseNoTitle" && cielEndingId(460,false)==="vowNoTitle"');
+assertOk('cielEndingId(458,true)==="releaseTitle" && cielEndingId(459,true)==="vowTitle"');
+assertOk('cielEndingId(458,false)==="releaseNoTitle" && cielEndingId(459,false)==="vowNoTitle"');
 for(const change of ['stats.지성--','stats.기품--','stats.매력--','stats.통찰--','stats.경영--','stats.의지--','stats.체력--','advancedStudy.study--','level.kitchen--','salesBook.pop()','royal--','renown--','fund--','debt++']){
   const previous=run('structuredClone(state)');
   run('state.'+change);assertOk('!qualifies()');ctx.savedCourt=previous;run('state=savedCourt');
