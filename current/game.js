@@ -141,12 +141,15 @@ function forecast(shop=state.shop){
   const season=(state.month-1)%12;
   const baseline=p.demand[season%6]+(season>=9?3:0)+(state.month>6?2:0);
   const terms=businessTerms(state,state.product);
-  const unit=Math.max(Math.ceil(p.unit*.65),p.unit+terms.cost+(quality?3:0)-(shop.works-1)-terms.skill-Math.min(2,Math.floor(state.stats.경영/100)));
+  const market=marketShifts[state.marketShift];
+  const shift=market?.products.includes(state.product)?market:null;
+  const baseUnit=Math.max(Math.ceil(p.unit*.65),p.unit+terms.cost+(quality?3:0)-(shop.works-1)-terms.skill-Math.min(2,Math.floor(state.stats.경영/100)));
+  const unit=Math.max(1,baseUnit+(shift?.cost||0));
   const design=state.productNotes?.[state.product];
   const appeal=design?((design.brief==="gift"&&season>=9)?3:1)+(design.reworked?1:0):0;
   const reputation=Math.floor(productHistory(state,state.product).reputation/5);
   const premium=terms.premium+(quality?2:0);
-  const demand=Math.max(0,baseline+appeal+londonPlan(state).power.salon+terms.reach+reputation-terms.pressure+fairDemand(state,state.product)+businessTailwind(state.product).bonus
+  const demand=Math.max(0,baseline+(shift?.demand||0)+appeal+londonPlan(state).power.salon+terms.reach+reputation-terms.pressure+fairDemand(state,state.product)+businessTailwind(state.product).bonus
     +(historicalTradeEvents[state.month]?.demand[state.product]||0)+(state.month===31&&state.product==="toys"?-3:0)
     +(shop.store-1)*2+Math.min(3,Math.floor(state.stats.경영/80))+(state.visit==="town"?2:0)
     -Math.round((state.price-p.price-premium)*1.9));
@@ -492,7 +495,7 @@ function advance(){
   if(state.prototype?.approved){
     const p=state.prototype;if(!state.unlocked.includes(p.product))state.unlocked.push(p.product);state.productNotes??={};state.productNotes[p.product]=p;delete state.prototype;
   }
-  state.month++;state.weather=rollSeasonWeather(state.month);state.planMonth=state.month;state.plan=emptyPlan();editingVisit=false;lessonPage=0;startAccounts(state);state.phase="plan";state.visit=null;selectedSlot=0;
+  state.month++;state.marketShift=rollMarketShift(state);state.weather=rollSeasonWeather(state.month);state.planMonth=state.month;state.plan=emptyPlan();editingVisit=false;lessonPage=0;startAccounts(state);state.phase="plan";state.visit=null;selectedSlot=0;
   if(state.weather)state.phase="weatherBriefing";
   startFinnyAtTurn(state);
   tab=state.phase==="plan"?"home":"plan";persist();render(true);

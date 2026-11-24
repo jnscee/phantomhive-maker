@@ -227,6 +227,16 @@ for(const weather of ['heat','cold']){
   assertOk('state.report.bills===quote && actualBudget().includes(weatherFor(state).charge)');
 }
 
+for(const id of run('Object.keys(marketShifts)')){
+  ctx.shiftId=id;
+  setup('state.product=marketShifts[shiftId].products[0]');
+  const base=run('forecast()');
+  run('state.marketShift=shiftId;persist();state=normalizeSave(saves.auto)');
+  assert.equal(run('forecast().unit'),base.unit+run('marketShifts[shiftId].cost||0'));
+  assert.equal(run('forecast().demand'),base.demand+run('marketShifts[shiftId].demand||0'));
+  assertOk('tradeNews(state).includes(marketShifts[shiftId].title)');
+}
+
 function pick(){
   run('if(recruitScenes[state.pending])state.recruitPage={id:state.pending,version:2,at:recruitScenes[state.pending].lines.length-1};choose(0);if(state.choiceImpact?.next)handleAction("impact-close")');
 }

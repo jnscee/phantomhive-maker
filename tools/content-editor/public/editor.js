@@ -718,7 +718,7 @@ function fieldEditor(field) {
     return block;
   }
   const block=node("div",undefined,"field");
-  const label=node("label",field.label);
+  const label=node("label",field.label+(field.caseOutcome?" · "+field.caseOutcome:""));
   const media=node("div",undefined,"asset-preview");
   let control;
   if(field.trigger){control=storyTrigger(current);}
@@ -810,6 +810,7 @@ function drawList() {
 const paneLabels={flow:"장면 흐름도",dialogue:"대사",choices:"선택지",stage:"이미지 · 소리",details:"기본 정보"};
 
 function paneFor(field){
+  if(field.caseOutcome||field.caseReply)return "choices";
   if(field.type==="lines"||/^(날씨 지문$|상대 · 첫 인사$|상대 인사 ·|시엘의 답 ·|시엘 · 종목 |참여 지문 |입상 결과 |참가 결과 |추리 질문$|단서 \d+ ·|판단 \d+)/.test(field.label))return "dialogue";
   if(field.type==="choices"||/^(선택지|응답)\s*\d|마무리 버튼|^마지막 대사/.test(field.label))return "choices";
   if(field.media||field.paths||field.fixed||["cast","cue"].includes(field.type))return "stage";

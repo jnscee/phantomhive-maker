@@ -175,6 +175,11 @@ function drawStoryFlow(panel,group){
     lanes.append(branch);
     return branch;
   }
+  for(const field of fields.filter(item=>item.caseOutcome)){
+    const branch=lane(),reply=byLabel(field.label+" · 후일담");
+    branch.append(fieldCard(field,field.label,"choice"));
+    if(reply)branch.append(fieldCard(reply,field.caseOutcome,"dialogue"));
+  }
   const defaults=fields.filter(field=>/^선택지 \d+$/.test(field.label)||field.label==="마무리 버튼");
   for(const field of defaults){
     const branch=lane(),n=field.label.split(" ")[1];

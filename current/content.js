@@ -218,11 +218,33 @@ const historicalTradeEvents={
 function tradeBuyer(order){
   return historicalTradeEvents[order.tradeMonth]?.buyer||productBuyers[order.id];
 }
+const marketShifts={
+  toyOrders:{title:"지방 완구점의 추가 주문",products:["toys","plush"],demand:4},
+  toySurplus:{title:"창고 정리 할인전",products:["toys","game"],demand:-3},
+  teaOrders:{title:"다과회 예약 증가",products:["sweets","candy","hamper"],demand:4},
+  teaCancellations:{title:"연회 주문 취소",products:["sweets","hamper"],demand:-3},
+  timberShortage:{title:"목재 하역 지연",products:["toys","game"],cost:2},
+  timberArrival:{title:"목재 운반선 입항",products:["toys","game"],cost:-2},
+  sugarShortage:{title:"설탕 경매가 상승",products:["sweets","candy"],cost:1},
+  sugarArrival:{title:"정제당 대량 입고",products:["sweets","candy"],cost:-1}
+};
+function rollMarketShift(run){
+  if(monthlyDraw(run,0x6d61726b)>=.35)return null;
+  const eligible=Object.keys(marketShifts).filter(id=>marketShifts[id].products.some(p=>run.unlocked.includes(p)));
+  return eligible[Math.floor(monthlyDraw(run,0x74726164)*eligible.length)]||null;
+}
 function tradeNews(run){
+  const shift=marketShifts[run.marketShift];
+  const notes=[];
+  if(shift){
+    const items=shift.products.map(id=>products[id].name).join("·");
+    const change=shift.cost?"개당 재료비 "+(shift.cost>0?"+":"−")+"£"+Math.abs(shift.cost):"소매 수요 "+signed(shift.demand)+"개";
+    notes.push(shift.title+" · "+items+" "+change);
+  }
   const fair=historicalTradeEvents[run.month];
-  if(!fair)return "";
+  if(!fair)return notes.join(" / ");
   const demand=Object.entries(fair.demand).map(([id,n])=>products[id].name+" +"+n+"개").join(" · ");
-  return fair.title+" · 이달 소매 수요 "+demand;
+  return [...notes,fair.title+" · 이달 소매 수요 "+demand].join(" / ");
 }
 function productHistory(run,id){
   return run.productHistory?.[id]||{reputation:0,units:0,orders:0};

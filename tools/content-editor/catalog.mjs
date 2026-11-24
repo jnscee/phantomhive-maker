@@ -291,8 +291,9 @@ export function catalog(files, publishedAssets = [], version = "") {
       }
       for(const [i,row] of rows(prop(node,"answers")).entries()){
         const [label,response]=rows(row);
-        add(g,file,label,"판단 "+(i+1));
-        add(g,file,response,"판단 "+(i+1)+" · 후일담");
+        const outcome=i===value(prop(node,"correct"))?"정답 · 가문 명성 +"+value(prop(node,"award")):"오답 · 명성 변화 없음";
+        add(g,file,label,"판단 "+(i+1),"text",undefined,{caseOutcome:outcome});
+        add(g,file,response,"판단 "+(i+1)+" · 후일담","text",undefined,{caseReply:true});
       }
     }
     literalChoices(g,file,prop(node,"choices"));
