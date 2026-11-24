@@ -204,7 +204,7 @@ function settleFestival(run,duel){
   if(duel&&won){
     const subjects=fair.company?[["경영",10],["지성",8]]:[[fair.options[ticket.index].stat,10],["의지",6]];
     entry.growth=subjects.map(([name,base])=>{
-      const gain=lessonGain(name,run.stats[name],base,run.month,run.flags,false,run.foundation||0);
+      const gain=lessonGain(name,run.stats[name],base,run.month,run.flags);
       run.stats[name]+=gain;
       return name+" +"+gain;
     });

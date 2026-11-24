@@ -537,7 +537,7 @@ for(const invest of [false,true]){
   }
   assert.ok(campaign.january.stats.filter(value=>value<500).length>=4);
   assert.ok(campaign.stats.some((value,i)=>value>campaign.january.stats[i]));
-  assert.ok(campaign.exams>=12);
+  assert.ok(campaign.exams>=11);
   assert.deepEqual(Array.from(campaign.birthdays),[12,24]);
   assert.deepEqual(Array.from(campaign.decisions),[26,29,32]);
   console.log('PASS 35-month campaign',invest?'expanded estate':'starting facilities',
@@ -583,7 +583,7 @@ assertOk('statusPanel().includes("컨디션") && statusPanel().includes("지구�
 run('state.accounts.opening=483;state.fund=410;state.accounts.company=80;state.report={income:240,cost:135,bills:48,expenses:10,operating:10,training:40,debtPayment:0}');
 assertOk('actualBudget().includes("−£73") && actualBudget().includes("£313") && actualBudget().includes("£410") && !actualBudget().includes("내역 외 잔액 변동")');
 // Only the part of a training gain above 485 slows down before the second applied exam.
-setup('state.month=25;state.foundation=24;state.stats.지성=484');
+setup('state.month=25;state.stats.지성=484');
 assertOk('lessonGain("지성",440,20,25,{})===lessonGain("지성",440,20,25,{lateDispatch:true})');
 assertOk('lessonGain("지성",484,20,25)===2 && lessonGain("지성",485,20,25)===1 && lessonGain("지성",500,20,25)===0');
 assertOk('scheduleNote("study").replace(/<[^>]+>/g,"").includes("지성 ↑") && !statusPanel().includes("과목 실기")');
@@ -595,9 +595,9 @@ assertOk('state.stats.지성===491 && lessonGain("지성",491,20,25)>1 && !statu
 // Final ordinary gains advance one point at a time, with no hidden bonus required.
 setup('state.stats.지성=497;for(let i=0;i<5;i++)changeStat("지성",6)');
 assertOk('state.stats.지성===500');
-for(const [flag,grade,expected] of [[false,"great",498],[true,"steady",499],[true,"great",499]]){
+for(const [flag,grade,expected] of [[false,"great",498],[true,"steady",500],[true,"great",500]]){
   ctx.mflag=flag;ctx.mgrade=grade;
-  setup('state.month=34;state.foundation=24;state.stats.지성=state.stats.통찰=497;state.flags.lateDispatch=mflag;state.level.library=3;applyActivity(state,"study",mgrade)');
+  setup('state.month=34;state.stats.지성=state.stats.통찰=497;state.flags.lateDispatch=mflag;state.level.library=3;applyActivity(state,"study",mgrade)');
   assert.equal(run('state.stats.지성'),expected);
   assert.ok(run('state.stats.통찰')>=497 && run('state.stats.통찰')<=498);
 }
@@ -606,22 +606,28 @@ assertOk('state.stats.지성===500 && state.stats.통찰<=500');
 run('changeStat("지성",4)');
 assertOk('state.stats.지성===500');
 setup('state.plan=["study","inquiry","casework"];state.month=1;projectTraining()');
-assertOk('state.foundation===0&&!state.linkFrom');
+assertOk('!Object.hasOwn(state,"foundation")&&!state.linkFrom');
 run('applyActivity(state,"study","steady");state=normalizeSave(state);applyActivity(state,"inquiry","steady");applyActivity(state,"casework","steady")');
-assertOk('state.foundation===0');
+assertOk('!Object.hasOwn(state,"foundation")');
 setup('state.plan=["accounts","rest","study"]');
-assertOk('projectTraining().foundation===0 && state.linkFrom===null');
+assertOk('!Object.hasOwn(projectTraining(),"foundation") && state.linkFrom===null');
 run('recordStudyLink(state,"accounts");recordStudyLink(state,"rest");state=normalizeSave(state)');
-assertOk('recordStudyLink(state,"study")==="지성" && state.foundation===0');
+assertOk('recordStudyLink(state,"study")==="지성"');
 run('state.month=2;recordStudyLink(state,"rest")');assertOk('!recordStudyLink(state,"inquiry")');
 setup('state.month=6;state.weather="heat";state.plan=["riding","rest","exercise"]');
-assertOk('projectTraining().foundation===12 && state.foundation===0');
-run('applyActivity(state,"riding","steady");applyActivity(state,"study","great");applyActivity(state,"recovery",null,"exercise");state=normalizeSave(state)');
-assertOk('state.foundation===6');
-run('state.month=12;state.weather="cold";for(let i=0;i<3;i++)applyActivity(state,"exercise","steady")');
-assertOk('state.foundation===24');
-run('state.foundation=6;state.month=18;state.weather="heat";applyActivity(state,"riding","great")');
-assertOk('state.foundation===6');
+run('const fairWeather=structuredClone(state);fairWeather.weather=null;applyActivity(fairWeather,"riding","steady");applyActivity(state,"riding","steady")');
+assertOk('state.stats.체력>fairWeather.stats.체력 && state.hp<fairWeather.hp');
+run('state=normalizeSave({...state,foundation:24})');
+assertOk('!Object.hasOwn(state,"foundation")');
+setup('state.month=26;state.fund=state.accounts.opening=2140;state.stats.경영=420;state.shop={design:3,works:3,store:3};state.plan=["rest","walk","rest"];state.visit="none";state.qty=20;state.price=18');
+assertOk('forecast().trade.contribution>0 && profitContribution(state,120,200)===0');
+run('const feeQuote=forecast();execute();state=normalizeSave(state);settleMonth()');
+assertOk('state.report.contribution===feeQuote.trade.contribution && state.report.expenses===feeQuote.expenses');
+assertOk('state.fund===2140+feeQuote.margin-state.report.training-state.report.bills && actualBudget().includes("수익 분담금")');
+setup('state.month=9;state.hp=62;state.stress=76');
+assertOk('!criticalHealth(state)');
+run('state.hp=52');
+assertOk('criticalHealth(state)');
 // High stress spends condition on work; sick leave requires low condition as well.
 setup('state.hp=76;state.stats.체력=50;state.motivation=70;state.stress=75;updateIllness(state)');
 assertOk('!state.ill && healthNotice(state).includes("손이 떨리") && careActivity(state,"accounts")==="accounts"');

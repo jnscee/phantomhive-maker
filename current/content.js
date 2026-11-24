@@ -272,7 +272,16 @@ function businessTerms(run,id){
 function operatingCost(shop){
   return Object.values(shop).reduce((sum,level)=>sum+5*(level-1)+(level>=3?6:0),0);
 }
-function supplyPlan(run,shop,demand,unit,receipt){
+const profitContributionFloor=1600;
+const profitContributionUpperBand=2100;
+function profitContribution(run,margin,livingCosts){
+  const reserve=Math.max(profitContributionFloor,run.accounts?.opening??run.fund);
+  const retained=Math.min(margin,run.fund+margin-livingCosts-reserve);
+  if(retained<=0)return 0;
+  const firstBand=Math.min(retained,Math.max(0,profitContributionUpperBand-reserve));
+  return Math.floor(firstBand*.65+(retained-firstBand)*.85);
+}
+function supplyPlan(run,shop,demand,unit,receipt,livingCosts=0){
   const id=run.product,order=run.order?.due===run.month?run.order:null;
   const stock={...run.stock},fine={...run.fineStock};
   stock[id]+=run.qty;
@@ -296,7 +305,10 @@ function supplyPlan(run,shop,demand,unit,receipt){
   const opening=run.accounts?.opening??run.fund;
   const guaranteeFee=expanded?Math.ceil(Math.max(0,reserve-Math.max(0,opening))/3):0;
   const trade={holding,freight,freightAllowance,guaranteeFee,operation:operatingCost(shop)+guaranteeFee,penalty:short*(order?.shortFee??2),wholesale:order?shipped*order.rate:0,shipped,short,order,stock,fine};
-  const revenue=sold*receipt+trade.wholesale,cost=run.qty*unit,expenses=holding+freight+trade.penalty+trade.operation;
+  const revenue=sold*receipt+trade.wholesale,cost=run.qty*unit;
+  const baseExpenses=holding+freight+trade.penalty+trade.operation;
+  trade.contribution=profitContribution(run,revenue-cost-baseExpenses,livingCosts);
+  const expenses=baseExpenses+trade.contribution;
   return {unit,demand,receipt,sold,available,cost,revenue,expenses,margin:revenue-cost-expenses,trade};
 }
 function recordTrading(run,id,sold,trade){
