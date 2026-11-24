@@ -289,10 +289,12 @@ function facilityLedger(){
    return {room,n,cost,condition};
  });
  const total=rooms.reduce((sum,item)=>sum+item.cost,0);
- const rows=rooms.map(({room,n,cost,condition})=>
-   '<tr><th scope="row">'+room.name+' <small>Lv.'+n+'</small></th><td>'+money(cost)+'</td><td><span class="room-health"><meter aria-label="'+room.name+' 상태" min="0" max="100" value="'+condition+'"></meter><b>'+condition+'%</b></span></td></tr>').join("");
+ const cards=rooms.map(({room,n,cost,condition})=>
+   '<li><header><strong>'+room.name+'</strong><small>Lv.'+n+'</small></header>'+
+   '<div><span>월 비용</span><b>'+money(cost)+'</b></div>'+
+   '<div><span>상태</span><span class="room-health"><meter aria-label="'+room.name+' 상태" min="0" max="100" value="'+condition+'"></meter><b>'+condition+'%</b></span></div></li>').join("");
  return '<details class="estate-ledger"'+(facilityLedgerOpen?' open':'')+'><summary><span>시설별 유지비와 상태 <small>월 시설 유지비</small></span><strong>'+money(total)+'</strong></summary>'+
-   '<div class="estate-ledger-body"><table><thead><tr><th scope="col">시설</th><th scope="col">월 비용</th><th scope="col">상태</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+   '<div class="estate-ledger-body"><ul class="facility-pairs">'+cards+'</ul>'+
    '<small>공통 관리비 £36과 경비 절감액은 별도입니다.</small></div></details>';
 }
 
