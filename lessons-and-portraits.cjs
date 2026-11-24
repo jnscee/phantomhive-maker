@@ -200,7 +200,17 @@ async function check(browserType){
         assert.ok(await page.locator('#ciel-aside').textContent());
         assert.equal(await portrait.evaluate(e=>getComputedStyle(e).animationName),'ciel-greeting-hop');
         await page.locator('#ciel-greet').press('Enter');
-        await page.locator('[data-action="open-guide"]').click();
+        await page.locator('#nav [data-action="tab:plan"]').click();
+        const planned=await page.evaluate(()=>JSON.stringify(state.plan));
+        await page.locator('#system-status').click();
+        assert.ok((await page.locator('#sheet').innerText()).includes('편성한 일정의 예상 변동'));
+        assert.equal(await page.locator('.attributes .attribute:not(.attr-label)').count(),7);
+        await page.locator('#system-back').click();
+        assert.equal(await page.evaluate(()=>tab),'plan');
+        assert.equal(await page.evaluate(()=>JSON.stringify(state.plan)),planned);
+        await page.locator('#system-save').click();
+        await page.locator('.notebook-guide > summary').click();
+        await page.locator('.notebook-guide [data-action="open-guide"]').click();
         assert.ok((await page.locator('#home-standing').getAttribute('src')).endsWith(file));
         await page.locator('[data-action="guide-close"]').click();
         assert.equal(await page.evaluate(()=>state.month),month);

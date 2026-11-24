@@ -941,7 +941,7 @@ function statusPanel(){
       value+'%"></i></span><b>'+value+'</b><em class="'+((i===1?delta>0:delta<0)?"danger":"good")+'">'+(delta?signed(delta):"–")+'</em></div>';
   }).join("");
   return frame(state.ill?"시엘 상태 · 병중":"시엘 상태",'<div class="inline"><b>시엘 팬텀하이브</b><span class="small muted">'+
-    (state.phase==="plan"?"월말 예상 변동":"이번 달 변동")+'</span></div><div class="hud-group">'+meters+
+    (state.phase==="plan"?"편성한 일정의 예상 변동":"이번 달 변동")+'</span></div><div class="hud-group">'+meters+
     '</div><div class="hud-group"><div class="attributes"><div class="attribute attr-label muted"><span>능력치</span><b>현재</b><em>변동</em></div>'+
     stats.map(name=>{
       const delta=predicted?.stats?(state.phase==="plan"?predicted.stats[name]-state.stats[name]:state.stats[name]-predicted.stats[name]):0;
@@ -1224,6 +1224,7 @@ function render(focus=false,playbackOffset=0){
   musicPlayer.sync(trackForView());
   stopPlayback();
   $("system-back").disabled=tab==="home"||tab==="title";
+  $("system-status").setAttribute("aria-pressed",String(tab==="status"));
   $("system-book").setAttribute("aria-pressed",String(tab==="record"));
   $("system-save").setAttribute("aria-pressed",String(tab==="save"));
   const opening=inOpening();
@@ -1447,6 +1448,7 @@ document.addEventListener("keydown",event=>{
 });
 let pendingConfirmation=null;
 let lastMenu="tab:plan";
+const utilityTabs=["status","record","save"];
 let utilityOrigin=null;
 function askConfirmation(key,title,description,label,rect,extra=""){
   pendingConfirmation=key;
@@ -1661,8 +1663,8 @@ function handleAction(key,rect,confirmed=false){
     if(["contract","guide"].includes(state.phase)&&!["save","plan","title"].includes(id)){tab="plan";render(true);return;}
     if(id==="chat"&&state.phase!=="plan"){announce("진행 중인 일정과 결산을 먼저 마쳐 주세요.");return;}
     if(id==="plan")lessonPage=Math.max(0,categories.findIndex(([,list])=>list.includes(state.plan[selectedSlot])));
-    if(["record","save"].includes(id)){
-      if(!["record","save"].includes(tab))utilityOrigin=tab;
+    if(utilityTabs.includes(id)){
+      if(!utilityTabs.includes(tab))utilityOrigin=tab;
     }else utilityOrigin=null;
     if(id==="staffing"){selectedEmployee=null;estateReturnScroll=$("panel").scrollTop;}
     const openManagement=tab==="home"&&id==="estate";
@@ -1683,10 +1685,10 @@ function handleAction(key,rect,confirmed=false){
     if(tab==="save"&&utilityOrigin==="title"){utilityOrigin=null;tab="title";render(true);return;}
     if(tab==="staffing"){tab="estate";render();$("panel").scrollTop=estateReturnScroll;focusAction("tab:staffing");return;}
     if(["contract","guide"].includes(state.phase)){tab="plan";render(true);return;}
-    editingVisit=false;
-    if(["record","save"].includes(tab)&&utilityOrigin){
+    if(utilityTabs.includes(tab)&&utilityOrigin){
       tab=utilityOrigin;utilityOrigin=null;render(true);respond("back",rect);return;
     }
+    editingVisit=false;
     tab="home";render();focusAction(commands.find(([action])=>action===lastMenu)?.[0]||"tab:plan");respond("back",rect);return;
   }
   if(action==="run"){
