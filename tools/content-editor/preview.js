@@ -14,6 +14,14 @@ if(editorPreview?.kind==="opening"){
   state.openingLine=openingLines.findIndex(line=>line.sceneIndex===editorPreview.scene);
 }else if(editorPreview?.kind==="ending"){
   endingReplay={id:editorPreview.id,at:0,origin:"record"};
+  if(editorPreview.career){
+    saves.londonCareer=editorPreview.career;
+    endingReplay.at=endingScenes.vowNoTitle.lines.length-londonEndingScenes[editorPreview.career].length;
+  }
+  if(editorPreview.person){
+    saves.farewellGallery={[editorPreview.id]:{age:12,cast:[[editorPreview.person,editorPreview.tier]]}};
+    endingReplay.farewell=0;
+  }
   state.phase="plan";
   tab="endingMemory";
 }else if(["event","recruit"].includes(editorPreview?.kind)){

@@ -38,3 +38,12 @@ export async function write(key,value,expectedRevision) {
     transaction.onabort=()=>reject(conflict?new Error("다른 탭에서 저장했습니다. 변경을 복사한 뒤 새로고침해 주세요."):transaction.error);
   });
 }
+
+export async function releaseKeys(){
+  const db=await opened;
+  return new Promise((resolve,reject)=>{
+    const req=db.transaction("workspace").objectStore("workspace").getAllKeys(IDBKeyRange.bound("release:","release:\uffff"));
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}

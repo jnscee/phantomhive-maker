@@ -157,6 +157,21 @@ export function catalog(files, publishedAssets = [], version = "") {
     add(g,"chapters.js",prop(p.value,"alt"),"대표 CG 대체 설명");
     add(g,"chapters.js",prop(p.value,"lines"),"대사 순서","lines",undefined,{metadata:"illustration",artOptions,defaultArt:id,cues:true});
   }
+  for (const route of properties(variable("chapters.js","londonEndingScenes"))) {
+    const career=propertyName(route);
+    const g=group("story","career-"+career,"문장 없는 마차 · "+(career==="merchant"?"사업가":"정보상"),"런던 진로",{kind:"ending",id:"vowNoTitle",career});
+    add(g,"chapters.js",route.value,"대사 순서","lines",undefined,{metadata:"illustration",artOptions,defaultArt:"vowNoTitle",cues:true});
+  }
+  for (const entry of properties(variable("chapters.js","endingFarewells"))) {
+    const person=propertyName(entry), name=value(prop(variable("recruit.js","recruitNames"),person))??person;
+    for (const mode of properties(entry.value)) {
+      const mourning=propertyName(mode)==="mourning";
+      rows(mode.value).forEach((line,tier)=>{
+        const g=group("story",["farewell",person,propertyName(mode),tier].join("-"),name+" · "+(mourning?"추모":"배웅")+" · 신뢰 "+tier,"엔딩 인사",{kind:"ending",id:mourning?"ill":"vowNoTitle",person,tier});
+        add(g,"chapters.js",line,"대사");
+      });
+    }
+  }
   for (const [id,title] of artOptions) {
     const g=group("assets","cg-"+id,"CG · "+title,id);
     g.asset=inventory.ending[id];

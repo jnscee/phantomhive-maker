@@ -923,7 +923,13 @@ function payload() {
 async function refresh() {
   data=await api("/api/catalog");
   if(isWeb)inspectStoryRoutes=(await web).inspectRoutes;
-  if(isWeb) $("export-older").hidden=!data.hasOlder;
+  if(isWeb){
+    $("release-info").textContent="배포 "+data.release+" · "+(data.sourceCommit||"").slice(0,7)+(data.hasDraft?" · 브라우저 편집본":" · 공개 원본");
+    const past=$("past-release");
+    past.replaceChildren(...data.past.map(id=>new Option(id.slice(8),id)));
+    $("export-older").hidden=past.hidden=!data.past.length;
+    $("export-backup").hidden=!data.hasDraft&&!data.past.length;
+  }
   if(!currentGroup()) selected=filtered()[0]?.key;
   drawList();
   drawDesk();
@@ -1335,7 +1341,13 @@ if(isWeb){
   });
   $("editor-note").hidden=false;
   $("export-edits").addEventListener("click",()=>void download("changes"));
-  $("export-older").addEventListener("click",()=>void download("older"));
+  $("export-backup").addEventListener("click",()=>void download("backup"));
+  const checkRelease=async()=>{
+    try{if(await (await web).deploymentChanged())$("release-info").textContent="새 배포가 있습니다. 편집 내용을 저장하고 ZIP으로 백업한 뒤 새로고침하세요.";}catch{}
+  };
+  window.addEventListener("focus",checkRelease);
+  setInterval(checkRelease,120000);
+  $("export-older").addEventListener("click",()=>void download($("past-release").value));
 }
 window.addEventListener("beforeunload",event=>{
   if(draftCount()) event.preventDefault();

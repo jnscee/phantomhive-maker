@@ -1,6 +1,6 @@
 import {catalog,applyEdits,additionPath,inspectRoutes} from "./catalog.mjs";
 import {zip,strToU8} from "./fflate.mjs";
-import {read,write} from "./storage.mjs";
+import {read,write,releaseKeys} from "./storage.mjs";
 
 export {additionPath,inspectRoutes};
 
@@ -25,8 +25,10 @@ const [original,gameHTML,previewScript]=await Promise.all([
 ]);
 const key="release:"+release;
 let saved=await read(key)??{revision:"initial",sources:{},media:{},previous:null};
-const recent=await read("last-release");
-const older=recent&&recent!==release?await read("release:"+recent):null;
+export async function deploymentChanged(){
+  const latest=await load(new URL("manifest.json",scope),"json",{cache:"no-store"});
+  return latest.release!==release||latest.sourceCommit!==sourceCommit;
+}
 const hasFiles=workspace=>Boolean(workspace&&(Object.keys(workspace.sources).length||Object.keys(workspace.media).length));
 
 function model(){
@@ -77,7 +79,7 @@ function edits(current,body){
 const mediaUrls=new Map();
 
 async function commit(update,previous){
-  const next={revision:crypto.randomUUID(),sources:update.sources,media:update.media,previous};
+  const next={sourceCommit,baseSources:Object.fromEntries(Object.keys(update.sources).map(name=>[name,original[name]])),revision:crypto.randomUUID(),sources:update.sources,media:update.media,previous};
   await write(key,next,saved.revision);
   for(const [filename,url] of mediaUrls){
     if(saved.media[filename]!==next.media[filename]){
@@ -198,7 +200,7 @@ export async function api(path,body){
   if(path==="/api/catalog"){
     const {groups,inventory,version,trackOptions,roomOptions,artOptions,recruitCastOptions,recruitArtOptions,recruitTargets,cueFields}=current;
     const recruits=[...recruitTargets.keys()].map(id=>[id,groups.find(group=>group.key==="recruit-"+id)?.title??id]);
-    return {groups,inventory,version,trackOptions,roomOptions,artOptions,recruitCastOptions,recruitArtOptions,recruits,cueFields,canUndo:Boolean(saved.previous),hasOlder:hasFiles(older),publishCount:sourceCommit?Object.keys(saved.sources).length+Object.keys(saved.media).length:0};
+    return {groups,inventory,version,trackOptions,roomOptions,artOptions,recruitCastOptions,recruitArtOptions,recruits,cueFields,canUndo:Boolean(saved.previous),release,sourceCommit,hasDraft:hasFiles(saved),past:(await releaseKeys()).filter(id=>id!==key),publishCount:sourceCommit?Object.keys(saved.sources).length+Object.keys(saved.media).length:0};
   }
   if(path==="/api/preview")return preview(current,body);
   if(path==="/api/save"){
@@ -234,11 +236,23 @@ export async function exportZip(kind){
     }));
     return archive(entries,"phantomhive-game.zip");
   }
-  const workspace=kind==="older"?older:saved;
+  if(kind==="backup"){
+    const entries={};
+    for(const id of await releaseKeys()){
+      const work=await read(id);
+      const prefix=id.slice(8)+"/";
+      entries[prefix+"source.json"]=strToU8(JSON.stringify({sourceCommit:work.sourceCommit??null,baseSources:work.baseSources??{}}));
+      for(const [name,source] of Object.entries(work.sources))entries[prefix+"current/"+name]=strToU8(source);
+      for(const [name,blob] of Object.entries(work.media))entries[prefix+"current/"+name]=new Uint8Array(await blob.arrayBuffer());
+    }
+    return archive(entries,"phantomhive-editor-backup.zip");
+  }
+  const past=kind.startsWith("release:");
+  const workspace=past?await read(kind):saved;
   if(!hasFiles(workspace))throw new Error("먼저 편집 내용을 저장해 주세요.");
   const entries=Object.fromEntries(Object.entries(workspace.sources).map(([name,source])=>["current/"+name,strToU8(source)]));
   for(const [name,blob] of Object.entries(workspace.media))entries["current/"+name]=new Uint8Array(await blob.arrayBuffer());
-  return archive(entries,kind==="older"?"phantomhive-previous-changes.zip":"phantomhive-changes.zip");
+  return archive(entries,past?"phantomhive-"+kind.slice(8)+".zip":"phantomhive-changes.zip");
 }
 
 
