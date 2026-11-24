@@ -116,14 +116,13 @@ html[data-game-motion=reduced] :is(#ciel-greet > .greeting-hop,.performer,.motio
 #scene[data-mode=market] .goods-ticket b {grid-column:1/-1;align-self:center;font-size:clamp(12px,1.35cqw,17px)}
 #scene[data-mode=market] .goods-ticket img {grid-column:1; width:26px;height:22px}
 #scene[data-mode=market] .goods-ticket strong {grid-column:2;align-self:center;font-size:clamp(15px,2cqw,24px)}
-#scene[data-mode=market] .shop-talk {grid-area:3/2;width:100%;margin:0;padding:8px}
+#scene[data-mode=market] .shop-talk {width:100%;margin:0;padding:8px}
 #scene[data-mode=market] .lau-standing {right:4%;height:95%}
 .estate-ledger>summary {cursor:pointer;font-weight:700;padding:7px 0}
 @media (orientation:portrait) and (max-width:650px) {
   #scene[data-mode=market] .lau-counter {grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;padding:4px 5% 9px}
   #scene[data-mode=market] .shop-purse {grid-area:1/1}
   #scene[data-mode=market] .goods-list {grid-area:2/1}
-  #scene[data-mode=market] .shop-talk {grid-area:3/1}
 }
 @media (orientation:landscape) and (max-height:530px) {
   #scene[data-mode=market] .lau-counter {padding:3px 4% 6px;grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
