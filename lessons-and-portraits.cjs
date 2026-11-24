@@ -161,7 +161,10 @@ async function check(browserType){
       page.setDefaultTimeout(12000); console.log(browserType.name(),viewport.width);
       await openGame(page);
       assert.ok(await page.locator('.book-cover').isVisible());
-      const notice=page.locator('.cover-notice');
+      const notice=page.locator('.book-cover .cover-notice');
+      const aiNotice=page.locator('.cover-ai-notice');
+      assert.ok(await aiNotice.isVisible());
+      assert.match(await aiNotice.innerText(),/생성형 AI/);
       assert.match(await notice.innerText(),/『흑집사』 비공식 2차 창작 팬게임/);
       assert.match(await notice.innerText(),/원작과 다른 IF 세계관/);
       assert.match(await notice.innerText(),/허구이며 현실과 무관합니다/);
