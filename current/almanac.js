@@ -384,7 +384,7 @@ function courtFolio(rows){
   const wording=["왕실 서신에 가문의 이름이 아직 오르지 않았습니다.","궁정에서 팬텀하이브의 근황을 묻기 시작했습니다.","왕실 서기관이 가문의 평판과 살림을 함께 검토하고 있습니다.","작위 회복에 필요한 조건을 모두 갖췄습니다."];
   const priority=courtEducationPriority();
   const pending=rows.find(row=>!row[1]);
-  const advice=priority?priority+" "+state.stats[priority]+"/"+courtEducation[priority][0]+" · 다음 일정 추천: "+courtEducation[priority][1]:pending?.[2];
+  const advice=priority?statLabel(priority)+" "+(courtEducation[priority][0]-state.stats[priority])+"점 부족 · "+courtEducation[priority][1]:pending?.[2];
   const title=approved?"작위 회복":held?"이번 심의 유보":stages[stage];
   const description=approved?"왕실이 백작 작위를 승인했습니다.":held?"이번 회차의 작위 승인이 유보되었습니다.":wording[stage];
   const steps=stages.map((label,index)=>

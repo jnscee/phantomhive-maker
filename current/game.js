@@ -77,16 +77,24 @@ function btn(label,action,disabled=false,style=""){
   return '<button type="button" class="'+style+'" data-action="'+action+'" '+(disabled?"disabled":"")+'>'+label+'</button>';
 }
 const masteryThreshold=485;
-function lessonGain(key,current,base,month,flags=state.flags){
+const masteryFinish=497;
+function ordinaryAbilityGain(current,gain){
+  return Math.min(gain,Math.max(0,masteryFinish-current));
+}
+function lessonGain(key,current,base,month,flags=state.flags,primaryGreat=false){
   const rate=1.1+Math.min(month-1,12)*0.065;
   const max=statMax(key);
   const mastery=Math.max(.14,1-Math.max(0,current-280)/235);
   const polish=1-.45*cap((current-450)/50,1);
   const gain=Math.round(base*rate*mastery*polish*max/abilityMax);
   const remaining=max-current;
-  if(flags.lateDispatch)return Math.min(remaining,gain);
+  if(flags.lateDispatch&&primaryGreat){
+    return Math.min(remaining,gain,Math.max(0,masteryFinish-current)+2);
+  }
+  const ordinary=ordinaryAbilityGain(current,gain);
+  if(flags.lateDispatch)return ordinary;
   const beforeMastery=Math.max(0,masteryThreshold-current);
-  return Math.min(remaining,gain,beforeMastery+1);
+  return Math.min(ordinary,beforeMastery+1);
 }
 function deltaTone(name,delta){
   if(!delta)return "steady";
@@ -148,7 +156,7 @@ function businessTailwind(id){
   const trend=["가족","어린이","다과회","어린이","가족","다과회","어린이","가족","다과회","가족","선물","선물"][season];
   return {audience:audience[id],trend,bonus:state.month===1?0:(audience[id]===trend?3:0)+(id==="hamper"&&season>=10?2:0)};
 }
-function changeStat(name,value){state.stats[name]=cap(state.stats[name]+value,statMax(name));}
+function changeStat(name,value){state.stats[name]=cap(state.stats[name]+ordinaryAbilityGain(state.stats[name],value),statMax(name));}
 function flagEvent(id,effect){
   state.flags[id]=true;
   effect();
@@ -301,7 +309,7 @@ function recordContractAdvance(amount){
 }
 const choiceMilestones={
   keys:"서재 관리 권한 인수",deed:"가문 증빙 확보",market:"시장 거래 기록",audit:"회계 감사 기록",
-  lateDispatch:"두 번째 종합 실기 완료 · 능력치 "+masteryThreshold+" 이후 일정 성장 한도 해제",
+  lateDispatch:"두 번째 종합 실기 완료 · 497점을 넘기려면 해당 능력이 주특기인 수업에서 대성공",
   lookout:"망보기 기록",postmark:"소인 기록",agniLesson:"아그니와의 집사 교류 기록",agniTea:"아그니와의 다과 기록",
   carrierSpace:"정기 운송 4자리 확보",checkedReceipt:"영수증 확인",sharedReceipt:"영수증 공유",teaBlend:"차 배합 기록",morningGloves:"아침 장갑 기록"
 };
@@ -509,7 +517,7 @@ function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),
   const changes=Object.entries(a.gains).map(([name,value])=>{
     const before=run.stats[name];
     const secondary=name!==primary;
-    const gain=grade==="poor"&&secondary?-1:lessonGain(name,before,(value+(advancedCourse(run,id)?3:0)+(room?(run.level[room]-1)*4:0))*(grade?lessonGrades[grade].factor:1)*(weather?1.5:1)*(run.neglect>=2?.85:1),run.month,run.flags);
+    const gain=grade==="poor"&&secondary?-1:lessonGain(name,before,(value+(advancedCourse(run,id)?3:0)+(room?(run.level[room]-1)*4:0))*(grade?lessonGrades[grade].factor:1)*(weather?1.5:1)*(run.neglect>=2?.85:1),run.month,run.flags,!secondary&&a.stress>0&&grade==="great");
     run.stats[name]=cap(before+gain,statMax(name));
     return statLabel(name)+" "+signed(run.stats[name]-before);
   });
@@ -523,7 +531,7 @@ function applyEstateTraining(run){
   if(cooperation)run.motivation=cap(run.motivation+2);
   run.hp=cap(run.hp+(shiftAssigned("kitchen")?3:0)+(run.level.kitchen-1)*6+(run.staff==="kitchen"?3:0));
   if(run.staff==="library"&&run.plan.some(id=>id==="study"||id==="inquiry")){
-    run.stats.지성=cap(run.stats.지성+(run.trust>=3?4:2),abilityMax);
+    run.stats.지성+=ordinaryAbilityGain(run.stats.지성,run.trust>=3?4:2);
   }
 }
 function projectTraining(beforeSlot=null){
@@ -540,8 +548,8 @@ function projectTraining(beforeSlot=null){
   return run;
 }
 const courtEducation={
-  지성:[480,"서재 수업"],기품:[485,"귀족 예법"],매력:[460,"사교 수업"],
-  통찰:[475,"가문 기록 조사"],경영:[470,"팬텀사 회계"],의지:[300,"사건 조사"]
+  지성:[485,"서재 수업"],기품:[495,"귀족 예법"],매력:[470,"사교 수업"],
+  통찰:[480,"가문 기록 조사"],경영:[480,"팬텀사 회계"],의지:[300,"사건 조사"],체력:[420,"승마"]
 };
 function courtEducationPriority(keys=Object.keys(courtEducation)){
   return keys.filter(k=>state.stats[k]<courtEducation[k][0])
@@ -550,16 +558,16 @@ function courtEducationPriority(keys=Object.keys(courtEducation)){
 function courtRows(){
   const rooms=Object.values(state.level).filter(level=>level>=2).length;
   const profitableMonths=state.salesBook.filter(row=>row.revenue>row.cost+(row.expenses||0)).length;
-  function statPair(label,first,second){
-    const keys=[first,second];
+  function statRow(label,...keys){
     const next=courtEducationPriority(keys);
-    const progress=keys.map(k=>k+" "+state.stats[k]+"/"+courtEducation[k][0]).join(" · ");
+    const progress=keys.map(k=>statLabel(k)+" "+state.stats[k]+"/"+courtEducation[k][0]).join(" · ");
     return [label,!next,progress+(next?" · 추천 수업: "+courtEducation[next][1]:"")];
   }
   return [
-    statPair("귀족 교육","지성","기품"),
-    statPair("사교와 조사","매력","통찰"),
-    statPair("사업과 결단","경영","의지"),
+    statRow("귀족 교육","지성","기품"),
+    statRow("사교와 조사","매력","통찰"),
+    statRow("사업과 결단","경영","의지"),
+    statRow("현장 수행","체력"),
     ["저택 재건",rooms>=2,"서재와 응접실, 주방을 개수하세요."],
     ["회사 기반",profitableMonths>=8,"판매·납품 흑자 "+profitableMonths+"/8개월 (상금 제외)"],
     ["왕실 신임",state.royal>=6,"왕실 서신에 답하거나 납품 인증으로 신임을 얻으세요."],
@@ -1197,9 +1205,9 @@ const exchangeAmount=6;
 function exchangeQuote(g){
   const current=state.stats[g.raise];
   const limit=state.flags.lateDispatch?exchangeAmount:Math.max(0,masteryThreshold-current)+1;
-  const gain=Math.min(exchangeAmount,statMax(g.raise)-current,limit);
+  const gain=ordinaryAbilityGain(current,Math.min(exchangeAmount,limit));
   const reason=state.flags.lauExchangeMonth===state.month?"이달의 교본은 이미 사용했습니다.":
-    gain<=0?statLabel(g.raise)+" 수치가 이미 한도에 도달했습니다.":
+    gain<=0?"교본으로 기를 수 있는 "+statLabel(g.raise)+"의 한도에 도달했습니다.":
     state.stats[g.lower]<exchangeAmount?statLabel(g.lower)+" 수치가 "+exchangeAmount+" 이상 필요합니다.":"";
   return {gain,reason};
 }

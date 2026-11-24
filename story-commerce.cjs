@@ -240,7 +240,7 @@ run('placeEmployee("agni","post");settleLondon(state);settleLondon(state);state=
 assertOk('state.london.book.length===1 && state.london.jobs.agni==="kitchen" && state.london.skill.agni===10 && state.hp===100 && state.renown===1');
 assertOk('londonPlan(state).power.salon===4 && state.london.book[0].summary.includes("컨디션 +1")');
 run('state.month=2;state.phase="plan";placeEmployee("agni","post");state.stats.통찰=499;settleLondon(state)');
-assertOk('state.stats.통찰===500 && state.renown===2 && state.london.book.length===2');
+assertOk('state.stats.통찰===499 && state.renown===2 && state.london.book.length===2');
 run('state.month=3;placeEmployee("agni","off");placeEmployee("soma","off");settleLondon(state)');
 assertOk('state.london.book.length===2 && londonPlan(state).power.salon===0');
 setup('state.flags.townhouse=true;recruit("soma");recruit("agni");tab="townhouse";placeEmployee("soma","post");placeEmployee("agni","post")');
@@ -493,6 +493,17 @@ assertOk('graduate.stats.지성>486 && projectTraining().stats.지성===486 && s
 run('changeStat("지성",6);state.flags.lateDispatch=true;persist();state=normalizeSave(saves.auto)');
 assertOk('state.stats.지성===491 && lessonGain("지성",491,20,25)>1 && !statusPanel().includes("과목 실기 0/6")');
 
+// Mastery above 497 requires two great results in the stat's primary subject.
+for(const [flag,grade,expected] of [[false,"great",497],[true,"steady",497],[true,"great",499]]){
+  ctx.mflag=flag;ctx.mgrade=grade;
+  setup('state.month=34;state.stats.지성=state.stats.통찰=497;state.flags.lateDispatch=mflag;state.level.library=3;applyActivity(state,"study",mgrade)');
+  assert.equal(run('state.stats.지성'),expected);
+  assert.equal(run('state.stats.통찰'),497);
+}
+run('changeStat("지성",20);state=normalizeSave(state);applyActivity(state,"study","great")');
+assertOk('state.stats.지성===500 && state.stats.통찰===497');
+run('changeStat("지성",4)');
+assertOk('state.stats.지성===500');
 // High stress spends condition on work; sick leave requires low condition as well.
 setup('state.hp=76;state.stats.체력=50;state.motivation=70;state.stress=75;updateIllness(state)');
 assertOk('!state.ill && healthNotice(state).includes("손이 떨리") && careActivity(state,"accounts")==="accounts"');
@@ -551,8 +562,8 @@ run('state.hp=57;state.stress=51;persist()');
 assertOk('!state.ill && hasPendingVisit()');
 
 setup('for(const [key,[target]] of Object.entries(courtEducation))state.stats[key]=target;Object.assign(state.level,{library:2,kitchen:2});state.salesBook=Array.from({length:8},()=>({revenue:30,cost:15}));state.royal=6;state.renown=32;state.fund=1200;state.debt=0');
-assertOk('qualifies() && courtRows().length===8');
-for(const change of ['stats.지성--','stats.기품--','stats.매력--','stats.통찰--','stats.경영--','stats.의지--','level.kitchen--','salesBook.pop()','royal--','renown--','fund--','debt++']){
+assertOk('qualifies() && courtRows().length===9');
+for(const change of ['stats.지성--','stats.기품--','stats.매력--','stats.통찰--','stats.경영--','stats.의지--','stats.체력--','level.kitchen--','salesBook.pop()','royal--','renown--','fund--','debt++']){
   const previous=run('structuredClone(state)');
   run('state.'+change);assertOk('!qualifies()');ctx.savedCourt=previous;run('state=savedCourt');
 }

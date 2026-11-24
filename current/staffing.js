@@ -53,7 +53,7 @@ function settleLondon(run){
   if(!working.length)return;
   const {power,request,ready}=londonPlan(run);
   const health=Math.min(100-run.hp,power.kitchen);
-  const insight=Math.min(statMax("통찰")-run.stats.통찰,power.post);
+  const insight=ordinaryAbilityGain(run.stats.통찰,power.post);
   run.hp+=health;
   run.stats.통찰+=insight;
   if(ready)run.renown++;
