@@ -15,10 +15,13 @@ function playMarkup(){
   const stageText=(advancedCourse(state,id)?advancedLessons[id]+" ":"")+(outcome?lessonPlayback(id,seq.grade,seq.remark):line);
   const all=Object.keys(seq.after).filter(k=>seq.before[k]!==seq.after[k]);
   let rows=all.map(k=>'<div class="stage-stat"><span>'+statLabel(k)+'</span><em data-stat="'+k+'">'+seq.before[k]+'</em><i><b></b></i><small>'+signed(seq.after[k]-seq.before[k])+'</small></div>').join("");
+  const weather=weatherFor(state);
+  const season=weather?' <span class="season-weather" data-weather="'+state.weather+'">'+weather.name+'</span>':"";
+  const remark=weather&&part===0?weather.scene:stageText;
   return '<div class="lesson-art"><div class="lesson-plane" data-room="'+room+'"><img class="stage-room" src="'+sceneArt[room]+'" alt="">'+
     '<div class="performer '+movement+'" data-frames="'+pose.join(" ")+'"><img src="'+actors[pose[0]]+'" alt="'+courseName(id)+' 중인 시엘"><span class="motion-object '+prop+'" aria-hidden="true">'+motionObjects[prop]+'</span></div></div></div>'+
-    '<div class="stage-top"><b>'+stageNames[room]+'</b><span>'+slotNames[part]+' · '+courseName(id)+(outcome?' · '+outcome:'')+'</span></div>'+
-    '<div class="stage-record">'+rows+'</div><div class="stage-foot"><p>'+stageText+'</p><div><button data-action="speed">재생 ×'+speed+'</button><button data-action="skip">이 순 마치기 ›</button></div></div>';
+    '<div class="stage-top"><b>'+stageNames[room]+season+'</b><span>'+slotNames[part]+' · '+courseName(id)+(outcome?' · '+outcome:'')+'</span></div>'+
+    '<div class="stage-record">'+rows+'</div><div class="stage-foot"><p>'+remark+'</p><div><button data-action="speed">재생 ×'+speed+'</button><button data-action="skip">이 순 마치기 ›</button></div></div>';
 }
 // Match background-size: cover, using the actual visible room even on the first frame.
 function fitLessonRoom(image){
@@ -77,6 +80,7 @@ function enterSlot(){
   seq.remark=(state.counts[id]||0)%2;
   delete seq.examNote;
   if(id!==planned)seq.sickAbsence=true;
+  if(id==="riding"&&state.stats.체력<90)seq.strainedRide=true;
   const changes=applyActivity(state,id,seq.grade,planned);
   state.counts[id]=(state.counts[id]||0)+1;
   if(seq.onSickLeave&&id!==planned)state.log.push(actions[planned].name+" 결석 · 요양으로 대체 · 예약 비용 "+money(paid));

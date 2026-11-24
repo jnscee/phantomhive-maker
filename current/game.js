@@ -29,8 +29,9 @@ function initial(){
 const previewQuery=new URL(document.baseURI).searchParams;
 const previewFair=previewQuery.has("fair-preview")?(contests.find(f=>f.id===previewQuery.get("fair-preview"))||contests[0]):null;
 const previewStory=previewQuery.get("story-preview");
+const previewSetback=monthlySetbacks.find(item=>item.id===previewStory);
 const previewCompanyCase=companyCases.find(item=>item.id===previewStory);
-const storyDemo=Boolean(previewCompanyCase)||Object.hasOwn(middleObservations,previewStory);
+const storyDemo=Boolean(previewSetback||previewCompanyCase)||Object.hasOwn(middleObservations,previewStory);
 const storageKey="earl-phantomhive-maker-v1";
 let saves, storageOk=true;
 try{ saves=previewFair||storyDemo?{}:JSON.parse(localStorage.getItem(storageKey)||"{}"); }catch{ storageOk=false; }
@@ -86,13 +87,13 @@ function deltaTone(name,delta){
 }
 function scheduleNote(id){
   const a=actions[id];
-  const effects=Object.entries(a.gains).map(([k,v])=>[k,lessonGain(k,state.stats[k],v+(advancedCourse(state,id)?3:0),state.month)]);
   const projection=projectTraining(selectedSlot);
   updateIllness(projection);
   const actual=careActivity(projection,id);
-  const hp=projection.hp,stress=projection.stress;
+  const hp=projection.hp,stress=projection.stress,prior={...projection.stats};
   applyActivity(projection,actual,"steady",id);
   if(actual!==id)return "병환 · "+actions[actual].name+" 예정";
+  const effects=Object.keys(a.gains).map(k=>[k,projection.stats[k]-prior[k]]);
   if(projection.hp!==hp)effects.push(["건강",projection.hp-hp]);
   effects.push(["스트레스",projection.stress-stress]);
   const markers=effects.map(([name,delta])=>'<span class="plan-effect">'+escapeHTML(statLabel(name))+' <b class="'+deltaTone(name,delta)+'">'+signed(delta)+'</b></span>');
@@ -128,7 +129,7 @@ function investmentEffect(order){
   return {production,extraSales,design,wrapping,overheadChange,total:order.margin-base.margin};
 }
 function overhead(){
-  return 36+Object.values(state.annex||{}).reduce((v,l)=>v+Math.max(0,l-1)*2,0)-(state.annex.guard-1)*8-(Object.entries(state.jobs).filter(([,r])=>r==="guard").length*2)-(shiftAssigned("guard")?1:0)+Object.values(state.level).reduce((sum,l)=>sum+l*4,0)+Math.min(24,state.debt)-(state.houseCare==="defer"?8:0);
+  return (weatherFor(state)?.fee||0)+36+Object.values(state.annex||{}).reduce((v,l)=>v+Math.max(0,l-1)*2,0)-(state.annex.guard-1)*8-(Object.entries(state.jobs).filter(([,r])=>r==="guard").length*2)-(shiftAssigned("guard")?1:0)+Object.values(state.level).reduce((sum,l)=>sum+l*4,0)+Math.min(24,state.debt)-(state.houseCare==="defer"?8:0);
 }
 function cashNeeded(){
   return plannedTuition()+state.qty*forecast().unit;
@@ -144,7 +145,7 @@ function flagEvent(id,effect){
   state.flags[id]=true;
   effect();
 }
-const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),finalYearDecisions(),followupEvents(),appliedExams(),portfolioEvents(),visitorEvents(),companyCaseEvents(),authoredStoryEvents(),contests.map(contestEvent)).map(appendAuthoredOptions);
+const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),finalYearDecisions(),followupEvents(),appliedExams(),portfolioEvents(),visitorEvents(),setbackEvents(),companyCaseEvents(),authoredStoryEvents(),contests.map(contestEvent)).map(appendAuthoredOptions);
 
 function pendingEvent(){
   return events.find(event=>event.id===state.pending);
@@ -205,7 +206,7 @@ function overdueArrival(run){
 function settleMonth(){
   if(prepareContest(state))return;
   const duel=state.sequence.duel;
-  const {unit,demand,receipt=state.price,investment,opening:before,sickAbsence}=state.sequence;
+  const {unit,demand,receipt=state.price,investment,opening:before,sickAbsence,strainedRide}=state.sequence;
   const trainingPaid=state.sequence.trainingPaid??state.plan.reduce((sum,id)=>sum+(actions[id]?.cost||0),0);
   const visitAdvance=state.sequence.visitAdvance||0;
   const trade=state.sequence.trade,retailSold=state.sequence.retailSold??state.sequence.sold;
@@ -246,7 +247,7 @@ function settleMonth(){
   state.fund+=income-cost-bills-expenses;
   // Paid sales and supply contracts belong to Funtom. Scheduled work only trains Ciel.
   state.salesBook.push({month:state.month,product,sold,revenue:income,cost,advance:visitAdvance,investment,expenses,wholesale:trade?.wholesale||0,delivery:trade?.order?{id:trade.order.id,shipped:trade.shipped,qty:trade.order.qty}:null});
-  state.report={income,festivalIncome,cost,expenses,storage:trade?.holding||0,freight:trade?.freight||0,operating:trade?.operation||0,penalty:trade?.penalty||0,wholesale:trade?.wholesale||0,advance:visitAdvance,bills,debtPayment,sold,before,investment,training:trainingPaid};
+  state.report={weather:state.weather,income,festivalIncome,cost,expenses,storage:trade?.holding||0,freight:trade?.freight||0,operating:trade?.operation||0,penalty:trade?.penalty||0,wholesale:trade?.wholesale||0,advance:visitAdvance,bills,debtPayment,sold,before,investment,training:trainingPaid};
   if(sold>=14&&income>cost+expenses+25)state.renown+=1;
   state.log.push(products[product].name+" "+sold+"개 소매 · 매출 "+money(sold*receipt)+" / 생산비 "+money(cost)+" / 재고 "+state.stock[product]+"개");
   state.log.push("저택 유지·채무 상환 "+money(bills));
@@ -266,6 +267,8 @@ function settleMonth(){
   queue.push(...events.filter(e=>e.authored&&!state.flags[e.id]&&e.sees(state)).map(e=>e.id));
   const inquiry=dueCompanyCase(state);
   if(inquiry)queue.push(inquiry.id);
+  const setback=drawMonthlySetback(state,Boolean(strainedRide));
+  if(setback)queue.push(setback);
   state.pending=queue.shift()||null;
   state.eventQueue=queue;
   state.phase=state.pending?"event":"result";
@@ -340,7 +343,8 @@ function impactMarkup(impact){
     return '<li class="'+deltaTone(name,delta)+'"><span>'+escapeHTML(statLabel(name))+'</span><small>'+unit+before+' → '+unit+value+'</small><strong>'+signed(delta)+'</strong><i class="impact-track" aria-hidden="true" style="--low:'+low+'%;--high:'+high+'%"></i></li>';
   }).join("");
   const blocks='<ul>'+lines+'</ul>'+[...notes].map(n=>'<p>'+escapeHTML(n)+'</p>').join("")+(!lines&&!notes.size?'<p>능력치 변화 없음</p>':'');
-  return '<article id="impact-summary" class="dialogue" aria-label="선택 결과"><header>선택 결과</header><div class="impact-scroll">'+blocks+'</div>'+btn("확인","impact-close",false,"primary")+'</article>';
+  const heading=impact.setback?"사건 결과":"선택 결과";
+  return '<article id="impact-summary" class="dialogue" aria-label="'+heading+'"><header>'+heading+'</header><div class="impact-scroll">'+blocks+'</div>'+btn("확인","impact-close",false,"primary")+'</article>';
 }
 function choose(index){
   const event=pendingEvent();
@@ -349,12 +353,13 @@ function choose(index){
   const isRecruit=Object.hasOwn(recruitScenes,event.id);
   if(isRecruit&&recruitPage(event.id)!==recruitReadingOrder(event.id,Boolean(state.people.tanaka)).at(-1))return;
   const pages=termPages(event);
-  if(state.termOutcome||(pages&&(state.termPage||0)<pages.length-1))return;
+  if((event.setback&&state.flags[event.id])||state.termOutcome||(pages&&(state.termPage||0)<pages.length-1))return;
   const scriptedOutcome=pages&&(event.authored||!event.lines||observedLines(event));
   const examBefore=event.exam||scriptedOutcome?snapStats(state):null;
   const before=choiceSnapshot();
   flagEvent(event.id,choice.effect);
   showChoiceImpact(choice.label,before);
+  if(event.setback&&state.choiceImpact)state.choiceImpact.setback=true;
   let examNote="";
   if(examBefore){
     const after=snapStats(state);
@@ -447,7 +452,7 @@ function advance(){
   if(state.prototype?.approved){
     const p=state.prototype;if(!state.unlocked.includes(p.product))state.unlocked.push(p.product);state.productNotes??={};state.productNotes[p.product]=p;delete state.prototype;
   }
-  state.month++;state.planMonth=state.month;state.plan=emptyPlan();editingVisit=false;lessonPage=0;startAccounts(state);state.phase="plan";state.visit=null;selectedSlot=0;startFinnyAtTurn(state);tab=state.phase==="event"?"plan":"home";persist();render(true);
+  state.month++;state.weather=rollSeasonWeather(state.month);state.planMonth=state.month;state.plan=emptyPlan();editingVisit=false;lessonPage=0;startAccounts(state);state.phase="plan";state.visit=null;selectedSlot=0;startFinnyAtTurn(state);tab=state.phase==="event"?"plan":"home";persist();render(true);
 }
 function fatigueThreshold(stamina){
   return 65+Math.floor(cap(stamina,abilityMax)*10/abilityMax);
@@ -478,22 +483,23 @@ function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),
   const tired=(run.hp<40||run.stress>=tolerance||run.motivation<35)&&a.stress>0;
   const room=trainingRooms[id];
   const fieldPenalty=(categories[2][1].includes(id)&&run.stress>=55)?3:0;
+  const weather=weatherWorkout(id)?weatherFor(run):null;
   const stress=run.stress;
   const hp=run.hp;
-  run.stress=cap(run.stress+a.stress);
+  run.stress=cap(run.stress+a.stress+(weather?.stress||0));
   const restBonus=(id==="rest"||id==="recovery")?(run.annex.bedroom-1)*5:0;
   let healthGain=a.health||0;
   const relapse=plannedCareLevel(run)<2 ? run.relapseStage||0 : 0;
   if(id!==planned && relapse)healthGain=relapse===1?8:-6;
   const strain=a.stress>=10 ? 3*relapse : 0;
-  run.hp=cap(run.hp+healthGain-strain-fieldPenalty+restBonus-overworkLoss(run.stress,a));
+  run.hp=cap(run.hp+healthGain-(weather?.strain||0)-strain-fieldPenalty+restBonus-overworkLoss(run.stress,a));
   if(id==="walk")run.stress=cap(run.stress-(run.annex.garden-1)*5-(shiftAssigned("garden")?2:0));
   run.motivation=cap(run.motivation+(a.stress<0?8:tired?-7:-2));
   const primary=Object.keys(a.gains)[0];
   const changes=Object.entries(a.gains).map(([name,value])=>{
     const before=run.stats[name];
     const secondary=name!==primary;
-    const gain=grade==="poor"&&secondary?-1:lessonGain(name,before,(value+(advancedCourse(run,id)?3:0)+(room?(run.level[room]-1)*4:0))*(grade?lessonGrades[grade].factor:1)*(run.neglect>=2?.85:1),run.month,run.flags);
+    const gain=grade==="poor"&&secondary?-1:lessonGain(name,before,(value+(advancedCourse(run,id)?3:0)+(room?(run.level[room]-1)*4:0))*(grade?lessonGrades[grade].factor:1)*(weather?1.5:1)*(run.neglect>=2?.85:1),run.month,run.flags);
     run.stats[name]=cap(before+gain,statMax(name));
     return statLabel(name)+" "+signed(run.stats[name]-before);
   });
@@ -645,11 +651,15 @@ function plannerContents() {
   const estimate = marketStats();
   const invitations=openContests(state);
   const note = plannerNote(editingVisit?state.visit:chosen);
+  const weather=weatherFor(state);
+  const date=monthText(state.month)+(weather?' <button type="button" class="season-weather" data-weather="'+state.weather+'" popovertarget="season-bulletin" aria-label="'+weather.name+' 소식">'+weather.name+'</button>':"");
+  const bulletin=weather?'<aside popover id="season-bulletin" aria-labelledby="season-title"><header><strong id="season-title">'+weather.name+'</strong><button type="button" popovertarget="season-bulletin" popovertargetaction="hide">닫기</button></header><p>'+weather.scene+'</p>'+
+    '<dl><div><dt>승마 · 체력 단련</dt><dd>성장 기본량 ×1.5<br>컨디션 −'+weather.strain+' · 스트레스 +'+weather.stress+'</dd></div><div><dt>실내 공부</dt><dd>평소와 같음</dd></div><div><dt>'+weather.charge+'</dt><dd>이달 저택 지출 +£'+weather.fee+'</dd></div></dl></aside>':"";
   return (editingVisit?'<div class="lesson-index visit-index"><span class="index-tab">자유행동 · 월 1회</span></div>':'<div class="lesson-index">'+categories.map(([name],i)=>option(name,"category:"+i,i===lessonPage,false,"index-tab")).join("")+'</div>')+
     '<div class="card-field" role="group" aria-label="'+(editingVisit?'자유행동':slotNames[selectedSlot]+' 활동 목록')+'">'+
       '<div class="card-bank">'+cards.slice(0,half).join('')+'</div>'+
       '<div class="card-bank">'+cards.slice(half).join('')+'</div></div>'+
-    '<div class="calendar-foot"><div class="calendar-summary">'+(invitations.length?'<div class="invite-date"><strong>'+monthText(state.month)+'</strong>'+btn('<i aria-hidden="true"></i>이달의 초대장',"fair-notices",false,"fair-invite")+'</div>':'<strong>'+monthText(state.month)+'</strong>')+
+    '<div class="calendar-foot"><div class="calendar-summary">'+(invitations.length?'<div class="invite-date"><strong>'+date+'</strong>'+btn('<i aria-hidden="true"></i>이달의 초대장',"fair-notices",false,"fair-invite")+'</div>':'<strong>'+date+'</strong>')+
       '<span class="calendar-note">'+note+'</span></div>'+
       '<div class="calendar-periods" role="group" aria-label="편집할 기간">'+periods.join('')+'</div>'+
       '<div class="calendar-settle">'+plannerCosts(estimate)+
@@ -657,7 +667,7 @@ function plannerContents() {
       btn('이달 일정 실행','execute',!planReady()||estimate.blocked,'calendar-run')+'</div>'+(healthNotice(state)?'<p class="calendar-warning">'+healthNotice(state)+'</p>':'')+
       (state.unwell>0?'<p class="calendar-warning">시엘이 위독합니다. 당분간 곁에서 돌봐야겠습니다.</p>':'')+
       (state.arrears>0?'<p class="calendar-warning">미지급금 경고 · 이번 월말까지 잔액을 £0 이상으로 회복하세요.</p>':'')+
-      (estimate.blocked?'<p class="calendar-warning">준비비가 부족합니다. 활동이나 생산량을 조정하세요.</p>':'')+'</div>';
+      (estimate.blocked?'<p class="calendar-warning">준비비가 부족합니다. 활동이나 생산량을 조정하세요.</p>':'')+'</div>'+bulletin;
 }
 
 function planPanel(){
@@ -1799,7 +1809,7 @@ function handleAction(key,rect,confirmed=false){
   if(action==="reset"){
     if(tab!=="title"){utilityOrigin=null;tab="title";render(true);return;}
     if(saves.auto?.v===1&&!confirmed){askConfirmation(key,"새 회차","현재 진행이 초기화됩니다.<br>수동 저장은 유지됩니다.","새 회차 시작",rect);return;}
-    utilityOrigin=null;state=initial();selectedSlot=0;editingVisit=false;lessonPage=0;tab="plan";message="새 회차 시작";
+    utilityOrigin=null;state=initial();state.weather=rollSeasonWeather(state.month);selectedSlot=0;editingVisit=false;lessonPage=0;tab="plan";message="새 회차 시작";
   }else if(action==="store"){
     if(saves[id]&&!confirmed){askConfirmation(key,"슬롯 "+id+" 저장","기존 슬롯의 저장 내용을 교체합니다.","덮어쓰기",rect);return;}
     pattern="save";saves[id]=structuredClone(state);message="슬롯 "+id+" 저장 완료";
@@ -1938,8 +1948,9 @@ function openFairPreview(fair){
 }
 if(storyDemo){
   tab="plan";state=normalizeSave(initial());
-  state.month=state.planMonth=previewCompanyCase?.month??{"season-16":16,jubilee:18,birthday2:24}[previewStory];
-  if(!previewCompanyCase){
+  state.month=state.planMonth=previewSetback?.month??previewCompanyCase?.month??{"season-16":16,jubilee:18,birthday2:24}[previewStory];
+  if(previewSetback?.renown)state.renown=5;
+  if(!previewSetback&&!previewCompanyCase){
     const directions=Object.keys(middleObservations[previewStory]),selected=previewQuery.get("stat");
     state.stats[directions.includes(selected)?selected:directions[0]]=400;
   }

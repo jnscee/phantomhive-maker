@@ -50,6 +50,48 @@ run('state.productHistory.toys.units=90');
 assertOk('dueCompanyCase(state).gate==="fame"');
 run('state.events.push({id:"merchantAlphabet",month:13,index:0})');assertOk('!dueCompanyCase(state)');
 run('state.month++;state.flags.merchantBorrowedCrest=true');assertOk('dueCompanyCase(state)?.gate!=="fame"');
+// Month-end incidents cannot be declined or resolved twice, including after reloading.
+for(const id of run('monthlySetbacks.map(item=>item.id)')){
+  ctx.incident=id;
+  setup('state.month=22;state.pending=incident;state.phase="event";state.renown=4');
+  assertOk('pendingEvent().choices.length===1');
+  run('state.termPage=1;state=normalizeSave(state);choose(0);');
+  assertOk('state.flags[incident] && state.choiceImpact.setback && state.choiceImpact.items[0].rows.length');
+  const once=run('JSON.stringify([state.fund,state.hp,state.stress,state.motivation,state.renown,state.accounts.setbacks,state.events])');
+  run('state=normalizeSave(state);choose(0)');
+  assert.equal(run('JSON.stringify([state.fund,state.hp,state.stress,state.motivation,state.renown,state.accounts.setbacks,state.events])'),once);
+}
+setup('state.month=3;state.report={sold:10}');
+assertOk('drawMonthlySetback(state,false,()=>0)==="setbackGlass" && drawMonthlySetback(state,false,()=>.99)===null');
+run('state.events.push({id:"setbackGlass",month:2,index:0})');assertOk('drawMonthlySetback(state,true,()=>0)===null');
+setup('state.month=2;state.report={sold:0}');
+assertOk('!drawMonthlySetback(state,false,()=>0) && drawMonthlySetback(state,true,()=>0)==="setbackFall"');
+for(let month=1;month<=35;month++){
+  ctx.m=month;const season=(month-1)%12+1;
+  assert.equal(run('rollSeasonWeather(m,()=>0)'),[6,7,8].includes(season)?'heat':[12,1,2].includes(season)?'cold':null);
+  assert.equal(run('rollSeasonWeather(m,()=>.4)'),null);
+}
+for(const weather of ['heat','cold']){
+  ctx.weatherKind=weather;
+  setup('state.month=weatherKind==="heat"?7:12;state.plan=["exercise","study","rest"];state.visit="none";');
+  const ordinary=run('overhead()');
+  run('state.weather=weatherKind;state=normalizeSave(state)');
+  assert.equal(run('overhead()'),ordinary+(weather==='heat'?22:30));
+  assertOk('!drawMonthlySetback(state,true,()=>0)');
+  for(const activity of ['exercise','riding','study','language','rest','recovery']){
+    ctx.subject=activity;
+    const [clear,extreme]=run('[null,weatherKind].map(weather=>{const r=structuredClone(state);r.weather=weather;applyActivity(r,subject,"steady");return [r.hp,r.stress,r.stats.체력,r.stats.의지,r.stats.지성]})');
+    if(['exercise','riding'].includes(activity)){
+      assert.equal(extreme[0]-clear[0],weather==='heat'?-7:-9);
+      assert.equal(extreme[1]-clear[1],weather==='heat'?3:2);
+      assert.ok(extreme[2]>clear[2] && extreme[3]>clear[3]);
+    }else assert.deepEqual(extreme,clear);
+  }
+  assertOk('plannerContents().includes(weatherFor(state).name) && scheduleNote("exercise").includes("그럭저럭 기준")');
+  run('state.plan=["study","study","study"];state.visit="town";state.qty=0;execute();var quote=overhead();state.sequence.index=2;settleMonth()');
+  assertOk('state.report.bills===quote && actualBudget().includes(weatherFor(state).charge)');
+}
+
 function pick(){
   run('if(recruitScenes[state.pending])state.recruitPage={id:state.pending,version:2,at:recruitScenes[state.pending].lines.length-1};choose(0);if(state.choiceImpact?.next)handleAction("impact-close")');
 }
@@ -286,11 +328,15 @@ function playCampaign(invest){
   ctx.invest=invest;
   return vm.runInContext(`(()=>{
   let january;
+  const originalRandom=Math.random;
+  let trialSeed=5371;
+  Math.random=()=>((trialSeed=(Math.imul(trialSeed,1664525)+1013904223)>>>0)/0x100000000);
   state=initial();state.owlSeed=0;state.phase="plan";tab="plan";
   for(const [a,b,c,price,qty] of campaignSchedule){
     if(state.phase!=="plan")throw Error("Could not enter calendar at "+state.month);
     state.plan=[a,b,c];state.visit="town";state.price=price;state.qty=qty;
     if(invest)for(const action of facilityPurchases[state.month]||[])handleAction(action,null,true);
+    if(cashNeeded()>state.fund)state.qty=Math.max(0,Math.min(qty,Math.floor((state.fund-plannedTuition())/forecast().unit)));
     execute();
     if(state.phase!=="scene")throw Error("Infeasible budget at "+state.month);
     for(let steps=0;steps<180;steps++){
@@ -319,6 +365,7 @@ function playCampaign(invest){
       else break;
     }
   }
+  Math.random=originalRandom;
   return {january,finished:state.phase==="ending"||state.phase==="investiture",ending:state.ending,
     stats:Object.values(state.stats),fund:state.fund,decisions:state.events.filter(e=>["winterAxles","carrierPlace","estateRoof"].includes(e.id)).map(e=>e.month),
     birthdays:state.events.filter(e=>birthdayDialogue[e.id]).map(e=>e.month),exams:state.events.filter(e=>e.id.startsWith("portfolio-")).length};

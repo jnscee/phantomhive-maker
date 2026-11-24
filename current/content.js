@@ -172,6 +172,20 @@ const actions = {
 };
 for (const [id,[name,cost,gains,stress,health=0]] of Object.entries(extraActivities))
   actions[id]={name,cost,gains,stress,health};
+const seasonalWeather={
+  heat:{name:"폭염",charge:"빙고 얼음값",fee:22,strain:7,stress:3,
+    scene:"아침부터 얼음 배달 수레가 두 번째로 저택에 들어섰다."},
+  cold:{name:"한파",charge:"난방 석탄값",fee:30,strain:9,stress:2,
+    scene:"밤새 창 안쪽까지 성에가 끼었다. 복도 끝에서 석탄통 부딪히는 소리가 난다."}
+};
+function rollSeasonWeather(month,random=Math.random){
+  const m=(month-1)%12+1;
+  const kind=m>=6&&m<=8?"heat":m===12||m<=2?"cold":null;
+  return kind&&random()<.4?kind:null;
+}
+function weatherFor(run){return seasonalWeather[run.weather]||null;}
+function weatherWorkout(id){return id==="exercise"||id==="riding";}
+
 const trainingRooms={study:"library",inquiry:"library",language:"library",etiquette:"parlor",dance:"parlor",social:"parlor"};
 const facilities = {
   library:{name:"서재",cost:90,desc:"개수마다 서재 수업·기록 조사·라틴어의 각 성장치 +4 (피로 보정 전)"},

@@ -171,6 +171,19 @@ async function check(browserType){
           note.top>=bounds.top-1 && note.bottom<=bounds.bottom+1;
       });
       assert.ok(coverFits,'The fan game notice must be visible when the cover opens');
+      const weatherPage=await browser.newPage({viewport});
+      await openGame(weatherPage);
+      await weatherPage.evaluate(()=>{
+        state=initial();state.month=state.planMonth=7;state.weather="heat";state.phase="plan";tab="plan";render();
+      });
+      await weatherPage.getByRole('button',{name:'폭염 소식'}).click();
+      const bulletin=weatherPage.locator('#season-bulletin');
+      assert.ok(await bulletin.isVisible());
+      assert.match(await bulletin.innerText(),/성장 기본량 ×1.5/);
+      assert.match(await bulletin.innerText(),/이달 저택 지출 \+£22/);
+      await bulletin.getByRole('button',{name:'닫기'}).click();
+      assert.ok(await bulletin.isHidden());
+      await weatherPage.close();
       const fairPage=await browser.newPage({viewport});
       await fairPage.goto(base+'?fair-preview=newYear-1886&entry=1');
       assert.equal(await fairPage.locator('.duel-plate b').first().textContent(),'에드워드 미드포드');

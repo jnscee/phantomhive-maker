@@ -29,7 +29,7 @@ function authoredChoice([label,response,stat,amount,responseLines,route]){
   };
 }
 function appendAuthoredOptions(event){
-  if(!Object.hasOwn(authoredOptions,event.id)||visitEncounterCards.some(card=>card.id===event.id))return event;
+  if(event.setback||!Object.hasOwn(authoredOptions,event.id)||visitEncounterCards.some(card=>card.id===event.id))return event;
   const choices=authoredOptions[event.id].map(authoredChoice);
   return {...event,choices:[...event.choices,...choices]};
 }
@@ -441,6 +441,55 @@ function companyCaseEvents(){
       effect:()=>{if(index===item.correct)shift("renown",item.award);}
     }))
   }));
+}
+
+// Each incident has a single outcome. The monthly draw is saved in the event queue.
+const monthlySetbacks = [
+  {id:"setbackGlass",month:3,title:"온실에 남은 서른두 칸",room:"garden",cost:34,
+   lines:[["","새벽 돌풍이 온실 유리를 한 줄 통째로 뽑아 갔다. 아침 식탁에 오른 건 꽃 한 송이와 유리공의 청구서였다."],
+          ["시엘","꽃은 그 자리에 둬. 유리값은 저택 앞으로 달아 놓고."]]},
+  {id:"setbackFall",month:2,title:"빈 등자",room:"field",hp:-18,stress:5,eligible:(run,ride)=>ride,
+   lines:[["","마지막 회전에서 장화가 등자를 놓쳤다. 시엘이 다시 숨을 들이켰을 때는 젖은 모래에 한쪽 어깨가 닿아 있었다."],
+          ["세바스찬","말은 제가 데려가겠습니다. 오늘 저녁엔 그 팔로 찻잔을 들지 마십시오."]]},
+  {id:"setbackPress",month:5,title:"한 줄 밀린 가격표",room:"office",cost:46,eligible:run=>run.report.sold>=6,
+   lines:[["","상점에 도착한 전단에는 아랫줄 상품의 값이 찍혀 있었다. 점원은 먼저 줄을 선 손님들에게 인쇄된 값으로 팔았다."],
+          ["시엘","약속한 값은 지켜야지. 차액과 전단을 다시 찍은 값은 팬텀사 앞으로 청구해."]]},
+  {id:"setbackLetter",month:9,title:"연회가 끝난 뒤",room:"ballroom",renown:-2,stress:6,eligible:run=>run.renown>=2,
+   lines:[["","반송된 답신이 저택에 돌아온 건 연회 다음 날이었다. 조간지의 좌석표에는 주빈 옆 한 자리만 이름이 없었다."],
+          ["시엘","받지 못한 편지를 읽었다고 할 수도 없잖아. 사과문은 내가 쓸게."]]},
+  {id:"setbackBells",month:10,title:"새벽 두 시의 종",room:"bedroom",hp:-10,motivation:-6,
+   lines:[["","마을 종이 멎었을 때는 이미 동이 틀 무렵이었다. 이웃 헛간의 불은 꺼졌지만 시엘의 베개에는 머리를 뉜 자국조차 없었다."],
+          ["세바스찬","차가 식었습니다, 도련님. 아까부터 같은 면을 읽고 계시는군요."]]},
+  {id:"setbackAxle",month:15,title:"돌아오지 않은 마차",room:"office",cost:68,eligible:run=>run.report.sold>=9,
+   lines:[["","팬텀사의 짐마차가 런던 다리 앞에서 축이 부러졌다. 남의 마차 세 대에 상자를 나눠 싣고 나서야 가게 문을 열었다."],
+          ["세바스찬","물건은 한 상자도 빠지지 않았습니다. 대신 마차 세 대의 운임과 새 차축 값이 들었습니다."]]},
+  {id:"setbackPipe",month:20,title:"식당 천장의 물자국",room:"ballroom",cost:84,
+   lines:[["","은쟁반 한가운데로 물방울이 떨어졌다. 천장을 걷어 내자 벽 속의 오래된 수도관이 이음매부터 갈라져 있었다."],
+          ["시엘","배관공에게 방을 열어 줘. 오늘 저녁은 서재에서 먹겠다."]]}
+];
+function drawMonthlySetback(run,ride,random=Math.random){
+  if(run.duration!==35||run.month<2||weatherFor(run))return null;
+  const last=run.events.findLast(record=>monthlySetbacks.some(item=>item.id===record.id));
+  if(last&&run.month-last.month<2)return null;
+  const eligible=monthlySetbacks.filter(item=>run.month>=item.month&&!run.flags[item.id]&&(!item.eligible||item.eligible(run,ride)));
+  if(!eligible.length||random()>=(run.month<=12?.32:.42))return null;
+  return eligible[Math.floor(random()*eligible.length)].id;
+}
+function setbackEvents(){
+  return monthlySetbacks.map(item=>{
+    const result=[item.cost&&"지출 £"+item.cost,item.hp&&"컨디션 "+signed(item.hp),
+      item.stress&&"스트레스 "+signed(item.stress),item.motivation&&"의욕 "+signed(item.motivation),
+      item.renown&&"가문 명성 "+signed(item.renown)].filter(Boolean).join(" · ");
+    return {id:item.id,title:item.title,room:item.room,lines:item.lines,text:item.lines[0][1],setback:true,sees:()=>false,
+      choices:[choice("기록을 확인한다",item.title+" · "+result,()=>{
+        if(item.cost){
+          state.fund-=item.cost;
+          state.accounts.setbacks=(state.accounts.setbacks||0)+item.cost;
+        }
+        for(const key of ["hp","stress","motivation"])if(item[key])shift(key,item[key]);
+        if(item.renown)state.renown=Math.max(0,state.renown+item.renown);
+      })]};
+  });
 }
 
 function recordedChoice(run,id){
