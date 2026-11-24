@@ -1018,6 +1018,12 @@ function showGrowthCredits(host,id,years,onFinish){
     add(section,"p","“그래서, 내일부터는 수업이 없나?”");
     add(section,"p","“도련님께서 그렇게 말씀하실 줄 알고 다음 교본을 준비해 두었습니다.”");
   }
+  const references=add(roll,"section","");
+  add(references,"h3","참고작품");
+  add(references,"p","「Princess Maker 3」, 「관을 가진 신의 손」, Kairosoft");
+  const thanks=add(roll,"section","");
+  add(thanks,"h3","SPECIAL THANKS").lang="en";
+  for(const name of ["꼬","또쥐","Hato","우유"])add(thanks,"p",name);
   add(roll,"p","끝").className="growth-fin";
   const toggle=host.querySelector(".growth-toggle");
   let paused=document.documentElement.dataset.gameMotion==="reduced"||matchMedia("(prefers-reduced-motion: reduce)").matches,lastTime=0,fraction=0,finished=false;

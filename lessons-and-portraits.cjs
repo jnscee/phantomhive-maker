@@ -63,6 +63,15 @@ async function checkNotebook(page){
   assert.equal(await page.evaluate(()=>state.month),14);
 }
 
+async function checkClosingCredits(page){
+  const roll=page.locator('.growth-roll');
+  const references=roll.locator('section').filter({has:page.getByRole('heading',{name:'참고작품',exact:true})});
+  assert.equal(await references.locator('p').textContent(),'「Princess Maker 3」, 「관을 가진 신의 손」, Kairosoft');
+  const thanks=roll.locator('section').filter({has:page.getByRole('heading',{name:'SPECIAL THANKS',exact:true})});
+  assert.deepEqual(await thanks.locator('p').allTextContents(),['꼬','또쥐','Hato','우유']);
+  assert.equal(await roll.locator(':scope > :last-child').textContent(),'끝');
+}
+
 async function checkRoomCamera(page,activity){
   await page.evaluate(id=>{
     state=initial();state.phase="plan";tab="plan";state.plan=[id,"study","walk"];state.visit="none";
@@ -374,6 +383,7 @@ async function check(browserType){
         const backdrop=page.locator('.growth-backdrop');
         assert.equal(await backdrop.getAttribute('src'),'assets/endings/'+id+'.webp');
         await backdrop.evaluate(im=>im.decode());
+        await checkClosingCredits(page);
         await page.locator('.growth-end').click();
         assert.ok(await page.locator('#sheet').isVisible());
       }
@@ -400,6 +410,7 @@ async function check(browserType){
         await page.locator('#conversation [data-read="finish"]').click();
         assert.equal(await page.locator('.growth-backdrop').getAttribute('src'),'assets/endings/'+ending+'.webp');
         assert.match(await page.locator('.growth-roll').innerText(),ending==='ill'?/세부 장부는 남아 있지 않습니다/:/팬텀사 회계/);
+        await checkClosingCredits(page);
         await page.locator('.growth-end').click();
         assert.equal(await page.evaluate(()=>tab),'record');
         if(await gallery.locator('summary').evaluate(el=>!el.parentElement.open))await gallery.locator('summary').click();
