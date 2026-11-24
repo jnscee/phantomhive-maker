@@ -222,10 +222,14 @@ function tanakaReturns(run){
   return canTanakaReturn(run)&&(run.month>=lastTanakaMonth || monthlyDraw(run,0x54414e41)<1/(lastTanakaMonth-run.month+1));
 }
 function canReceiveSnake(run){
-  return run.duration===35 && run.flags.townhouse && run.people.soma && run.people.agni && !run.people.snake;
+  return run.duration===35 && run.flags.townhouse && ["finny","mey","bard","soma","agni"].every(id=>run.people[id]) && !run.people.snake;
 }
 function scheduleSnakeVisit(run){
-  if(!canReceiveSnake(run)||Number.isInteger(run.snakeArrivalMonth))return;
+  if(!canReceiveSnake(run)){
+    delete run.snakeArrivalMonth;
+    return;
+  }
+  if(Number.isInteger(run.snakeArrivalMonth))return;
   const monthsLeft=Math.min(3,run.duration-run.month+1);
   run.snakeArrivalMonth=run.month+Math.floor(monthsLeft*monthlyDraw(run,0x534e414b));
 }
@@ -1189,9 +1193,9 @@ function purchaseOrder(order,accepted){
     (accepted?'<strong class="order-stamp">수락 완료 · 월말 자동 납품</strong>':btn('발주 수락','order:'+order.id,state.phase!=="plan","order-accept"))+'</article>';
 }
 function orderDesk(){
-  if(state.order)return '<h4>받은 발주서</h4>'+purchaseOrder(state.order,true);
+  if(state.order)return '<h4>받은 발주서</h4><div class="order-grid">'+purchaseOrder(state.order,true)+'</div>';
   const offers=state.unlocked.map(id=>customerOffer(state,id)).filter(Boolean);
-  return '<h4>'+(historicalTradeEvents[state.month]?'이달의 발주서':'거래처 재주문')+'</h4>'+(offers.length?offers.map(o=>purchaseOrder(o,false)).join("")+'<small>한 번에 한 건을 수락할 수 있습니다. 납기에는 해당 품목의 표준품부터 출고합니다.</small>':state.month===state.duration?'<p>이번 달이 마지막 영업입니다.</p>':'<p>한 품목의 평판이 3에 이르면 거래처가 다음 달 납품을 제안합니다.</p>');
+  return '<h4>'+(historicalTradeEvents[state.month]?'이달의 발주서':'거래처 재주문')+'</h4>'+(offers.length?'<div class="order-grid">'+offers.map(o=>purchaseOrder(o,false)).join("")+'</div><small>한 번에 한 건을 수락할 수 있습니다. 납기에는 해당 품목의 표준품부터 출고합니다.</small>':state.month===state.duration?'<p>이번 달이 마지막 영업입니다.</p>':'<p>한 품목의 평판이 3에 이르면 거래처가 다음 달 납품을 제안합니다.</p>');
 }
 function companyDetail(){
   const id=selectedDepartment, room=departments[id], level=state.shop[id], active=state.phase==="plan";

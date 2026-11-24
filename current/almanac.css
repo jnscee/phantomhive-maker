@@ -451,10 +451,13 @@ html[data-fair-preview] #conversation .contest-screen {padding-block-start:.6rem
 .hud-group em > [role="img"] {font-size:.4375rem}
 
 #scene[data-mode=company] .work-actions.production-grid {
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,5.6rem),1fr));gap:4px;
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:1fr;gap:6px;
 }
 #scene[data-mode=company] .production-grid button {
-  margin:0;min-width:0;width:100%;height:100%;padding:5px 3px;text-align:center;word-break:keep-all;
+  box-sizing:border-box;display:grid;place-items:center;margin:0;min-width:0;width:100%;height:auto;min-height:2.2rem;padding:5px 4px;text-align:center;line-height:1.25;word-break:keep-all;
+}
+@media (max-width:600px) {
+  #scene[data-mode=company] .work-actions.production-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 .property-desk .facility-rates {display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap;color:#425464;font-size:.75rem}
 .facility-rates > span + span {border-inline-start:1px solid #aab6bc;padding-inline-start:.5rem}
@@ -476,6 +479,21 @@ html[data-fair-preview] #conversation .contest-screen {padding-block-start:.6rem
 .purchase-order small,.stock-entry small {display:block;font-size:.74rem}
 #panel .purchase-order .order-accept,.order-stamp {display:block;width:fit-content;margin:.5rem 0 0 auto}
 .order-stamp {font-size:.77rem;color:#376459}
+
+/* Paired order slips on the sales desk. */
+.property-desk .order-grid {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.45rem;margin-block:.45rem;
+}
+.property-desk .order-grid .purchase-order {
+  display:flex;flex-direction:column;min-width:0;margin:0;padding:.5rem;
+  background:linear-gradient(135deg,#fffaf0,#f3e9d7);box-shadow:0 2px 4px #342c2017;
+  word-break:keep-all;overflow-wrap:anywhere;
+}
+.order-grid .purchase-order header {display:grid;gap:.1rem}
+.order-grid .purchase-order .ledger-figures {grid-template-columns:1fr;gap:.12rem}
+.order-grid .ledger-figures > div {display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:.1rem .25rem}
+.order-grid .purchase-order small {margin-bottom:.45rem}
+#panel .order-grid .order-accept,.order-grid .order-stamp {margin-top:auto;max-width:100%;box-sizing:border-box}
 
 #panel .sales-books .compact-month {margin:0;padding:0;border:0;border-block-end:1px solid #a8b7c455;background:transparent}
 #panel .compact-month > summary {
