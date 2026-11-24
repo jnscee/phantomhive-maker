@@ -544,6 +544,20 @@ for(const invest of [false,true]){
     'January',JSON.stringify(campaign.january),'final funds',campaign.fund);
 }
 
+// Liquidation uses existing stock, preserves pending orders, and reconciles with the ledger.
+setup('tab="market";shopMode="sell";selectedStock="toys";state.stock.toys=12;state.fineStock.toys=5;state.order={id:"toys",due:state.month,qty:3,rate:12};');
+assertOk('lauStockQuote(state,"toys").available===9&&marketPanel().includes("납품 예약 3개")');
+run('handleAction("shop-sell:toys:10",null,true);handleAction("shop-sell:toys:0",null,true);handleAction("shop-sell:toys:1.5",null,true)');
+assertOk('state.stock.toys===12&&state.fund===500');
+run('handleAction("shop-sell:toys:8",null,true);state=normalizeSave(saves.auto)');
+assertOk('state.stock.toys===4&&state.fineStock.toys===4&&state.fund===524&&state.accounts.lauSales===24');
+assertOk('!state.lauPurchases && productHistory(state,"toys").units===0');
+run('handleAction("shop-sell:toys:8",null,true);state.phase="scene";handleAction("shop-sell:toys:1",null,true)');
+assertOk('state.stock.toys===4&&state.fund===524');
+run('state.phase="plan";state.plan=["walk","walk","walk"];state.visit="none";state.qty=0;execute();settleMonth()');
+assertOk('state.salesBook.at(-1).delivery.shipped===3&&actualBudget().includes("라우 상점 재고 매각")&&!actualBudget().includes("내역 외 잔액 변동")');
+run('startAccounts(state);shopMode="buy"');
+assertOk("state.accounts.lauSales===undefined");
 // Charge excess freight exactly once, including wholesale shipments, and honor a pre-update signed quote.
 setup('state.month=26;state.qty=21;state.price=10;state.visit="town";state.plan=["walk","walk","walk"];state.order={id:"toys",qty:5,rate:14,due:26}');
 assertOk('forecast().sold===16 && forecast().trade.shipped===5 && forecast().trade.freight===15');
