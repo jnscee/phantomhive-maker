@@ -1706,6 +1706,7 @@ html[data-game-motion=reduced] :is(.company-worker img,.duty-walker,.duty-walker
   color:rgb(211 220 230 / 72%); font-size:clamp(.59375rem,.84cqw,.725rem); line-height:1.45; word-break:keep-all;
 }
 .cover-notice strong {margin-bottom:2px; color:rgb(239 219 182 / 80%); font-size:1.08em}
+.cover-notice > span {font-size:.88em}
 .cover-actions {display:grid; width:100%; gap:3px}
 #scene .cover-actions button {
   width:100%; min-width:0; min-height:44px; border:1px solid transparent; border-bottom-color:#cdbb9f5c;
