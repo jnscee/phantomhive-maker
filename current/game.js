@@ -492,7 +492,10 @@ function advance(){
   if(state.prototype?.approved){
     const p=state.prototype;if(!state.unlocked.includes(p.product))state.unlocked.push(p.product);state.productNotes??={};state.productNotes[p.product]=p;delete state.prototype;
   }
-  state.month++;state.weather=rollSeasonWeather(state.month);state.planMonth=state.month;state.plan=emptyPlan();editingVisit=false;lessonPage=0;startAccounts(state);state.phase="plan";state.visit=null;selectedSlot=0;startFinnyAtTurn(state);tab=state.phase==="event"?"plan":"home";persist();render(true);
+  state.month++;state.weather=rollSeasonWeather(state.month);state.planMonth=state.month;state.plan=emptyPlan();editingVisit=false;lessonPage=0;startAccounts(state);state.phase="plan";state.visit=null;selectedSlot=0;
+  if(state.weather)state.phase="weatherBriefing";
+  startFinnyAtTurn(state);
+  tab=state.phase==="plan"?"home":"plan";persist();render(true);
 }
 function fatigueThreshold(stamina){
   return 65+Math.floor(cap(stamina,abilityMax)*10/abilityMax);
@@ -1626,6 +1629,12 @@ function askConfirmation(key,title,description,label,rect,extra=""){
 }
 function handleAction(key,rect,confirmed=false){
   const [action,id,value]=key.split(":");
+  if(action==="weather-close"&&state.phase==="weatherBriefing"){
+    state.phase="plan";
+    startFinnyAtTurn(state);
+    tab=state.phase==="plan"?"home":"plan";
+    persist();render(true);return;
+  }
   const impact=state.choiceImpact;
   if(impact?.next && (tab===impact.owner||action==="impact-close")){
     if(action!=="impact-close")return;

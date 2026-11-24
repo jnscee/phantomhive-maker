@@ -200,11 +200,14 @@ setup('state.month=2;state.report={sold:0}');
 assertOk('!drawMonthlySetback(state,false,()=>0) && drawMonthlySetback(state,true,()=>0)==="setbackFall"');
 for(let month=1;month<=35;month++){
   ctx.m=month;const season=(month-1)%12+1;
-  assert.equal(run('rollSeasonWeather(m,()=>0)'),[6,7,8].includes(season)?'heat':[12,1,2].includes(season)?'cold':null);
+  assert.equal(run('rollSeasonWeather(m,()=>0)'),season===6?'heat':season===12?'cold':null);
   assert.equal(run('rollSeasonWeather(m,()=>.4)'),null);
 }
 for(const weather of ['heat','cold']){
   ctx.weatherKind=weather;
+  setup('tab="plan";state.month=weatherKind==="heat"?6:12;state.weather=weatherKind;state.phase="weatherBriefing";persist();state=normalizeSave(saves.auto)');
+  assertOk('faceDialogue() && $("conversation").innerHTML.includes(weatherFor(state).scene) && $("conversation").innerHTML.includes("weather-close")');
+  run('handleAction("weather-close")');assertOk('state.phase==="plan" && saves.auto.phase==="plan"');
   setup('state.month=weatherKind==="heat"?7:12;state.plan=["exercise","study","rest"];state.visit="none";');
   const ordinary=run('overhead()');
   run('state.weather=weatherKind;state=normalizeSave(state)');
@@ -473,6 +476,7 @@ function playCampaign(invest){
     if(state.phase!=="scene")throw Error("Infeasible budget at "+state.month);
     for(let steps=0;steps<180;steps++){
       if(state.choiceImpact?.next)handleAction("impact-close");
+      else if(state.phase==="weatherBriefing")handleAction("weather-close");
       else if(state.phase==="scene")finishScene();
       else if(state.phase==="review")continueSequence();
       else if(state.phase==="event"||state.phase==="slotEvent"){

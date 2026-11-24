@@ -179,13 +179,13 @@ for (const [id,[name,cost,gains,stress,health=0]] of Object.entries(extraActivit
   actions[id]={name,cost,gains,stress,health};
 const seasonalWeather={
   heat:{name:"폭염",charge:"빙고 얼음값",fee:22,strain:7,stress:3,
-    scene:"아침부터 얼음 배달 수레가 두 번째로 저택에 들어섰다."},
+    scene:"도련님, 오늘은 차를 테라스에 내지 않는 편이 좋겠습니다. 아침부터 온도계가 이 눈금까지 오른 건 저택의 6월 기록에도 없더군요."},
   cold:{name:"한파",charge:"난방 석탄값",fee:30,strain:9,stress:2,
-    scene:"밤새 창 안쪽까지 성에가 끼었다. 복도 끝에서 석탄통 부딪히는 소리가 난다."}
+    scene:"도련님, 커튼은 잠시 그대로 두시지요. 밤새 창 안쪽까지 얼었습니다. 올 12월은 기록적인 한파로 남겠군요. 차는 난롯가에 준비했습니다."}
 };
 function rollSeasonWeather(month,random=Math.random){
   const m=(month-1)%12+1;
-  const kind=m>=6&&m<=8?"heat":m===12||m<=2?"cold":null;
+  const kind=m===6?"heat":m===12?"cold":null;
   return kind&&random()<.4?kind:null;
 }
 function weatherFor(run){return seasonalWeather[run.weather]||null;}

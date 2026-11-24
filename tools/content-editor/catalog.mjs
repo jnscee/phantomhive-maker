@@ -475,7 +475,7 @@ export function catalog(files, publishedAssets = [], version = "") {
   }
   for(const property of properties(variable("content.js","seasonalWeather"))){
     const id=propertyName(property),weather=property.value;
-    const g=group("events","weather-"+id,value(prop(weather,"name")),"계절 날씨 · 일정 첫 장면",{kind:"weather",id});
+    const g=group("events","weather-"+id,value(prop(weather,"name")),"계절 날씨 · 월초 보고",{kind:"weather",id});
     add(g,"content.js",prop(weather,"scene"),"날씨 지문");
     add(g,"content.js",prop(weather,"charge"),"추가 관리비 항목");
   }
