@@ -11,6 +11,7 @@ function dayPlate(turn,day){
 function playMarkup(){
   const seq=state.sequence, part=seq.index, id=seq.activity||state.plan[part], [room,frames,movement,prop,line]=choreography[id];
   const pose=frames.split(" ");
+  const illustrated=illustratedActivities.includes(id);
   const outcome=lessonGrades[seq.grade]?.label;
   const stageText=(advancedCourse(state,id)?advancedLessons[id]+" ":"")+(outcome?lessonPlayback(id,seq.grade,seq.remark):line);
   const all=Object.keys(seq.after).filter(k=>seq.before[k]!==seq.after[k]);
@@ -18,7 +19,7 @@ function playMarkup(){
   const weather=weatherFor(state);
   const season=weather?' <span class="season-weather" data-weather="'+state.weather+'">'+weather.name+'</span>':"";
   return '<div class="lesson-art"><div class="lesson-plane" data-room="'+room+'"><img class="stage-room" src="'+sceneArt[room]+'" alt="">'+
-    '<div class="performer '+movement+'" data-frames="'+pose.join(" ")+'"><img src="'+actors[pose[0]]+'" alt="'+courseName(id)+' 중인 시엘"><span class="motion-object '+prop+'" aria-hidden="true">'+motionObjects[prop]+'</span></div></div></div>'+
+    '<div class="performer '+movement+'"'+(illustrated?' data-illustrated':'')+' data-frames="'+pose.join(" ")+'"><img src="'+actors[pose[0]]+'" alt="'+courseName(id)+' 중인 시엘"><span class="motion-object '+prop+'" aria-hidden="true">'+motionObjects[prop]+'</span></div></div></div>'+
     '<div class="stage-top"><b>'+stageNames[room]+season+'</b><span>'+slotNames[part]+' · '+courseName(id)+(outcome?' · '+outcome:'')+'</span></div>'+
     '<div class="stage-record">'+rows+'</div><div class="stage-foot"><p>'+stageText+'</p><div><button data-action="speed">재생 ×'+speed+'</button><button data-action="skip">이 순 마치기 ›</button></div></div>';
 }
@@ -39,7 +40,7 @@ function startPlayback(resumeAt=0){
   const roomImage=actor.parentElement.querySelector(".stage-room");
   fitLessonRoom(roomImage);
   if(!roomImage.complete)roomImage.addEventListener("load",()=>fitLessonRoom(roomImage),{once:true});
-  const custom=illustratedActivities.includes((seq.activity||state.plan[index]));
+  const custom=actor.hasAttribute("data-illustrated");
   const frameMs=custom?((seq.activity||state.plan[index])==="exercise"?260:(seq.activity||state.plan[index])==="recovery"?950:460):
     poses[0]==="trot1"?180:poses.includes("step1")?280:poses[0]==="bowOut"?390:800;
   const sprite=actor.querySelector("img"), fields=[...$("playback").querySelectorAll("[data-stat]")];

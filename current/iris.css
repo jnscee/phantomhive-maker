@@ -1140,18 +1140,20 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
 #picker .desk-review[open] summary,#picker .expense-details[open] summary {margin-bottom:8px}
 
 /* Place the sprite on the same 480 × 320 coordinate plane as its background. */
-#playback:not([hidden]) {display:grid;grid-template-rows:minmax(0,1fr) auto;grid-template-columns:7% minmax(0,1fr) minmax(0,2fr) 7%;gap:6px 1%;padding-bottom:4%;background:transparent}
+#playback:not([hidden]) {display:grid;grid-template-rows:minmax(0,1fr) auto;grid-template-columns:7% minmax(0,1fr) minmax(0,2fr) 7%;gap:6px 1%;padding-bottom:2.6%;background:transparent}
 .lesson-art {position:absolute;inset:0;overflow:hidden;pointer-events:none}
-.lesson-plane {position:absolute;inset:0;isolation:isolate}
-.lesson-plane[data-room=archive] {--foot-x:0.57;--foot-y:0.86}
-.lesson-plane[data-room=ballroom] {--foot-x:0.61;--foot-y:0.77}
-.lesson-plane[data-room=bedroom] {--foot-x:0.6;--foot-y:0.8}
-.lesson-plane[data-room=field] {--foot-x:0.58;--foot-y:0.71}
-.lesson-plane[data-room=garden] {--foot-x:0.71;--foot-y:0.68}
-.lesson-plane[data-room=library] {--foot-x:0.58;--foot-y:0.84}
-.lesson-plane[data-room=music] {--foot-x:0.56;--foot-y:0.8}
-.lesson-plane[data-room=office] {--foot-x:0.52;--foot-y:0.86}
-.lesson-plane[data-room=street] {--foot-x:0.62;--foot-y:0.8}
+/* Coordinates are measured on the room artwork, before the viewport crops it. */
+.lesson-plane {position:absolute;inset:0;isolation:isolate;--foot-x:.5;--foot-y:.68}
+.lesson-plane[data-room=archive] {--foot-x:.44;--foot-y:.71}
+.lesson-plane[data-room=ballroom] {--foot-y:.67}
+.lesson-plane[data-room=bedroom] {--foot-y:.66}
+.lesson-plane[data-room=field] {--foot-y:.65}
+.lesson-plane[data-room=garden] {--foot-y:.62}
+.lesson-plane[data-room=gym] {--foot-y:.69}
+.lesson-plane[data-room=library] {--foot-x:.46;--foot-y:.68}
+.lesson-plane[data-room=music] {--foot-x:.47;--foot-y:.69}
+.lesson-plane[data-room=office] {--foot-x:.45;--foot-y:.70}
+.lesson-plane[data-room=street] {--foot-y:.71}
 .lesson-plane > img.stage-room {display:block;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}
 .lesson-plane .performer {
   --sprite-size:min(calc(var(--painted-height) * var(--actor-ratio,.255)), 82cqw);
@@ -1159,36 +1161,44 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
   width:var(--sprite-size);height:var(--sprite-size);
   left:clamp(var(--edge),calc(50% + var(--painted-width) * (var(--foot-x) - .5)),calc(100% - var(--edge)));
   bottom:calc(50% - var(--painted-height) * (var(--foot-y) - .5));
-  translate:-50% 0;transform-origin:50% 100%;
+  translate:-50% 0;transform-origin:50% 100%;animation-name:lesson-idle;
 }
+.lesson-plane .performer[data-illustrated] > img {translate:0 2.5%}
 .lesson-plane[data-room=gym] .performer.calisthenics {--actor-ratio:.42}
 .lesson-plane .performer.ride {animation-name:lesson-ride}
 .lesson-plane :is(.performer.walk,.performer.jog) {animation-name:lesson-walk}
 .lesson-plane .performer.waltz {animation-name:lesson-waltz}
+.lesson-plane .performer.bow {animation-name:bow}
+.lesson-plane .performer.play {animation-name:play}
+.lesson-plane .performer.search {animation-name:lesson-search}
+.lesson-plane :is(.performer.count,.performer.write,.performer.recite,.performer.meet) {animation-name:lesson-write}
+@keyframes lesson-idle {50% {transform:scaleY(.985)}}
+@keyframes lesson-write {45% {transform:rotate(-2deg)}}
+@keyframes lesson-search {50% {transform:translateX(-8%) rotate(-4deg)}}
 @keyframes lesson-ride {from {transform:translateX(-35%)} to {transform:translateX(25%)}}
 @keyframes lesson-walk {0%,100% {transform:translateX(-12%)} 50% {transform:translateX(12%)}}
 @keyframes lesson-waltz {0%,100% {transform:translateX(-8%) rotate(-2deg)} 50% {transform:translateX(8%) rotate(2deg)}}
 #playback .stage-foot {
-  grid-row:2;grid-column:3;position:relative;inset:auto;margin:0;width:100%;min-width:0;align-self:center;
-  display:flex;align-items:center;justify-content:space-between;gap:8px 16px;
-  padding:clamp(10px,1.5cqw,20px) clamp(14px,2cqw,24px);border:1px solid #b6cce19c;
+  grid-row:2;grid-column:3;position:relative;inset:auto;margin:0;width:100%;min-width:0;align-self:end;
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 12px;
+  padding:6px clamp(8px,1.3cqw,18px);border:1px solid #b6cce19c;box-sizing:border-box;
   border-radius:12px;background:var(--dialogue-glass);color:#f1f6ff;box-shadow:inset 0 1px #effaff55;
 }
-#playback .stage-foot p {margin:0;line-height:1.6;font-family:var(--serif);overflow-wrap:anywhere}
-#playback .stage-record {position:relative;inset:auto;grid-area:2/2;align-self:center;width:100%;min-width:0;max-width:none;box-sizing:border-box}
-#playback .stage-foot {box-sizing:border-box;flex-wrap:wrap}
+#playback .stage-foot p {margin:0;line-height:1.5;font-family:var(--serif);overflow-wrap:anywhere}
+#playback .stage-record {position:relative;inset:auto;grid-area:2/2;align-self:end;width:100%;min-width:0;max-width:none;box-sizing:border-box}
 #playback .stage-foot > div {
-  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
-  width:min(100%,15.5rem);min-width:0;margin-left:auto;
+  display:grid;grid-template-columns:repeat(2,auto);gap:6px;
 }
 #playback .stage-foot button {
-  box-sizing:border-box;width:100%;min-height:42px;margin:0;
-  padding:9px clamp(8px,1.3cqw,16px);line-height:1.3;word-break:keep-all;
+  box-sizing:border-box;width:100%;min-height:38px;margin:0;
+  padding:7px clamp(6px,1cqw,12px);line-height:1.3;white-space:nowrap;
 }
 @media(max-width:700px) and (orientation:portrait) {
-  #playback:not([hidden]) {grid-template-columns:6% minmax(0,1fr) 6%;grid-template-rows:minmax(0,1fr) auto auto}
-  #playback .stage-record {grid-area:2/2;justify-self:start;width:min(100%,19rem)}
-  #playback .stage-foot {grid-area:3/2;align-items:stretch}
+  #playback:not([hidden]) {grid-template-columns:4% minmax(0,1fr) 4%;grid-template-rows:minmax(0,1fr) auto auto}
+  #playback .stage-record {grid-area:2/2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 12px}
+  #playback .stage-foot {grid-area:3/2;grid-template-columns:minmax(0,1fr)}
+  #playback .stage-foot > div {justify-content:end}
+  #playback .stage-foot button {min-height:44px;padding-inline:12px}
 }
 
 .report-timeline .log-gain {color:#a9d8ff}
