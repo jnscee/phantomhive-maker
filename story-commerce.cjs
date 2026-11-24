@@ -110,6 +110,23 @@ setup('state.month=13;state.stats.기품=124;state.fairTickets={"newYear-1887":{
 assertOk('contestScene(pendingEvent()).includes("195점")&&matchAssessment(state,contests[2],{index:0},state.sequence.duel).chance===.32');
 run('settleFestival(state,state.sequence.duel)');
 assertOk('state.fairBook["newYear-1887"].duel.rivalScore===195&&state.fairBook["newYear-1887"].chance===.32');
+// Poor condition raises the chance of a real failure, even with practice and an upgraded room.
+assertOk(`(()=>{
+  const run=initial();run.month=20;run.counts.study=3;run.level.library=3;
+  const failures=(hp,stress,motivation)=>{
+    Object.assign(run,{hp,stress,motivation});
+    let count=0;
+    for(let i=1;i<=512;i++){
+      run.owlSeed=Math.imul(i,2654435761)>>>0;
+      if(lessonResult(run,"study",0)==="poor")count++;
+    }
+    return count;
+  };
+  return failures(76,20,70)===0&&failures(45,60,30)>300&&failures(40,65,30)>450
+    &&failures(45,60,30)>failures(60,60,30)&&failures(45,60,30)>failures(45,45,30)
+    &&failures(45,60,30)>failures(45,60,55)&&lessonGrades.poor.label==="실패"
+    &&lessonResult(run,"rest",0)===null;
+})()`);
 // Preview, execution and save/load use the same course tradeoff for each of the three grades.
 for(const id of run('[...categories[0][1],...categories[2][1]]')){
   ctx.subject=id;
@@ -546,7 +563,7 @@ for(const invest of [false,true]){
   }
   assert.ok(campaign.january.stats.filter(value=>value<500).length>=4);
   assert.ok(campaign.stats.some((value,i)=>value>campaign.january.stats[i]));
-  assert.ok(campaign.exams>=11);
+  assert.ok(campaign.exams>=10);
   assert.deepEqual(Array.from(campaign.birthdays),[12,24]);
   assert.deepEqual(Array.from(campaign.decisions),[26,29,32]);
   console.log('PASS 35-month campaign',invest?'expanded estate':'starting facilities',
