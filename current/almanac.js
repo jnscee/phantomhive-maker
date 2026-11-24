@@ -58,16 +58,13 @@ const contestSlot=2;
 function reservedContest(run){
   return openContests(run).find(fair=>fair.month===run.month&&contestTicket(run,fair));
 }
-function contestCutoffs(fair){
-  if(fair.warrant)return [[55,82],[62,90],[68,96]][fair.year];
-  if(fair.company)return fair.month===5?[37,62]:fair.month===18?[48,76]:[55,84];
-  const targets={1:[[24,46],[115,195],[235,365]],4:[[37,73],[145,230],[260,390]],9:[[63,115],[185,275],[295,420]]};
-  return targets[(fair.month-1)%12+1][fair.year];
+function contestRivalAbility(fair){
+  if(fair.warrant)return [82,90,96][fair.year];
+  if(fair.company)return fair.month===5?62:fair.month===18?76:84;
+  const levels={1:[22,195,365],4:[73,230,390],9:[115,275,420]};
+  return levels[(fair.month-1)%12+1][fair.year];
 }
-function contestPurse(fair){
-  const first=fair.warrant?65:fair.company?55:36+fair.year*10;
-  return [0,Math.floor(first*0.55),first];
-}
+function winningPurse(fair){return fair.warrant?65:fair.company?55:36+fair.year*10;}
 function availableSample(run,id){
   const producing=id===run.product&&run.qty>0;
   return {
@@ -97,7 +94,7 @@ function festivalNotice(){
       ["평가 항목","견본 등급, 제품 평판, 판매·납품 실적, 설계·제작 시설"],
       ...(fair.warrant?[["인증 요건","출품 전 누적 판매·납품 18개 이상"]]:[])
     ]:[
-      ["기본 점수","경연 당일 해당 종목의 능력치"],
+      ["심사","종목 능력치에 그날의 컨디션·의욕·스트레스가 반영됩니다."],
       ["참가 조건","병중에는 개인 경연에 출전할 수 없습니다."]
     ];
     const ruleRows=criteria.map(([label,value])=>'<div><dt>'+label+'</dt><dd>'+value+'</dd></div>').join("");
@@ -142,59 +139,58 @@ function selectFestival(id,value){
     if(value==="cancel")$("picker").querySelector(".fair-notice[open]>summary")?.focus();
   }
 }
-function contestSpread(fair){return fair.company?4:Math.round(contestCutoffs(fair)[1]*.06);}
-
 function prepareContest(run){
   const seq=run.sequence;
   const fair=contestArchive.find(f=>f.id===seq.contest);
   if(!fair||run.fairBook?.[fair.id]||seq.duel)return false;
   const ticket=contestTicket(run,fair);
   if(!ticket)return false;
-  const target=contestCutoffs(fair)[1],spread=contestSpread(fair);
-  seq.duel={fairId:fair.id,rivalScore:target-spread+Math.floor(monthlyDraw(run,0x46414952)*(2*spread+1))};
-  seq.duel.judgment=judgeContest(run,fair,ticket,seq.duel);
-  if(seq.duel.judgment.reason){delete seq.duel;return false;}
+  const judgment=judgeContest(run,fair,ticket);
+  if(judgment.reason)return false;
+  seq.duel={fairId:fair.id,rivalScore:contestRivalAbility(fair),judgment};
   run.pending="contest-"+fair.id;run.phase="event";
   persist();render(true);return true;
 }
-function judgeContest(run,fair,ticket,duel){
-  const [silver,target]=contestCutoffs(fair),gold=duel?.rivalScore??target,o=fair.options?.[ticket.index];
-  const base={index:ticket.index,product:ticket.product,rank:0,purse:0};
+// The saved assessment contains the odds. The draw is made only when the verdict is read.
+function judgeContest(run,fair,ticket){
+  const base={index:ticket.index,product:ticket.product,match:true,purse:0};
+  const o=fair.options?.[ticket.index];
+  let basis,factors,condition="";
   if(o){
-    if(run.ill)return {...base,reason:"병중으로 불참"};
-    const score=run.stats[o.stat];
-    return {...base,score,rank:score>=gold?2:score>=silver?1:0,...contestScoreDetails([[o.stat,score]])};
+    if(run.ill??run.illness)return {...base,reason:"병중으로 불참"};
+    basis=[o.stat,run.stats[o.stat]];
+    factors=[["컨디션",.85+.002*run.hp],["의욕",.86+.002*run.motivation],["스트레스",1.04-.002*run.stress]];
+  }else{
+    const id=ticket.product;
+    if(!id||!run.unlocked.includes(id))return {...base,reason:"출품 가능한 품목 없음"};
+    const lot=availableSample(run,id);
+    if(!lot.ready)return {...base,reason:"생산품 및 재고 부족"};
+    const history=productHistory(run,id),design=run.productNotes?.[id];
+    basis=[lot.fine?"고급 견본":"일반 견본",lot.fine?50:25];
+    const equipment=3*(run.shop.design+run.shop.works-2)+(design?.material==="select"?6:0)+(design?.reworked?4:0);
+    factors=[["평판",1+Math.min(30,history.reputation*2)/50],
+      ["실적",1+Math.min(16,Math.floor(history.units/6)+history.orders*3)/50],["설비·기획",1+equipment/50]];
+    if(fair.warrant&&history.units<18)condition="누적 판매·납품 18개 미달";
   }
-  const id=ticket.product;
-  if(!id||!run.unlocked.includes(id))return {...base,reason:"출품 가능한 품목 없음"};
-  const lot=availableSample(run,id);
-  if(!lot.ready)return {...base,reason:"생산품 및 재고 부족"};
-  const history=productHistory(run,id),design=run.productNotes?.[id];
-  const parts=[
-    ["견본",lot.fine?50:25],
-    ["제품 평판",Math.min(30,history.reputation*2)],
-    ["판매·납품 실적",Math.min(16,Math.floor(history.units/6)+history.orders*3)],
-    ["설비·기획",3*(run.shop.design+run.shop.works-2)+(design?.material==="select"?6:0)+(design?.reworked?4:0)]
-  ];
-  const score=parts.reduce((sum,[,n])=>sum+n,0);
-  const goldEligible=!fair.warrant||history.units>=18;
-  return {...base,score,rank:score>=gold&&goldEligible?2:score>=silver?1:0,
-    ...contestScoreDetails(parts,goldEligible?"":"금상 실적 요건 미달")};
+  const strength=factors.reduce((n,[,factor])=>n*factor,basis[1]);
+  const ratio=strength/contestRivalAbility(fair),weight=Math.pow(ratio,1.6);
+  const chance=condition?0:Math.max(.03,Math.min(.97,weight/(1+weight)));
+  return {...base,score:Math.round(strength),chance,speechTier:ratio<.7?0:ratio<1.1?1:2,
+    scoreParts:[basis],factors,scoreCondition:condition};
 }
-function contestScoreDetails(parts,condition=""){
-  const scoreNote=parts.map(([label,n])=>label+" "+n).join(" + ")+(condition?" · "+condition:"");
-  return {scoreParts:parts,scoreCondition:condition,scoreNote};
+function matchAssessment(run,fair,ticket,duel){
+  return duel?.judgment?.match?duel.judgment:judgeContest(run,fair,ticket);
 }
 function settleFestival(run,duel){
   const scheduled=duel?.fairId||run.sequence?.contest;
   const fair=run.duration===35&&contestArchive.find(f=>f.month===run.month&&contestTicket(run,f)&&(!scheduled||scheduled===f.id));
   const ticket=fair&&contestTicket(run,fair);
   if(!ticket||contestArchive.some(f=>f.month===run.month&&run.fairBook?.[f.id]))return null;
-  const entry={...(duel?.judgment||judgeContest(run,fair,ticket,duel))};
-  if(duel&&!entry.reason){entry.duel={rivalScore:duel.rivalScore};entry.revealed=true;}
-  const rank=entry.rank;
-  entry.purse=contestPurse(fair)[rank];
-  entry.prize=rank===2?fair.prize:rank===1?fair.ribbon:"";
+  const assessment=matchAssessment(run,fair,ticket,duel);
+  const won=!assessment.reason&&Math.random()<assessment.chance;
+  const rank=won?2:0;
+  const entry={...assessment,rank,purse:won?winningPurse(fair):0,prize:won?fair.prize:""};
+  if(duel&&!entry.reason){entry.duel={rivalScore:contestRivalAbility(fair)};entry.revealed=true;}
   if(fair.company&&!fair.warrant&&!entry.reason)entry.demand=[0,2,4][rank];
   if(!entry.reason)run.renown+=rank;
   if(fair.warrant&&rank===2){
@@ -205,10 +201,10 @@ function settleFestival(run,duel){
     }
   }
   if(fair.id==="jubilee1887")run.royal+=[0,2,3][rank];
-  if(duel&&!entry.reason){
+  if(duel&&won){
     const subjects=fair.company?[["경영",10],["지성",8]]:[[fair.options[ticket.index].stat,10],["의지",6]];
     entry.growth=subjects.map(([name,base])=>{
-      const gain=lessonGain(name,run.stats[name],base,run.month,run.flags);
+      const gain=lessonGain(name,run.stats[name],base,run.month,run.flags,false,run.foundation||0);
       run.stats[name]+=gain;
       return name+" +"+gain;
     });
@@ -230,7 +226,7 @@ function fairDemand(run,product){
   return bonus+(entry.outcome!=="absent"&&former?.product===product?(entry.outcome==="success"?4:2):0);
 }
 function contestRank(entry){
-  return entry.reason||["입상권 밖","은상","금상"][entry.rank];
+  return entry.reason||(entry.match?(entry.rank===2?"승리":"패배"):["입상권 밖","은상","금상"][entry.rank]);
 }
 function contestEntryName(fair,entry){
   return (fair.company?products[entry.product]?.name:fair.options[entry.index]?.label)||"견본 출품";
@@ -250,7 +246,7 @@ function fairReport(fair){
   return '<article class="fair-report"><small>'+date+' · '+contestRank(entry)+'</small><h4>'+fair.title+'</h4>'+
     '<p>'+contestEntryName(fair,entry)+(entry.score==null?'':' · '+entry.score+'점')+
     (entry.purse?' · 상금 '+money(entry.purse)+' · '+entry.prize:'')+'</p>'+
-    (entry.duel?'<p>'+contestOpponent(fair).name+' '+entry.duel.rivalScore+'점 · '+(entry.growth||[]).join(' · ')+'</p>':'')+
+    (entry.duel?'<p>'+contestOpponent(fair).name+' '+entry.duel.rivalScore+'점'+(entry.growth?.length?' · '+entry.growth.join(' · '):'')+'</p>':'')+
     (entry.demand?'<b>다음 달 '+products[entry.product].name+' 수요 +'+entry.demand+'개</b>':'')+'</article>';
 }
 function thisMonthFairReport(){
@@ -262,9 +258,9 @@ function contestEvent(fair){
 }
 function contestResultSlip(fair,entry,line){
   const duel=entry.duel;
-  const margin=duel?entry.score-duel.rivalScore:null;
+  const margin=duel&&!entry.match?entry.score-duel.rivalScore:null;
   const rank=margin===0&&entry.rank===2?"공동 금상":contestRank(entry);
-  const verdict=margin===null?"심사 결과":margin===0?"동점":(margin>0?"시엘":contestOpponent(fair).name)+" 승리";
+  const verdict=entry.match?(entry.rank===2?"시엘 팬텀하이브":contestOpponent(fair).name)+" 승리":margin===null?"심사 결과":margin===0?"동점":(margin>0?"시엘":contestOpponent(fair).name)+" 승리";
   const parts=entry.scoreParts?.map(([label,n])=>'<span>'+escapeHTML(label)+' <b>'+n+'</b></span>').join('<i aria-hidden="true">+</i>');
   const growth=(entry.growth||[]).map(change=>{
     const match=/^(.*) ([+-]\d+)$/.exec(change);
@@ -272,13 +268,15 @@ function contestResultSlip(fair,entry,line){
   }).join("");
   return '<article class="contest-slip award-sheet" data-rank="'+entry.rank+'" aria-label="경연 결과" aria-live="polite">'+
     '<header class="award-head"><h3>'+escapeHTML(rank)+'</h3><strong>'+escapeHTML(verdict)+'</strong>'+
+    (entry.match?'<span>시엘 승률 '+Math.round(entry.chance*100)+'%</span>':'')+
     (margin?'<span>'+Math.abs(margin)+'점 차</span>':'')+'</header>'+
     '<div class="award-body"><p class="award-comment">'+escapeHTML(line)+'</p><dl class="award-ledger">'+
-    '<div><dt>심사 점수</dt><dd><strong class="award-total">'+entry.score+'점</strong>'+
+    '<div><dt>'+(entry.match?'환산 실력':'심사 점수')+'</dt><dd><strong class="award-total">'+entry.score+'점</strong>'+
     (parts?'<span class="award-parts">'+parts+'</span>':entry.scoreNote?'<span>'+escapeHTML(entry.scoreNote)+'</span>':'')+
+    (entry.factors?'<small>'+entry.factors.map(([label,n])=>escapeHTML(label)+' ×'+n.toFixed(2)).join(' · ')+'</small>':'')+
     (entry.scoreCondition?'<small>'+escapeHTML(entry.scoreCondition)+'</small>':'')+'</dd></div>'+
     (growth?'<div><dt>능력 변화</dt><dd>'+growth+'</dd></div>':'')+
-    (entry.purse||entry.prize?'<div><dt>입상 보상</dt><dd>'+
+    (entry.purse||entry.prize?'<div><dt>'+(entry.match?'승리 보상':'입상 보상')+'</dt><dd>'+
       (entry.purse?'<strong class="award-purse">상금 '+money(entry.purse)+'</strong>':'')+
       (entry.prize?'<span>'+escapeHTML(entry.prize)+'</span>':'')+'</dd></div>':'')+
     (fair.warrant&&entry.rank===2?'<div><dt>왕실 인증</dt><dd>인증 품목 수요 매달 +2개</dd></div>':'')+
@@ -304,15 +302,16 @@ function duelScene(fair,ticket,duel,entry){
     slip=contestResultSlip(fair,entry,line);
   }else{
     const speaker=turn?"시엘":rival.name;
-    const line=turn?contestSpeech(fair,ticket,(duel.judgment||judgeContest(state,fair,ticket,duel)).rank):
-      (rival.laterQuotes?.[fair.year-1]??rival.quote);
+    const reply=rival.replies?.[fair.year];
+    const line=turn===0?(rival.laterQuotes?.[fair.year-1]??rival.quote):
+      turn===1&&reply?reply:contestSpeech(fair,ticket,matchAssessment(state,fair,ticket,duel).speechTier);
     const next='<button type="button" class="line-next" aria-label="다음 대사" data-action="fair-next:'+turn+'"><span aria-hidden="true">▼</span></button>';
     slip=sceneLine(escapeHTML(speaker),escapeHTML(line),next,'aria-live="polite"');
   }
   return '<section class="contest-screen duel-screen'+(done?' duel-result':'')+'" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+
     '<header><span>'+monthText(fair.month)+' · '+(fair.company?'출품 심사':option.label)+'</span><h2 id="contest-title">'+fair.title+'</h2></header>'+
     '<div class="duel-stage'+(done?' is-revealed':'')+'">'+
-    side(rival.name,fair.company?products[rival.product].name:rival.role,rivalArt+(fair.company?sample(rival.product):''),duel.rivalScore+"점",!turn&&!done)+
+    side(rival.name,fair.company?products[rival.product].name:rival.role,rivalArt+(fair.company?sample(rival.product):''),(entry?duel.rivalScore:contestRivalAbility(fair))+"점",!turn&&!done)+
     '<b class="duel-vs" lang="en">vs.</b>'+
     side("시엘 팬텀하이브",fair.company?products[ticket.product].name:"팬텀하이브의 당주",actor+(fair.company?sample(ticket.product):''),done?entry.score+"점":"심사 중",turn&&!done)+'</div>'+
     slip+'</section>';
@@ -360,8 +359,8 @@ function festivalAction(action,id){
   if(!entry&&duel){
     const page=duel.page??(Number.isInteger(duel.choice)?1:0);
     if(action!=="fair-next"||id!==String(page))return true;
-    duel.judgment??=judgeContest(state,fair,contestTicket(state,fair),duel);
-    if(page===0){duel.page=1;persist();render(true);}
+    const finalPage=contestOpponent(fair).replies?.[fair.year]?2:1;
+    if(page<finalPage){duel.page=page+1;persist();render(true);}
     else if(previewFair){settleFestival(state,duel);render(true);}
     else settleMonth();
     return true;

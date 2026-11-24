@@ -418,11 +418,9 @@ html:is([data-fair-preview],[data-story-preview]) :is(#system-menu,#mobile-menu)
 #conversation .contest-screen>header h2 {margin:.12em 0 0;font-size:clamp(1.05rem,2cqw,1.55rem);line-height:1.15}
 #conversation .contest-screen .dialogue {
   position:relative;inset:auto;transform:none;align-self:center;flex:none;box-sizing:border-box;
-  width:min(94%,38rem);min-height:0;height:auto;max-height:none;margin:0 auto;
-  padding:.72rem 1.1rem .82rem;text-align:left;cursor:pointer;
+  height:auto;margin:0 auto;text-align:left;cursor:pointer;
 }
-#conversation .contest-screen .dialogue p {margin:.3rem 0 0;color:#f7f4ee;line-height:1.6}
-#conversation .contest-screen .dialogue small {color:#f1d8a4}
+#conversation .contest-screen .dialogue p {margin:.35em 0 0}
 html[data-fair-preview] .preview-fairs {padding-block-start:clamp(1.6rem,3.3cqw,3rem)}
 html[data-fair-preview] #conversation .contest-screen {padding-block-start:.6rem}
 @media(max-width:540px){

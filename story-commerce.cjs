@@ -61,10 +61,43 @@ for(const fairId of run('contests.map(f=>f.id)')){
       const first=judgeContest(state,f,t,{...duel,choice:0});
       const second=judgeContest(state,f,t,{...duel,choice:1});
       return JSON.stringify(first)===JSON.stringify(second)&&
-        first.score===first.scoreParts.reduce((sum,[,n])=>sum+n,0)&&
-        (f.company||first.score===state.stats[f.options[t.index].stat]);
+        first.score===Math.round(first.factors.reduce((n,[,m])=>n*m,first.scoreParts[0][1]))&&
+        (f.company||first.scoreParts[0][1]===state.stats[f.options[t.index].stat]);
     });
   })()`);
+}
+// A real manual slot saved on the last line can be replayed. Once awarded, the saved result is final.
+for(const [index,stat,low,high] of [[0,"기품",.31,.34],[1,"매력",.15,.18]]){
+  setup('tab="plan";state.fairTickets={"newYear-1886":{index:'+index+'}};state.sequence={contest:"newYear-1886"};prepareContest(state)');
+  const chance=run('state.sequence.duel.judgment.chance');
+  assert.ok(chance>low&&chance<high);
+  assert.equal(run('state.sequence.duel.rivalScore'),22);
+  run('state.sequence.duel.page=2;handleAction("store:1",null,true)');
+  const before=run('JSON.stringify([state.fund,state.renown,state.stats])');
+  for(const won of [false,true]){
+    run('handleAction("load:1",null,true)');
+    assert.equal(run('JSON.stringify([state.fund,state.renown,state.stats])'),before);
+    ctx.roll=won?chance/2:(1+chance)/2;
+    run('(()=>{const rng=Math.random;try{Math.random=()=>roll;settleFestival(state,state.sequence.duel);}finally{Math.random=rng;}})()');
+    const entry=run('state.fairBook["newYear-1886"]');
+    assert.equal(entry.rank,won?2:0);
+    assert.equal(entry.purse,won?36:0);
+    assert.equal(entry.prize,won?"은제 찻숟가락":"");
+    assert.equal(entry.growth?.length||0,won?2:0);
+    if(!won)assert.equal(run('JSON.stringify([state.fund,state.renown,state.stats])'),before);
+    const slip=run('contestResultSlip(contests[0],state.fairBook["newYear-1886"],"심사평")');
+    assert.match(slip,won?/<h3>승리/:/<h3>패배/);assert.doesNotMatch(slip,/금상|은상|동점/);
+    assert.equal(slip.includes("승리 보상"),won);
+    const paid=run('JSON.stringify([state.fairBook,state.fund,state.renown,state.stats])');
+    run('handleAction("store:2",null,true);handleAction("load:2",null,true);settleFestival(state,state.sequence.duel)');
+    assert.equal(run('JSON.stringify([state.fairBook,state.fund,state.renown,state.stats])'),paid);
+  }
+  setup();
+  ctx.optionIndex=index; ctx.statKey=stat;
+  const odds=()=>run('judgeContest(state,contests[0],{index:optionIndex}).chance');
+  const baseline=odds();
+  run('state.stats[statKey]+=12');assert.ok(odds()>baseline);
+  run('state.stats[statKey]-=12;state.stress+=20');assert.ok(odds()<baseline);
 }
 setup('state.fund=-8;state.visit="none";state.plan=["study","study","study"];tab="plan"');
 assertOk('marketStats().shortfall===cashNeeded()&&!plannerContents().match(/<button[^>]*data-action="execute"[^>]*disabled/)');
@@ -484,7 +517,7 @@ assertOk('statusPanel().includes("컨디션") && statusPanel().includes("지구�
 run('state.accounts.opening=483;state.fund=410;state.accounts.company=80;state.report={income:240,cost:135,bills:48,expenses:10,operating:10,training:40,debtPayment:0}');
 assertOk('actualBudget().includes("−£73") && actualBudget().includes("£313") && actualBudget().includes("£410") && !actualBudget().includes("내역 외 잔액 변동")');
 // Only the part of a training gain above 485 slows down before the second applied exam.
-setup('state.month=25;state.stats.지성=484');
+setup('state.month=25;state.foundation=24;state.stats.지성=484');
 assertOk('lessonGain("지성",440,20,25,{})===lessonGain("지성",440,20,25,{lateDispatch:true})');
 assertOk('lessonGain("지성",484,20,25)===2 && lessonGain("지성",485,20,25)===1 && lessonGain("지성",500,20,25)===0');
 assertOk('scheduleNote("study").replace(/<[^>]+>/g,"").includes("지성 +2") && !statusPanel().includes("과목 실기")');
@@ -493,10 +526,10 @@ assertOk('graduate.stats.지성>486 && projectTraining().stats.지성===486 && s
 run('changeStat("지성",6);state.flags.lateDispatch=true;persist();state=normalizeSave(saves.auto)');
 assertOk('state.stats.지성===491 && lessonGain("지성",491,20,25)>1 && !statusPanel().includes("과목 실기 0/6")');
 
-// Mastery above 497 requires two great results in the stat's primary subject.
-for(const [flag,grade,expected] of [[false,"great",497],[true,"steady",497],[true,"great",499]]){
+// Mastery above 497 uses the main subject after the applied examination in the stat's primary subject.
+for(const [flag,grade,expected] of [[false,"great",497],[true,"steady",499],[true,"great",499]]){
   ctx.mflag=flag;ctx.mgrade=grade;
-  setup('state.month=34;state.stats.지성=state.stats.통찰=497;state.flags.lateDispatch=mflag;state.level.library=3;applyActivity(state,"study",mgrade)');
+  setup('state.month=34;state.foundation=24;state.stats.지성=state.stats.통찰=497;state.flags.lateDispatch=mflag;state.level.library=3;applyActivity(state,"study",mgrade)');
   assert.equal(run('state.stats.지성'),expected);
   assert.equal(run('state.stats.통찰'),497);
 }
@@ -504,6 +537,14 @@ run('changeStat("지성",20);state=normalizeSave(state);applyActivity(state,"stu
 assertOk('state.stats.지성===500 && state.stats.통찰===497');
 run('changeStat("지성",4)');
 assertOk('state.stats.지성===500');
+setup('state.plan=["study","inquiry","casework"];state.month=1;projectTraining()');
+assertOk('state.foundation===0&&!state.linkFrom');
+run('applyActivity(state,"study","steady");state=normalizeSave(state);applyActivity(state,"inquiry","steady");applyActivity(state,"casework","steady")');
+assertOk('state.foundation===6');
+run('state.month=2;applyActivity(state,"inquiry","steady");applyActivity(state,"rest");applyActivity(state,"casework","steady")');
+assertOk('state.foundation===6');
+run('state.month=14;applyActivity(state,"study","steady");applyActivity(state,"inquiry","steady")');
+assertOk('state.foundation===6');
 // High stress spends condition on work; sick leave requires low condition as well.
 setup('state.hp=76;state.stats.체력=50;state.motivation=70;state.stress=75;updateIllness(state)');
 assertOk('!state.ill && healthNotice(state).includes("손이 떨리") && careActivity(state,"accounts")==="accounts"');
@@ -561,9 +602,9 @@ assertOk('state.ill && !hasPendingVisit()');
 run('state.hp=57;state.stress=51;persist()');
 assertOk('!state.ill && hasPendingVisit()');
 
-setup('for(const [key,[target]] of Object.entries(courtEducation))state.stats[key]=target;Object.assign(state.level,{library:2,kitchen:2});state.salesBook=Array.from({length:8},()=>({revenue:30,cost:15}));state.royal=6;state.renown=32;state.fund=1200;state.debt=0');
-assertOk('qualifies() && courtRows().length===9');
-for(const change of ['stats.지성--','stats.기품--','stats.매력--','stats.통찰--','stats.경영--','stats.의지--','stats.체력--','level.kitchen--','salesBook.pop()','royal--','renown--','fund--','debt++']){
+setup('for(const [key,[target]] of Object.entries(courtEducation))state.stats[key]=target;Object.assign(state.level,{library:2,kitchen:2});state.salesBook=Array.from({length:8},()=>({revenue:30,cost:15}));state.royal=6;state.renown=32;state.fund=1200;state.debt=0;state.advancedStudy={study:2,etiquette:2,accounts:2}');
+assertOk('qualifies() && courtRows().length===10');
+for(const change of ['stats.지성--','stats.기품--','stats.매력--','stats.통찰--','stats.경영--','stats.의지--','stats.체력--','advancedStudy.study--','level.kitchen--','salesBook.pop()','royal--','renown--','fund--','debt++']){
   const previous=run('structuredClone(state)');
   run('state.'+change);assertOk('!qualifies()');ctx.savedCourt=previous;run('state=savedCourt');
 }
@@ -573,9 +614,9 @@ for(const ending of ["title","business","defer"]){
   assertOk('state.duration===35 && state.phase==="result" && !state.ending && state.endingBeat===undefined');
   run('advance()');assertOk('state.month===7 && state.phase==="plan"');
 }
-for(const [quality,qty,rank] of [["fine",1,1],["standard",1,0],["fine",0,0]]){
+for(const [quality,qty,roll,rank] of [["fine",1,0,2],["fine",1,.999,0],["standard",1,.999,0],["fine",0,0,0]]){
   setup('tab="plan";state.month=4;state.fairTickets={kensington1886:{product:"toys"}};persist();state=normalizeSave(saves.auto);state.month=5;state.qty='+qty+';state.quality='+JSON.stringify(quality));
-  run('settleFestival(state,{focus:0,choice:0,rivalScore:62})');
+  run('(()=>{const rng=Math.random;try{Math.random=()=>'+roll+';settleFestival(state,{fairId:"kensington1886"});}finally{Math.random=rng;}})()');
   assert.equal(run('state.fairBook.kensington1886.rank'),rank);
   const renown=run('state.renown');run('settleFestival(state)');assert.equal(run('state.renown'),renown);
   run('state.month=6');assert.equal(run('fairDemand(state,"toys")'),rank*2);

@@ -207,6 +207,7 @@ function reviewMarkup(){
   let line=reviewLines[id];
   if(seq.grade)line=lessonFeedback(id,seq.grade,seq.remark);
   if(seq.grade==="great"&&seq.remark===1&&butlerLessonPraise[id])line=butlerLessonPraise[id][sebastianRegard(state.stats)];
+  if(seq.linkedFrom&&seq.grade!=="poor")line="지난 "+actions[seq.linkedFrom].name+"에서 익히신 것을 여기 쓰셨군요. 따로 설명드릴 필요가 없겠습니다.";
   if(!seq.grade&&tired)line="끝까지 자리를 지키셨군요. 다음 순에는 차를 일찍 올리겠습니다. 오늘은 평소보다 피로가 짙으셨습니다.";
   const lead=preferred[0]||(["건강","스트레스","의욕"].find(k=>after[k]!==seq.before[k]));
   if(!changed.length&&!seq.grade)line="오늘 기록은 지난 순과 같군요. 다음에는 다른 과목을 편성해 보시겠습니까, 도련님?";

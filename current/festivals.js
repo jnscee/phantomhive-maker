@@ -57,7 +57,7 @@ const annualContests = [
         line:"서로 처음 만난 손님 셋이 시엘의 탁자에 앉습니다. 한 사람이 차는 됐다며 찻잔을 밀어 놓습니다.",
         placed:"시엘은 뜨거운 물을 따로 내고, 양옆의 손님에게도 차의 농도를 묻습니다. 빈 찻잔에 손을 대지 않던 손님이 먼저 두 번째 잔을 청합니다.",
         missed:"찻잔은 제때 돌렸지만 탁자 끝의 손님 몫은 식고 말았습니다. 시엘이 새 물을 부어 주는 사이 심사 종료 종이 울립니다."}
-    ], prize:"은제 찻숟가락", ribbon:"신년 다과회 입상 리본"
+    ], prize:"은제 찻숟가락"
   },
   {
     id:"spring", month:4, title:"봄꽃 정원제", track:"sakura", room:"garden",
@@ -71,7 +71,7 @@ const annualContests = [
         line:"꽃 이름을 떼어 낸 화분들이 온실 앞에 늘어섭니다. 마지막 두 화분에는 아직 봉오리만 달렸습니다.",
         placed:"시엘은 잎 뒷면의 털과 줄기가 갈라지는 높이를 비교해 표찰을 놓습니다. 심사위원이 마지막 화분을 돌려 보다가 고개를 끄덕입니다.",
         missed:"꽃잎만 본 앞줄은 맞혔지만 끝의 두 표찰이 뒤바뀝니다. 시엘은 정답표를 접기 전에 잎 모양부터 다시 그려 둡니다."}
-    ], prize:"봄꽃 압화 책갈피", ribbon:"봄꽃 정원제 입상 리본"
+    ], prize:"봄꽃 압화 책갈피"
   },
   {
     id:"harvest", month:9, title:"영지의 수확 감사제", track:"harvest", room:"field",
@@ -85,12 +85,12 @@ const annualContests = [
         line:"주최 측이 보리와 밀을 나누어 줄 명단을 내밉니다. 성인과 아이가 받는 양이 달라 자루 수부터 맞춰야 합니다.",
         placed:"시엘은 한 집에서 두 번 적어 낸 몫을 찾아냅니다. 남은 곡물까지 계량을 끝내자 심사위원이 장부와 저울의 수를 대조합니다.",
         missed:"합계는 맞았지만 마지막 집 몫을 다른 줄에 써 놓았습니다. 시엘은 배부가 끝나기 전에 잘못 건넨 표를 돌려받습니다."}
-    ], prize:"수확 감사 바구니", ribbon:"수확 감사제 입상 리본"
+    ], prize:"수확 감사 바구니"
   },
   {
     id:"warrant", month:10, title:"로열 워런트 · 왕실 납품 심사", track:"companyFair", room:"office", company:true,
-    invitation:"왕실 납품 담당관이 팬텀사의 견본과 거래 장부를 함께 봅니다. 해당 품목이 금상을 받으면 왕실 납품 인증을 획득합니다.",
-    prize:"왕실 납품 증서", ribbon:"왕실 납품 심사 은상장"
+    invitation:"왕실 납품 담당관이 팬텀사의 견본과 거래 장부를 함께 봅니다. 해당 품목이 대결에서 이기면 왕실 납품 인증을 획득합니다.",
+    prize:"왕실 납품 증서"
   }
 ];
 
@@ -98,15 +98,15 @@ const historicalContests = [
   {id:"kensington1886",month:5,date:"1886년 5월 4일 박람회 개막",
     title:"사우스켄싱턴 박람회 · 팬텀사 출품전", track:"companyFair", room:"street", company:true,
     invitation:"사우스켄싱턴에서 식민지·인도 박람회가 열렸습니다. 박람회 주간에 맞춰 런던 상인들이 여는 별도 견본 품평회에 출품합니다.",
-    prize:"사우스켄싱턴 상인회 메달", ribbon:"런던 견본 품평회 은상장"},
+    prize:"사우스켄싱턴 상인회 메달"},
   {id:"jubilee1887",month:18,date:"1887년 6월 21일 기념 예배",
     title:"여왕의 골든 주빌리 · 기념품 경연", track:"companyFair", room:"street", company:true,
     invitation:"여왕의 즉위 50주년을 기념하는 주간입니다. 런던 상인들이 여는 기념품 경연에 팬텀사 제품을 냅니다.",
-    prize:"골든 주빌리 기념 메달", ribbon:"주빌리 기념품 경연 은상장"},
+    prize:"골든 주빌리 기념 메달"},
   {id:"earlsCourt1888",month:29,date:"1888년 5월 얼스 코트 박람회",
     title:"얼스 코트 이탈리아 박람회 · 공예품 품평", track:"companyFair", room:"street", company:true,
     invitation:"얼스 코트 이탈리아 박람회가 열리는 달입니다. 인근 상인회가 여는 공예품 견본 품평에 팬텀사도 참가합니다.",
-    prize:"얼스 코트 공예 메달", ribbon:"공예품 품평회 은상장"}
+    prize:"얼스 코트 공예 메달"}
 ];
 
 const oldContests = annualContests.flatMap(fair=>[0,1,2].map(year=>({
@@ -126,7 +126,7 @@ const easterFair={
       line:"생울타리 사이로 달걀을 담을 빈 바구니가 하나씩 건네집니다.",
       placed:"시엘이 빈 둥지 밑을 살짝 들추자 금빛 달걀이 굴러 나옵니다. 엘리자베스가 직접 묶은 작은 리본이 달려 있습니다.",
       missed:"분홍 리본 끝을 따라간 곳에는 빈 바구니만 남았습니다. 마지막 종이 울리자 시엘이 찾아낸 달걀을 심사대에 올립니다."}
-  ], prize:"은제 달걀 장식", ribbon:"부활절 입상 리본"
+  ], prize:"은제 달걀 장식"
 };
 const harvestWarrant={...annualContests.find(f=>f.id==="warrant"),
   id:"royalWarrant",month:9,title:"로열 워런트(수확제)",room:"field",warrant:true,
@@ -140,7 +140,7 @@ const contestArchive=[...contests,...retiredContests].sort((a,b)=>a.month-b.mont
 
 // Each contestant addresses Ciel before his own demonstration.
 const contestOpponents={
-  newYear:{name:"에드워드 미드포드",quote:"시엘, 난 아직 널 내 매제로 인정하지 않았다. ……뭐? 다과회랑 무슨 상관이냐고? 아무튼, 내가 먼저다!",laterQuotes:["해가 바뀌었다고 내가 마음을 바꾼 줄은 아니겠지, 시엘? 리지는 벌써 네 자리부터 봐 뒀더구나.","시엘, 잘해라. 리지가 보고 있다. ……응원한 게 아니다! 내 매제가 되려면 그 정도는 해야지."],role:"미드포드가 장남",poses:["assets/portraits/edward-greeting.png","assets/portraits/edward-tea.png"]},
+  newYear:{name:"에드워드 미드포드",quote:"시엘, 난 아직 널 내 매제로 인정하지 않았다. ……뭐? 다과회랑 무슨 상관이냐고? 아무튼, 내가 먼저다!",laterQuotes:["해가 바뀌었다고 내가 마음을 바꾼 줄은 아니겠지, 시엘? 리지는 벌써 네 자리부터 봐 뒀더구나.","시엘, 잘해라. 리지가 보고 있다. ……응원한 게 아니다! 내 매제가 되려면 그 정도는 해야지."],replies:["내가 언제 인정해 달랬어? ……먼저 해, 에드워드. 손님들 차가 식겠어.","리지가 내 자리를 봐 뒀다고? 고맙다고 전해야겠군. 네 자리도 옆이야?","그래, 응원 고마워. ……그렇게 노려보지 마. 리지한테는 비밀로 할 테니까."],role:"미드포드가 장남",poses:["assets/portraits/edward-greeting.png","assets/portraits/edward-tea.png"]},
   easter:{name:"엘리자베스 미드포드",quote:"시엘, 저 금색 달걀 보이지? 오늘은 나도 봐주지 않을 거야!",laterQuotes:["작년 생각나? 이번에는 내가 먼저 심사대에 갈 거야, 시엘!","올해도 같이 나올 줄 알았어. 자, 종이 울린다!"],role:"미드포드가 영애",get portrait(){return portraits.엘리자베스;}},
   spring:{name:"클라라 벨",quote:"정원에서는 바람도 심사에 끼어들지요.",role:"교구 원예회",actor:"designer"},
   harvest:{name:"토머스 리드",quote:"도련님, 장터에 내놓을 물건을 고른다고 생각해 보십시오.",role:"영지 소작농 대표",actor:"maker"},
@@ -151,7 +151,7 @@ const contestOpponents={
 };
 function contestOpponent(fair){return contestOpponents[fair.warrant?"warrant":fair.id.split("-")[0]];}
 
-// Each row follows the same three outcomes as the judges' scorecard.
+// Dialogue reflects three levels of performance before the verdict.
 const contestSpeeches={
   newYear:[
     ["……미드포드 부인. 실례했습니다. 먼저 새해 인사를 드렸어야 했는데요.","먼 길 와 주셔서 감사합니다. 돌아가실 때는 저희 마차를 쓰시지요.","편지에 적어 주신 장미가 올봄엔 피겠군요. 그때는 제가 먼저 인사를 가겠습니다."],

@@ -24,7 +24,7 @@ function initial(){
     shop:{design:1,works:1,store:1},salesBook:[],productHistory:{},fineStock:{},order:null,
     product:"toys",unlocked:["toys"],quality:"standard",price:14,qty:15,stock:Object.fromEntries(Object.keys(products).map(id=>[id,0])),
     trust:1,royal:0,renown:0,flags:{},events:[],past:[],log:[],pending:null,ending:null,
-    debt:0,unwell:0,relapseStage:0,arrears:0,poverty:false,usedLoan:false,counts:{}});
+    debt:0,unwell:0,relapseStage:0,arrears:0,poverty:false,usedLoan:false,counts:{},advancedStudy:{},foundation:0,linkFrom:null,linkMonth:0});
 }
 const previewQuery=new URL(document.baseURI).searchParams;
 const previewFair=previewQuery.has("fair-preview")?(contests.find(f=>f.id===previewQuery.get("fair-preview"))||contests[0]):null;
@@ -81,14 +81,17 @@ const masteryFinish=497;
 function ordinaryAbilityGain(current,gain){
   return Math.min(gain,Math.max(0,masteryFinish-current));
 }
-function lessonGain(key,current,base,month,flags=state.flags,primaryGreat=false){
+function lessonGain(key,current,base,month,flags=state.flags,primarySuccess=false,foundation=state.foundation||0){
   const rate=1.1+Math.min(month-1,12)*0.065;
   const max=statMax(key);
   const mastery=Math.max(.14,1-Math.max(0,current-280)/235);
   const polish=1-.45*cap((current-450)/50,1);
-  const gain=Math.round(base*rate*mastery*polish*max/abilityMax);
+  const foundationRate=.24+.90*Math.min(1,foundation/24);
+  const advancedRate=1-(1-foundationRate)*cap((current-460)/30,1);
+  const raw=base*rate*mastery*polish*max/abilityMax;
+  const gain=Math.max(primarySuccess?1:0,Math.round(raw*advancedRate));
   const remaining=max-current;
-  if(flags.lateDispatch&&primaryGreat){
+  if(flags.lateDispatch&&primarySuccess){
     return Math.min(remaining,gain,Math.max(0,masteryFinish-current)+2);
   }
   const ordinary=ordinaryAbilityGain(current,gain);
@@ -309,7 +312,7 @@ function recordContractAdvance(amount){
 }
 const choiceMilestones={
   keys:"서재 관리 권한 인수",deed:"가문 증빙 확보",market:"시장 거래 기록",audit:"회계 감사 기록",
-  lateDispatch:"두 번째 종합 실기 완료 · 497점을 넘기려면 해당 능력이 주특기인 수업에서 대성공",
+  lateDispatch:"두 번째 종합 실기 완료 · 주력 과목의 심화 수련 해금",
   lookout:"망보기 기록",postmark:"소인 기록",agniLesson:"아그니와의 집사 교류 기록",agniTea:"아그니와의 다과 기록",
   carrierSpace:"정기 운송 4자리 확보",checkedReceipt:"영수증 확인",sharedReceipt:"영수증 공유",teaBlend:"차 배합 기록",morningGloves:"아침 장갑 기록"
 };
@@ -493,6 +496,18 @@ function plannedCareLevel(run){
   if(run.flags["doctor"+run.month] || run.plan.includes("recovery"))return 2;
   return Math.min(2,run.plan.filter(id=>actions[id]?.stress<0).length);
 }
+function linkedSubject(first,second){
+  if(!(actions[first]?.stress>0&&actions[second]?.stress>0))return null;
+  const primary=Object.keys(actions[second].gains)[0];
+  return Object.keys(actions[first].gains).slice(1).includes(primary)?primary:null;
+}
+function foundationWeight(month){return month<=3?3:month<=6?2:month<=12?1:0;}
+function recordStudyLink(run,id){
+  const linked=run.linkMonth===run.month&&linkedSubject(run.linkFrom,id);
+  if(linked)run.foundation=Math.min(24,(run.foundation||0)+foundationWeight(run.month));
+  run.linkMonth=run.month;run.linkFrom=id;
+  return linked;
+}
 function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),planned=id){
   const a=actions[id];
   if(run.lessonKit?.[id])delete run.lessonKit[id];
@@ -514,13 +529,15 @@ function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),
   if(id==="walk")run.stress=cap(run.stress-(run.annex.garden-1)*5-(shiftAssigned("garden")?2:0));
   run.motivation=cap(run.motivation+(a.stress<0?8:tired?-7:-2)-(worried&&["music","dance"].includes(id)?3:0));
   const primary=Object.keys(a.gains)[0];
+  const linked=recordStudyLink(run,id);
   const changes=Object.entries(a.gains).map(([name,value])=>{
     const before=run.stats[name];
     const secondary=name!==primary;
-    const gain=grade==="poor"&&secondary?-1:lessonGain(name,before,(value+(advancedCourse(run,id)?3:0)+(room?(run.level[room]-1)*4:0))*(grade?lessonGrades[grade].factor:1)*(weather?1.5:1)*(run.neglect>=2?.85:1),run.month,run.flags,!secondary&&a.stress>0&&grade==="great");
+    const gain=grade==="poor"&&secondary?-1:lessonGain(name,before,(value+(linked===name?3:0)+(advancedCourse(run,id)?3:0)+(room?(run.level[room]-1)*4:0))*(grade?lessonGrades[grade].factor:1)*(weather?1.5:1)*(run.neglect>=2?.85:1),run.month,run.flags,!secondary&&a.stress>0&&grade!=="poor",run.foundation);
     run.stats[name]=cap(before+gain,statMax(name));
     return statLabel(name)+" "+signed(run.stats[name]-before);
   });
+  if(linked)changes.push(statLabel(linked)+" · 앞 수업 응용");
   changes.push("스트레스 "+signed(run.stress-stress));
   if(run.hp!==hp)changes.push("컨디션 "+signed(run.hp-hp));
   updateIllness(run);
@@ -547,6 +564,17 @@ function projectTraining(beforeSlot=null){
   if(beforeSlot===null)applyEstateTraining(run);
   return run;
 }
+const courtCourses=[
+  ["학술",["study","inquiry","language"]],
+  ["사교",["etiquette","social","music","dance"]],
+  ["경영",["accounts","negotiate"]]
+];
+function educationRecord(run){
+  return courtCourses.map(([field,subjects])=>{
+    const best=Math.max(...subjects.map(id=>run.advancedStudy?.[id]||0));
+    return {field,done:best>=2,note:field+" "+Math.min(2,best)+"/2"};
+  });
+}
 const courtEducation={
   지성:[485,"서재 수업"],기품:[495,"귀족 예법"],매력:[470,"사교 수업"],
   통찰:[480,"가문 기록 조사"],경영:[480,"팬텀사 회계"],의지:[300,"사건 조사"],체력:[420,"승마"]
@@ -563,7 +591,9 @@ function courtRows(){
     const progress=keys.map(k=>statLabel(k)+" "+state.stats[k]+"/"+courtEducation[k][0]).join(" · ");
     return [label,!next,progress+(next?" · 추천 수업: "+courtEducation[next][1]:"")];
   }
+  const courses=educationRecord(state);
   return [
+    ["고급 과정 이수",courses.every(row=>row.done),courses.map(r=>r.note).join(" · ")+" · 각 분야 한 과목의 실기 합격 뒤 같은 과목 2회 수강"],
     statRow("귀족 교육","지성","기품"),
     statRow("사교와 조사","매력","통찰"),
     statRow("사업과 결단","경영","의지"),
@@ -934,6 +964,32 @@ function normalizeSave(run){
   if(typeof copy.poverty!=="boolean"){
     const opening=copy.accounts?.opening??copy.sequence?.opening?.fund??copy.fund;
     copy.poverty=povertyAfterClosing(copy,opening);
+  }
+  if(!Number.isFinite(copy.foundation)){
+    copy.foundation=0;copy.linkMonth=0;copy.linkFrom=null;
+    const completed={...copy.counts};
+    for(const row of copy.past){
+      if(row.month>12&&row.month!==copy.month)continue;
+      const length=row.month===copy.month&&copy.sequence?copy.sequence.index+1:3;
+      for(const id of (row.plan||[]).slice(0,length)){
+        if((completed[id]||0)>0){
+          completed[id]--;
+          const linked=copy.linkMonth===row.month&&linkedSubject(copy.linkFrom,id);
+          if(linked)copy.foundation=Math.min(24,copy.foundation+foundationWeight(row.month));
+          copy.linkFrom=id;
+        }else copy.linkFrom=null;
+        copy.linkMonth=row.month;
+      }
+    }
+  }
+  if(!copy.advancedStudy){
+    copy.advancedStudy={};
+    for(const [id] of exams){
+      const exam=copy.events.find(e=>e.id==="exam-"+id&&e.index===0);
+      if(!exam||!copy.flags["exam-"+id])continue;
+      const after=copy.past.filter(row=>row.month>exam.month).flatMap(row=>row.plan||[]).filter(key=>key===id).length;
+      copy.advancedStudy[id]=Math.min(2,after,Math.max(0,(copy.counts[id]||0)-2));
+    }
   }
   return copy;
 }
@@ -1959,7 +2015,7 @@ function openFairPreview(fair){
   state.quality="fine";
   state.productHistory.toys={reputation:9,units:36,orders:2};
   const index=previewQuery.get("entry")==="1"?1:0;
-  if(!fair.company)state.stats[fair.options[index].stat]=contestCutoffs(fair)[1]-5;
+  if(!fair.company)state.stats[fair.options[index].stat]=contestRivalAbility(fair)-5;
   state.fairTickets={[fair.id]:fair.company?{product:"toys"}:{index,start:0}};
   state.sequence={contest:fair.id};
   document.documentElement.dataset.fairPreview="true";

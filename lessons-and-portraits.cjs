@@ -202,7 +202,12 @@ async function check(browserType){
       assert.equal(await fairPage.locator('[data-action^="fair-play"]').count(),0);
       await fairPage.locator('.dialogue [data-action="fair-next:0"]').click();
       assert.equal(await fairPage.locator('.duel-screen .dialogue small').textContent(),'시엘');
+      assert.match(await fairPage.locator('.dialogue p').innerText(),/인정해 달랬어/);
       await fairPage.locator('.dialogue [data-action="fair-next:1"]').click();
+      assert.match(await fairPage.locator('.dialogue p').innerText(),/우유/);
+      // Exercise the victory slip on every viewport. The loss and reroll are tested in story-commerce.
+      await fairPage.evaluate(()=>{Math.random=()=>0;});
+      await fairPage.locator('.dialogue [data-action="fair-next:2"]').click();
       assert.ok(await fairPage.locator('[data-action="fair-close"]').isVisible());
       const award=fairPage.getByRole('article',{name:'경연 결과'});
       assert.match(await award.locator('.award-parts').innerText(),/매력/);
@@ -385,7 +390,7 @@ async function check(browserType){
         await page.evaluate(({will,approved})=>{
           state=initial();state.month=state.planMonth=35;state.phase='result';tab='plan';
           for(const person of ['finny','mey','bard','tanaka','snake'])recruit(person);
-          Object.assign(state.stats,Object.fromEntries(stats.map(s=>[s,500])));state.stats.의지=will;
+          Object.assign(state.stats,Object.fromEntries(stats.map(s=>[s,500])));state.stats.의지=will;state.advancedStudy={study:2,social:2,accounts:2};
           state.flags.deed=false;state.hp=45;state.fund=2500;state.royal=will<350&&approved?15:0;state.renown=approved?70:0;
           Object.assign(state.level,{parlor:3,library:3});state.shop.works=3;state.royal=approved?12:0;state.salesBook=Array.from({length:8},()=>({revenue:50,cost:10}));
           talkTrust('mey');

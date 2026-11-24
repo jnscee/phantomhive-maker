@@ -81,7 +81,12 @@ function enterSlot(){
   delete seq.examNote;
   if(id!==planned)seq.sickAbsence=true;
   if(id==="riding"&&state.stats.체력<90)seq.strainedRide=true;
+  seq.linkedFrom=state.linkMonth===state.month&&linkedSubject(state.linkFrom,id)?state.linkFrom:null;
   const changes=applyActivity(state,id,seq.grade,planned);
+  if(advancedCourse(state,id)){
+    state.advancedStudy??={};
+    state.advancedStudy[id]=Math.min(2,(state.advancedStudy[id]||0)+1);
+  }
   state.counts[id]=(state.counts[id]||0)+1;
   if(seq.onSickLeave&&id!==planned)state.log.push(actions[planned].name+" 결석 · 요양으로 대체 · 예약 비용 "+money(paid));
   if(!seq.onSickLeave&&state.ill)state.log.push("병환 · 다음 일정부터 요양");
