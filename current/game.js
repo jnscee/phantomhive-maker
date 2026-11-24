@@ -560,7 +560,8 @@ function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),
   const changes=Object.entries(a.gains).map(([name,value])=>{
     const before=run.stats[name];
     const secondary=name!==primary;
-    const gain=grade==="poor"&&secondary&&!advanced&&!trainingTradeoffs[id]?-1:lessonGain(name,before,(value+(linked===name?3:0)+(advanced?3:0)+(room?(run.level[room]-1)*4:0))*(grade?lessonGrades[grade].factor:1)*(weather?1.5:1)*(run.neglect>=2?.85:1),run.month,run.flags,!secondary&&a.stress>0&&grade!=="poor",run.foundation);
+    const studyRate=grade==="poor" && secondary && before>=320 ? .75 : 1;
+    const gain=grade==="poor"&&secondary&&!advanced&&!trainingTradeoffs[id]?-1:lessonGain(name,before,(value+(linked===name?3:0)+(advanced?3:0)+(room?(run.level[room]-1)*4:0))*studyRate*(grade?lessonGrades[grade].factor:1)*(weather?1.5:1)*(run.neglect>=2?.85:1),run.month,run.flags,!secondary&&a.stress>0&&grade!=="poor",run.foundation);
     run.stats[name]=cap(before+gain,statMax(name));
     return statLabel(name)+" "+signed(run.stats[name]-before);
   });
@@ -635,7 +636,7 @@ function courtRows(){
     ["회사 기반",profitableMonths>=7,"판매·납품 흑자 "+profitableMonths+"/7개월 (상금 제외)"],
     ["왕실 신임",state.royal>=6,"왕실 서신에 답하거나 납품 인증으로 신임을 얻으세요."],
     ["가문 명성",state.renown>=30,"접객과 팬텀사 판매로 명성 쌓기"],
-    ["재정 안정",state.fund>=1100 && state.debt===0,"채무를 상환하고 가문 자금을 비축하세요."]
+    ["재정 안정",state.fund>=1200 && state.debt===0,"채무를 상환하고 가문 자금을 비축하세요."]
   ];
 }
 function titleRequirements(){return courtRows().map(row=>row[1]);}

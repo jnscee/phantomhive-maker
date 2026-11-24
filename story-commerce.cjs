@@ -666,7 +666,7 @@ assertOk('state.ill && !hasPendingVisit()');
 run('state.hp=57;state.stress=51;persist()');
 assertOk('!state.ill && hasPendingVisit()');
 
-setup('for(const [key,[target]] of Object.entries(courtEducation))state.stats[key]=target;Object.assign(state.level,{library:2,kitchen:2});state.salesBook=Array.from({length:7},()=>({revenue:30,cost:15}));state.royal=6;state.renown=30;state.fund=1100;state.debt=0;state.advancedStudy={study:2,etiquette:2,accounts:2}');
+setup('for(const [key,[target]] of Object.entries(courtEducation))state.stats[key]=target;Object.assign(state.level,{library:2,kitchen:2});state.salesBook=Array.from({length:7},()=>({revenue:30,cost:15}));state.royal=6;state.renown=30;state.fund=1200;state.debt=0;state.advancedStudy={study:2,etiquette:2,accounts:2}');
 assertOk('qualifies() && courtRows().length===10');
 assertOk('cielEndingId(460,true,39)==="releaseTitle" && cielEndingId(460,true,40)==="vowTitle" && cielEndingId(459,true,70)==="vowTitle"');
 assertOk('cielEndingId(459,true,69)==="releaseTitle" && cielEndingId(461,true,0)==="vowTitle"');

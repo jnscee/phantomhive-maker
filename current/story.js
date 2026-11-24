@@ -77,16 +77,16 @@ function scriptedEvents(){
     [12,"birthday","열한 번째 생일","식탁 위에 초가 열한 개입니다. 시엘은 장부를 덮고, 빈 의자 하나를 잠깐 바라봅니다.",
       ["홍차와 케이크를 낸다","스트레스 −12",{stress:-12}],["도련님의 말을 기다린다","의지 +5",{의지:5}]],
     [18,"jubilee","황금빛 초대장","1887년 6월 21일, 여왕의 행렬이 웨스트민스터 사원으로 향합니다. 창가에서 보던 시엘이 돌아섭니다. 왕실 앞으로 보낼 가문의 서신이 아직 책상 위에 있습니다.",
-      ["직접 가문을 소개한다","왕실 신뢰 상승",{royal:3},s=>s.stats.기품>=28,"기품 28"],["헌정 완구를 보낸다","가문 명성 상승",{renown:2}]],
+      ["직접 가문을 소개한다","왕실 신뢰 상승",{royal:3},s=>s.stats.기품>=380,"기품 380"],["헌정 완구를 보낸다","가문 명성 상승",{renown:2}]],
     [24,"birthday2","열두 번째 생일","올해의 케이크 장식은 설탕으로 만든 체스 말입니다. 한 칸 움직이면 곧장 무너질 자리입니다.",
       ["먼저 한 수 둔다","통찰 +6",{통찰:6}],["도련님이 고를 때까지 둔다","의욕 +9",{motivation:9}]],
     [31,"match","상자에 남은 이름","런던의 성냥공장 파업 소식이 들어옵니다. 시엘은 팬텀사의 하청 명부도 가져오라고 합니다.",
-      ["납품 조건을 조사한다","협력 공장 기록 확보",{flag:"audit",경영:7}],["직원 대표를 만난다","가문 명성 상승",{renown:2}]],
+      ["납품 조건을 조사한다","협력 공장 기록 확보",{flag:"audit",경영:7}],["직원 대표를 만난다","가문 명성 상승",{renown:2}],["조사 자료를 왕실에 제출한다","왕실 신임 상승",{royal:3},s=>s.flags.deed&&s.stats.통찰>=400,"가문 증빙 확보 · 통찰 400"]],
     [33,"chapel","화이트채플에서 온 전보","동부에서 들어온 전보에 수신인이 빠져 있습니다. 시엘은 봉투에 남은 우편 소인부터 살핍니다.",
       ["소인의 경로를 맞춘다","조사 기록 확보",{flag:"postmark",통찰:8},s=>s.stats.통찰>=33,"통찰 33"],["연락망을 정리한다","의지 +5",{의지:5}]]
   ];
   const contestOverrides={expo:"kensington1886",jubilee:"jubilee1887"};
-  const fixed=timed.map(([month,id,title,text,a,b])=>({id,title,text,chapter:true,speaker:"세바스찬",sees:s=>s.month>=month&&s.month<=month+2&&!Number.isInteger(s.fairBook?.[contestOverrides[id]]?.rank),choices:[a,b].filter(Boolean).map(effectChoice)}));
+  const fixed=timed.map(([month,id,title,text,...options])=>({id,title,text,chapter:true,speaker:"세바스찬",sees:s=>s.month>=month&&s.month<=month+2&&!Number.isInteger(s.fairBook?.[contestOverrides[id]]?.rank),choices:options.filter(Boolean).map(effectChoice)}));
   // Dispatched by a completed investigation or the January turn opener.
   fixed.push({id:"gardener",title:recruitScenes.gardener.title,text:"연구소에서 빠져나온 S-012는 시엘에게 이름과 책을 받았다.",chapter:true,speaker:"세바스찬",sees:()=>false,
     choices:[effectChoice(["피니안 영입",recruitScenes.gardener.result,{recruit:"finny"}])]});
@@ -133,7 +133,7 @@ function scriptedEvents(){
   ];
   const personal=[
     {id:"bargainManners",title:"무례한 젊은 사업가",speaker:"세바스찬",text:"계약서에는 빈틈이 없습니다. 다만 상대는 악수도 하지 않고 돌아섰습니다.",sees:s=>s.stats.경영>=28&&s.stats.경영-s.stats.기품>=10,choices:[
-      choice("답례 방문을 잡는다","기품 +6 · 왕실 신뢰 상승",()=>{shift("기품",6);shift("royal",1)}),
+      choice("답례 방문을 잡는다","기품 +6 · 가문 명성 상승",()=>{shift("기품",6);shift("renown",1)}),
       choice("납품 약속에 집중한다","경영 +8",()=>shift("경영",8))]},
     {id:"teaPrivilege",title:"두 번째 잔",speaker:"세바스찬",lines:[["","시엘이 빈 잔을 내려놓는다. 명령을 기다릴 필요는 없었다. 세바스찬이 두 번째 잔을 채운다."]],sees:s=>s.flags.quietTea>=3,choices:[
       choice("설탕을 하나 줄인다","둘만의 차 취향 기록 · 의욕 +6",()=>{state.flags.teaBlend=true;shift("motivation",6)}),
@@ -178,7 +178,7 @@ function initialEvents(){
    text:"왕실에 가문의 활동 내역을 제출합니다.",
    sees:s=>s.month>=3&&(s.visit==="parlor"||s.month>=5),
    choices:[
-     {label:"가문 책무 보고",when:s=>s.stats.기품>=24,hint:"기품 24",effect:()=>{state.royal+=3;state.renown+=1;},result:"왕실 평가 상승 · 가문 명성 상승"},
+     {label:"가문 책무 보고",when:s=>s.stats.기품>=24,hint:"기품 24",effect:()=>{state.royal+=1;state.renown+=1;},result:"왕실 평가 상승 · 가문 명성 상승"},
      {label:"팬텀사 회계 장부 제출",when:s=>s.stats.경영>=22,hint:"경영 22",effect:()=>{state.royal+=2;state.renown+=2;},result:"왕실 평가 상승 · 가문 명성 상승"},
      {label:"증빙 자료 요청",when:s=>s.stats.통찰>=24,hint:"통찰 24",effect:()=>{state.royal+=2;state.flags.deed=true;},result:"왕실 평가 상승 · 가문 증빙 확보"},
      {label:"세바스찬에게 접수 위임",effect:()=>{state.royal+=1;},result:"왕실 평가 소폭 상승"}
@@ -194,7 +194,7 @@ function initialEvents(){
    text:"응접실을 개수해 거래처를 추가로 접대할 수 있습니다.",
    sees:s=>s.month>=4&&s.level.parlor>=2,
    choices:[
-     {label:"추가 접객 진행",effect:()=>{state.royal+=1;state.renown+=1;},result:"왕실 평가 상승 · 가문 명성 상승"},
+     {label:"추가 접객 진행",effect:()=>{state.renown+=2;},result:"가문 명성 +2"},
      {label:"접객 일정 종료",effect:()=>{state.trust+=1;state.stress=cap(state.stress-8);},result:"스트레스 -8"}
    ]}
 ];
