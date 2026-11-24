@@ -137,6 +137,19 @@ async function check(browserType){
       for(let i=0;i<remaining;i++)await page.locator('#opening-next').click();
       assert.ok(await page.locator('#guide-replay').isVisible());
       assert.deepEqual(await page.evaluate(()=>[tourSession.saves.auto.phase,tourSession.saves[1].phase]),['guide','guide']);
+      const forward=page.locator('#guide-replay [data-action="guide-forward"]');
+      await forward.click();
+      await forward.click();
+      const checkpoint=await page.locator('#guide-replay-title').innerText();
+      for(const slot of ['1','auto']){
+        await page.reload();
+        await page.locator('[data-action="cover:continue"]').click();
+        await page.locator(slot==='auto'?'[data-action="resume"]':'[data-action="load:1"]').click();
+        if(slot!=='auto')await page.locator('#picker [data-action="confirm"]').click();
+        assert.equal(await page.locator('#guide-replay-title').innerText(),checkpoint);
+        assert.deepEqual(await page.evaluate(()=>[tourPage,tourSession.state.guideStep]),[2,2]);
+        assert.equal(await page.evaluate(()=>tourSession.state.people.mey),undefined);
+      }
       assert.equal(await page.evaluate(()=>recruitScenes.homecoming.lines.some(line=>line.text.includes('회중시계'))),false);
       await page.locator('#guide-replay [data-action="guide-close"]').click();
       if(viewport.width===390){

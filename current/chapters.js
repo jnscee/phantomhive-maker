@@ -172,15 +172,12 @@ function finishVisit(){
 }
 function chapterView(){
  if(tab!=="plan")return "";
- if(state.phase==="guide"){const i=state.guidePage||0;return staged("세바스찬",guide[i][0],guideMenu(i)+guide[i][1],btn(i===guide.length-1?"저택으로":"다음 안내","guide-next")+btn("안내 마치기","guide-end"),"조작 안내 "+(i+1)+" / "+guide.length);}
  if(state.phase==="investiture")return staged("세바스찬","","도련님, 왕실에서 서신이 왔습니다. 봉랍을 확인했습니다. 도련님 앞으로 온 친서입니다.",btn("서신을 펼친다","read-verdict"),"","library");
  if(state.phase==="visit")return visitScene();
  return "";
 }
 function chapterAction(action,id,confirmed,rect){
- if(state.phase==="guide"&&["guide-end","guide-next"].includes(action)){
- if(action==="guide-end"||state.guidePage>=guide.length-1){state.phase="plan";tab="home";}else state.guidePage++;
- }else if(action==="visit-done"&&state.phase==="visit"){visitDone(id==="engage");return true;}
+ if(action==="visit-done"&&state.phase==="visit"){visitDone(id==="engage");return true;}
  else if(action==="visit-choice"&&state.phase==="visit"){chooseVisitEvent(Number(id));return true;}
  else if(action==="visit-finish"&&state.phase==="visit"){finishVisit();return true;}
  else return false;

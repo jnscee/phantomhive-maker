@@ -54,7 +54,10 @@ function persist(){
   if(tourSession||previewFair||storyDemo)return;
   updateIllness(state);
   saves.auto=structuredClone(state);
-  try{localStorage.setItem(storageKey,JSON.stringify(saves));}catch{storageOk=false;}
+  writeSaveBook(saves);
+}
+function writeSaveBook(book){
+  try{localStorage.setItem(storageKey,JSON.stringify(book));}catch{storageOk=false;}
 }
 function flash(message){ $("flash").textContent=message; }
 function btn(label,action,disabled=false,style=""){
@@ -1198,6 +1201,7 @@ function greetCiel(){
   remarkTimeout=setTimeout(()=>{bubble.textContent="";},3000);
 }
 function render(focus=false,playbackOffset=0){
+  if(tab==="plan"&&state.phase==="guide"&&!tourSession){showGuidePage(savedGuideStep(state));return;}
   if(state.phase==="vow"&&tab==="plan"){beginFinale(cielEndingId(state.stats.의지,qualifies()));return;}
   if($("scene").dataset.artOnly==="true")setArtOnly($("scene"),false);
   if(tab!=="home"){
@@ -1535,7 +1539,6 @@ function handleAction(key,rect,confirmed=false){
   if((tab==="title"||tab==="continue")&&action==="resume"&&hasCoverSave("auto")){
     utilityOrigin=null;
     tab=state.phase==="plan"?"home":"plan";render(true);
-    if(state.phase==="guide")showGuidePage(0);
     return;
   }
   if(action==="open-guide"){showGuidePage(0);return;}
@@ -1766,7 +1769,9 @@ function handleAction(key,rect,confirmed=false){
   }else if(action==="load"){
     if(!saves[id])return;
     if(!confirmed){askConfirmation(key,"불러오기","현재 진행을 선택한 저장 상태로 바꿉니다.","불러오기",rect);return;}
-    utilityOrigin=null;state=normalizeSave(saves[id]);selectedSlot=0;tab=state.phase==="plan"?"home":"plan";message="불러오기 완료";
+    utilityOrigin=null;state=normalizeSave(saves[id]);selectedSlot=0;tab=state.phase==="plan"?"home":"plan";
+    if(state.phase==="guide"){state.guideSlot=id;render(true);return;}
+    message="불러오기 완료";
   }else{
     if(state.phase!=="plan")return;
     if(action==="buy"){
@@ -1903,7 +1908,7 @@ if(storyDemo){
   document.documentElement.dataset.storyPreview="true";
 }else if(previewFair)openFairPreview(previewFair);
 render();
-if(state.phase==="guide"&&tab==="plan")showGuidePage(0);
+
 document.documentElement.lang=gameLanguage;
 syncMotion();
 matchMedia("(prefers-reduced-motion: reduce)").addEventListener?.("change",syncMotion);

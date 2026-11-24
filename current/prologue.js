@@ -189,11 +189,12 @@ function finishOpening(){
   stopOpeningAuto();
   if(tab==="recollection"){tab="save";render(true);focusAction("recollect");return;}
   if(!state.contractFiled){state.openingLine=openingSigningLine;persist();drawOpening(true);return;}
-  state.phase="guide";state.guidePage=0;
+  state.phase="guide";state.guideStep=0;
   const slot=state.openingSlot;
+  state.guideSlot=slot;
   delete state.openingSlot;
   if(slot&&saves[slot]?.owlSeed===state.owlSeed)saves[slot]=structuredClone(state);
-  persist();render();showGuidePage(0);
+  persist();render();
 }
 function stepOpening(step){
   if(!inOpening()||$("picker").open||$("scene").dataset.artOnly==="true")return;

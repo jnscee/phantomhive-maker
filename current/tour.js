@@ -32,6 +32,22 @@ const tourSteps=[
 let tourSession=null;
 let tourPage=0, tourTarget=null, tourAnchor=null, positionFrame=0;
 let tourLocks=[];
+function savedGuideStep(run){
+  // The old dialogue used eight topics. Resume at the corresponding practice screen.
+  const oldTopics=[0,1,6,15,11,8,22,24];
+  if(!Number.isInteger(run.guideStep))return oldTopics[run.guidePage]??0;
+  return Math.max(0,Math.min(tourSteps.length-1,run.guideStep));
+}
+function saveGuideStep(page){
+  const {state:run,saves:book}=tourSession;
+  if(run.phase!=="guide")return;
+  run.guideStep=page;
+  const snapshot=structuredClone(run);
+  book.auto=snapshot;
+  const slot=book[run.guideSlot];
+  if(slot?.phase==="guide"&&slot.owlSeed===run.owlSeed)book[run.guideSlot]=snapshot;
+  writeSaveBook(book);
+}
 function beginGuide(){
   const panel=$("panel");
   tourSession={
@@ -76,6 +92,7 @@ function endGuide(){
   document.body.classList.remove("guiding");
   $("guide-replay").hidden=$("tour-ring").hidden=true;
   if(state.phase==="guide"&&tab==="plan"){
+    delete state.guideStep;delete state.guidePage;delete state.guideSlot;
     state.phase="plan";tab="home";persist();render(true);
     return;
   }
@@ -92,6 +109,7 @@ function showGuidePage(page){
   if(!tourSession)beginGuide();
   unlockPractice();
   tourPage=page;
+  saveGuideStep(page);
   const [view,action,title,hint]=tourSteps[page];
   state=initial();state.month=state.planMonth=tourSession.state.month;state.phase="plan";state.people.mey={toward:2};state.jobs.mey="parlor";
   tab=view==="confirm"?"plan":view;
