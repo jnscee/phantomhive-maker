@@ -109,7 +109,7 @@ for(const id of run('[...categories[0][1],...categories[2][1]]')){
     setup('for(const k of stats)state.stats[k]=100;state.plan=[subject,"rest","rest"];tab="plan";selectedSlot=0');
     assertOk('!Object.hasOwn(actions[subject].gains,trainingTradeoffs[subject])');
     const key=run('trainingTradeoffs[subject]');
-    assert.match(run('scheduleNote(subject)'),/▼/);
+    assert.match(run('scheduleNote(subject)'),/↓/);
     assert.equal(run('state.stats[trainingTradeoffs[subject]]'),100);
     run('applyActivity(state,subject,testGrade);state=normalizeSave(state)');
     assert.equal(run('state.stats[trainingTradeoffs[subject]]'),100-cost,id+" "+key);
@@ -222,7 +222,7 @@ for(const weather of ['heat','cold']){
       assert.ok(extreme[2]>clear[2] && extreme[3]>clear[3]);
     }else assert.deepEqual(extreme,clear);
   }
-  assertOk('plannerContents().includes(weatherFor(state).name) && scheduleNote("exercise").includes("▲")');
+  assertOk('plannerContents().includes(weatherFor(state).name) && scheduleNote("exercise").includes("↑")');
   run('state.plan=["study","study","study"];state.visit="town";state.qty=0;execute();var quote=overhead();state.sequence.index=2;settleMonth()');
   assertOk('state.report.bills===quote && actualBudget().includes(weatherFor(state).charge)');
 }
@@ -261,10 +261,19 @@ for(const omit of ["townhouse","soma","agni"]){
   setup('state.month=35;state.phase="event";state.pending="circus";state.recruitPage={id:"circus",at:7,version:2};state.eventQueue=["snakeReturn"];for(const p of ["finny","mey","bard","tanaka","soma","agni"])recruit(p);state.flags.townhouse=omit!=="townhouse";delete state.people[omit];state=normalizeSave(state)');
   assertOk('!state.people.snake && !state.recruitPage && !["circus","snakeReturn"].includes(state.pending) && !state.snakeArrivalMonth');
 }
-for(const missing of ["townhouse","finny","mey","bard"]){
+for(const missing of ["townhouse"]){
   ctx.missing=missing;
   setup('state.flags.townhouse=missing!=="townhouse";for(const id of ["finny","mey","bard"])if(id!==missing)recruit(id);state.pending="visitPrince";state.phase="event";state.recruitReturn="estate";state.eventQueue=["visitPrince"];state=normalizeSave(state)');
   assertOk('state.phase==="plan"&&!state.pending&&!townhouseGuestsDue(state)&&!state.flags.visitPrince');
+}
+for(const present of [null,"soma","agni"]){
+  ctx.present=present;
+  setup('state.flags.townhouse=true;state.flags.visitPrince=true;state.flags.agni=true;if(present)state.people[present]={toward:7};state=normalizeSave(state)');
+  assert.equal(run('state.pending'),"visitPrince");
+  run('state.recruitPage={id:"visitPrince",at:6,version:3};state=normalizeSave(state)');
+  assert.equal(run('recruitPage("visitPrince")'),6);
+  pick();
+  assertOk('state.people.soma&&state.people.agni&&(!present||state.people[present].toward===7)&&!normalizeSave(state).pending');
 }
 setup('state.month=19;state.flags.townhouse=true;recruit("finny");recruit("mey");state.phase="event";state.pending="cook";state.eventQueue=[]');
 pick();assert.equal(run('state.pending'),"visitPrince");
@@ -526,7 +535,7 @@ for(const invest of [false,true]){
   }
   assert.ok(campaign.january.stats.filter(value=>value<500).length>=4);
   assert.ok(campaign.stats.some((value,i)=>value>campaign.january.stats[i]));
-  assert.equal(campaign.exams,invest?13:12);
+  assert.equal(campaign.exams,12);
   assert.deepEqual(Array.from(campaign.birthdays),[12,24]);
   assert.deepEqual(Array.from(campaign.decisions),[26,29,32]);
   console.log('PASS 35-month campaign',invest?'expanded estate':'starting facilities',
@@ -575,7 +584,7 @@ assertOk('actualBudget().includes("−£73") && actualBudget().includes("£313")
 setup('state.month=25;state.foundation=24;state.stats.지성=484');
 assertOk('lessonGain("지성",440,20,25,{})===lessonGain("지성",440,20,25,{lateDispatch:true})');
 assertOk('lessonGain("지성",484,20,25)===2 && lessonGain("지성",485,20,25)===1 && lessonGain("지성",500,20,25)===0');
-assertOk('scheduleNote("study").replace(/<[^>]+>/g,"").includes("지성 ▲") && !statusPanel().includes("과목 실기")');
+assertOk('scheduleNote("study").replace(/<[^>]+>/g,"").includes("지성 ↑") && !statusPanel().includes("과목 실기")');
 run('state.stats.지성=485;state.plan=["study","rest","walk"];const graduate=structuredClone(state);graduate.flags.lateDispatch=true;applyActivity(graduate,"study","great")');
 assertOk('graduate.stats.지성>486 && projectTraining().stats.지성===486 && state.stats.지성===485');
 run('changeStat("지성",6);state.flags.lateDispatch=true;persist();state=normalizeSave(saves.auto)');

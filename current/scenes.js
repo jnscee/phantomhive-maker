@@ -16,12 +16,15 @@ function playMarkup(){
   const stageText=(advancedCourse(state,id)?advancedLessons[id]+" ":"")+(outcome?lessonPlayback(id,seq.grade,seq.remark):line);
   const all=Object.keys(seq.after).filter(k=>seq.before[k]!==seq.after[k]);
   let rows=all.map(k=>'<div class="stage-stat"><span>'+statLabel(k)+'</span><em data-stat="'+k+'">'+seq.before[k]+'</em><i><b></b></i><small>'+signed(seq.after[k]-seq.before[k])+'</small></div>').join("");
+  const controls=previewLesson
+    ? '<select id="preview-lesson" aria-label="미리 볼 일정">'+Object.keys(choreography).map(key=>'<option value="'+key+'"'+(key===id?' selected':'')+'>'+actions[key].name+'</option>').join("")+'</select><a href="./">표지로</a>'
+    : '<button data-action="speed">재생 ×'+speed+'</button><button data-action="skip">이 순 마치기 ›</button>';
   const weather=weatherFor(state);
   const season=weather?' <span class="season-weather" data-weather="'+state.weather+'">'+weather.name+'</span>':"";
   return '<div class="lesson-art"><div class="lesson-plane" data-room="'+room+'"><img class="stage-room" src="'+sceneArt[room]+'" alt="">'+
     '<div class="performer '+movement+'"'+(illustrated?' data-illustrated':'')+' data-frames="'+pose.join(" ")+'"><img src="'+actors[pose[0]]+'" alt="'+courseName(id)+' 중인 시엘"><span class="motion-object '+prop+'" aria-hidden="true">'+motionObjects[prop]+'</span></div></div></div>'+
     '<div class="stage-top"><b>'+stageNames[room]+season+'</b><span>'+slotNames[part]+' · '+courseName(id)+(outcome?' · '+outcome:'')+'</span></div>'+
-    '<div class="stage-record">'+rows+'</div><div class="stage-foot"><p>'+stageText+'</p><div><button data-action="speed">재생 ×'+speed+'</button><button data-action="skip">이 순 마치기 ›</button></div></div>';
+    '<div class="stage-record">'+rows+'</div><div class="stage-foot"><p>'+stageText+'</p><div>'+controls+'</div></div>';
 }
 // Match background-size: cover, using the actual visible room even on the first frame.
 function fitLessonRoom(image){
@@ -62,7 +65,7 @@ function startPlayback(resumeAt=0){
       const key=field.dataset.stat,v=Math.round(seq.before[key]+(seq.after[key]-seq.before[key])*Math.min(1,pct*1.35));
       field.textContent=v;field.nextElementSibling.firstElementChild.style.width=Math.min(100,v/statMax(key)*100)+"%";
     }
-    if(pct>=1)finishScene();
+    if(pct>=1){if(previewLesson)playbackElapsed=0;else finishScene();}
   }
   playbackTimer=setInterval(paint,85);paint();
 }

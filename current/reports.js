@@ -41,10 +41,10 @@ function budgetTable(compact=false){
   return '<section class="budget-book forecast">'+(compact?'':'<h3>이달 자금 예상</h3>')+
     '<div class="cash-head"><span>예상 월말 잔액</span><strong>'+money(b.closing)+'</strong><b class="cash-change">'+(change>0?'▲ '+money(change)+' 증가':change<0?'▼ '+money(-change)+' 감소':'변동 없음')+'</b></div>'+
     amountRow("현재 가용 자금",state.fund)+flow("팬텀사 예상 매출",b.revenue,false)+flow("남은 지출 합계",b.total,true)+
-    (compact?'<details class="expense-details"><summary>지출 내역·시설 효과</summary>':'')+'<div class="cash-detail">'+amountRow("저택 운영 · 시설 유지",b.estate-(weatherFor(state)?.fee||0))+(weatherFor(state)?amountRow(weatherFor(state).charge,weatherFor(state).fee):"")+amountRow("팬텀사 운영 · 생산비",b.company)+
+    ('<details class="expense-details"><summary>지출 내역·시설 효과</summary>')+'<div class="cash-detail">'+amountRow("저택 운영 · 시설 유지",b.estate-(weatherFor(state)?.fee||0))+(weatherFor(state)?amountRow(weatherFor(state).charge,weatherFor(state).fee):"")+amountRow("팬텀사 운영 · 생산비",b.company)+
     tradeCosts(b.trade)+amountRow("교육·활동비",b.tuition)+
     (b.debt?amountRow("채무 상환",b.debt):"")+'</div>'+
-    contributionNote(investmentEffect(forecast()),state.accounts.researchSaved)+(compact?'</details>':'')+'</section>';
+    contributionNote(investmentEffect(forecast()),state.accounts.researchSaved)+ '</details></section>';
 }
 function contributionNote(investment,research){
   if(!(investment?.total||research))return "";

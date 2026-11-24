@@ -445,7 +445,56 @@ html[data-fair-preview] #conversation .contest-screen {padding-block-start:.6rem
 .plan-effect b > [role="img"],
 .hud-group em > [role="img"] {
   font-size:max(9px,.75em);
-  letter-spacing:0;
+  letter-spacing:.12em;
   white-space:nowrap;
 }
 .hud-group em > [role="img"] {font-size:.4375rem}
+
+#scene[data-mode=company] .work-actions.production-grid {
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,5.6rem),1fr));gap:4px;
+}
+#scene[data-mode=company] .production-grid button {
+  margin:0;min-width:0;width:100%;height:100%;padding:5px 3px;text-align:center;word-break:keep-all;
+}
+.property-desk .facility-rates {display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap;color:#425464;font-size:.75rem}
+.facility-rates > span + span {border-inline-start:1px solid #aab6bc;padding-inline-start:.5rem}
+.facility-rates strong,.ledger-figures dd {font-variant-numeric:tabular-nums}
+.property-desk .stock-entry,.property-desk .purchase-order {
+  box-sizing:border-box;margin:.45rem 0;padding:.55rem .65rem;color:#253950;
+  background:#eff3f6;border:1px solid #afbbc5;border-radius:4px;
+}
+.stock-entry header,.purchase-order header {display:flex;align-items:baseline;justify-content:space-between;gap:.4rem;flex-wrap:wrap}
+.stock-entry header span,.purchase-order header span {font-size:.76rem}
+.stock-entry progress {display:block;width:100%;height:4px;margin:.35rem 0 .45rem;accent-color:#486a79}
+.property-desk .ledger-figures {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,3.6rem),1fr));gap:.3rem;margin:.35rem 0}
+.ledger-figures dt {font-size:.72rem;color:#4c6072}
+.ledger-figures dd {margin:0;font-weight:700;line-height:1.35}
+.property-desk .purchase-order {background:#faf4e6;border:1px solid #c9baa2;border-top:3px double #9c835b;color:#45382d}
+.purchase-order header {border-bottom:1px solid #d5c7aa;padding-bottom:.3rem}
+.property-desk .purchase-order .order-subject {margin:.4rem 0;font-weight:700}
+.property-desk .purchase-order .order-due {margin:.5rem 0 .15rem;font-size:.82rem}
+.purchase-order small,.stock-entry small {display:block;font-size:.74rem}
+#panel .purchase-order .order-accept,.order-stamp {display:block;width:fit-content;margin:.5rem 0 0 auto}
+.order-stamp {font-size:.77rem;color:#376459}
+
+#panel .sales-books .compact-month {margin:0;padding:0;border:0;border-block-end:1px solid #a8b7c455;background:transparent}
+#panel .compact-month > summary {
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:baseline;
+  gap:.45rem;min-height:0;margin:0;padding:.4rem .25rem;font-size:.8rem;line-height:1.3;cursor:pointer;
+}
+.compact-month .month-receipts {white-space:nowrap;font-variant-numeric:tabular-nums}
+#panel .sales-archive {padding:0;margin:0;border:0;background:transparent}
+#panel .sales-archive > summary {padding:.4rem .25rem;font-size:.8rem;cursor:pointer}
+html[data-lesson-preview] #system-menu {visibility:hidden}
+#playback #preview-lesson {max-width:100%;min-width:0;font:inherit;color:#203548;background:#eff3f6;border:1px solid #8da5b9;border-radius:4px;padding:3px}
+html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-space:nowrap}
+
+#calendar b .townhouse-words {display:inline;font:inherit;color:inherit;word-break:keep-all;white-space:normal}
+#calendar b .townhouse-words>span {display:inline-block;font:inherit;color:inherit;white-space:nowrap}
+.property-grounds .company-forecast,.property-grounds #sales-gauge,#live-budget {box-sizing:border-box;width:min(100%,27rem);margin-inline:auto}
+.property-grounds .company-forecast {grid-template-columns:repeat(2,minmax(0,1fr));gap:1px}
+.property-grounds .company-forecast .tile {grid-template-columns:minmax(0,1fr);justify-items:start;gap:2px;padding:7px 12px}
+.property-grounds .company-forecast strong,#live-budget strong {font-variant-numeric:tabular-nums}
+#live-budget .forecast {margin-inline:0;width:100%;box-sizing:border-box}
+#live-budget .expense-details {border-top:1px solid #8fabc34d;margin-top:8px;padding-top:6px}
+#live-budget .expense-details>summary {cursor:pointer;font-weight:600}

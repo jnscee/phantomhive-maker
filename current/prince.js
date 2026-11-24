@@ -1,8 +1,7 @@
 "use strict";
 
 function townhouseGuestsDue(run){
-  return Boolean(run.flags.townhouse && run.people.bard && run.people.finny && run.people.mey &&
-    !run.flags.visitPrince && !(run.people.soma && (run.people.agni || run.flags.agni)));
+  return Boolean(run.flags.townhouse && !(run.people.soma && run.people.agni));
 }
 
 const princeChapter={

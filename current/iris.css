@@ -1142,25 +1142,12 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
 /* Place the sprite on the same 480 × 320 coordinate plane as its background. */
 #playback:not([hidden]) {display:grid;grid-template-rows:minmax(0,1fr) auto;grid-template-columns:7% minmax(0,1fr) minmax(0,2fr) 7%;gap:6px 1%;padding-bottom:2.6%;background:transparent}
 .lesson-art {position:absolute;inset:0;overflow:hidden;pointer-events:none}
-/* Coordinates are measured on the room artwork, before the viewport crops it. */
-.lesson-plane {position:absolute;inset:0;isolation:isolate;--foot-x:.5;--foot-y:.68}
-.lesson-plane[data-room=archive] {--foot-x:.44;--foot-y:.69}
-.lesson-plane[data-room=ballroom] {--foot-x:.50;--foot-y:.64}
-.lesson-plane[data-room=bedroom] {--foot-x:.50;--foot-y:.64}
-.lesson-plane[data-room=field] {--foot-x:.50;--foot-y:.63}
-.lesson-plane[data-room=garden] {--foot-x:.50;--foot-y:.65}
-.lesson-plane[data-room=gym] {--foot-x:.50;--foot-y:.66}
-.lesson-plane[data-room=library] {--foot-x:.47;--foot-y:.66}
-.lesson-plane[data-room=music] {--foot-x:.49;--foot-y:.66}
-.lesson-plane[data-room=office] {--foot-x:.46;--foot-y:.69}
-.lesson-plane[data-room=street] {--foot-x:.50;--foot-y:.69}
+.lesson-plane {position:absolute;inset:0;isolation:isolate}
 .lesson-plane > img.stage-room {display:block;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}
 .lesson-plane .performer {
   --sprite-size:min(calc(var(--painted-height) * var(--actor-ratio,.255)), 82cqw);
-  --edge:calc(var(--sprite-size) * .68);
   width:var(--sprite-size);height:var(--sprite-size);
-  left:clamp(var(--edge),calc(50% + var(--painted-width) * (var(--foot-x) - .5)),calc(100% - var(--edge)));
-  bottom:calc(50% - var(--painted-height) * (var(--foot-y) - .5));
+  left:50%;bottom:calc(50% - var(--sprite-size) * .5);
   translate:-50% 0;transform-origin:50% 100%;animation-name:lesson-idle;
 }
 .lesson-plane .performer[data-illustrated] > img {translate:0 2.5%}

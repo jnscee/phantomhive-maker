@@ -191,9 +191,9 @@ async function check(browserType){
         state=initial();state.fund=-10;state.phase="plan";state.plan=["study","study","study"];state.visit="none";tab="plan";render();
       });
       const forecast=await creditPage.locator("#calendar .calendar-note").innerText();
-      assert.match(forecast,/지구력\s*▼/);
+      assert.match(forecast,/지구력\s*↓/);
       assert.doesNotMatch(forecast,/기준|[+−-]\d/);
-      assert.match(await creditPage.evaluate(()=>statusPanel()),/aria-label="(?:소폭|중간|대폭) 상승">▲/);
+      assert.match(await creditPage.evaluate(()=>statusPanel()),/aria-label="(?:소폭|중간|대폭) 상승">↑/);
       await creditPage.locator('.calendar-run').click();
       assert.match(await creditPage.locator('#picker').innerText(),/외상/);
       await creditPage.locator('#picker [data-action="confirm"]').click();
@@ -336,7 +336,7 @@ async function check(browserType){
         assert.ok((await page.locator('#sheet').innerText()).includes('편성한 일정의 예상 변동'));
         assert.equal(await page.locator('.attributes .attribute:not(.attr-label)').count(),7);
         const changes=await page.locator('#sheet .meter em, #sheet .attribute:not(.attr-label) em').allTextContents();
-        assert.ok(changes.length===10&&changes.every(value=>/^(▲{1,3}|▼{1,3}|–)$/.test(value)),JSON.stringify(changes));
+        assert.ok(changes.length===10&&changes.every(value=>/^(↑{1,3}|↓{1,3}|–)$/.test(value)),JSON.stringify(changes));
         await page.locator('#system-back').click();
         assert.equal(await page.evaluate(()=>tab),'plan');
         assert.equal(await page.evaluate(()=>JSON.stringify(state.plan)),planned);

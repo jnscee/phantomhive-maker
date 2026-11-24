@@ -34,13 +34,15 @@ function initial(){
 }
 const previewQuery=new URL(document.baseURI).searchParams;
 const previewFair=previewQuery.has("fair-preview")?(contests.find(f=>f.id===(previewQuery.get("fair-preview")==="newYear-1886"?"newYear-1887":previewQuery.get("fair-preview")))||contests[0]):null;
+const requestedLesson=previewQuery.get("lesson-preview");
+const previewLesson=Object.hasOwn(choreography,requestedLesson)?requestedLesson:null;
 const previewStory=previewQuery.get("story-preview");
 const previewSetback=monthlySetbacks.find(item=>item.id===previewStory);
 const previewCompanyCase=companyCases.find(item=>item.id===previewStory);
 const storyDemo=Boolean(previewSetback||previewCompanyCase)||Object.hasOwn(middleObservations,previewStory);
 const storageKey="earl-phantomhive-maker-v1";
 let saves, storageOk=true;
-try{ saves=previewFair||storyDemo?{}:JSON.parse(localStorage.getItem(storageKey)||"{}"); }catch{ storageOk=false; }
+try{ saves=previewLesson||previewFair||storyDemo?{}:JSON.parse(localStorage.getItem(storageKey)||"{}"); }catch{ storageOk=false; }
 if(!saves || typeof saves!=="object")saves={};
 let state=saves.auto?.v===1?saves.auto:initial();
 state=structuredClone(state);
@@ -70,7 +72,7 @@ function updateIllness(run){
   else if(run.hp>=50 && run.stress<=60)run.ill=false;
 }
 function persist(){
-  if(tourSession||previewFair||storyDemo)return;
+  if(tourSession||previewLesson||previewFair||storyDemo)return;
   updateIllness(state);
   saves.auto=structuredClone(state);
   writeSaveBook(saves);
@@ -114,7 +116,7 @@ function previewDelta(delta){
   if(!delta)return "–";
   const size=Math.abs(delta);
   const count=size<=5?1:size<=12?2:3;
-  const arrows=(delta>0?"▲":"▼").repeat(count);
+  const arrows=(delta>0?"↑":"↓").repeat(count);
   const label=["","소폭","중간","대폭"][count]+(delta>0?" 상승":" 하락");
   return '<span role="img" aria-label="'+label+'">'+arrows+'</span>';
 }
@@ -297,7 +299,7 @@ function settleMonth(){
   const seasonal=state.duration===35?events.find(e=>e.season&&e.sees(state)&&!state.flags[e.id]):null;
   const queue=[contest&&"contest-"+contest.id,event?.id,seasonal?.id].filter(Boolean);
   for(const e of events){
-    if(e.household&&(state.duration===35||e.id==="visitPrince")&&!state.flags[e.id]&&e.sees(state))queue.push(e.id);
+    if(e.household&&(state.duration===35||e.id==="visitPrince")&&(e.id==="visitPrince"||!state.flags[e.id])&&e.sees(state))queue.push(e.id);
   }
   if(owlAppears(state))queue.push("maid");
   const overdue=overdueArrival(state);
@@ -505,7 +507,7 @@ function fatigueThreshold(stamina){
   return 65+Math.floor(cap(stamina,abilityMax)*10/abilityMax);
 }
 const lessonGrades={
-  great:{label:"대성공",factor:1.65,loss:1}, steady:{label:"그럭저럭",factor:1,loss:2}, poor:{label:"별로",factor:.55,loss:4}
+  great:{label:"대성공",factor:1.30,loss:1}, steady:{label:"그럭저럭",factor:1,loss:2}, poor:{label:"별로",factor:.55,loss:4}
 };
 function lessonResult(run,id,slot){
   if(actions[id].stress<=0)return null;
@@ -515,7 +517,7 @@ function lessonResult(run,id,slot){
   const room=trainingRooms[id];
   const salt=(Object.keys(actions).indexOf(id)+1)*101+(slot+1)*7907;
   const luck=monthlyDraw(run,salt)*26-13;
-  const score=53+(run.hp-60)*.27+(run.motivation-55)*.33-(run.stress-28)*.42
+  const score=53+(run.hp-60)*.42+(run.motivation-55)*.33-(run.stress-28)*.42
     +practice*3+preparation+(room?(run.level[room]-1)*3:0)+luck;
   return score>=65?"great":score>=38?"steady":"poor";
 }
@@ -557,11 +559,12 @@ function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),
   const primary=Object.keys(a.gains)[0];
   const advanced=advancedCourse(run,id);
   const linked=recordStudyLink(run,id);
+  const conditionFactor=grade ? .9+cap(hp)/500 : 1;
   const changes=Object.entries(a.gains).map(([name,value])=>{
     const before=run.stats[name];
     const secondary=name!==primary;
     const studyRate=grade==="poor" && secondary && before>=320 ? .75 : 1;
-    const gain=grade==="poor"&&secondary&&!advanced&&!trainingTradeoffs[id]?-1:lessonGain(name,before,(value+(linked===name?3:0)+(advanced?3:0)+(room?(run.level[room]-1)*4:0))*studyRate*(grade?lessonGrades[grade].factor:1)*(weather?1.5:1)*(run.neglect>=2?.85:1),run.month,run.flags,!secondary&&a.stress>0&&grade!=="poor",run.foundation);
+    const gain=grade==="poor"&&secondary&&!advanced&&!trainingTradeoffs[id]?-1:lessonGain(name,before,(value+(linked===name?3:0)+(advanced?3:0)+(room?(run.level[room]-1)*4:0))*studyRate*conditionFactor*(grade?lessonGrades[grade].factor:1)*(weather?1.5:1)*(run.neglect>=2?.85:1),run.month,run.flags,!secondary&&a.stress>0&&grade!=="poor",run.foundation);
     run.stats[name]=cap(before+gain,statMax(name));
     return statLabel(name)+" "+signed(run.stats[name]-before);
   });
@@ -674,6 +677,9 @@ function tile(label,value,id=""){
 function ledger(entries){
   return '<ul class="ledger">'+entries.map(entry=>"<li>"+escapeHTML(entry)+"</li>").join("")+"</ul>";
 }
+function visitButtonName(id,name){
+  return id==="townhouse"?'<span class="townhouse-words">런던 <span>타운</span><wbr><span>하우스</span></span>':name;
+}
 function calendarSlot(label, value, action, selected, reserved=false) {
   return option('<span>'+label+'</span><b>'+value+'</b>', action, selected, reserved, reserved?"period contest-period":"period");
 }
@@ -720,7 +726,7 @@ function plannerContents() {
   const chosen = state.plan[selectedSlot];
   const cards = editingVisit
     ? Object.entries(visits).filter(([id])=>canVisit(id)).map(([id, name]) =>
-        option(plannerIcon(id)+'<b>'+name+'</b>', 'visit:'+id, state.visit===id, false, 'lesson visit-card'))
+        option(plannerIcon(id)+'<b>'+visitButtonName(id,name)+'</b>', 'visit:'+id, state.visit===id, false, 'lesson visit-card'))
     : categories[lessonPage][1].map(id => {
         const tier=advancedCourse(state,id)?"고급 · ":"";
         return option(plannerIcon(id)+'<b>'+actions[id].name+'</b><small>'+tier+money(courseTuition(state,id))+'</small>',
@@ -731,7 +737,7 @@ function plannerContents() {
     contest&&index===contestSlot
       ?calendarSlot("하순 · 경연",contest.title,"pick:"+index,false,true)
       :calendarSlot(slotNames[index],actions[id]?courseName(id):"","pick:"+index,!editingVisit&&selectedSlot===index));
-  periods.push(calendarSlot("자유행동", visits[state.visit]??"", "pick-visit", editingVisit));
+  periods.push(calendarSlot("자유행동", visitButtonName(state.visit,visits[state.visit]??""), "pick-visit", editingVisit));
   const estimate = marketStats();
   const invitations=openContests(state);
   const note = plannerNote(editingVisit?state.visit:chosen);
@@ -894,10 +900,6 @@ function normalizeSave(run){
   }
   copy.annex={...defaults.annex,...copy.annex};
   copy.people={...defaults.people,...copy.people};
-  // The original townhouse event recorded Soma and only sometimes set a flag for Agni.
-  if(copy.flags.townhouse&&copy.people.soma&&(copy.flags.visitPrince||copy.events.some(e=>e.id==="visitPrince"))){
-    copy.people.agni??={toward:2};copy.flags.agni=true;copy.flags.visitPrince=true;
-  }
   copy.jobs={...copy.jobs};if(copy.people.tanaka&&copy.staff)copy.jobs.tanaka=copy.staff;
   for(const rel of Object.values(copy.people))delete rel.from;
   copy.shop={...defaults.shop,...copy.shop};
@@ -944,11 +946,12 @@ function normalizeSave(run){
     if(typeof id==="string"&&id.startsWith("custom-"))return events.some(event=>event.id===id);
     if(id==="circus"||id==="snakeReturn")return id===dueSnakeVisit(copy);
     if(id==="homecoming"&&copy.phase==="event"&&copy.pending===id)return canTanakaReturn(copy);
+    if(id==="visitPrince")return townhouseGuestsDue(copy);
     if(id==="maid")return copy.people.finny&&!copy.people.mey&&!copy.flags.maid;
     const arrival=events.find(e=>e.id===id&&e.household);
     return !arrival||(!copy.flags[id]&&arrival.sees(copy));
   };
-  if(copy.eventQueue)copy.eventQueue=copy.eventQueue.filter(allowed);
+  if(copy.eventQueue)copy.eventQueue=copy.eventQueue.filter(id=>allowed(id)&&!(id==="visitPrince"&&copy.pending===id));
   if(copy.phase==="event"&&copy.pending&&!allowed(copy.pending)){
     delete copy.recruitPage;delete copy.termPage;delete copy.termOutcome;
     copy.pending=copy.eventQueue?.shift()||null;copy.phase=copy.pending?"event":copy.recruitReturn==="vow"?"vow":copy.recruitReturn==="estate"?"plan":"result";
@@ -1156,20 +1159,31 @@ function roomDetail(){
     '<h4>저택 지원</h4><div class="work-actions">'+btn("왕진 · £55","doctor",!active||state.fund<55||state.flags["doctor"+state.month])+
     btn("대출 · £144","loan",!active||state.usedLoan)+'</div><small>왕진 시 컨디션 +24 · 대출은 월 £24씩 상환</small>';
 }
+function ledgerFigure(label,value){
+  return '<div><dt>'+label+'</dt><dd>'+value+'</dd></div>';
+}
 function inventoryRows(){
   return state.unlocked.map(id=>{
-    const line=productHistory(state,id),stock=state.stock[id],fine=state.fineStock[id]||0;
+    const line=productHistory(state,id),stock=state.stock[id]||0,fine=state.fineStock[id]||0;
     const pressure=businessTerms(state,id).pressure;
-    return '<div class="sale-row"><b>'+products[id].name+' · 평판 '+line.reputation+'/20</b><span>표준품 '+(stock-fine)+'개 · 고급품 '+fine+'개 · 누적 판매 '+line.units+'개 · 완납 '+line.orders+'회</span>'+
+    return '<article class="stock-entry"><header><strong>'+products[id].name+'</strong><span>평판 <b>'+line.reputation+'/20</b></span></header>'+
+      '<progress aria-label="상품 평판" max="20" value="'+line.reputation+'"></progress><dl class="ledger-figures">'+
+      ledgerFigure("표준품",stock-fine+"개")+ledgerFigure("고급품",fine+"개")+ledgerFigure("누적 판매",line.units+"개")+ledgerFigure("완납",line.orders+"회")+'</dl>'+
       (state.royalWarrants?.[id]?'<small>로열 워런트 · 왕실 납품 인증 · 월 수요 +2개</small>':'')+
-      (pressure?'<small>최근 판매로 이번 달 소매 수요 −'+pressure+'개</small>':'')+'</div>';
+      (pressure?'<small>최근 판매로 이번 달 소매 수요 −'+pressure+'개</small>':'')+'</article>';
   }).join("");
 }
+function purchaseOrder(order,accepted){
+  return '<article class="purchase-order"><header><span>발주처</span><strong>'+escapeHTML(tradeBuyer(order))+'</strong></header>'+
+    '<p class="order-subject">'+products[order.id].name+'</p><dl class="ledger-figures">'+
+    ledgerFigure("발주 수량",order.qty+"개")+ledgerFigure("개당 단가",money(order.rate))+ledgerFigure("완납 시 대금",money(order.qty*order.rate))+'</dl>'+
+    '<p class="order-due"><b>납기</b> '+monthText(order.due)+' 월말</p><small>미납 1개당 '+money(order.shortFee??2)+' 부담</small>'+
+    (accepted?'<strong class="order-stamp">수락 완료 · 월말 자동 납품</strong>':btn('발주 수락','order:'+order.id,state.phase!=="plan","order-accept"))+'</article>';
+}
 function orderDesk(){
-  const active=state.order;
-  if(active)return '<h4>받은 발주서</h4><p>'+tradeBuyer(active)+' · '+products[active.id].name+' '+active.qty+'개 · 개당 '+money(active.rate)+'<br>'+monthText(active.due)+' 월말 자동 납품 · 부족분 개당 '+money(active.shortFee??2)+' 부담</p>';
+  if(state.order)return '<h4>받은 발주서</h4>'+purchaseOrder(state.order,true);
   const offers=state.unlocked.map(id=>customerOffer(state,id)).filter(Boolean);
-  return '<h4>'+(historicalTradeEvents[state.month]?'이달의 발주서':'거래처 재주문')+'</h4>'+(offers.length?offers.map(o=>'<div class="sale-row"><b>'+tradeBuyer(o)+'</b><span>'+products[o.id].name+' '+o.qty+'개 · 개당 '+money(o.rate)+' · '+monthText(o.due)+' 납기 · 미납 개당 '+money(o.shortFee)+' 부담</span>'+btn('발주 수락','order:'+o.id,state.phase!=="plan")+'</div>').join("")+'<small>한 번에 한 건을 수락할 수 있습니다. 납기에는 해당 품목의 표준품부터 출고합니다.</small>':state.month===state.duration?'<p>이번 달이 마지막 영업입니다.</p>':'<p>한 품목의 평판이 3에 이르면 거래처가 다음 달 납품을 제안합니다.</p>');
+  return '<h4>'+(historicalTradeEvents[state.month]?'이달의 발주서':'거래처 재주문')+'</h4>'+(offers.length?offers.map(o=>purchaseOrder(o,false)).join("")+'<small>한 번에 한 건을 수락할 수 있습니다. 납기에는 해당 품목의 표준품부터 출고합니다.</small>':state.month===state.duration?'<p>이번 달이 마지막 영업입니다.</p>':'<p>한 품목의 평판이 3에 이르면 거래처가 다음 달 납품을 제안합니다.</p>');
 }
 function companyDetail(){
   const id=selectedDepartment, room=departments[id], level=state.shop[id], active=state.phase==="plan";
@@ -1182,7 +1196,7 @@ function companyDetail(){
           (done&&!canDesign(key)?'<b>'+(state.productNotes?.[key]?.revised?'개량 완료':'평판 4부터 개량')+'</b>':btn((done?'개량 · ':'개발 · ')+money(fee),'develop:'+key,!active||!!state.prototype||state.month===state.duration||state.fund-fee<cashNeeded()))+'</div>';
       }).join("");
   }else if(id==="works"){
-    controls='<h4>이달 생산품</h4><div class="work-actions">'+state.unlocked.map(key=>option(products[key].name,"product:"+key,state.product===key,!active)).join("")+'</div>'+
+    controls='<h4>이달 생산품</h4><div class="work-actions production-grid">'+state.unlocked.map(key=>option(products[key].name,"product:"+key,state.product===key,!active)).join("")+'</div>'+
       '<h4>생산·소매 등급</h4><div class="work-actions">'+[["standard","표준품"],["fine","고급품"]].map(([key,label])=>option(label,"quality:"+key,state.quality===key,!active)).join("")+'</div>'+
       (active?stepper("qty","생산량 (개)",0):'<p>생산량 '+state.qty+'개</p>')+
       '<div class="work-cost" id="work-cost">'+productionCost(forecast().unit)+'</div>';
@@ -1193,7 +1207,7 @@ function companyDetail(){
       '<h4>상품 장부</h4>'+inventoryRows()+orderDesk();
   }
   return '<div class="work-title"><h3>'+room.name+'</h3><b>Lv. '+level+' / 3</b></div>'+(tradeNews(state)?'<p class="work-ledger">'+tradeNews(state)+'</p>':'')+controls+
-    '<section class="expansion-quote"><h4>사업 확장</h4><p class="facility-benefit"><b>'+room.benefit+'</b><small>월 운영비　Lv.2 £5 · Lv.3 £16</small></p><div id="investment-quote">'+expansionQuote(id)+'</div></section><div class="facility-actions">'+btn(level===3?"최대 규모":"증설 · "+money(room.cost*level),"expand:"+id,!active||level===3||state.fund<room.cost*level,"work-order")+(level>1?btn("설비 매각 · "+money(Math.floor(room.cost*(level-1)*.5)),"liquidate:"+id,!active):"")+"</div>";
+    '<section class="expansion-quote"><h4>사업 확장</h4><p class="facility-benefit"><b>'+room.benefit+'</b><span class="facility-rates"><span>월 운영비</span>'+[2,3].map(l=>'<span>Lv.'+l+' <strong>'+money(operatingCost({[id]:l}))+'</strong></span>').join("")+'</span></p><div id="investment-quote">'+expansionQuote(id)+'</div></section><div class="facility-actions">'+btn(level===3?"최대 규모":"증설 · "+money(room.cost*level),"expand:"+id,!active||level===3||state.fund<room.cost*level,"work-order")+(level>1?btn("설비 매각 · "+money(Math.floor(room.cost*(level-1)*.5)),"liquidate:"+id,!active):"")+"</div>";
 }
 function expansionQuote(id){
   const level=state.shop[id], next=Math.min(3,level+1);
@@ -1230,7 +1244,7 @@ function salesGauge(sold){
 }
 function businessForecast(){
   const est=marketStats();
-  return '<div class="work-figures">'+tile("예상 판매량",est.sold+"개","market-estimate")+tile("예상 매출",money(est.revenue),"market-revenue")+
+  return '<div class="work-figures company-forecast">'+tile("예상 판매량",est.sold+"개","market-estimate")+tile("예상 매출",money(est.revenue),"market-revenue")+
     tile("생산비",money(est.unit*state.qty),"market-cost")+tile("예상 월말 자금",money(est.balance),"market-balance")+'</div><div class="sales-gauge" id="sales-gauge">'+salesGauge(est.sold)+'</div>';
 }
 function salesBooks(){
@@ -1239,16 +1253,17 @@ function salesBooks(){
   function line(label,value,tone){
     return '<div class="sale-metric '+tone+'"><dt>'+label+'</dt><dd>'+money(value)+'</dd><i aria-hidden="true" style="--amount:'+100*value/cap+'%"></i></div>';
   }
-  const rows=entries.map((r,i)=>{
+  const rows=entries.map(r=>{
     const retail=r.revenue-(r.wholesale||0),gain=r.investment?.total;
-    return '<details class="sale-month"'+(i===0?' open':'')+'><summary><span>'+monthText(r.month)+'</span><b>'+products[r.product].name+'</b></summary>'+
+    return '<details class="sale-month compact-month"><summary><span>'+monthText(r.month)+'</span><b>'+products[r.product].name+'</b><span class="month-receipts">매출 <strong>'+money(r.revenue)+'</strong></span></summary>'+
       '<dl>'+line("소매 판매 · "+r.sold+"개",retail,"receipt")+
       (r.delivery?line(products[r.delivery.id].name+" 납품 "+r.delivery.shipped+"/"+r.delivery.qty+"개",r.wholesale||0,"receipt"):"")+
       line("납품 선금",r.advance||0,"receipt")+line("생산비",r.cost||0,"outlay")+'</dl>'+
       (gain!=null?'<p class="sale-gain"><span>시설 기여 이익</span><b>'+(gain>0?"+":gain<0?"−":"")+money(Math.abs(gain))+'</b></p>':'')+'</details>';
-  }).join("");
-  return '<details class="sales-books"><summary>월별 영업 장부</summary><p>판매 대금과 납품 선금은 가문 자금에 합산됩니다.</p>'+
-    (rows||'<p>첫 월간 결산 후 판매 내역이 기록됩니다.</p>')+'</details>';
+  });
+  const previous=rows.length>3?'<details class="sales-archive"><summary>이전 기록 · '+(rows.length-3)+'개월</summary>'+rows.slice(3).join("")+'</details>':'';
+  return '<details class="sales-books"><summary>월별 영업 장부</summary>'+
+    (rows.length?rows.slice(0,3).join("")+previous:'<p>첫 월간 결산 후 판매 내역이 기록됩니다.</p>')+'</details>';
 }
 function managementPanel(){
   const company=tab==="company",active=state.phase==="plan";
@@ -1558,7 +1573,10 @@ function setNumber(key,value){
   $("sales-gauge").innerHTML=salesGauge(estimate.sold);
   if(selectedDepartment==="works")$("work-cost").innerHTML=productionCost(estimate.unit);
   $("investment-quote").innerHTML=expansionQuote(selectedDepartment);
-  $("live-budget").innerHTML=budgetTable();
+  const budget=$("live-budget");
+  const expanded=budget.querySelector(".expense-details")?.open;
+  budget.innerHTML=budgetTable();
+  if(expanded)budget.querySelector(".expense-details").open=true;
   emphasize(field);
   persist();
 }
@@ -1623,6 +1641,7 @@ function askConfirmation(key,title,description,label,rect,extra=""){
   respond("tap",rect);
 }
 function handleAction(key,rect,confirmed=false){
+  if(previewLesson)return;
   const [action,id,value]=key.split(":");
   if(action==="weather-close"&&state.phase==="weatherBriefing"){
     state.phase="plan";
@@ -2059,7 +2078,15 @@ function openFairPreview(fair){
   });
   prepareContest(state);
 }
-if(storyDemo){
+if(previewLesson){
+  state=normalizeSave(initial());tab="plan";state.phase="scene";state.plan=[previewLesson,null,null];
+  const before=snapStats(state);
+  state.sequence={index:0,activity:previewLesson,before,after:{...before}};
+  document.documentElement.dataset.lessonPreview="true";
+  document.addEventListener("change",event=>{
+    if(event.target.id==="preview-lesson")location.search="?lesson-preview="+encodeURIComponent(event.target.value);
+  });
+}else if(storyDemo){
   tab="plan";state=normalizeSave(initial());
   state.month=state.planMonth=previewSetback?.month??previewCompanyCase?.month??{"season-16":16,jubilee:18,birthday2:24}[previewStory];
   if(previewSetback?.renown)state.renown=5;
