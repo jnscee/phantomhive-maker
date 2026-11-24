@@ -1152,14 +1152,7 @@ function propertyMap(company){
   let additions="",pins="";
   for(const [id,room] of Object.entries(rooms)){
     const [x,y]=mapPositions[id]||dutyPins[id];
-    if(company){
-      const sparkPositions=[[3,-2],[-5,1],[8,4]];
-      for(const [dx,dy] of sparkPositions.slice(0,levels[id])){
-        additions+='<i class="map-award" aria-hidden="true" style="left:'+(x+dx)+'%;top:'+(y+dy)+'%"></i>';
-      }
-    }else if(levels[id]>1){
-      additions+='<i class="map-award award-'+levels[id]+'" aria-hidden="true" style="left:'+x+'%;top:'+y+'%"></i>';
-    }
+    additions+=facilitySparkles(levels[id],x,y);
     const selected=id===(company?selectedDepartment:selectedRoom);
     const [pinX,pinY]=company?companyPinPositions[id]:dutyPins[id];
     pins+='<button type="button" data-action="station:'+id+'" aria-pressed="'+selected+'" class="map-pin" style="left:'+pinX+'%;top:'+pinY+'%">'+

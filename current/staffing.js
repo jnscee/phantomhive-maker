@@ -1,6 +1,11 @@
 "use strict";
 const dutyPins = {library:[50,14], kitchen:[23,45], parlor:[74,45], garden:[19,78], guard:[79,78]};
 const dutyFloors={library:[48,58,35],kitchen:[26,34,74],parlor:[61,69,72],garden:[21,30,97],guard:[77,86,97]};
+function facilitySparkles(level,x,y){
+  if(!(level>=2))return "";
+  const tier=level>=3?3:2;
+  return '<i class="map-award award-'+tier+'" aria-hidden="true" style="left:'+x+'%;top:'+y+'%"></i>';
+}
 function estateWalkers(){
   const staff=peopleInHouse().filter(id=>servants[id].job);
   return Object.entries(dutyFloors).map(([room,[left,right,feet]])=>{
@@ -79,7 +84,9 @@ function londonBoard(){
       return '<span aria-hidden="true" class="duty-lane" style="left:'+(left+i*span)+'%;width:'+span+'%;top:'+feet+'%;--pace:11s;--delay:-'+(i+1)*3+'s"><span class="duty-walker" data-servant="'+person+'"><img alt="" src="assets/staff/'+person+'.png"></span></span>';
     }).join("");
     const names=team.map(person=>londonHosts[person].name).join(" · ")||"미배치";
-    return walkers+'<button type="button" class="map-pin" data-duty="'+id+'" style="left:'+x+'%;top:'+y+'%" aria-pressed="'+(selectedLondonRoom===id)+'">'+room.name+' <small><em>'+names+'</em></small></button>';
+    const skill=Math.max(0,...team.map(person=>state.london?.skill?.[person]||0));
+    const sparkles=facilitySparkles(1+Math.floor(skill/10),(left+right)/2,feet-13);
+    return sparkles+walkers+'<button type="button" class="map-pin" data-duty="'+id+'" style="left:'+x+'%;top:'+y+'%" aria-pressed="'+(selectedLondonRoom===id)+'">'+room.name+' <small><em>'+names+'</em></small></button>';
   }).join("");
   const room=londonRooms[selectedLondonRoom];
   const roster=ids.map(id=>{
