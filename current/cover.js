@@ -16,7 +16,7 @@ function titlePanel() {
     '<aside class="cover-notice" aria-labelledby="fan-game-notice"><strong id="fan-game-notice">'+gameString("fanGame")+'</strong>'+
     '<span>'+gameString("alternateStory")+'</span><span>'+gameString("fictionNotice")+'</span></aside></header>'+
     '<nav class="cover-actions" aria-label="'+gameString("menu")+'">'+actions+languageControls(true)+'</nav></article>'+
-    '<footer class="cover-notice" style="max-width:none;text-align:center">'+gameString("aiNotice")+'</footer></div>';
+    '<footer class="cover-notice cover-ai-notice">'+gameString("aiNotice")+'</footer></div>';
 }
 function coverPanel() {
   let body;
@@ -103,9 +103,3 @@ function cgAlbum(){
     return '<article class="cg-reader"><header><h2 tabindex="-1">'+escapeHTML(e.title)+'</h2>'+btn("앨범으로","back")+'</header><img src="'+e.src+'" alt="'+escapeHTML(e.title)+'"></article>';
   }
   const cells=entries.map((e,i)=>e.seen?
-    btn('<img loading="lazy" src="'+e.src+'" alt=""><span>'+escapeHTML(e.title)+'</span>',"cg:"+i,false,"cg-print"):
-    '<div class="cg-print cg-blank"><i aria-hidden="true">◇</i><span>미수집</span></div>').join("");
-  const endings=Object.keys(endingScenes).filter(hasEndingRecord);
-  return '<article class="cover-leaf cg-album"><header><h2 tabindex="-1">CG 앨범</h2>'+btn("표지로 돌아가기","back")+'</header><p class="cover-count">수집한 CG <b>'+seen+' / '+entries.length+'</b></p><div class="cg-grid">'+cells+'</div>'+
-    (endings.length?'<details><summary>엔딩 다시 보기</summary><div class="cover-gallery">'+endings.map(endingThumb).join("")+'</div></details>':'')+'</article>';
-}
