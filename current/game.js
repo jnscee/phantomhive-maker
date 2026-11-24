@@ -609,7 +609,7 @@ function educationRecord(run){
 }
 const courtEducation={
   지성:[485,"서재 수업"],기품:[495,"귀족 예법"],매력:[470,"사교 수업"],
-  통찰:[480,"가문 기록 조사"],경영:[480,"팬텀사 회계"],의지:[475,"사건 조사"],체력:[420,"승마"]
+  통찰:[480,"가문 기록 조사"],경영:[480,"팬텀사 회계"],의지:[470,"사건 조사"],체력:[420,"승마"]
 };
 function courtEducationPriority(keys=Object.keys(courtEducation)){
   return keys.filter(k=>state.stats[k]<courtEducation[k][0])
