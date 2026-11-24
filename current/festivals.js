@@ -88,7 +88,7 @@ const annualContests = [
     ], prize:"수확 감사 바구니", ribbon:"수확 감사제 입상 리본"
   },
   {
-    id:"warrant", month:10, title:"로열 워런트 · 왕실 납품 심사", track:"etiquette", room:"office", company:true,
+    id:"warrant", month:10, title:"로열 워런트 · 왕실 납품 심사", track:"companyFair", room:"office", company:true,
     invitation:"왕실 납품 담당관이 팬텀사의 견본과 거래 장부를 함께 봅니다. 해당 품목이 금상을 받으면 왕실 납품 인증을 획득합니다.",
     prize:"왕실 납품 증서", ribbon:"왕실 납품 심사 은상장"
   }
@@ -96,49 +96,84 @@ const annualContests = [
 
 const historicalContests = [
   {id:"kensington1886",month:5,date:"1886년 5월 4일 박람회 개막",
-    title:"사우스켄싱턴 박람회 · 팬텀사 출품전", track:"cheerful", room:"street", company:true,
+    title:"사우스켄싱턴 박람회 · 팬텀사 출품전", track:"companyFair", room:"street", company:true,
     invitation:"사우스켄싱턴에서 식민지·인도 박람회가 열렸습니다. 박람회 주간에 맞춰 런던 상인들이 여는 별도 견본 품평회에 출품합니다.",
     prize:"사우스켄싱턴 상인회 메달", ribbon:"런던 견본 품평회 은상장"},
   {id:"jubilee1887",month:18,date:"1887년 6월 21일 기념 예배",
-    title:"여왕의 골든 주빌리 · 기념품 경연", track:"cheerful", room:"street", company:true,
+    title:"여왕의 골든 주빌리 · 기념품 경연", track:"companyFair", room:"street", company:true,
     invitation:"여왕의 즉위 50주년을 기념하는 주간입니다. 런던 상인들이 여는 기념품 경연에 팬텀사 제품을 냅니다.",
     prize:"골든 주빌리 기념 메달", ribbon:"주빌리 기념품 경연 은상장"},
   {id:"earlsCourt1888",month:29,date:"1888년 5월 얼스 코트 박람회",
-    title:"얼스 코트 이탈리아 박람회 · 공예품 품평", track:"cheerful", room:"street", company:true,
+    title:"얼스 코트 이탈리아 박람회 · 공예품 품평", track:"companyFair", room:"street", company:true,
     invitation:"얼스 코트 이탈리아 박람회가 열리는 달입니다. 인근 상인회가 여는 공예품 견본 품평에 팬텀사도 참가합니다.",
     prize:"얼스 코트 공예 메달", ribbon:"공예품 품평회 은상장"}
 ];
 
-const contests = annualContests.flatMap(fair=>[0,1,2].map(year=>({
+const oldContests = annualContests.flatMap(fair=>[0,1,2].map(year=>({
   ...fair, id:fair.id+"-"+(1886+year), month:fair.month+12*year, year,
   warrant:fair.id==="warrant"
 }))).concat(historicalContests).sort((a,b)=>a.month-b.month);
 
-// The two demonstrations in each class respond to the examiner's observations.
-const contestOpponents={
-  newYear:{name:"에드워드 미드포드",quote:"시엘, 난 아직 널 내 매제로 인정하지 않았다. ……뭐? 다과회랑 무슨 상관이냐고? 아무튼, 내가 먼저다!",laterQuotes:["해가 바뀌었다고 내가 마음을 바꾼 줄은 아니겠지, 시엘? 리지는 벌써 네 자리부터 봐 뒀더구나.","시엘, 잘해라. 리지가 보고 있다. ……응원한 게 아니다! 내 매제가 되려면 그 정도는 해야지."],role:"미드포드가 장남",poses:["assets/portraits/edward-greeting.png","assets/portraits/edward-tea.png"],
-    entries:[
-      ["에드워드는 원고를 접어 주머니에 넣습니다. 뒷줄에 앉은 노부인이 고개를 들자, 그제야 새해 인사를 건넵니다.","목소리가 닿는가","맨 뒤 손님을 향해 축사한다","호칭이 정확한가","초청장 순서로 이름을 부른다"],
-      ["에드워드는 손님이 내려놓은 잔을 받으며 두 번째 잔도 같은 농도로 드실지 묻습니다. 심사위원이 탁자 사이로 한 걸음 다가섭니다.","차의 온도","식은 잔부터 바꾸어 낸다","손님의 취향","설탕과 우유를 따로 권한다"]
-    ]},
-  spring:{name:"클라라 벨",quote:"정원에서는 바람도 심사에 끼어들지요.",role:"교구 원예회",actor:"designer",
-    entries:[
-      ["클라라가 낮은 현에서 시작해 온실 지붕 아래로 선율을 보냅니다. 반주자가 마지막 음을 짧게 받습니다.","합주의 호흡","반주자의 손을 보고 들어간다","음의 울림","긴 음에서 활을 끝까지 쓴다"],
-      ["클라라가 화분을 반 바퀴 돌리고 봉오리 아래에 표찰을 꽂습니다.","잎 뒷면의 차이","잎맥과 잔털을 대조한다","생장 시기","봉오리와 파종표를 맞춘다"]
-    ]},
-  harvest:{name:"토머스 리드",quote:"도련님, 장터에 내놓을 물건을 고른다고 생각해 보십시오.",role:"영지 소작농 대표",actor:"maker",
-    entries:[
-      ["토머스가 사과 바구니를 번쩍 들어 심사대에 놓습니다. 과일이 구르지 않도록 밑에는 짚을 덧대었습니다.","운반 중 손상","바닥에 짚을 한 겹 더 댄다","익은 정도","꼭지와 향으로 열매를 고른다"],
-      ["토머스는 저울에 보리를 올리고 가족 수에 맞춰 몫을 나눕니다. 장부 끝에는 남은 반 자루까지 적습니다.","저울의 눈금","빈 자루 무게를 먼저 뺀다","배부 명단","같은 집이 두 번 적혔는지 찾는다"]
-    ]},
-  kensington1886:{name:"하트웰 완구점",quote:"세 바퀴째도 첫 바퀴처럼 달리는지 봐 주십시오.",role:"기계 완구 상인",actor:"maker",product:"toys",entries:[
-    ["하트웰의 점원이 태엽 마차를 전시대 끝에서 놓습니다. 바퀴가 난간을 스치고 제자리로 돌아옵니다.","반복 작동","같은 견본을 세 번 시연한다","제작 원가","부품별 단가표를 펼친다"]]},
-  jubilee1887:{name:"벨 & 손 제과점",quote:"리본을 푸는 순간까지가 저희 선물입니다.",role:"주빌리 기념품 출품사",actor:"clerk",product:"hamper",entries:[
-    ["벨 제과점이 기념 리본을 풀어 작은 선물 상자 여섯 개를 한 줄에 놓습니다.","선물의 마감","봉인과 포장을 가까이 보인다","기념품 보급","판매처별 인도 기록을 제시한다"]]},
-  earlsCourt1888:{name:"모레티 공방",quote:"손잡이를 한번 돌려 보시지요. 인사가 끝날 때까지요.",role:"기계 인형 제작소",actor:"designer",product:"plush",entries:[
-    ["모레티 공방의 장인이 인형극 상자를 엽니다. 인형이 손잡이 한 바퀴에 맞춰 모자를 벗습니다.","공예의 정밀도","이음새와 수작업 마감을 보인다","수선의 편의","교체 가능한 부품을 꺼낸다"]]},
-  warrant:{name:"휘트컴 상회",quote:"지난 주문서까지 가져왔습니다. 어느 쪽이든 먼저 보시지요.",role:"왕실 납품 후보",actor:"clerk",product:"game",entries:[
-    ["휘트컴 상회의 대리인이 견본과 봉인된 발송장을 나란히 놓습니다. 담당관이 왕실 인장을 책상에 내려놓습니다.","품질의 일관성","같은 규격의 마감을 대조한다","납기 준수","수령일이 찍힌 전표를 제출한다"]]}
+const easterFair={
+  id:"easter", month:4, title:"이스터(부활절)", track:"sakura", room:"garden",
+  invitation:"부활절 예배가 끝나자 엘리자베스가 정원의 문을 엽니다. 리본을 단 달걀을 찾거나, 예배를 마친 손님들에게 바이올린 한 곡을 들려주세요.",
+  options:[
+    {label:"부활절 연주",stat:"기품",poses:["bowOut","bowIn"],
+      line:"예배를 마친 손님들이 연주석 앞으로 모입니다.",
+      placed:"시엘이 마지막 음을 길게 당기자 종소리가 그 뒤를 받습니다. 모자를 쓰고 일어서던 손님까지 돌아서서 박수를 칩니다.",
+      missed:"첫 종소리에 활이 반 박자 늦습니다. 시엘은 반주자의 손끝을 보며 마지막 소절을 마칩니다."},
+    {label:"부활절 달걀 찾기",stat:"통찰",poses:["inspect","read"],
+      line:"생울타리 사이로 달걀을 담을 빈 바구니가 하나씩 건네집니다.",
+      placed:"시엘이 빈 둥지 밑을 살짝 들추자 금빛 달걀이 굴러 나옵니다. 엘리자베스가 직접 묶은 작은 리본이 달려 있습니다.",
+      missed:"분홍 리본 끝을 따라간 곳에는 빈 바구니만 남았습니다. 마지막 종이 울리자 시엘이 찾아낸 달걀을 심사대에 올립니다."}
+  ], prize:"은제 달걀 장식", ribbon:"부활절 입상 리본"
 };
-function contestOpponent(fair){return contestOpponents[fair.id.split("-")[0]];}
-function contestDemonstration(fair,ticket){return contestOpponent(fair).entries[fair.company?0:ticket.index];}
+const harvestWarrant={...annualContests.find(f=>f.id==="warrant"),
+  id:"royalWarrant",month:9,title:"로열 워런트(수확제)",room:"field",warrant:true,
+  invitation:"수확제 장터에 왕실 납품 심사대가 섰습니다. 팬텀사에서 만든 제품 한 점을 골라 출품하세요. 담당관이 견본과 지금까지의 납품 장부를 살핍니다."};
+const contests=[annualContests[0],easterFair,harvestWarrant].flatMap(fair=>
+  [0,1,2].map(year=>({...fair,id:fair.id+"-"+(1886+year),month:fair.month+12*year,year}))
+).sort((a,b)=>a.month-b.month);
+// Completed pages and previously booked invitations retain their original rules and dates.
+const retiredContests=oldContests.filter(f=>!contests.some(active=>active.id===f.id));
+const contestArchive=[...contests,...retiredContests].sort((a,b)=>a.month-b.month);
+
+// Each contestant addresses Ciel before his own demonstration.
+const contestOpponents={
+  newYear:{name:"에드워드 미드포드",quote:"시엘, 난 아직 널 내 매제로 인정하지 않았다. ……뭐? 다과회랑 무슨 상관이냐고? 아무튼, 내가 먼저다!",laterQuotes:["해가 바뀌었다고 내가 마음을 바꾼 줄은 아니겠지, 시엘? 리지는 벌써 네 자리부터 봐 뒀더구나.","시엘, 잘해라. 리지가 보고 있다. ……응원한 게 아니다! 내 매제가 되려면 그 정도는 해야지."],role:"미드포드가 장남",poses:["assets/portraits/edward-greeting.png","assets/portraits/edward-tea.png"]},
+  easter:{name:"엘리자베스 미드포드",quote:"시엘, 저 금색 달걀 보이지? 오늘은 나도 봐주지 않을 거야!",laterQuotes:["작년 생각나? 이번에는 내가 먼저 심사대에 갈 거야, 시엘!","올해도 같이 나올 줄 알았어. 자, 종이 울린다!"],role:"미드포드가 영애",get portrait(){return portraits.엘리자베스;}},
+  spring:{name:"클라라 벨",quote:"정원에서는 바람도 심사에 끼어들지요.",role:"교구 원예회",actor:"designer"},
+  harvest:{name:"토머스 리드",quote:"도련님, 장터에 내놓을 물건을 고른다고 생각해 보십시오.",role:"영지 소작농 대표",actor:"maker"},
+  kensington1886:{name:"하트웰 완구점",quote:"세 바퀴째도 첫 바퀴처럼 달리는지 봐 주십시오.",role:"기계 완구 상인",actor:"maker",product:"toys"},
+  jubilee1887:{name:"벨 & 손 제과점",quote:"리본을 푸는 순간까지가 저희 선물입니다.",role:"주빌리 기념품 출품사",actor:"clerk",product:"hamper"},
+  earlsCourt1888:{name:"모레티 공방",quote:"손잡이를 한번 돌려 보시지요. 인사가 끝날 때까지요.",role:"기계 인형 제작소",actor:"designer",product:"plush"},
+  warrant:{name:"휘트컴 상회",quote:"지난 주문서까지 가져왔습니다. 어느 쪽이든 먼저 보시지요.",role:"왕실 납품 후보",actor:"clerk",product:"game"}
+};
+function contestOpponent(fair){return contestOpponents[fair.warrant?"warrant":fair.id.split("-")[0]];}
+
+// Each row follows the same three outcomes as the judges' scorecard.
+const contestSpeeches={
+  newYear:[
+    ["……미드포드 부인. 실례했습니다. 먼저 새해 인사를 드렸어야 했는데요.","먼 길 와 주셔서 감사합니다. 돌아가실 때는 저희 마차를 쓰시지요.","편지에 적어 주신 장미가 올봄엔 피겠군요. 그때는 제가 먼저 인사를 가겠습니다."],
+    ["잠깐. 그 잔은 이미 식었군. 새로 우려 오도록 해.","우유를 곁들이신다고요? 이번 잔은 조금 진하게 따르겠습니다.","첫 잔은 거의 안 드셨더군요. 이번엔 조금 연하게 해 봤습니다. 어떠십니까?"]
+  ],
+  easter:[
+    ["다시 한 번만. 교회 종이 울릴 때 첫 음을 놓쳤어.","다음 종이 울리면 들어가 줘. 내가 먼저 시작할게.","리지, 마지막 음은 조금 늦춰. 들리지? 종이 우리 대신 끝을 맺어 줄 거야."],
+    ["분명히 저 리본이었는데. ……빈 바구니까지 숨겨 두다니.","이쪽 가지에 물감이 묻었어. 파란 달걀은 이 아래야.","리지, 넌 매듭을 언제나 왼쪽으로 묶잖아. 그래서 새 둥지도 한번 들춰 봤지."]
+  ],
+  spring:[
+    ["한 마디만 다시 부탁해. 바람에 악보가 두 장 넘어갔어.","그 박자로 계속 쳐 줘. 다음 소절에서 내가 따라가지.","악보는 그대로 둬. 방금 네가 바꾼 끝음, 이번엔 내가 받아 볼게."],
+    ["꽃잎 색은 같은데…… 이 둘의 표찰은 잠시 비워 두겠어.","이건 앵초야. 잎을 뒤집어 보면 털이 있으니까.","같은 날 심었다는 기록부터 틀렸군. 이쪽만 묵은 꽃대가 남았잖아."]
+  ],
+  harvest:[
+    ["맨 아래 배가 눌렸군. 잠깐, 바구니를 다시 내 줘.","사과와 배 사이에 짚을 좀 깔아. 이 정도면 장터까지 가겠어.","맨 아래 것을 하나 꺼내 보시죠. 마차에 실려도 멍이 들지 않게 담았습니다."],
+    ["잠깐만. 마지막 집에 돌아갈 몫이 왜 한 자루 모자라지?","빈 자루 무게는 빼고 달아. 그래야 마지막 집까지 제 몫이 돌아가.","이 두 줄은 같은 집이야. 잘못 뺀 반 자루는 아이들이 셋인 집 몫이고."]
+  ],
+  warrant:[["이 품목의 지난 납품 전표가 이것뿐인가? 있는 대로 올려.","견본과 납품분은 같은 규격입니다. 치수는 여기 적었습니다.","첫 주문부터 이번 물량까지입니다. 어느 상자를 여셔도 같은 견본과 대조하실 수 있습니다."]],
+  kensington1886:[["잠깐, 그 견본은 내가 놓겠어. 받침대가 조금 흔들리는군.","가까이서 보셔도 됩니다. 진열장에 놓인 것과 같은 물건입니다.","여기 있는 것 중 아무거나 골라 보시죠. 저희 상표를 붙인 건 전부 같은 검사를 거칩니다."]],
+  jubilee1887:[["리본이 걸렸군. 잠시만요, 제가 풀겠습니다.","포장을 여실 때 이 끝을 당기시면 됩니다. 안쪽도 보시죠.","받는 분이 직접 여실 텐데 칼을 쓰실 필요야 없지요. 리본을 한 번만 당겨 보시겠습니까?"]],
+  earlsCourt1888:[["잠깐. 견본을 빛 쪽으로 좀 옮겨 주겠어?","가장자리까지 손으로 마감했습니다. 가까이서 보시지요.","심사대의 것만 고른 솜씨라고요? 납품 상자에서도 하나 꺼내 보시겠습니까?"]]
+};
+function contestSpeech(fair,ticket,rank){
+  return contestSpeeches[fair.warrant?"warrant":fair.id.split("-")[0]][fair.company?0:ticket.index][rank];
+}

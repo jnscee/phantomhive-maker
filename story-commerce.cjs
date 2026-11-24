@@ -30,7 +30,23 @@ for(const [rank,score,expected] of [[0,5,"입상권 밖"],[1,40,"은상"],[2,44,
   assert.ok(slip.includes("<h3>"+expected+"</h3>")&&slip.includes(ctx.legacyEntry.scoreNote));
   assert.doesNotMatch(slip,/undefined|NaN|입상 보상/);
 }
-// Choices direct the demonstration. Scores, prizes and ranks depend on the entrant.
+assert.deepEqual(Array.from(run('contests.map(f=>f.month)')),[1,4,9,13,16,21,25,28,33]);
+assert.deepEqual(Array.from(run('contests.slice(0,3).map(f=>f.title)')),["신년 다과회","이스터(부활절)","로열 워런트(수확제)"]);
+assertOk('contests.every(f=>f.track===(f.warrant?"companyFair":f.id.startsWith("easter-")?"sakura":"newYear"))');
+for(const [month,extra,qty] of [[5,4,8],[18,2,9],[29,3,8]]){
+  ctx.marketMonth=month;
+  setup('state.month=state.planMonth=marketMonth;state.product="toys";state.qty=20');
+  const demand=run('forecast().demand');
+  assertOk('openContests(state).every(f=>f.month!==marketMonth)');
+  assert.equal(run('historicalTradeEvents[state.month].demand.toys'),extra);
+  run('state.order=customerOffer(state,"toys");state=normalizeSave(state)');
+  assert.equal(run('state.order.qty'),qty);
+  assertOk('state.order.due===state.month&&tradeBuyer(state.order)===historicalTradeEvents[state.month].buyer');
+  assert.equal(run('forecast().trade.shipped'),qty);
+  assert.equal(run('forecast().demand'),demand);
+  assertOk('!customerOffer(state,"toys")');
+}
+// All competitions pair each judging tier with its own scripted reading.
 setup();
 for(const fairId of run('contests.map(f=>f.id)')){
   ctx.fairId=fairId;
@@ -40,6 +56,8 @@ for(const fairId of run('contests.map(f=>f.id)')){
     const entries=f.company?[{product:"toys"}]:f.options.map((_,index)=>({index}));
     return entries.every(t=>{
       const duel={rivalScore:44,focus:0};
+      const speeches=[0,1,2].map(rank=>contestSpeech(f,t,rank));
+      if(new Set(speeches).size!==3||speeches.some(line=>typeof line!=="string"))return false;
       const first=judgeContest(state,f,t,{...duel,choice:0});
       const second=judgeContest(state,f,t,{...duel,choice:1});
       return JSON.stringify(first)===JSON.stringify(second)&&
@@ -545,14 +563,14 @@ for(const ending of ["title","business","defer"]){
   run('advance()');assertOk('state.month===7 && state.phase==="plan"');
 }
 for(const [quality,qty,rank] of [["fine",1,1],["standard",1,0],["fine",0,0]]){
-  setup('tab="plan";state.month=4;selectFestival("kensington1886","toys");persist();state=normalizeSave(saves.auto);state.month=5;state.qty='+qty+';state.quality='+JSON.stringify(quality));
+  setup('tab="plan";state.month=4;state.fairTickets={kensington1886:{product:"toys"}};persist();state=normalizeSave(saves.auto);state.month=5;state.qty='+qty+';state.quality='+JSON.stringify(quality));
   run('settleFestival(state,{focus:0,choice:0,rivalScore:62})');
   assert.equal(run('state.fairBook.kensington1886.rank'),rank);
   const renown=run('state.renown');run('settleFestival(state)');assert.equal(run('state.renown'),renown);
   run('state.month=6');assert.equal(run('fairDemand(state,"toys")'),rank*2);
   run('state.month=7');assertOk('fairDemand(state,"toys")===0');
 }
-setup('tab="plan";state.month=4;selectFestival("kensington1886","toys");selectFestival("kensington1886","cancel");state.month=5;settleFestival(state)');
+setup('tab="plan";state.month=4;state.fairTickets={kensington1886:{product:"toys"}};selectFestival("kensington1886","cancel");state.month=5;settleFestival(state)');
 assertOk('!state.fairBook?.kensington1886');
 for(const index of [0,1]){
   ctx.replyIndex=index;

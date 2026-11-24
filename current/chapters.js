@@ -225,7 +225,7 @@ function calendarEvents(){
  if(month===9)data=["영지의 수확 감사제","세바스찬","교회 현관에 빵과 채소를 놓을 자리를 비워 두었습니다. 올해는 도련님께서 첫 바구니를 맡으시지요.","주민에게 빵을 나눈다","매력","수확 장부를 검토한다","경영","빅토리아 시대 수확 감사 관습 · 가문 참여 IF"];
  if(!data)continue;
  const [title,speaker,text,a,ka,b,kb,source]=data;
- out.push({id:"season-"+m,title,speaker,text,source,season:true,sees:s=>month===4&&s.month===m,choices:[choice(a,ka+" +4",()=>changeStat(ka,4)),choice(b,kb+" +4",()=>changeStat(kb,4))]});
+ out.push({id:"season-"+m,title,speaker,text,source,season:true,sees:s=>month===4&&s.month===m&&!s.fairBook?.["easter-"+(1886+Math.floor((m-1)/12))],choices:[choice(a,ka+" +4",()=>changeStat(ka,4)),choice(b,kb+" +4",()=>changeStat(kb,4))]});
  }
  return out;
 }

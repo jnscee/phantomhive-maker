@@ -1678,11 +1678,20 @@ html[data-game-motion=reduced] :is(.company-worker img,.duty-walker,.duty-walker
   --folio-gold:#e0c9a3;
 }
 #scene .book-cover {
-  width:min(100%,54rem); padding:clamp(18px,3.5cqw,52px) 1%; box-sizing:border-box; margin:auto;
-  display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); align-items:center;
-  gap:clamp(20px,5.8cqw,90px); justify-items:stretch; border-block:1px solid #d6c09877;
+  width:min(100%,68rem); padding:clamp(16px,2.3cqw,36px) 2%; box-sizing:border-box; margin:auto;
+  display:grid; grid-template-columns:minmax(0,1.75fr) minmax(0,1fr); align-items:center;
+  gap:clamp(18px,3.6cqw,50px); justify-items:stretch; border-block:1px solid #d6c09877;
 }
-.cover-name {text-align:center}
+#scene .book-cover .cover-name {
+  container-type:inline-size;display:grid;justify-items:center;align-content:center;
+  width:100%;min-width:0;text-align:center;
+}
+#scene .book-cover .cover-name h2 {
+  display:block;width:100%;max-width:100%;text-align:center;
+  font-size:clamp(1.15rem,10.5cqw,4.25rem);line-height:1.04;letter-spacing:.012em;
+}
+#scene .book-cover h2 span {display:block;white-space:nowrap;text-align:center}
+#scene .book-cover .cover-actions {min-width:0}
 .cover-name small {color:#e3ceb0; letter-spacing:.19em; font:normal clamp(12px,1.15cqw,16px) Georgia,serif}
 #scene .book-cover h2 {
   margin:.19em 0 .24em; color:#f6e9d3; text-transform:uppercase;

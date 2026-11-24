@@ -205,6 +205,20 @@ const visits=Object.fromEntries(Object.entries(visiting).map(([id,[label]])=>[id
 const productBuyers={
   toys:"런던 완구상회",plush:"리버티 완구점",game:"체스 클럽",sweets:"빅토리아 다실",candy:"역전 매점",hamper:"지역 호텔 조합"
 };
+const historicalTradeEvents={
+  5:{title:"사우스켄싱턴 박람회",buyer:"사우스켄싱턴 역 앞 완구점",orders:{toys:8},demand:{toys:4,game:2}},
+  18:{title:"여왕의 골든 주빌리",buyer:"주빌리 기념품상",orders:{toys:9,hamper:6},demand:{toys:2,hamper:7,sweets:4}},
+  29:{title:"얼스 코트 이탈리아 박람회",buyer:"얼스 코트 인근 상점",orders:{toys:8,plush:7},demand:{toys:3,plush:6,game:3}}
+};
+function tradeBuyer(order){
+  return historicalTradeEvents[order.tradeMonth]?.buyer||productBuyers[order.id];
+}
+function tradeNews(run){
+  const fair=historicalTradeEvents[run.month];
+  if(!fair)return "";
+  const demand=Object.entries(fair.demand).map(([id,n])=>products[id].name+" +"+n+"개").join(" · ");
+  return fair.title+" · 이달 소매 수요 "+demand;
+}
 function productHistory(run,id){
   return run.productHistory?.[id]||{reputation:0,units:0,orders:0};
 }
@@ -214,7 +228,10 @@ function recentRetail(run,id){
 }
 function customerOffer(run,id){
   const line=productHistory(run,id);
-  if(run.order||run.month>=run.duration||line.reputation<3||!run.unlocked.includes(id))return null;
+  if(run.order||run.month>=run.duration||!run.unlocked.includes(id))return null;
+  const qtyRequested=historicalTradeEvents[run.month]?.orders[id];
+  if(qtyRequested)return {id,qty:qtyRequested,tradeMonth:run.month,due:run.month,shortFee:run.flags.checkedReceipt?1:2,rate:products[id].price+4};
+  if(line.reputation<3)return null;
   const qty=Math.min(13,6+Math.floor(line.reputation/3)+line.orders);
   return {id,qty,due:run.month+1,shortFee:run.flags.checkedReceipt?1:2,rate:products[id].price+1+Math.min(3,line.orders)+(run.flags.sharedReceipt?1:0)};
 }

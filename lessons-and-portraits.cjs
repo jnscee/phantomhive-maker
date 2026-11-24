@@ -199,8 +199,10 @@ async function check(browserType){
       await fairPage.goto(base+'?fair-preview=newYear-1886&entry=1');
       assert.equal(await fairPage.locator('.duel-plate b').first().textContent(),'에드워드 미드포드');
       await fairPage.locator('.duel-portrait').evaluate(img=>img.decode());
-      await fairPage.locator('[data-action="fair-play:0"]').click();
-      await fairPage.locator('[data-action="fair-reveal"]').click();
+      assert.equal(await fairPage.locator('[data-action^="fair-play"]').count(),0);
+      await fairPage.locator('.dialogue [data-action="fair-next:0"]').click();
+      assert.equal(await fairPage.locator('.duel-screen .dialogue small').textContent(),'시엘');
+      await fairPage.locator('.dialogue [data-action="fair-next:1"]').click();
       assert.ok(await fairPage.locator('[data-action="fair-close"]').isVisible());
       const award=fairPage.getByRole('article',{name:'경연 결과'});
       assert.match(await award.locator('.award-parts').innerText(),/매력/);

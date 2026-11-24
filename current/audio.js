@@ -1,6 +1,7 @@
 "use strict";
 
 const musicTracks = {
+  companyFair:{title:"Sakura [CD Audio]",file:"assets/audio/company-fair-sakura.mp3"},
   "extra-bgm-23734dde":{"title":"자유행동","file":"assets/audio/extra-bgm-23734dde.mp3"},
 
   sakura:{title:"SAKURA",file:"assets/audio/sakura.mp3"},

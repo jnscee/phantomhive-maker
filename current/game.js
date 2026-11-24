@@ -120,7 +120,7 @@ function forecast(shop=state.shop){
   const reputation=Math.floor(productHistory(state,state.product).reputation/5);
   const premium=terms.premium+(quality?2:0);
   const demand=Math.max(0,baseline+appeal+londonPlan(state).power.salon+terms.reach+reputation-terms.pressure+fairDemand(state,state.product)+businessTailwind(state.product).bonus
-    +(state.month===5?1:0)+(state.month===18?3:0)+(state.month===31&&state.product==="toys"?-3:0)
+    +(historicalTradeEvents[state.month]?.demand[state.product]||0)+(state.month===31&&state.product==="toys"?-3:0)
     +(shop.store-1)*2+Math.min(3,Math.floor(state.stats.경영/80))+(state.visit==="town"?2:0)
     -Math.round((state.price-p.price-premium)*1.9));
   const receipt=state.price+(shop.design-1)+(shop.store-1);
@@ -153,7 +153,7 @@ function flagEvent(id,effect){
   state.flags[id]=true;
   effect();
 }
-const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),finalYearDecisions(),followupEvents(),appliedExams(),portfolioEvents(),visitorEvents(),setbackEvents(),companyCaseEvents(),authoredStoryEvents(),contests.map(contestEvent)).map(appendAuthoredOptions);
+const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),finalYearDecisions(),followupEvents(),appliedExams(),portfolioEvents(),visitorEvents(),setbackEvents(),companyCaseEvents(),authoredStoryEvents(),contestArchive.map(contestEvent)).map(appendAuthoredOptions);
 
 function pendingEvent(){
   return events.find(event=>event.id===state.pending);
@@ -253,12 +253,13 @@ function settleMonth(){
   if(state.debt>0)state.debt=Math.max(0,state.debt-24);
   state.fund+=income-cost-bills-expenses;
   // Paid sales and supply contracts belong to Funtom. Scheduled work only trains Ciel.
-  state.salesBook.push({month:state.month,product,sold,revenue:income,cost,advance:visitAdvance,investment,expenses,wholesale:trade?.wholesale||0,delivery:trade?.order?{id:trade.order.id,shipped:trade.shipped,qty:trade.order.qty}:null});
+  state.salesBook.push({month:state.month,product,sold,revenue:income,cost,advance:visitAdvance,investment,expenses,wholesale:trade?.wholesale||0,delivery:trade?.order?{...(trade.order.tradeMonth?{tradeMonth:trade.order.tradeMonth}:{}),id:trade.order.id,shipped:trade.shipped,qty:trade.order.qty}:null});
   state.report={weather:state.weather,income,festivalIncome,cost,expenses,storage:trade?.holding||0,freight:trade?.freight||0,operating:trade?.operation||0,penalty:trade?.penalty||0,wholesale:trade?.wholesale||0,advance:visitAdvance,bills,debtPayment,sold,before,investment,training:trainingPaid};
   if(sold>=14&&income>cost+expenses+25)state.renown+=1;
+  if(tradeNews(state))state.log.push(tradeNews(state));
   state.log.push(products[product].name+" "+sold+"개 소매 · 매출 "+money(sold*receipt)+" / 생산비 "+money(cost)+" / 재고 "+state.stock[product]+"개");
   state.log.push("저택 유지·채무 상환 "+money(bills));
-  if(trade?.order)state.log.push(productBuyers[trade.order.id]+" 납품 "+trade.shipped+"/"+trade.order.qty+"개 · "+money(trade.wholesale)+(trade.short?" · 미납 부담금 "+money(trade.penalty):""));
+  if(trade?.order)state.log.push(tradeBuyer(trade.order)+" 납품 "+trade.shipped+"/"+trade.order.qty+"개 · "+money(trade.wholesale)+(trade.short?" · 미납 부담금 "+money(trade.penalty):""));
   if(state.flags.market&&state.marketMonth!==state.month){state.flags.market=false;state.renown+=1;}
   scheduleSnakeVisit(state);
   const candidates=events.filter(e=>!e.companyCase&&!e.authored&&!e.slot&&!e.examSubjects&&!e.season&&!e.household&&!e.visitOnly&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
@@ -1073,9 +1074,9 @@ function inventoryRows(){
 }
 function orderDesk(){
   const active=state.order;
-  if(active)return '<h4>받은 발주서</h4><p>'+productBuyers[active.id]+' · '+products[active.id].name+' '+active.qty+'개 · 개당 '+money(active.rate)+'<br>'+monthText(active.due)+' 월말 자동 납품 · 부족분 개당 '+money(active.shortFee??2)+' 부담</p>';
+  if(active)return '<h4>받은 발주서</h4><p>'+tradeBuyer(active)+' · '+products[active.id].name+' '+active.qty+'개 · 개당 '+money(active.rate)+'<br>'+monthText(active.due)+' 월말 자동 납품 · 부족분 개당 '+money(active.shortFee??2)+' 부담</p>';
   const offers=state.unlocked.map(id=>customerOffer(state,id)).filter(Boolean);
-  return '<h4>거래처 재주문</h4>'+(offers.length?offers.map(o=>'<div class="sale-row"><b>'+productBuyers[o.id]+'</b><span>'+products[o.id].name+' '+o.qty+'개 · 개당 '+money(o.rate)+' · '+monthText(o.due)+' 납기 · 미납 개당 '+money(o.shortFee)+' 부담</span>'+btn('발주 수락','order:'+o.id,state.phase!=="plan")+'</div>').join("")+'<small>한 번에 한 건을 수락할 수 있습니다. 납기에는 해당 품목의 표준품부터 출고합니다.</small>':state.month===state.duration?'<p>이번 달이 마지막 영업입니다.</p>':'<p>한 품목의 평판이 3에 이르면 거래처가 다음 달 납품을 제안합니다.</p>');
+  return '<h4>'+(historicalTradeEvents[state.month]?'이달의 발주서':'거래처 재주문')+'</h4>'+(offers.length?offers.map(o=>'<div class="sale-row"><b>'+tradeBuyer(o)+'</b><span>'+products[o.id].name+' '+o.qty+'개 · 개당 '+money(o.rate)+' · '+monthText(o.due)+' 납기 · 미납 개당 '+money(o.shortFee)+' 부담</span>'+btn('발주 수락','order:'+o.id,state.phase!=="plan")+'</div>').join("")+'<small>한 번에 한 건을 수락할 수 있습니다. 납기에는 해당 품목의 표준품부터 출고합니다.</small>':state.month===state.duration?'<p>이번 달이 마지막 영업입니다.</p>':'<p>한 품목의 평판이 3에 이르면 거래처가 다음 달 납품을 제안합니다.</p>');
 }
 function companyDetail(){
   const id=selectedDepartment, room=departments[id], level=state.shop[id], active=state.phase==="plan";
@@ -1098,7 +1099,7 @@ function companyDetail(){
       (active?'<div class="work-ledger"><span>이 가격의 예상 수요</span><b id="shop-demand">'+forecast().demand+'개</b></div>':'')+
       '<h4>상품 장부</h4>'+inventoryRows()+orderDesk();
   }
-  return '<div class="work-title"><h3>'+room.name+'</h3><b>Lv. '+level+' / 3</b></div>'+controls+
+  return '<div class="work-title"><h3>'+room.name+'</h3><b>Lv. '+level+' / 3</b></div>'+(tradeNews(state)?'<p class="work-ledger">'+tradeNews(state)+'</p>':'')+controls+
     '<section class="expansion-quote"><h4>사업 확장</h4><p class="facility-benefit"><b>'+room.benefit+'</b><small>월 운영비　Lv.2 £5 · Lv.3 £16</small></p><div id="investment-quote">'+expansionQuote(id)+'</div></section><div class="facility-actions">'+btn(level===3?"최대 규모":"증설 · "+money(room.cost*level),"expand:"+id,!active||level===3||state.fund<room.cost*level,"work-order")+(level>1?btn("설비 매각 · "+money(Math.floor(room.cost*(level-1)*.5)),"liquidate:"+id,!active):"")+"</div>";
 }
 function expansionQuote(id){
@@ -1544,10 +1545,7 @@ function handleAction(key,rect,confirmed=false){
   if(storyDemo&&!["choose","term-next","term-close","music"].includes(action))return;
   if(previewFair){
     if(action==="fair-close"){location.reload();return;}
-    if(action==="fair-reveal" && !state.fairBook?.[previewFair.id] && Number.isInteger(state.sequence.duel.choice)){
-      settleFestival(state,state.sequence.duel);render(true);return;
-    }
-    if(action!=="fair-play" && action!=="music")return;
+    if(action!=="fair-next" && action!=="music")return;
   }
   if(action==="fair-notices"&&tab==="plan"&&state.phase==="plan"){openFairNotices();return;}
   if(action==="fair-entry"){selectFestival(id,value);return;}
@@ -1632,7 +1630,7 @@ function handleAction(key,rect,confirmed=false){
   if(action==="order"&&state.phase==="plan"&&tab==="company"){
     const offer=customerOffer(state,id);
     if(!offer)return;
-    state.order=offer;persist();render();announce(productBuyers[id]+"의 발주서를 접수했습니다.");return;
+    state.order=offer;persist();render();announce(tradeBuyer(offer)+"의 발주서를 접수했습니다.");return;
   }
   if(action==="liquidate"&&state.phase==="plan"&&tab==="company"&&Object.hasOwn(departments,id)){
     const level=state.shop[id];if(level<2)return;
