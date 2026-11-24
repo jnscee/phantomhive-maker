@@ -528,7 +528,7 @@ function fatigueThreshold(stamina){
   return 65+Math.floor(cap(stamina,abilityMax)*10/abilityMax);
 }
 const lessonGrades={
-  great:{label:"대성공",factor:1.30,loss:1}, steady:{label:"그럭저럭",factor:1,loss:2}, poor:{label:"별로",factor:.55,loss:4}
+  great:{label:"대성공",factor:1.30,loss:1}, steady:{label:"그럭저럭",factor:1,loss:2}, poor:{label:"실패",factor:.55,loss:4}
 };
 function lessonResult(run,id,slot){
   if(actions[id].stress<=0)return null;
@@ -538,8 +538,10 @@ function lessonResult(run,id,slot){
   const room=trainingRooms[id];
   const salt=(Object.keys(actions).indexOf(id)+1)*101+(slot+1)*7907;
   const luck=monthlyDraw(run,salt)*26-13;
+  const fatiguePenalty=Math.max(0,55-run.hp)*.24
+    +Math.max(0,run.stress-50)*.28+Math.max(0,35-run.motivation)*.32;
   const score=53+(run.hp-60)*.42+(run.motivation-55)*.33-(run.stress-28)*.42
-    +practice*3+preparation+(room?(run.level[room]-1)*3:0)+luck;
+    +practice*3+preparation+(room?(run.level[room]-1)*3:0)+luck-fatiguePenalty;
   return score>=65?"great":score>=38?"steady":"poor";
 }
 function plannedCareLevel(run){
