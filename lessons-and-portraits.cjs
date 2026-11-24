@@ -106,6 +106,12 @@ async function check(browserType){
       page.setDefaultTimeout(12000); console.log(browserType.name(),viewport.width);
       await openGame(page);
       assert.ok(await page.locator('.book-cover').isVisible());
+      const fairPage=await browser.newPage({viewport});
+      await fairPage.goto(base+'?fair-preview=newYear-1886');
+      await fairPage.locator('[data-action="fair-play:0"]').click();
+      await fairPage.locator('[data-action="fair-reveal"]').click();
+      assert.ok(await fairPage.locator('[data-action="fair-close"]').isVisible());
+      await fairPage.close();
       assert.equal(await page.locator('#overture').isVisible(),false);
       await page.locator('.book-cover [data-action="reset"]').click();
       await page.locator('#dialogue-visibility').click();
@@ -218,7 +224,7 @@ async function check(browserType){
       await page.locator('[data-duty="kitchen"]').click();
       assert.ok((await page.locator('.london-request').innerText()).includes('준비 완료'));
       await page.reload();
-      await page.locator('.book-cover [data-action="resume"]').click();
+      await page.locator('[data-action="cover:continue"]').click();await page.locator('[data-action="resume"]').click();
       await page.locator('#nav [data-action="tab:estate"]').click();
       assert.equal(await page.locator('[data-duty="salon"] em').textContent(),'소마');
       assert.equal(await page.locator('[data-duty="kitchen"] em').textContent(),'아그니');
@@ -228,10 +234,11 @@ async function check(browserType){
       assert.ok(await page.locator('#sheet').isVisible());
       assert.ok((await page.locator('#sheet').evaluate(e=>+getComputedStyle(e).zIndex))>(await page.locator('#date').evaluate(e=>+getComputedStyle(e).zIndex)));
       await page.evaluate(()=>{tab='market';render();});
-      assert.equal(await page.locator('.goods-ticket').count(),13);
-      await page.locator('[data-action="goods:weights"]').click();
-      await page.locator('[data-action="buy:weights"]').click();
-      assert.ok(await page.locator('[data-action="buy:weights"]').isDisabled());
+      assert.equal(await page.locator('.goods-ticket').count(),await page.evaluate(()=>Object.keys(marketGoods).length));
+      const before=await page.evaluate(()=>state.stats.매력);
+      await page.locator('[data-action="goods:birds"]').click();
+      await page.locator('[data-action="buy:birds"]').click();
+      assert.ok(await page.evaluate(()=>state.stats.매력)>before);
       await page.evaluate(()=>{tab='plan';state.plan=['exercise','study','walk'];state.visit='none';execute();});
       await page.locator('.performer img').evaluate(im=>im.decode());
       assert.equal(await page.locator('.lesson-plane').getAttribute('data-room'),await page.evaluate(()=>choreography.exercise[0]));
@@ -250,7 +257,7 @@ async function check(browserType){
           for(const person of ['finny','mey','bard','tanaka','snake'])recruit(person);
           Object.assign(state.stats,Object.fromEntries(stats.map(s=>[s,500])));state.stats.의지=will;
           state.flags.deed=false;state.hp=45;state.fund=2500;state.royal=will<350&&approved?15:0;state.renown=approved?70:0;
-          Object.assign(state.level,{parlor:3,library:3});state.shop.works=3;
+          Object.assign(state.level,{parlor:3,library:3});state.shop.works=3;state.royal=approved?12:0;state.salesBook=Array.from({length:8},()=>({revenue:50,cost:10}));
           talkTrust('mey');
           advance();
         },{will,approved});
@@ -260,7 +267,7 @@ async function check(browserType){
         await page.locator('.ending-cg').evaluate(im=>im.decode());
         await page.locator('#conversation [data-read="next"]').click();
         const line=await page.locator('#conversation .dialogue p').textContent();
-        await page.reload();await page.locator('.book-cover [data-action="resume"]').click(); assert.equal(await page.locator('#conversation .dialogue p').textContent(),line);
+        await page.reload();await page.locator('[data-action="cover:continue"]').click();await page.locator('[data-action="resume"]').click(); assert.equal(await page.locator('#conversation .dialogue p').textContent(),line);
         await page.locator('#dialogue-visibility').click();await page.locator('#conversation .dialogue').waitFor({state:'hidden'});
         await page.locator('#dialogue-visibility').click();
         await page.locator('#conversation [data-read="skip"]').click();
@@ -276,7 +283,7 @@ async function check(browserType){
         ][trustTier(state.people.mey.toward)],id);
         assert.equal(await farewell.locator('.farewell-bubble p').textContent(),farewellLine);
         await page.reload();
-        await page.locator('.book-cover [data-action="resume"]').click();
+        await page.locator('[data-action="cover:continue"]').click();await page.locator('[data-action="resume"]').click();
         assert.equal(await farewell.locator('.farewell-bubble p').textContent(),farewellLine);
         await farewell.locator('.farewell-person').evaluate(im=>im.decode());
         await farewell.locator('[data-farewell="skip"]').click();
@@ -331,10 +338,10 @@ async function check(browserType){
       const speakerPortrait=page.locator('#conversation .standing-window img[alt="세바스찬"]');
       await speakerPortrait.evaluate(im=>im.decode());
       await page.getByRole('button',{name:'영입 확정'}).click();
-      const impact=page.locator('#choice-impact');
+      const impact=page.locator('#impact-summary');
       assert.ok(await impact.isVisible());
       assert.match(await impact.innerText(),/메이린 합류/);
-      assert.equal(await impact.getByRole('button').count(),0);
+      await impact.getByRole('button',{name:'확인'}).click();
       assert.ok(await page.evaluate(()=>Boolean(state.people.mey)));
       await page.evaluate(()=>{state.phase='plan';state.pending=null;tab='staffing';render();});
       assert.equal(await page.locator('[data-employee=mey] img').getAttribute('src'),'assets/npc-mey.webp');

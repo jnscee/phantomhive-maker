@@ -12,7 +12,7 @@ function staged(who,title,line,buttons,caption="",room="library",partner=who){
   const start='<div class="review-room" style="background-image:url(&quot;'+sceneArt[room]+'&quot;)"></div>'+dialogueCast(partner);
   const speaker=(caption?caption+'　·　':'')+who,heading=title?'<h2>'+title+'</h2>':'';
   if(!buttons)return start+sceneLine(speaker,line,'<button type="button" class="line-next" aria-label="다음 대사" data-action="intro-next">▼</button>',"",heading);
-  return start+'<article class="dialogue">'+(speaker?'<small>'+speaker+'</small>':"")+heading+'<p>'+line+'</p><div class="answers">'+buttons+'</div></article>';
+  return start+'<article class="dialogue"><small>'+speaker+'</small>'+heading+'<p>'+line+'</p><div class="answers">'+buttons+'</div></article>';
 }
 const guide=[
  ["날짜판과 명패","오늘 날짜는 왼쪽 위 달력을 보십시오. 연도 옆에는 서른다섯 달 중 몇 달째인지 적어 두었습니다. 저택의 오른쪽 위 명패에는 도련님의 나이와 가문의 잔금이 있습니다."],
@@ -93,17 +93,15 @@ function visitScene(){
    if(page)return page;
    const event=events.find(e=>e.id===seq.visitEvent);
    const buttons=event.choices.map((c,i)=>btn(c.label+(c.when&&!c.when(state)?" · "+c.hint:""),"visit-choice:"+i,Boolean(c.when&&!c.when(state)))).join("");
-   const partner=castName(event);
-   return staged(event.narration?"":partner,"",storyLine(event),buttons,"",room,partner);
+   return staged(castName(event),"",storyLine(event),buttons,"",room);
  }
  if(seq.visitBefore){
    if(seq.encounterReply){
      const [speaker,line]=seq.encounterReply;
-     return staged(speaker,"",line,btn(seq.index===0?"상순으로":"월말 결산으로","visit-finish"),"방문 기록",room,seq.encounterPartner);
+     return staged(speaker,"",line,btn(seq.index===0?"상순으로":seq.contest?"하순 경연으로":"월말 결산으로","visit-finish"),"방문 기록",room,seq.encounterPartner);
    }
-   const changes=visitChanges();
-   return staged(seq.visitReply?seq.replySpeaker:visitName(visitPerson(id)),"",seq.visitReply || changes.join(" · ")||"더 변한 수치는 없습니다.",
-     btn(seq.index===0?"상순으로":"월말 결산으로","visit-finish"),visits[id]+" · 자유행동 결과",room);
+   return staged(seq.visitReply?seq.replySpeaker:visitName(visitPerson(id)),"",seq.visitReply || "방문을 마치고 마차로 돌아왔다.",
+     btn(seq.index===0?"상순으로":seq.contest?"하순 경연으로":"월말 결산으로","visit-finish"),visits[id]+" · 자유행동 결과",room);
  }
  const person=visitPerson(id);
  const memory=visitMemory(id,person);
@@ -166,6 +164,7 @@ function chooseVisitEvent(index){
 function finishVisit(){
  const seq=state.sequence;
  if(state.phase!=="visit"||!seq.visitBefore||seq.visitEvent)return;
+ if(openChoiceImpact("visit"))return;
  const changes=visitChanges();
  if(changes.length)state.log.push("자유행동 성과 · "+changes.join(" · "));
  delete seq.visitBefore;delete seq.encounterReply;delete seq.encounterPartner;
@@ -229,7 +228,7 @@ function calendarEvents(){
  if(month===9)data=["영지의 수확 감사제","세바스찬","교회 현관에 빵과 채소를 놓을 자리를 비워 두었습니다. 올해는 도련님께서 첫 바구니를 맡으시지요.","주민에게 빵을 나눈다","매력","수확 장부를 검토한다","경영","빅토리아 시대 수확 감사 관습 · 가문 참여 IF"];
  if(!data)continue;
  const [title,speaker,text,a,ka,b,kb,source]=data;
- out.push({id:"season-"+m,title,speaker,text,source,season:true,sees:s=>s.month===m,choices:[choice(a,ka+" +4",()=>changeStat(ka,4)),choice(b,kb+" +4",()=>changeStat(kb,4))]});
+ out.push({id:"season-"+m,title,speaker,text,source,season:true,sees:s=>month===4&&s.month===m,choices:[choice(a,ka+" +4",()=>changeStat(ka,4)),choice(b,kb+" +4",()=>changeStat(kb,4))]});
  }
  return out;
 }
@@ -289,8 +288,10 @@ function facilityLedger(){
  });
  const total=rooms.reduce((sum,item)=>sum+item.cost,0);
  const rows=rooms.map(({room,n,cost,condition})=>
-   '<tr><th scope="row">'+room.name+' <small>Lv.'+n+'</small></th><td>'+money(cost)+'</td><td><span class="room-health"><meter aria-label="'+room.name+' 상태" min="0" max="100" value="'+condition+'"></meter>'+condition+'</span></td></tr>').join("");
- return '<details class="estate-ledger"'+(facilityLedgerOpen?' open':'')+'><summary>시설별 유지비와 상태</summary><p>월 시설 유지비 <strong>'+money(total)+'</strong></p><table><thead><tr><th>시설</th><th>월 비용</th><th>상태</th></tr></thead><tbody>'+rows+'</tbody></table><small>공통 관리비 £36과 경비 절감액은 별도입니다.</small></details>';
+   '<tr><th scope="row">'+room.name+' <small>Lv.'+n+'</small></th><td>'+money(cost)+'</td><td><span class="room-health"><meter aria-label="'+room.name+' 상태" min="0" max="100" value="'+condition+'"></meter><b>'+condition+'%</b></span></td></tr>').join("");
+ return '<details class="estate-ledger"'+(facilityLedgerOpen?' open':'')+'><summary><span>시설별 유지비와 상태 <small>월 시설 유지비</small></span><strong>'+money(total)+'</strong></summary>'+
+   '<div class="estate-ledger-body"><table><thead><tr><th scope="col">시설</th><th scope="col">월 비용</th><th scope="col">상태</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+   '<small>공통 관리비 £36과 경비 절감액은 별도입니다.</small></div></details>';
 }
 
 // Later assignments combine subjects that the player actually practised.
@@ -978,6 +979,7 @@ function growthRecord(run){
     plans:[...group.plans].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([name])=>name),
     entries:group.entries.sort((a,b)=>a.month-b.month)
   }));
+  if(run.ending==="vowTitle" && stats.every(key=>run.stats[key]===abilityMax))record.at(-1).allMastered=true;
   return record;
 }
 function savedGrowthRecord(id,replay){
@@ -1003,6 +1005,13 @@ function showGrowthCredits(host,years,onFinish){
       const row=add(section,"div","");row.className="growth-entry";
       add(row,"small",(calendarDate(entry.month).getUTCMonth()+1)+"월");add(row,"span",entry.title);
     }
+  }
+  if(years.at(-1)?.allMastered){
+    const section=add(roll,"section","");
+    add(section,"h3","일곱 과목 만점");
+    add(section,"p","세바스찬은 마지막 성적표의 일곱 칸에 차례로 서명했다.");
+    add(section,"p","“그래서, 내일부터는 수업이 없나?”");
+    add(section,"p","“도련님께서 그렇게 말씀하실 줄 알고 다음 교본을 준비해 두었습니다.”");
   }
   add(roll,"p","끝").className="growth-fin";
   const toggle=host.querySelector(".growth-toggle");
@@ -1076,6 +1085,7 @@ function showEndingScene(host){
   if(art!==existing){
     art.className="ending-cg";art.dataset.ending=id;
   }
+  if(!story)rememberCG("assets/endings/"+picture+".webp");
   if(art.dataset.picture!==picture){
     art.dataset.picture=picture;art.src=(story?"assets/":"assets/endings/")+picture+".webp";art.alt=story?"":endingArtDescriptions[picture]||scene.alt;
   }

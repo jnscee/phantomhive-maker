@@ -335,6 +335,9 @@ function standingFit(profile,age){
   const referenceScale=Number(cielPortraitScale(age));
   const [height,eye,chin]=standingMeasures[profile];
   const eyeLevel=referenceScale*(1-referenceEye/400)+(height-referenceHeight)/300;
+  if(profile==="엘리자베스12"&&age===11){
+    return {scale:referenceScale*referenceChin/chin,window:referenceScale*1.035};
+  }
   const faceRatio=profile.startsWith("엘리자베스")?1:1.08;
   const scale=Math.max(referenceScale*referenceChin*faceRatio/chin,eyeLevel/(1-eye/400));
   return {scale,window:eyeLevel+scale*eye/400};
@@ -409,6 +412,7 @@ function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers="",hasT
   const book=recruitScenes[id],{scene,speaker,text,withTanaka,cue}=book.lines[at];
   const picture=cue?.cg||scene.picture;
   const art=picture?{bg:"assets/endings/"+picture+".webp"}:recruitArt[scene.art],bg=file(art.bg),last=at===order.at(-1);
+  if(typeof rememberCG==="function")rememberCG(art.bg);
   const backdrop=art.crop
     ? '<svg class="review-room recruit-backdrop '+art.tone+'" viewBox="'+art.crop.join(" ")+'" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><image width="680" height="380" href="'+bg+'"/></svg>'
     : '<div class="review-room '+(art.tone||'')+'" style="background-image:url(&quot;'+bg+'&quot;)"></div>';

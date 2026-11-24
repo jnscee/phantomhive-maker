@@ -90,8 +90,10 @@ function hasPendingVisit(){
   return !state.ill && state.visit!=="none"&&state.visitTurn!==state.month&&canVisit(state.visit);
 }
 function continueSequence(){
-  if(state.sequence.index<2){state.sequence.index++;enterSlot();}
-  else if(hasPendingVisit()){state.phase="visit";tab="plan";persist();render(true);}
+  const seq=state.sequence;
+  if(seq.index<(seq.contest?contestSlot-1:2)){seq.index++;enterSlot();return;}
+  seq.index=2;
+  if(hasPendingVisit()){state.phase="visit";tab="plan";persist();render(true);}
   else {
     if(state.ill && state.visit && state.visit!=="none")state.log.push("자유행동 · 병환으로 방문 취소");
     settleMonth();
@@ -111,6 +113,11 @@ function faceDialogue(){
   const con=$("conversation"),event=["slotEvent","event"].includes(state.phase)&&tab==="plan"?pendingEvent():null;
   if(showEndingScene(con))return true;
   if(tab==="staffMemory"&&recruitMemory){showRecruitMemory(con);return true;}
+  if(event?.contest&&(state.sequence?.duel||state.fairBook?.[event.contest.id])){
+    con.dataset.review="false";con.hidden=false;con.innerHTML=contestScene(event);
+    playNovelCue(con,null);
+    return true;
+  }
   if(event&&Object.hasOwn(recruitScenes,event.id)){con.dataset.review="false";showMonthlyRecruit(con,event);return true;}
   const review=state.phase==="review"&&tab==="plan";
   con.dataset.review=String(review);

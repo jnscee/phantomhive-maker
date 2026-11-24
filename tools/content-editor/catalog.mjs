@@ -306,7 +306,7 @@ export function catalog(files, publishedAssets = [], version = "") {
   const ranks=rows(variable("term-events.js","portfolioRanks"));
   for(const [i,row] of rows(variable("term-events.js","portfolios")).entries()){
     const [,title,description]=rows(row);
-    ranks.forEach((rank,n)=>event("portfolio-"+i+"-"+n,value(title)+" · "+value(prop(rank,"name")),value(description)));
+    ranks.forEach((rank,n)=>event("portfolio-"+i+"-"+n,value(title)+" · "+value(prop(rank,"name")),value(rows(rows(description)[n]??rows(description)[0])[0])));
   }
   const authored=variable("story.js","authoredEvents");
   const customIds=[];
@@ -431,13 +431,13 @@ export function catalog(files, publishedAssets = [], version = "") {
     });
     addChoices(g,id);
   }
-  for(const entry of rows(variable("festivals.js","londonFestivals"))){
+  for(const entry of [...rows(variable("festivals.js","annualContests")),...rows(variable("festivals.js","historicalContests"))]){
     const id=value(prop(entry,"id"));
     const g=group("events","fair-"+id,value(prop(entry,"title")),"런던 행사",{kind:"fair",month:value(prop(entry,"month"))});
     for(const [key,label] of [["title","행사 제목"],["date","날짜 표기"],["historical","역사 소개"],["invitation","참여 안내"]])
       add(g,"festivals.js",prop(entry,key),label);
     rows(prop(entry,"options")).forEach((option,i)=>{
-      for(const [key,label] of [["label","종목"],["line","참여 지문"],["success","호평 결과"],["practice","참가 결과"]])
+      for(const [key,label] of [["label","종목"],["line","참여 지문"],["placed","입상 결과"],["missed","참가 결과"]])
         add(g,"festivals.js",prop(option,key),label+" "+(i+1));
     });
   }

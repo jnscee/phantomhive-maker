@@ -1,9 +1,9 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const mem=new Map(),elements=new Map();
 function element(){return {isConnected:true,dataset:{},style:{setProperty(){}},addEventListener(){},setAttribute(){},focus(){},querySelector(){return this},querySelectorAll(){return []},classList:{contains(){return false},toggle(){}}}}
-const doc={hidden:false,getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id)},querySelectorAll(){return []},addEventListener(){}};
-const ctx=vm.createContext({console,structuredClone,document:doc,ResizeObserver:class {observe(){}},localStorage:{getItem:k=>mem.get(k)||null,setItem:(k,v)=>mem.set(k,v)},setTimeout,clearTimeout,clearInterval,window:{getSelection(){return null},addEventListener(){}},URLSearchParams});
-for(const name of ['content','prince','recruit','story','scenes','audio','reports','prologue','chapters','staffing','term-events','visitors','festivals','almanac','game']){
+const doc={baseURI:"https://example.test/",hidden:false,getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id)},querySelectorAll(){return []},addEventListener(){}};
+const ctx=vm.createContext({console,structuredClone,document:doc,ResizeObserver:class {observe(){}},localStorage:{getItem:k=>mem.get(k)||null,setItem:(k,v)=>mem.set(k,v)},setTimeout,clearTimeout,clearInterval,window:{getSelection(){return null},addEventListener(){}},URL,URLSearchParams});
+for(const name of ['locale','cover','content','prince','recruit','story','scenes','audio','reports','prologue','chapters','staffing','term-events','visitors','festivals','almanac','game']){
  let s=fs.readFileSync(require('node:path').join(process.argv[2]||'site','js',name+'.js'),'utf8');if(name==='game')s=s.slice(0,s.indexOf('\nrender();\nif(state.phase'));
  vm.runInContext(s,ctx,{filename:name+'.js'});
 }
@@ -12,7 +12,7 @@ run('render=()=>{};respond=()=>{};announce=()=>{};focusAction=()=>{};popMoney=()
 const assertOk=source=>assert.ok(run(source),source);
 const setup=(code="")=>run('state=initial();state.owlSeed=1;state.phase="plan";tab="company";'+code);
 function pick(){
-  run('if(recruitScenes[state.pending])state.recruitPage={id:state.pending,version:2,at:recruitScenes[state.pending].lines.length-1};choose(0)');
+  run('if(recruitScenes[state.pending])state.recruitPage={id:state.pending,version:2,at:recruitScenes[state.pending].lines.length-1};choose(0);if(state.choiceImpact?.next)handleAction("impact-close")');
 }
 setup('delete state.unifiedAbilityCaps;state.uniformAbilityCaps=true;state.mixedAbilityCaps=true;state.stats.의지=220;state.stats.체력=75;state.illness=true;state.phase="ending";state.ending="ill";state.endingPage=2;state=normalizeSave(state)');
 assertOk('state.stats.의지===220&&state.stats.체력===75&&state.ill&&state.endingBeat===2');
@@ -255,7 +255,8 @@ function playCampaign(invest){
     execute();
     if(state.phase!=="scene")throw Error("Infeasible budget at "+state.month);
     for(let steps=0;steps<180;steps++){
-      if(state.phase==="scene")finishScene();
+      if(state.choiceImpact?.next)handleAction("impact-close");
+      else if(state.phase==="scene")finishScene();
       else if(state.phase==="review")continueSequence();
       else if(state.phase==="event"||state.phase==="slotEvent"){
         const event=pendingEvent();
@@ -288,7 +289,7 @@ for(const invest of [false,true]){
   const campaign=playCampaign(invest);
   assert.ok(campaign.finished);
   if(invest){
-    assert.equal(campaign.ending,"vowTitle");
+    assert.equal(campaign.ending,"vowNoTitle");
     assert.ok(campaign.stats.some(value=>value<500));
   }
   assert.ok(campaign.january.stats.filter(value=>value<500).length>=4);
@@ -296,7 +297,7 @@ for(const invest of [false,true]){
   assert.equal(campaign.exams,14);
   assert.deepEqual(Array.from(campaign.birthdays),[12,24]);
   assert.deepEqual(Array.from(campaign.decisions),[26,29,32]);
-  if(invest)assert.equal(campaign.ending,"vowTitle");
+  if(invest)assert.equal(campaign.ending,"vowNoTitle");
   console.log('PASS 35-month campaign',invest?'expanded estate':'starting facilities',
     'January',JSON.stringify(campaign.january),'final funds',campaign.fund);
 }
@@ -312,7 +313,7 @@ assertOk('state.report.freight===0');
 for(const [id,cost,account] of [['winterAxles',180,'company'],['carrierPlace',48,'company'],['estateRoof',240,'estate']]){
   ctx.decisionId=id;ctx.cost=cost;ctx.account=account;
   setup('state.month=26;state.pending=decisionId;state.phase="event";state.fund=cost-1');
-  run('choose(0)');assertOk('state.pending===decisionId && !state.flags[decisionId] && state.fund===cost-1');
+  run('choose(0);if(state.choiceImpact?.next)handleAction("impact-close")');assertOk('state.pending===decisionId && !state.flags[decisionId] && state.fund===cost-1');
   run('choose(1)');assertOk('state.flags[decisionId] && state.fund===cost-1 && state.accounts[account]===0');
   setup('state.pending=decisionId;state.phase="event";state.fund=cost;choose(0);state=normalizeSave(saves.auto)');
   assertOk('state.flags[decisionId] && state.fund===0 && state.accounts[account]===cost');
@@ -322,13 +323,13 @@ assertOk('state.fund===3000 && stats.every(key=>state.stats[key]===500)');
 setup('state.month=25;state.stats.지성=375;state.flags["portfolio-0-0"]=true;state.sequence={activity:"rest"}');
 assertOk('!events.find(e=>e.id==="portfolio-0-1").sees(state)');
 run('state.sequence.activity="study"');assertOk('events.find(e=>e.id==="portfolio-0-1").sees(state)');
-run('events.find(e=>e.id==="portfolio-0-1").choices[0].effect()');assert.equal(run('state.stats.지성'),405);
+run('events.find(e=>e.id==="portfolio-0-1").choices[0].effect()');assert.equal(run('state.stats.지성'),393);
 
 // Only the part of a training gain above 485 slows down before the second applied exam.
 setup('state.month=25;state.stats.지성=484');
 assertOk('lessonGain("지성",440,20,25,{})===lessonGain("지성",440,20,25,{lateDispatch:true})');
 assertOk('lessonGain("지성",484,20,25)===2 && lessonGain("지성",485,20,25)===1 && lessonGain("지성",500,20,25)===0');
-assertOk('scheduleNote("study").includes("지성 +2") && statusPanel().includes("과목 실기 0/6")');
+assertOk('scheduleNote("study").replace(/<[^>]+>/g,"").includes("지성 +2") && statusPanel().includes("과목 실기 0/6")');
 run('state.stats.지성=485;state.plan=["study","rest","walk"];const graduate=structuredClone(state);graduate.flags.lateDispatch=true;applyActivity(graduate,"study","great")');
 assertOk('graduate.stats.지성>486 && projectTraining().stats.지성===486 && state.stats.지성===485');
 run('changeStat("지성",6);state.flags.lateDispatch=true;persist();state=normalizeSave(saves.auto)');
@@ -386,31 +387,27 @@ assertOk('state.ill && !hasPendingVisit()');
 run('state.hp=57;state.stress=51;persist()');
 assertOk('!state.ill && hasPendingVisit()');
 
-setup('Object.assign(state.stats,{지성:420,기품:440,매력:300,통찰:340,경영:320,의지:300});Object.assign(state.level,{library:2,kitchen:2});state.shop.store=2;state.flags.deed=true;state.royal=6;state.renown=32;state.fund=1200;state.debt=0;state.flags.deed=false;state.hp=1;state.stats.체력=0');
-assertOk('qualifies() && courtRows().length===8 && !/\\d/.test(courtRows().map(row=>row[2]).join(""))');
-for(const change of ['stats.지성--','stats.기품--','stats.매력--','stats.통찰--','stats.경영--','stats.의지--','level.kitchen--','shop.store--','royal--','renown--','fund--','debt++']){
+setup('for(const [key,[target]] of Object.entries(courtEducation))state.stats[key]=target;Object.assign(state.level,{library:2,kitchen:2});state.salesBook=Array.from({length:8},()=>({revenue:30,cost:15}));state.royal=6;state.renown=32;state.fund=1200;state.debt=0');
+assertOk('qualifies() && courtRows().length===8');
+for(const change of ['stats.지성--','stats.기품--','stats.매력--','stats.통찰--','stats.경영--','stats.의지--','level.kitchen--','salesBook.pop()','royal--','renown--','fund--','debt++']){
   const previous=run('structuredClone(state)');
   run('state.'+change);assertOk('!qualifies()');ctx.savedCourt=previous;run('state=savedCourt');
 }
-run('state.stats.의지=350;state.royal=0');
-assertOk('qualifies() && !courtRows().some(row=>row[0]==="왕실 신임")');
 for(const ending of ["title","business","defer"]){
   ctx.legacyEnding=ending;
   setup('state=normalizeSave({...state,duration:6,month:6,planMonth:6,phase:"ending",ending:legacyEnding,endingBeat:3})');
   assertOk('state.duration===35 && state.phase==="result" && !state.ending && state.endingBeat===undefined');
   run('advance()');assertOk('state.month===7 && state.phase==="plan"');
 }
-for(const [index,outcome] of [[0,"success"],[1,"practice"],[1,"absent"]]){
-  Object.assign(ctx,{fairIndex:index,fairOutcome:outcome});
-  setup('state.month=4;selectFestival(fairIndex);persist();state=normalizeSave(saves.auto);state.month=5;');
-  run('if(fairOutcome==="success")state.counts.developToy=1;if(fairOutcome==="absent")state.ill=true;settleFestival(state)');
-  assertOk('state.fairBook.kensington1886.outcome===fairOutcome');
+for(const [quality,qty,rank] of [["fine",1,1],["standard",1,0],["fine",0,0]]){
+  setup('tab="plan";state.month=4;selectFestival("kensington1886","toys");persist();state=normalizeSave(saves.auto);state.month=5;state.qty='+qty+';state.quality='+JSON.stringify(quality));
+  run('settleFestival(state,{focus:0,choice:0,rivalScore:62})');
+  assert.equal(run('state.fairBook.kensington1886.rank'),rank);
   const renown=run('state.renown');run('settleFestival(state)');assert.equal(run('state.renown'),renown);
-  run('state.month=6');
-  assert.equal(run('fairDemand(state,londonFestivals[0].options[fairIndex].product)'),outcome==="success"?4:outcome==="practice"?2:0);
-  run('state.month=7');assertOk('fairDemand(state,londonFestivals[0].options[fairIndex].product)===0');
+  run('state.month=6');assert.equal(run('fairDemand(state,"toys")'),rank*2);
+  run('state.month=7');assertOk('fairDemand(state,"toys")===0');
 }
-setup('state.month=4;selectFestival(0);selectFestival("cancel");state.month=5;settleFestival(state)');
+setup('tab="plan";state.month=4;selectFestival("kensington1886","toys");selectFestival("kensington1886","cancel");state.month=5;settleFestival(state)');
 assertOk('!state.fairBook?.kensington1886');
 for(const index of [0,1]){
   ctx.replyIndex=index;

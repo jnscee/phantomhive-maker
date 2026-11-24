@@ -85,7 +85,8 @@ function scriptedEvents(){
     [33,"chapel","화이트채플에서 온 전보","동부에서 들어온 전보에 수신인이 빠져 있습니다. 시엘은 봉투에 남은 우편 소인부터 살핍니다.",
       ["소인의 경로를 맞춘다","조사 기록 확보",{flag:"postmark",통찰:8},s=>s.stats.통찰>=33,"통찰 33"],["연락망을 정리한다","의지 +5",{의지:5}]]
   ];
-  const fixed=timed.map(([month,id,title,text,a,b])=>({id,title,text,chapter:true,speaker:"세바스찬",sees:s=>s.month>=month&&s.month<=month+2,choices:[a,b].filter(Boolean).map(effectChoice)}));
+  const contestOverrides={expo:"kensington1886",jubilee:"jubilee1887"};
+  const fixed=timed.map(([month,id,title,text,a,b])=>({id,title,text,chapter:true,speaker:"세바스찬",sees:s=>s.month>=month&&s.month<=month+2&&!Number.isInteger(s.fairBook?.[contestOverrides[id]]?.rank),choices:[a,b].filter(Boolean).map(effectChoice)}));
   // Dispatched by a completed investigation or the January turn opener.
   fixed.push({id:"gardener",title:recruitScenes.gardener.title,text:"연구소에서 빠져나온 S-012는 시엘에게 이름과 책을 받았다.",chapter:true,speaker:"세바스찬",sees:()=>false,
     choices:[effectChoice(["피니안 영입",recruitScenes.gardener.result,{recruit:"finny"}])]});

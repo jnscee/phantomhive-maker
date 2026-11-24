@@ -93,16 +93,15 @@ async function storyEditing({page,button,label,saved,search,game,viewport}){
   await label("필요 수치 이상").fill("0");
   await button("게임에서 미리보기 ↗").click();
   await game.getByRole("button",{name:"봉인을 살핀다",exact:true}).click();
-  const impact=game.locator("#choice-impact");
-  await impact.waitFor({state:"visible"});
+  const impact=game.locator("#impact-summary");
   await game.getByText("봉인이 열렸다.",{exact:true}).waitFor();
   await game.getByRole("button",{name:"다음 장면",exact:true}).click();
+  await impact.getByRole("button",{name:"확인"}).click();
   await game.getByText("접힌 쪽지가 보인다.",{exact:true}).waitFor();
   const image=game.locator("#conversation .cast-left img");
   assert.match(await image.getAttribute("src"),/assets\/expressions\/extra-/);
   await image.evaluate(element=>element.decode());
   await game.getByRole("button",{name:"기록을 덮는다",exact:true}).click();
-  await impact.waitFor({state:"visible"});
   await game.getByText("기록했다.",{exact:true}).waitFor();
   await button("닫기").click();
   await button("장면 흐름도").click();

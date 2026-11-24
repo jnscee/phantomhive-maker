@@ -1,6 +1,7 @@
 "use strict";
 
 const musicTracks = {
+  sakura:{title:"SAKURA",file:"assets/audio/sakura.mp3"},
   illness:{title:"Illness",file:"assets/audio/illness.mp3"},
   harvest:{title:"Harvest Festival",file:"assets/audio/harvest.mp3"},
   newYear:{title:"New Year’s Garden Party",file:"assets/audio/new-year.mp3"},
@@ -65,7 +66,7 @@ function eventTrack(id,fallback="daily"){
 
 function recruitTrack(id,at){
   const {scene,cue}=recruitScenes[id].lines[at];
-  return cue?.bgm||bgmAssignments["event:"+id]||scene.music||eventTrack(id,id==="maid"?"gloomy":"daily");
+  return cue?.bgm||bgmAssignments["event:"+id]||scene.music || (Object.hasOwn(eventTracks,id)?eventTracks[id]:id==="maid"?"gloomy":"daily");
 }
 
 const endingTracks={
@@ -73,6 +74,8 @@ const endingTracks={
   ill:"gloomy",broke:"gloomy",vowNoTitle:"goodEnding"
 };
 function trackForView(){
+  if(tab==="exit")return null;
+  if(tab==="title"||coverPages.includes(tab))return "manor";
   if(tourSession||(tab==="plan"&&state.phase==="guide"))return "tutorial";
   if(inOpening()){
     const line=openingNeedsSlot()?null:openingLines[openingIndex()];
@@ -84,11 +87,14 @@ function trackForView(){
     const at=tab==="endingMemory"?endingReplay.at:state.endingBeat;
     return endingScenes[id]?.lines[at]?.[3]?.bgm||endingTracks[id]||"manor";
   }
-  if(state.ill && !["staffMemory","recollection","endingMemory","title"].includes(tab)){
-    if(tab==="plan"&&["scene","review"].includes(state.phase)&&state.sequence?.onSickLeave)
-      return bgmAssignments["activity:"+state.sequence.activity]||"illness";
-    return "illness";
+  if(tab==="plan"&&state.phase==="event"&&pendingEvent()?.contest){
+    const event=pendingEvent();
+    return state.fairBook?.[event.contest.id]?.reason==="병중으로 불참"?"illness":event.track;
   }
+  // Recovery can clear illness before the scene's first frame.
+  if(tab==="plan"&&["scene","review"].includes(state.phase)&&state.sequence?.onSickLeave &&
+    (state.sequence.activity||state.plan[state.sequence.index])==="recovery")return "illness";
+  if(state.ill && !["staffMemory","recollection","endingMemory","title"].includes(tab))return "illness";
   if(tab==="staffMemory"&&recruitMemory)return recruitTrack(recruitMemory.id,recruitMemory.at);
   if(tab==="market")return "market";
   if(tab==="company"||tab==="estate"||tab==="staffing"||tab==="townhouse")return "business";
@@ -98,12 +104,8 @@ function trackForView(){
     if(state.phase==="event"||state.phase==="slotEvent"){
       const event=pendingEvent();
       if(event && Object.hasOwn(recruitScenes,event.id))return recruitTrack(event.id,recruitPage(event.id));
-      if(event){
-        const cue=termCue(event)?.bgm||bgmAssignments["event:"+event.id];
-        if(cue)return cue;
-        if(event.id==="birthday"&&state.termOutcome?.id==="birthday")return "romantic";
-      }
-      return event?.track||eventTrack(event?.id,event?.exam?"test":"daily");
+      if(event?.id==="birthday"&&state.termOutcome?.id==="birthday")return "romantic";
+      return (event&&termCue(event)?.bgm)||bgmAssignments["event:"+event?.id]||event?.track||(event?.exam&&!Object.hasOwn(eventTracks,event.id)?"test":eventTrack(event?.id));
     }
   }
   if(tab==="plan"&&["scene","slotEvent","review"].includes(state.phase)&&state.sequence){
@@ -144,10 +146,10 @@ const musicPlayer=(()=>{
     for(const {el} of tracks.values()){el.volume=0;if(!el.paused)el.pause();}
   }
   function sync(key=selected,retry=false){
-    if(key!=="tutorial")backgroundTrack=key==="prologue"?"manor":key;
+    if(key&&key!=="tutorial")backgroundTrack=key==="prologue"?"manor":key;
     if(["prologue","tutorial","titleApproval","goodEnding"].includes(key)&&selected!==key&&tracks.has(key))tracks.get(key).el.currentTime=0;
     selected=key;
-    if(!musicTracks[key].file){
+    if(!musicTracks[key]?.file){
       stop();
       return;
     }

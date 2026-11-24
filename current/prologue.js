@@ -106,6 +106,7 @@ function openingImage(scene){
 function openingArt(scene,picture){
   const frame=$("opening-picture");
   const source=picture?"assets/endings/"+picture+".webp":openingImage(scene);
+  rememberCG(source);
   if(frame.dataset.source===source)return;
   frame.dataset.source=source;
   frame.dataset.art=scene.art;

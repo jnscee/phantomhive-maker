@@ -1,7 +1,9 @@
 @font-face {
   font-family: "SaolDisplay-Regular";
-  src: url("https://db.onlinewebfonts.com/t/4c4c08af466e9ad071b6d69cf44093df.woff2") format("woff2"),
-       url("https://db.onlinewebfonts.com/t/4c4c08af466e9ad071b6d69cf44093df.woff") format("woff");
+  src: local("Saol Display Regular"), local("SaolDisplay-Regular"), local("Saol Display"),
+       url("https://db.onlinewebfonts.com/t/4c4c08af466e9ad071b6d69cf44093df.woff2") format("woff2"),
+       url("https://db.onlinewebfonts.com/t/4c4c08af466e9ad071b6d69cf44093df.woff") format("woff"),
+       url("https://db.onlinewebfonts.com/t/4c4c08af466e9ad071b6d69cf44093df.ttf") format("truetype");
   unicode-range: U+0020-007E, U+00A0-024F, U+2000-206F, U+20A0-20CF;
   font-weight: 400;
   font-display: swap;

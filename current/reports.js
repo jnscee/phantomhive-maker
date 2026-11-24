@@ -48,14 +48,20 @@ function budgetTable(compact=false){
 }
 function contributionNote(investment,research){
   if(!(investment?.total||research))return "";
-  const items=[];
-  if(investment?.production)items.push("생산비 절감 "+money(investment.production));
-  if(investment?.extraSales)items.push("매대 추가 매출 "+money(investment.extraSales));
-  if(investment?.overheadChange)items.push("운영·물류비 변화 "+money(investment.overheadChange));
-  if(investment?.wrapping)items.push("포장 수익 "+money(investment.wrapping));
-  if(investment?.design)items.push("도안 웃돈 "+money(investment.design));
-  if(research)items.push("개발비 할인 "+money(research));
-  return '<aside class="investment-result"><b>기본 시설 대비 '+money((investment?.total||0)+(research||0))+'</b><p>'+items.join(" · ")+'</p><small>같은 달·가격·물량에서의 차이로, 위 수입과 지출에 반영되어 있습니다.</small></aside>';
+  const items=[
+    ["생산비 절감",investment?.production],
+    ["매대 추가 매출",investment?.extraSales],
+    ["운영·물류비 변화",investment?.overheadChange,true],
+    ["포장 수익",investment?.wrapping],
+    ["도안 웃돈",investment?.design],
+    ["개발비 할인",research]
+  ];
+  const rows=items.filter(([,value])=>value).map(([label,value,isCost])=>{
+    const tone=(isCost?-value:value)>0?"gain":"loss";
+    return '<div><dt>'+label+'</dt><dd class="'+tone+'">'+(value>0?"+":"−")+money(Math.abs(value))+'</dd></div>';
+  }).join("");
+  return '<aside class="investment-result"><b>기본 시설 대비 '+money((investment?.total||0)+(research||0))+'</b>'+
+    (rows?'<dl>'+rows+'</dl>':'')+'<small>같은 달·가격·물량에서의 차이로, 위 수입과 지출에 반영되어 있습니다.</small></aside>';
 }
 function actualBudget(){
   const r=state.report,a=state.accounts;
@@ -65,6 +71,7 @@ function actualBudget(){
   return '<section class="budget-book"><h3>가문 회계</h3>'+
     amountRow(a.partial?"기록 시작 잔액":"월초 잔액",a.opening)+
     amountRow("팬텀사 소매 매출",r.income-(r.wholesale||0))+(r.wholesale?amountRow("거래처 납품 대금",r.wholesale):"")+(a.divest?amountRow("설비 매각 대금",a.divest):"")+(r.advance?amountRow("납품 선금",r.advance):"")+
+    (r.festivalIncome?amountRow("경연 상금",r.festivalIncome):"")+
     (a.borrowed?amountRow("대출 입금",a.borrowed):"")+
     amountRow(legacy?"저택 유지·채무 합산":"저택 운영",r.bills-(r.debtPayment||0)+a.estate)+
     (a.estate?'<p>유지 '+money(r.bills-(r.debtPayment||0))+' · 개수·지원 등 '+money(a.estate)+'</p>':'')+
@@ -180,7 +187,8 @@ function reviewMarkup(){
   else if(state.ill)line="오늘 수업은 여기까지입니다. 다음 선생님께는 제가 편지를 보내지요.";
   const note=lead?lead+' '+seq.before[lead]+' → '+after[lead]+' ('+signed(after[lead]-seq.before[lead])+')':"이번 순에는 수치 변화가 없습니다.";
   const rows=changed.map(k=>deltaRow(k,seq.before[k],after[k])).join('');
-  const next=seq.index===2?(hasPendingVisit()?"자유행동으로":"월말로"):slotNames[seq.index+1]+"으로";
+  const lastLesson=seq.index===(seq.contest?contestSlot-1:2);
+  const next=lastLesson?(hasPendingVisit()?"자유행동으로":seq.contest?"하순 경연으로":"월말로"):slotNames[seq.index+1]+"으로";
   return '<div class="review-room" style="background-image:url(&quot;'+sceneArt[choreography[id][0]]+'&quot;)"></div>'+
     framedStanding("세바스찬","assets/sebastian.webp","review-butler")+'<article class="review-bubble"><small>세바스찬</small><h2>'+a.name+' · '+(lessonGrades[seq.grade]?.label||'강평')+'</h2><p>'+line+'</p><b>'+note+'</b>'+(seq.examNote?'<p>'+seq.examNote+'</p>':'')+'</article>'+
     '<section class="review-slip"><h3>'+slotNames[seq.index]+' 성과 <small>'+a.name+'</small></h3>'+rows+

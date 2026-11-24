@@ -5,7 +5,7 @@
 .opening-cg {object-fit:cover;object-position:50% 43%;pointer-events:none}
 .opening-cg.ready {animation:opening-reveal .65s ease-out both}
 @keyframes opening-reveal {from{opacity:.25}to{opacity:1}}
-.opening-mat {z-index:2;display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;padding:clamp(14px,2.4cqw,34px) clamp(18px,4cqw,52px) clamp(15px,2.6cqw,35px);box-sizing:border-box;background:linear-gradient(180deg,#0d0e17ac,transparent 28%,transparent 48%,#0d0d17b0 83%,#0b0d16f0);pointer-events:none}
+.opening-mat {z-index:2;display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;padding:clamp(14px,2.4cqw,34px) clamp(18px,4cqw,52px) clamp(15px,2.6cqw,35px);box-sizing:border-box;background:linear-gradient(180deg,#0d0e174d,transparent 25%,transparent 75%,#0b0d164d);pointer-events:none}
 .opening-top,.opening-controls {display:flex;align-items:center;gap:7px}
 .opening-top {justify-content:space-between;color:#faf0d7;font:700 clamp(12px,1.1cqw,15px)/1.2 "Gowun Batang",serif;letter-spacing:.05em;text-shadow:0 1px 5px #000}
 :is(#overture,#conversation) .opening-top button {pointer-events:auto;border:1px solid #c5b89d7d;border-radius:2px;background:#13131dbd;color:var(--ink);font:inherit;font-weight:700;min-height:34px;padding:5px 15px;line-height:1.4;text-shadow:none;box-shadow:none;cursor:pointer}
@@ -25,10 +25,10 @@
 #opening-prev {margin-right:auto}
 #opening-read {z-index:1;padding:0;background:transparent;border:0;box-shadow:none;opacity:0;cursor:pointer}
 @media (orientation:portrait) {
- .opening-cg {object-position:49% 32%;height:70%}
+ .opening-cg {object-position:49% 32%}
  #overture[data-art="seal"] .opening-cg {object-position:48% 30%}
  #overture[data-art="lesson"] .opening-cg {object-position:49% 30%}
- .opening-mat {padding:16px 4% 15px;background:linear-gradient(180deg,#100f19aa,transparent 24%,transparent 38%,#110e1980 55%,#110e19 71%)}
+ .opening-mat {padding:16px 4% 15px}
  .opening-transcript {padding:14px 14px 10px}
  .opening-voice {min-height:6em}
  :is(#overture,#conversation) .opening-top button{min-height:40px}
@@ -46,9 +46,20 @@
 .quote-row {display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #acbdca;padding:4px 0;font-size:14px}
 .quote-row b {font-variant-numeric:tabular-nums;text-align:right}
 .expansion-quote p.quote-summary,.investment-result b {display:block;font-weight:bold;color:#24594b;margin:8px 0 2px}
-.expansion-quote small,.investment-result small {display:block;font-size:13px;line-height:1.5;color:#394954}
+.expansion-quote small {display:block;font-size:13px;line-height:1.5;color:#394954}
 .investment-result {margin-top:10px;padding:8px 12px;background:#e2ece6;border-inline-start:3px solid #52776b}
-.investment-result p {color:#263d34;margin:4px 0}
+.investment-result dl {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));
+  gap:0 14px; margin:4px 0 6px; color:#20372e;
+}
+.investment-result dl > div {
+  display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:baseline;
+  gap:8px; padding:4px 0; border-bottom:1px solid #b3c8bd; font-size:.875rem;
+}
+.investment-result dd { margin:0; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.investment-result .gain { color:#185542; }
+.investment-result .loss { color:#8b3c34; }
+.investment-result > small { display:block; color:#495c54; font-size:.71875rem; line-height:1.4; }
 /* The iris petals overlap the artwork at the corners of the stage. */
 @media(min-width:961px),(orientation:landscape){
  .opening-mat {padding-inline:9%;padding-top:clamp(14px,2.6cqw,36px);padding-bottom:clamp(18px,3.2cqw,46px)}

@@ -60,7 +60,7 @@ const portfolios = [
 ];
 const portfolioRanks=[
   {threshold:120,reward:35,name:"응용 실기"},
-  {threshold:375,reward:30,name:"최종 실기"}
+  {threshold:375,reward:18,name:"최종 실기"}
 ];
 function portfolioEvents(){
   return portfolios.flatMap(([stat,title,scenes],i)=>portfolioRanks.map(({threshold,reward,name},rank)=>({
@@ -73,7 +73,41 @@ function portfolioEvents(){
     ]
   })));
 }
+const middleObservations={
+  "season-16":{
+    통찰:"저 화분만 받침 아래 흙이 말랐어. 방금 옮긴 거지? 리지, 그 옆에서부터 찾아보자.",
+    매력:"리지, 내가 장미 쪽을 볼 때만 웃음을 참더군. 이리 와. 마지막 건 같이 열자.",
+    지성:"앞의 달걀은 수선화, 제비꽃, 은방울꽃 순이었어. 네 자수 도안 순서잖아. 다음 꽃을 보여 줘."
+  },
+  jubilee:{
+    기품:"봉투에는 폐하의 존호를 다 썼는데 편지 첫 줄은 평소 호칭이군. 새 종이를 가져와. 첫 줄은 내가 쓸게.",
+    경영:"견본은 마차에 실었는데 수령증이 여기 있어. 궁에 닿아도 누가 받았는지 모르겠군. 한 부 더 써.",
+    통찰:"봉랍 가장자리가 눌렸어. 아직 보내지도 않은 편지를 누가 서류 밑에 깔아 둔 거지? 다시 봉하겠다."
+  },
+  birthday2:{
+    통찰:"나이트가 지나간 자리에 설탕 가루가 끊겼군. 미끄러진 게 아니라 들어서 옮겼어. 비숍은 거기 둬.",
+    기품:"네 자리에서만 비숍이 안 보이겠군. 생일 손님에겐 판을 볼 권리쯤은 줘야지. 의자를 당겨.",
+    경영:"주방에서 센 건 흰 말 열다섯 개였지? 여기 열넷밖에 없어. 접시 아래 그 폰부터 꺼내."
+  }
+};
+const observationReplies={
+  "season-16":[["엘리자베스","그걸 봤어? 리본까지 새로 묶었는데! 자, 열어 봐. 마지막 달걀은 네 거야."],["엘리자베스","그럼 셋 하면 같이 들어 올리자. 하나, 둘…… 시엘, 벌써 봤지?"]],
+  jubilee:[["","시엘은 편지 끝에 가문의 이름을 적고 봉랍이 식을 때까지 손을 떼지 않았다."],["","세바스찬이 견본을 비단으로 감싸자 시엘은 왕실에 보낼 상자의 뚜껑을 직접 덮었다."]]
+};
+function observedLines(event){
+  const variants=middleObservations[event.id];
+  if(!variants)return null;
+  const key=Object.keys(variants).reduce((a,b)=>state.stats[a]>=state.stats[b]?a:b);
+  if(event.id==="birthday2"){
+    const lines=birthdayDialogue.birthday2.lines;
+    return [...lines.slice(0,-2),["시엘",variants[key]],...lines.slice(-2)];
+  }
+  return [[event.speaker,event.text],["시엘",variants[key]]];
+}
 function termPages(event){
+  if(event.authored)return event.lines;
+  const observation=observedLines(event);
+  if(observation)return observation;
   if(event.lines)return event.lines;
   const birthday=birthdayDialogue[event.id];
   if(birthday)return birthday.lines;
@@ -88,17 +122,18 @@ function termDialogue(event,buttons){
   const pages=termPages(event);
   const outcome=state.termOutcome?.id===event.id?state.termOutcome:null;
   if(!pages&&!outcome?.response)return "";
-  const script=outcome?.responseLines??(outcome?.response?[["",outcome.response]]:outcome?(event.authored?[["",event.response]]:birthdayDialogue[event.id]?.replies[outcome.index]||[["세바스찬",examDialogue[event.slot][2+outcome.index]]]):pages);
+  const script=outcome?.responseLines??(outcome?.response?[["",outcome.response]]:outcome?(event.authored?[["",event.response]]:birthdayDialogue[event.id]?.replies[outcome.index]||(observationReplies[event.id]?.[outcome.index]?[observationReplies[event.id][outcome.index]]:null)||[["세바스찬",examDialogue[event.slot][2+outcome.index]]]):pages);
   const at=Math.min(state.termPage||0,script.length-1),[who,line]=script[at];
   const end=at===script.length-1,actions=end?(outcome?btn(outcome.nextScene?"다음 장면":"기록을 덮는다","term-close"):buttons):btn("다음 ▸","term-next:"+at);
-  const room=event.room||birthdayDialogue[event.id]?.room||choreography[event.slot]?.[0]||"ballroom";
+  const room=event.room||(event.id==="season-16"?"garden":null)||birthdayDialogue[event.id]?.room||choreography[event.slot]?.[0]||"ballroom";
   const cue=termCue(event),picture=cue?.cg||event.picture;
   const art=picture?"assets/endings/"+picture+".webp":sceneArt[room];
+  if(picture)rememberCG(art);
   const standing=cue?.standing||event.standing;
   const cast=novelCast(cue,recruitArtwork(currentCielAge()))??(standing&&Object.hasOwn(recruitCast,standing)
-    ?sceneStanding(recruitNames[standing],"left",recruitArtwork(currentCielAge())(recruitCast[standing])):picture?"":dialogueCast("세바스찬"));
+    ?sceneStanding(recruitNames[standing],"left",recruitArtwork(currentCielAge())(recruitCast[standing])):picture?"":dialogueCast(event.id==="season-16"?"엘리자베스":"세바스찬"));
   const speaker=novelSpeakerName(who);
   return '<div class="review-room" style="background-image:url(&quot;'+art+'&quot;)"></div>'+cast+
     '<article class="dialogue">'+(speaker?'<small>'+escapeHTML(speaker)+'</small>':"")+'<p>'+escapeHTML(line)+'</p>'+
-    (outcome?.note&&end?'<small>'+escapeHTML(outcome.note)+'</small>':'')+'<div class="answers">'+actions+'</div></article>';
+    (outcome?.note&&end&&!state.choiceImpact?'<small>'+escapeHTML(outcome.note)+'</small>':'')+'<div class="answers">'+actions+'</div></article>';
 }

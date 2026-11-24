@@ -7,11 +7,14 @@ const cap=(value,max=100)=>Math.min(max,Math.max(0,value));
 const money=value=>"£"+value.toLocaleString("en-GB");
 const signed=value=>value>0?"+"+value:String(value);
 function emptyPlan(){return [null,null,null];}
+function scheduledActivities(run,contest=reservedContest(run)){
+  return contest?run.plan.slice(0,contestSlot):run.plan;
+}
 function planReady(){
-  return state.plan.length===3&&state.plan.every(id=>Object.hasOwn(actions,id))&&canVisit(state.visit);
+  return state.plan.length===3&&scheduledActivities(state).every(id=>Object.hasOwn(actions,id))&&canVisit(state.visit);
 }
 function plannedTuition(){
-  return state.plan.reduce((sum,id)=>sum+(actions[id]?.cost||0),0);
+  return scheduledActivities(state).reduce((sum,id)=>sum+(actions[id]?.cost||0),0);
 }
 function careActivity(run,planned){return run.ill && planned!=="rest" && planned!=="recovery"?"recovery":planned;}
 function initial(){
@@ -23,9 +26,13 @@ function initial(){
     trust:1,royal:0,renown:0,flags:{},events:[],past:[],log:[],pending:null,ending:null,
     debt:0,unwell:0,relapseStage:0,arrears:0,usedLoan:false,counts:{}});
 }
+const previewQuery=new URL(document.baseURI).searchParams;
+const previewFair=previewQuery.has("fair-preview")?(contests.find(f=>f.id===previewQuery.get("fair-preview"))||contests[0]):null;
+const previewStory=previewQuery.get("story-preview");
+const storyDemo=Object.hasOwn(middleObservations,previewStory);
 const storageKey="earl-phantomhive-maker-v1";
 let saves, storageOk=true;
-try{ saves=JSON.parse(localStorage.getItem(storageKey)||"{}"); }catch{ storageOk=false; }
+try{ saves=previewFair||storyDemo?{}:JSON.parse(localStorage.getItem(storageKey)||"{}"); }catch{ storageOk=false; }
 if(!saves || typeof saves!=="object")saves={};
 let state=saves.auto?.v===1?saves.auto:initial();
 state=structuredClone(state);
@@ -44,7 +51,7 @@ function updateIllness(run){
   else if(run.hp>=50 && run.stress<=60)run.ill=false;
 }
 function persist(){
-  if(tourSession)return;
+  if(tourSession||previewFair||storyDemo)return;
   updateIllness(state);
   saves.auto=structuredClone(state);
   try{localStorage.setItem(storageKey,JSON.stringify(saves));}catch{storageOk=false;}
@@ -58,18 +65,26 @@ function lessonGain(key,current,base,month,flags=state.flags){
   const rate=1.1+Math.min(month-1,12)*0.065;
   const max=statMax(key);
   const mastery=Math.max(.14,1-Math.max(0,current-280)/235);
-  const gain=Math.round(base*rate*mastery*max/abilityMax);
+  const polish=1-.45*cap((current-450)/50,1);
+  const gain=Math.round(base*rate*mastery*polish*max/abilityMax);
   const remaining=max-current;
   if(flags.lateDispatch)return Math.min(remaining,gain);
   const beforeMastery=Math.max(0,masteryThreshold-current);
   return Math.min(remaining,gain,beforeMastery+1);
 }
+function deltaTone(name,delta){
+  if(!delta)return "steady";
+  const burden=name==="스트레스"||name==="채무";
+  return (burden?delta<0:delta>0)?"gain":"loss";
+}
 function scheduleNote(id){
   const a=actions[id];
-  const effects=Object.entries(a.gains).map(([k,v])=>k+" "+signed(lessonGain(k,state.stats[k],v+(advancedCourse(state,id)?3:0),state.month)));
-  if(a.health)effects.push("건강 "+signed(a.health));
-  effects.push("스트레스 "+signed(a.stress));
-  return (a.stress>0?"그럭저럭 기준 · ":"")+effects.join(" · ");
+  const effects=Object.entries(a.gains).map(([k,v])=>[k,lessonGain(k,state.stats[k],v+(advancedCourse(state,id)?3:0),state.month)]);
+  if(a.health)effects.push(["건강",a.health]);
+  effects.push(["스트레스",a.stress]);
+  const markers=effects.map(([name,delta])=>'<span class="plan-effect">'+escapeHTML(name)+' <b class="'+deltaTone(name,delta)+'">'+signed(delta)+'</b></span>');
+  const basis=a.stress>0?'<small class="plan-basis">그럭저럭 기준</small> ':'';
+  return basis+'<span class="plan-effects">'+markers.join(" ")+'</span>';
 }
 function forecast(shop=state.shop){
   const p=products[state.product];
@@ -116,7 +131,7 @@ function flagEvent(id,effect){
   state.flags[id]=true;
   effect();
 }
-const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),finalYearDecisions(),followupEvents(),appliedExams(),portfolioEvents(),visitorEvents(),authoredStoryEvents()).map(appendAuthoredOptions);
+const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),finalYearDecisions(),followupEvents(),appliedExams(),portfolioEvents(),visitorEvents(),authoredStoryEvents(),contests.map(contestEvent)).map(appendAuthoredOptions);
 
 function pendingEvent(){
   return events.find(event=>event.id===state.pending);
@@ -125,9 +140,11 @@ function execute(){
   if(state.phase!=="plan"||!planReady())return;
   if(cashNeeded()>Math.max(0,state.fund)){flash("일정 비용과 생산비를 마련해 주세요.");return;}
   state.log=[];
-  state.past.push({month:state.month,plan:[...state.plan]});
+  const contest=reservedContest(state);
+  if(contest)state.plan[contestSlot]=null;
+  state.past.push({month:state.month,plan:[...state.plan],...(contest?{contest:contest.id}:{})});
   const order=forecast();
-  state.sequence={index:0,trainingPaid:0,unit:order.unit,demand:order.demand,receipt:order.receipt,trade:order.trade,retailSold:order.sold,investment:investmentEffect(order),opening:{fund:state.fund,hp:state.hp,stress:state.stress,motivation:state.motivation,stats:{...state.stats}}};
+  state.sequence={index:0,contest:contest?.id,trainingPaid:0,unit:order.unit,demand:order.demand,receipt:order.receipt,trade:order.trade,retailSold:order.sold,investment:investmentEffect(order),opening:{fund:state.fund,hp:state.hp,stress:state.stress,motivation:state.motivation,stats:{...state.stats}}};
   enterSlot();
 }
 // A stable per-campaign draw for each eligible month, including after loading a save.
@@ -173,6 +190,8 @@ function overdueArrival(run){
   return dueSnakeVisit(run);
 }
 function settleMonth(){
+  if(prepareContest(state))return;
+  const duel=state.sequence.duel;
   const {unit,demand,receipt=state.price,investment,opening:before,sickAbsence}=state.sequence;
   const trainingPaid=state.sequence.trainingPaid??state.plan.reduce((sum,id)=>sum+(actions[id]?.cost||0),0);
   const visitAdvance=state.sequence.visitAdvance||0;
@@ -183,7 +202,8 @@ function settleMonth(){
   settleLondon(state);
   trainHousehold(state);
   applyEstateTraining(state);
-  settleFestival(state);
+  const contest=settleFestival(state,duel);
+  const festivalIncome=contest?state.fairBook[contest.id].purse:0;
   const assessment=houseValues();
   if(state.houseCare==="clean"&&assessment.청결>=70)state.hp=cap(state.hp+2);
   if(state.houseCare==="repair")state.neglect=Math.max(0,state.neglect-1);
@@ -213,7 +233,7 @@ function settleMonth(){
   state.fund+=income-cost-bills-expenses;
   // Paid sales and supply contracts belong to Funtom. Scheduled work only trains Ciel.
   state.salesBook.push({month:state.month,product,sold,revenue:income,cost,advance:visitAdvance,investment,expenses,wholesale:trade?.wholesale||0,delivery:trade?.order?{id:trade.order.id,shipped:trade.shipped,qty:trade.order.qty}:null});
-  state.report={income,cost,expenses,storage:trade?.holding||0,freight:trade?.freight||0,operating:trade?.operation||0,penalty:trade?.penalty||0,wholesale:trade?.wholesale||0,advance:visitAdvance,bills,debtPayment,sold,before,investment,training:trainingPaid};
+  state.report={income,festivalIncome,cost,expenses,storage:trade?.holding||0,freight:trade?.freight||0,operating:trade?.operation||0,penalty:trade?.penalty||0,wholesale:trade?.wholesale||0,advance:visitAdvance,bills,debtPayment,sold,before,investment,training:trainingPaid};
   if(sold>=14&&income>cost+expenses+25)state.renown+=1;
   state.log.push(products[product].name+" "+sold+"개 소매 · 매출 "+money(sold*receipt)+" / 생산비 "+money(cost)+" / 재고 "+state.stock[product]+"개");
   state.log.push("저택 유지·채무 상환 "+money(bills));
@@ -223,7 +243,7 @@ function settleMonth(){
   const candidates=events.filter(e=>!e.authored&&!e.slot&&!e.statExam&&!e.season&&!e.household&&!e.visitOnly&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
   const event=state.duration===35?(candidates.find(e=>birthdayDialogue[e.id]&&[12,24].includes(state.month))||candidates.find(e=>e.chapter)||candidates[0]):candidates.find(e=>!e.chapter);
   const seasonal=state.duration===35?events.find(e=>e.season&&e.sees(state)&&!state.flags[e.id]):null;
-  const queue=[event?.id,seasonal?.id].filter(Boolean);
+  const queue=[contest&&"contest-"+contest.id,event?.id,seasonal?.id].filter(Boolean);
   for(const e of events){
     if(e.household&&(state.duration===35||e.id==="visitPrince")&&!state.flags[e.id]&&e.sees(state))queue.push(e.id);
   }
@@ -272,27 +292,40 @@ function choiceSnapshot(){
   return {values,milestones};
 }
 function showChoiceImpact(label,before){
-  if(!document.createElement)return;
   const after=choiceSnapshot();
-  const rows=Object.entries(after.values).map(([name,value])=>({name,value,delta:value-before.values[name]})).filter(row=>row.delta);
-  const notes=[...after.milestones].filter(label=>!before.milestones.has(label));
-  const peak=Math.max(1,...rows.map(row=>Math.abs(row.delta)));
-  const bars=rows.map(({name,value,delta})=>{
-    const unit=name==="가문 자금"||name==="채무"?"£":"";
-    const size=Math.abs(delta)/peak*50;
-    return '<div class="impact-row"><span>'+escapeHTML(name)+'</span><small>'+unit+(value-delta)+' → '+unit+value+'</small><b>'+signed(delta)+unit+'</b><i aria-hidden="true" class="impact-track"><i class="'+(delta>0?'increase':'decrease')+'" style="width:'+size+'%"></i></i></div>';
-  }).join("")+(rows.length?"":"<p>수치 변동 없음</p>")+notes.map(note=>'<p class="impact-note">'+escapeHTML(note)+'</p>').join("");
-  queueMicrotask(()=>{
-    document.getElementById("choice-impact")?.remove();
-    const host=document.querySelector("#conversation:not([hidden]) .dialogue, #conversation:not([hidden]) .review-slip")
-      ||document.querySelector("#sheet:not([hidden]) #panel, #nav:not([hidden]), #playback:not([hidden]) .stage-foot");
-    if(!host)return;
-    const section=document.createElement("section");
-    section.id="choice-impact";section.setAttribute("aria-label","선택 결과");section.setAttribute("aria-live","polite");
-    section.innerHTML='<header>선택 결과 · '+escapeHTML(label)+'</header><div class="impact-body">'+bars+'</div>';
-    if(host.classList.contains("dialogue")||host.classList.contains("stage-foot"))host.insertBefore(section,host.querySelector(":scope > .answers"));
-    else host.prepend(section);
-  });
+  const rows=Object.entries(after.values).filter(([name,value])=>value!==before.values[name])
+    .map(([name,value])=>({name,before:before.values[name],value}));
+  const notes=[...after.milestones].filter(note=>!before.milestones.has(note));
+  if(!rows.length&&!notes.length)return;
+  const owner=tab==="chat"?"chat":"plan";
+  if(state.choiceImpact?.owner!==owner||state.choiceImpact.month!==state.month)
+    state.choiceImpact={owner,month:state.month,items:[]};
+  state.choiceImpact.items.push({label,rows,notes});
+}
+function openChoiceImpact(next){
+  const impact=state.choiceImpact;
+  if(!impact||impact.owner!==tab||impact.month!==state.month)return false;
+  impact.next=next;persist();render(true);return true;
+}
+function impactMarkup(impact){
+  const changes=new Map(),notes=new Set();
+  for(const item of impact.items){
+    for(const row of item.rows){
+      changes.set(row.name,{...row,before:changes.get(row.name)?.before??row.before});
+    }
+    for(const note of item.notes)notes.add(note);
+  }
+  const lines=[...changes.values()].filter(row=>row.before!==row.value).map(({name,before,value})=>{
+    const delta=value-before;
+    const cash=name==="가문 자금"||name==="채무";
+    const limit=stats.includes(name)?abilityMax:Math.max(100,Math.abs(before),Math.abs(value));
+    const low=Math.max(0,Math.min(before,value))/limit*100;
+    const high=Math.max(0,Math.max(before,value))/limit*100;
+    const unit=cash?"£":"";
+    return '<li class="'+deltaTone(name,delta)+'"><span>'+escapeHTML(name)+'</span><small>'+unit+before+' → '+unit+value+'</small><strong>'+signed(delta)+'</strong><i class="impact-track" aria-hidden="true" style="--low:'+low+'%;--high:'+high+'%"></i></li>';
+  }).join("");
+  const blocks='<ul>'+lines+'</ul>'+[...notes].map(n=>'<p>'+escapeHTML(n)+'</p>').join("")+(!lines&&!notes.size?'<p>능력치 변화 없음</p>':'');
+  return '<article id="impact-summary" class="dialogue" aria-label="선택 결과"><header>선택 결과</header><div class="impact-scroll">'+blocks+'</div>'+btn("확인","impact-close",false,"primary")+'</article>';
 }
 function choose(index){
   const event=pendingEvent();
@@ -302,7 +335,7 @@ function choose(index){
   if(isRecruit&&recruitPage(event.id)!==recruitReadingOrder(event.id,Boolean(state.people.tanaka)).at(-1))return;
   const pages=termPages(event);
   if(state.termOutcome||(pages&&(state.termPage||0)<pages.length-1))return;
-  const scriptedOutcome=pages&&(event.authored||!event.lines);
+  const scriptedOutcome=pages&&(event.authored||!event.lines||observedLines(event));
   const examBefore=event.exam||scriptedOutcome?snapStats(state):null;
   const before=choiceSnapshot();
   flagEvent(event.id,choice.effect);
@@ -322,9 +355,10 @@ function choose(index){
     state.termOutcome={id:event.id,index,note:choice.response?"":examNote,response:choice.response,responseLines:choice.responseLines,nextScene:choice.nextScene};
     state.termPage=0;persist();render(true);return;
   }
-  finishEventChoice(event);
+  if(!openChoiceImpact("event"))finishEventChoice(event);
 }
 function finishEventChoice(event){
+  if(storyDemo){location.reload();return;}
   delete state.termPage;delete state.termOutcome;
   state.pending=null;
   if(state.sequence?.readingVisitOutcome){
@@ -357,6 +391,7 @@ function finish(id){
   state.ending=id;state.endingBeat=0;state.phase="ending";
   saves.gallery??={};
   saves.gallery[id]=endingLabels[id][0];
+  rememberCG("assets/endings/"+id+".webp");
   saves.farewellGallery??={};
   saves.farewellGallery[id]=endingFarewellRecord(state);
   if(id==="vowNoTitle")saves.londonCareer=londonCareer(state);
@@ -461,7 +496,7 @@ function applyEstateTraining(run){
   }
 }
 function projectTraining(){
-  const run={...state,stats:{...state.stats},counts:{...state.counts},lessonKit:{...state.lessonKit}};
+  const run={...state,plan:scheduledActivities(state),stats:{...state.stats},counts:{...state.counts},lessonKit:{...state.lessonKit}};
   for(const [slot,id] of run.plan.entries()){
     if(!actions[id])continue;
     updateIllness(run);
@@ -472,20 +507,30 @@ function projectTraining(){
   applyEstateTraining(run);
   return run;
 }
+const courtEducation={
+  지성:[480,"서재 수업"],기품:[485,"귀족 예법"],매력:[460,"사교 수업"],
+  통찰:[475,"가문 기록 조사"],경영:[470,"팬텀사 회계"],의지:[300,"사건 조사"]
+};
+function courtEducationPriority(keys=Object.keys(courtEducation)){
+  return keys.filter(k=>state.stats[k]<courtEducation[k][0])
+    .sort((a,b)=>state.stats[a]/courtEducation[a][0]-state.stats[b]/courtEducation[b][0])[0];
+}
 function courtRows(){
   const rooms=Object.values(state.level).filter(level=>level>=2).length;
-  const shopLevel=Math.max(...Object.values(state.shop));
-  function statPair(label,first,a,second,b){
-    const left=state.stats[first],right=state.stats[second];
-    return [label,left>=a && right>=b,[first,second].join(" · ")+" 수업을 편성하세요."];
+  const profitableMonths=state.salesBook.filter(row=>row.revenue>row.cost+(row.expenses||0)).length;
+  function statPair(label,first,second){
+    const keys=[first,second];
+    const next=courtEducationPriority(keys);
+    const progress=keys.map(k=>k+" "+state.stats[k]+"/"+courtEducation[k][0]).join(" · ");
+    return [label,!next,progress+(next?" · 추천 수업: "+courtEducation[next][1]:"")];
   }
   return [
-    statPair("귀족 교육","지성",420,"기품",440),
-    statPair("사교와 조사","매력",300,"통찰",340),
-    statPair("사업과 결단","경영",320,"의지",300),
+    statPair("귀족 교육","지성","기품"),
+    statPair("사교와 조사","매력","통찰"),
+    statPair("사업과 결단","경영","의지"),
     ["저택 재건",rooms>=2,"서재와 응접실, 주방을 개수하세요."],
-    ["회사 기반",shopLevel>=2,"팬텀사의 시설을 증설하세요."],
-    ...(state.stats.의지<vengeanceWill?[["왕실 신임",state.royal>=6,"왕실 서신에 답하거나 요청을 수행"]]:[]),
+    ["회사 기반",profitableMonths>=8,"판매·납품 흑자 "+profitableMonths+"/8개월 (상금 제외)"],
+    ["왕실 신임",state.royal>=6,"왕실 서신에 답하거나 납품 인증으로 신임을 얻으세요."],
     ["가문 명성",state.renown>=32,"접객과 팬텀사 판매로 명성 쌓기"],
     ["재정 안정",state.fund>=1200 && state.debt===0,"채무를 상환하고 가문 자금을 비축하세요."]
   ];
@@ -525,8 +570,8 @@ function tile(label,value,id=""){
 function ledger(entries){
   return '<ul class="ledger">'+entries.map(entry=>"<li>"+escapeHTML(entry)+"</li>").join("")+"</ul>";
 }
-function calendarSlot(label, value, action, selected) {
-  return option('<span>'+label+'</span><b>'+value+'</b>', action, selected, false, "period");
+function calendarSlot(label, value, action, selected, reserved=false) {
+  return option('<span>'+label+'</span><b>'+value+'</b>', action, selected, reserved, reserved?"period contest-period":"period");
 }
 
 function plannerCosts(estimate){
@@ -547,7 +592,7 @@ function plannerIcon(id){
 
 function plannerNote(id){
   if(!editingVisit&&!actions[id])return slotNames[selectedSlot]+" 활동을 선택하세요.";
-  return editingVisit?visitPreview(id):courseName(id)+' · '+scheduleNote(id);
+  return editingVisit?escapeHTML(visitPreview(id)):escapeHTML(courseName(id))+' · '+scheduleNote(id);
 }
 
 function previewPlannerCard(event){
@@ -557,13 +602,15 @@ function previewPlannerCard(event){
   const target=leaving?event.relatedTarget:event.target;
   const card=target instanceof Element?target.closest(".lesson[data-action]"):null;
   const id=card&&calendar.contains(card)?card.dataset.action.split(":").pop():editingVisit?state.visit:state.plan[selectedSlot];
-  note.textContent=plannerNote(id);
+  note.innerHTML=plannerNote(id);
 }
 for(const type of ["pointerover","pointerout","focusin","focusout"]){
   $("calendar").addEventListener(type,previewPlannerCard);
 }
 
 function plannerContents() {
+  const contest=reservedContest(state);
+  if(contest&&selectedSlot===contestSlot)selectedSlot=0;
   const chosen = state.plan[selectedSlot];
   const cards = editingVisit
     ? Object.entries(visits).filter(([id])=>canVisit(id)).map(([id, name]) =>
@@ -575,18 +622,21 @@ function plannerContents() {
       });
   const half = Math.ceil(cards.length / 2);
   const periods = state.plan.map((id,index) =>
-    calendarSlot(slotNames[index], actions[id]?.name??'', 'pick:'+index, !editingVisit && selectedSlot===index));
+    contest&&index===contestSlot
+      ?calendarSlot("하순 · 경연",contest.title,"pick:"+index,false,true)
+      :calendarSlot(slotNames[index],actions[id]?.name??"","pick:"+index,!editingVisit&&selectedSlot===index));
   periods.push(calendarSlot("자유행동", visits[state.visit]??"", "pick-visit", editingVisit));
   const estimate = marketStats();
+  const invitations=openContests(state);
   const note = plannerNote(editingVisit?state.visit:chosen);
   return (editingVisit?'<div class="lesson-index visit-index"><span class="index-tab">자유행동 · 월 1회</span></div>':'<div class="lesson-index">'+categories.map(([name],i)=>option(name,"category:"+i,i===lessonPage,false,"index-tab")).join("")+'</div>')+
     '<div class="card-field" role="group" aria-label="'+(editingVisit?'자유행동':slotNames[selectedSlot]+' 활동 목록')+'">'+
       '<div class="card-bank">'+cards.slice(0,half).join('')+'</div>'+
       '<div class="card-bank">'+cards.slice(half).join('')+'</div></div>'+
-    '<div class="calendar-foot"><div class="calendar-summary"><strong>'+monthText(state.month)+'</strong>'+
+    '<div class="calendar-foot"><div class="calendar-summary">'+(invitations.length?'<div class="invite-date"><strong>'+monthText(state.month)+'</strong>'+btn('<i aria-hidden="true"></i>이달의 초대장',"fair-notices",false,"fair-invite")+'</div>':'<strong>'+monthText(state.month)+'</strong>')+
       '<span class="calendar-note">'+note+'</span></div>'+
       '<div class="calendar-periods" role="group" aria-label="편집할 기간">'+periods.join('')+'</div>'+
-      festivalNotice()+'<div class="calendar-settle">'+plannerCosts(estimate)+
+      '<div class="calendar-settle">'+plannerCosts(estimate)+
       '<div class="plan-balance"><span>예상 월말 자금</span><strong>'+money(estimate.balance)+'</strong></div>'+
       btn('이달 일정 실행','execute',!planReady()||estimate.blocked,'calendar-run')+'</div>'+(healthNotice(state)?'<p class="calendar-warning">'+healthNotice(state)+'</p>':'')+
       (state.unwell>0?'<p class="calendar-warning">위독 · 이번 월말에 건강이 18 미만이면 시엘이 숨을 거둡니다.</p>':'')+
@@ -629,13 +679,6 @@ function updateMoney(){
 function relationBook(){
   return '<h3>인물 관계</h3>'+peopleInHouse().map(id=>{const r=state.people[id];return '<div class="work-ledger"><b>'+servants[id].name+'</b><span>상대 → 시엘 신뢰　'+rank(r.toward)+'</span></div>';}).join("");
 }
-function titlePanel(){
-  const ongoing=saves.auto?.v===1;
-  const slots=[1,2,3].some(id=>saves[id]?.v===1);
-  return '<article class="book-cover"><small>1886 — 1888</small><h2 lang="en">EARL<br>PHANTOMHIVE<br>MAKER</h2><p>팬텀하이브 백작 메이커</p><div class="cover-actions">'+
-    (ongoing?btn("이어하기","resume",false,"primary"):"")+btn(ongoing?"새 회차":"게임 시작","reset",false,ongoing?"":"primary")+
-    (slots?btn("저장 기록","tab:save"):"")+'</div></article>';
-}
 function londonCareer(run){
   if(run.stats.경영>=140&&run.fund>=260)return "merchant";
   if(run.stats.통찰>=140)return "broker";
@@ -657,7 +700,9 @@ function annexDesk(){
   const locked=state.phase!=="plan";
   const rooms=Object.entries(annex).filter(([id])=>!Object.hasOwn(dutyPins,id)).map(([id,r])=>'<div class="annex-line"><div><b>'+r.name+' · Lv.'+state.annex[id]+'</b><small>'+r.desc+'</small></div>'+btn(state.annex[id]===3?"완료":money(r.cost*state.annex[id]),"annex:"+id,locked||state.annex[id]>=3||state.fund<r.cost*state.annex[id])+'</div>').join("");
   return '<section class="estate-annex"><h3>부속 시설</h3>'+rooms+'</section>'+
-    btn(state.flags.townhouse?"런던 타운하우스 · 보유 중":"런던 타운하우스 취득 · £250","townhouse",!canBuyTownhouse(),"townhouse-purchase");
+    (state.flags.townhouse
+      ?btn('<span>런던 타운하우스 <small>보유 중</small></span><strong>관리 열기</strong>',"tab:townhouse",false,"townhouse-entry")
+      :btn('<span>런던 타운하우스</span><strong>취득 · £250</strong>',"townhouse",!canBuyTownhouse(),"townhouse-entry"));
 
 }
 // Page numbers from the previous scripts, used only when opening an existing save.
@@ -879,7 +924,7 @@ function savePanel(){
       (index?btn("저장","store:"+id,false,"slot-write"):"")+btn("불러오기","load:"+id,!record,"slot-read")+'</div></div>';
   }).join("");
   return frame("저장 · 설정",'<section class="notebook-slots" aria-labelledby="save-slots-title"><h3 id="save-slots-title">저장 기록</h3>'+rows+'</section>'+(!storageOk?'<p class="small danger">브라우저 저장소를 사용할 수 없습니다. 이 탭을 닫으면 진행 내용이 사라집니다.</p>':"")+
-    '<div class="notebook-settings">'+audioControls()+motionControls()+'</div>'+instructionBook()+
+    '<div class="notebook-settings">'+languageControls()+audioControls()+motionControls()+'</div>'+instructionBook()+
     '<div class="notebook-actions">'+(state.phase!=="contract"?btn("프롤로그 다시 보기","recollect"):"")+btn("새 회차","reset")+btn("표지로","tab:title")+'</div>'+
     '<details class="annexes game-references"><summary>제작 참고</summary><ul><li>프린세스 메이커 3</li><li>카모카테 시리즈</li><li>카이로소프트 ‘○○○ 스토리’ 시리즈</li></ul></details>');
 }
@@ -891,6 +936,7 @@ function statusPanel(){
     const passed=exams.filter(([id])=>advancedCourse(state,id)).length;
     masteryNote='<p class="condition-detail">능력치 '+masteryThreshold+'를 넘는 일정 성장분은 한 순에 최대 1점입니다. 서로 다른 여섯 과목의 실기를 통과하고 두 번째 종합 실기를 마치면 이 한도가 풀립니다. (과목 실기 '+Math.min(6,passed)+'/6)</p>';
   }
+  if(stats.some(name=>state.stats[name]>=450))masteryNote+='<p class="condition-detail">450부터 일정과 경연의 성장폭이 점차 줄어듭니다. 남은 순에는 부족한 능력을 함께 쓰는 과목을 편성하고, 휴식과 교재로 수업 성과를 높이세요.</p>';
   const current=[state.hp,state.stress,state.motivation];
   const properties=["hp","stress","motivation"];
   const conditions=["건강","스트레스","의욕"];
@@ -978,6 +1024,7 @@ function inventoryRows(){
     const line=productHistory(state,id),stock=state.stock[id],fine=state.fineStock[id]||0;
     const pressure=businessTerms(state,id).pressure;
     return '<div class="sale-row"><b>'+products[id].name+' · 평판 '+line.reputation+'/20</b><span>표준품 '+(stock-fine)+'개 · 고급품 '+fine+'개 · 누적 판매 '+line.units+'개 · 완납 '+line.orders+'회</span>'+
+      (state.royalWarrants?.[id]?'<small>로열 워런트 · 왕실 납품 인증 · 월 수요 +2개</small>':'')+
       (pressure?'<small>최근 판매로 이번 달 소매 수요 −'+pressure+'개</small>':'')+'</div>';
   }).join("");
 }
@@ -1070,7 +1117,7 @@ function managementPanel(){
   if(tab==="staffing")return header+staffBoard();
   const actual=state.salesBook.at(-1);
   const settled=["event","result","vow","investiture","ending"].includes(state.phase);
-  const remaining=state.sequence?state.plan.slice(state.sequence.index+1).reduce((n,id)=>n+actions[id].cost,0):0;
+  const remaining=state.sequence?state.plan.slice(state.sequence.index+1).reduce((n,id)=>n+(actions[id]?.cost||0),0):0;
   const live=state.sequence?'<section class="budget-book"><h3>확정된 이달 예산</h3>'+amountRow("남은 교육·활동비",remaining)+amountRow("저택 운영",overhead()-Math.min(24,state.debt))+amountRow("팬텀사 운영",state.qty*state.sequence.unit+(state.sequence.trade?.holding||0)+(state.sequence.trade?.operation||0)+(state.sequence.trade?.penalty||0))+(state.debt?amountRow("채무 상환",Math.min(24,state.debt)):"")+'</section>':"";
   const budget=active?'<div id="live-budget">'+budgetTable()+'</div>':settled&&state.report?actualBudget():live;
   const bottom=company?(active?businessForecast():settled&&actual?'<div class="work-ledger"><span>'+monthText(actual.month)+' 영업 수입</span><b>'+money(actual.revenue+actual.advance)+'</b></div>':'')+budget+salesBooks():budget;
@@ -1080,29 +1127,43 @@ function managementPanel(){
 }
 
 const marketGoods={
-  cocoa:{name:"핫초콜릿",cost:22,stat:"motivation",amount:12,label:"의욕",line:"카카오를 진하게 풀었지. 숟가락을 세워 볼 생각이라면 조금 더 식혀야겠지만 말이야."},
-  broth:{name:"따뜻한 콘소메",cost:24,stat:"hp",amount:13,label:"건강",line:"기름은 싹 걷어 냈어. 입맛이 없는 날엔 한 컵만 마셔도 괜찮을 걸세."},
+  cocoa:{name:"핫초콜릿",cost:22,stat:"motivation",amount:12,label:"의욕",line:"카카오를 진하게 풀었어. 숟가락을 세워 볼 생각이라면 조금 더 식혀야겠지만."},
+  broth:{name:"따뜻한 콘소메",cost:24,stat:"hp",amount:13,label:"건강",line:"기름은 걷어 냈어. 입맛이 없는 날에는 한 컵만 마셔도 괜찮지."},
   lavender:{name:"라벤더 향주머니",cost:20,stat:"stress",amount:-12,label:"스트레스",line:"서랍에 넣어 두면 장부를 펼칠 때마다 향이 날 거야."},
-  tart:{name:"체리 타르트",cost:14,stat:"motivation",amount:6,label:"의욕",line:"가장자리가 조금 깨진 건 내가 먹었어. 이건 마차로 가져가도 멀쩡할 걸?"},
-  ginger:{name:"생강 당과",cost:10,stat:"hp",amount:4,label:"건강",line:"설탕을 두 번 입혔지. 그래도 마지막엔 생강 맛이 남더라고."},
-  biscuit:{name:"버터 비스킷 한 봉",cost:8,stat:"stress",amount:-3,label:"스트레스",line:"깨지기 전에 하나 집게. 봉투는 책갈피로 써도 좋지."},
-  novel:{name:"주머니판 모험소설",icon:"reading",cost:17,stat:"motivation",amount:8,label:"의욕",line:"책갈피가 붙어 있네. 집사가 부르면 딱 거기까지만 읽고 덮으면 되겠지."},
-  abacus:{name:"휴대용 주판 대여",icon:"accounts",cost:19,lesson:"accounts",line:"외상 전표를 계산할 때 써 봐. 회계 수업 한 번 치 대여료야."},
-  lens:{name:"손돋보기 대여",icon:"casework",cost:20,lesson:"inquiry",line:"종이에 남은 눌린 자국까지 보일 걸. 조사할 때 가져가."},
-  shoes:{name:"무도화 조정권",icon:"dance",cost:22,lesson:"dance",line:"뒤축을 발에 맞춰 주지. 다음 무도 수업 전에 들르면 돼."},
-  weights:{name:"손아령 대여",icon:"exercise",cost:16,lesson:"exercise",line:"한 쌍이야. 다음 체력 단련이 끝나면 저택으로 사람을 보낼게."},
+  tart:{name:"체리 타르트",cost:14,stat:"motivation",amount:6,label:"의욕",line:"가장자리가 조금 깨진 건 내가 먹었어. 이건 마차로 가져가도 멀쩡할걸."},
+  ginger:{name:"생강 당과",cost:10,stat:"hp",amount:4,label:"건강",line:"설탕을 두 번 입혔지. 그래도 마지막엔 생강 맛이 남아."},
+  biscuit:{name:"버터 비스킷 한 봉",cost:8,stat:"stress",amount:-3,label:"스트레스",line:"깨지기 전에 하나 집어. 봉투는 책갈피로 써도 돼."},
+  novel:{name:"주머니판 모험소설",icon:"reading",cost:17,stat:"motivation",amount:8,label:"의욕",line:"책갈피가 붙어 있네. 집사가 부르면 거기까지만 읽으면 되겠지."},
   tea:{name:"홍차 한 잔",cost:12,stat:"stress",amount:-5,label:"스트레스",line:"마침 차가 잘 우러났어. 한 잔 하겠어?"},
-  scone:{name:"버터 스콘",cost:15,stat:"hp",amount:6,label:"건강",line:"스콘은 따뜻할 때 반으로 갈라야 버터가 스며드는 법이지."}
+  scone:{name:"버터 스콘",cost:15,stat:"hp",amount:6,label:"건강",line:"스콘은 따뜻할 때 반으로 갈라야 버터가 스며들지."},
+  birds:{name:"새소리 악보집",cost:44,icon:"music",raise:"매력",lower:"의지",line:"이 곡은 끝까지 밀어붙이면 새가 날아가 버려. 한 소절쯤은 쉬어도 좋아, 백작."},
+  puzzles:{name:"상아색 칠교판",cost:44,icon:"study",raise:"의지",lower:"매력",line:"일곱 조각이면 학 한 마리가 돼. 손님이 와도 자리를 뜨기 싫어질걸."},
+  samples:{name:"비단 견본장",cost:44,icon:"supplier",raise:"경영",lower:"기품",line:"소매를 걷고 천 끝을 비벼 봐. 장갑 낀 손으로는 올이 풀리는지 모르거든."},
+  letters:{name:"외교 서한집",cost:44,icon:"letters",raise:"기품",lower:"통찰",line:"마음에 들지 않는 선물에도 답례는 써야지. 첫 장에 아주 좋은 문안이 있어."},
+  maps:{name:"항로 측량 노트",cost:44,icon:"inquiry",raise:"지성",lower:"체력",line:"이 배가 언제 항구에 닿을까? 내 계산으론 저녁 산책을 한 번 걸러야 풀릴걸."},
+  trails:{name:"발자국 수첩",cost:44,icon:"walk",raise:"통찰",lower:"지성",line:"정원에 가져가 봐. 책에 그린 여우 발자국과 진짜가 얼마나 닮았는지."},
+  rope:{name:"선원의 매듭줄",cost:44,icon:"exercise",raise:"체력",lower:"경영",line:"짐꾼이 묶은 매듭을 직접 풀어 보겠어? 오늘 장부는 내가 봐 줄까?"}
 };
 let selectedGood="tea";
+const exchangeAmount=6;
+function exchangeQuote(g){
+  const current=state.stats[g.raise];
+  const limit=state.flags.lateDispatch?exchangeAmount:Math.max(0,masteryThreshold-current)+1;
+  const gain=Math.min(exchangeAmount,statMax(g.raise)-current,limit);
+  const reason=state.flags.lauExchangeMonth===state.month?"이달의 교본은 이미 사용했습니다.":
+    gain<=0?g.raise+" 수치가 이미 한도에 도달했습니다.":
+    state.stats[g.lower]<exchangeAmount?g.lower+" 수치가 "+exchangeAmount+" 이상 필요합니다.":"";
+  return {gain,reason};
+}
 function marketPanel(){
   const cards=Object.entries(marketGoods).map(([id,g])=>
     '<button type="button" class="goods-ticket" data-action="goods:'+id+'" aria-pressed="'+(selectedGood===id)+'">'+
     '<b>'+g.name+'</b><img src="'+(g.icon?"assets/planner-icons/"+g.icon+".png":"assets/goods-"+id+".webp")+'" alt=""><strong>'+money(g.cost)+'</strong></button>').join("");
-  const g=marketGoods[selectedGood],before=state[g.stat],after=g.lesson?null:cap(before+g.amount);
+  const g=marketGoods[selectedGood],before=state[g.stat],after=g.raise?null:cap(before+g.amount);
+  const exchange=g.raise?exchangeQuote(g):null;
   const reason=state.phase!=="plan"?"일정 편성 중에 구매할 수 있습니다.":state.fund<g.cost?"보유금이 부족합니다.":
-    g.lesson?(state.lessonKit?.[g.lesson]?"이미 준비했습니다.":""):after===before?g.label+" 수치가 이미 한도에 도달했습니다.":"";
-  const preview=g.lesson?'<div class="stat-preview">'+actions[g.lesson].name+' · 다음 한 번의 수업 성과 판정에 가산</div>':
+    exchange?exchange.reason:after===before?g.label+" 수치가 이미 한도에 도달했습니다.":"";
+  const preview=exchange?'<div class="stat-preview"><b>'+g.raise+' '+state.stats[g.raise]+' → '+(state.stats[g.raise]+exchange.gain)+'</b><br>'+g.lower+' '+state.stats[g.lower]+' → '+Math.max(0,state.stats[g.lower]-exchangeAmount)+'<br><small>교본 전체 중 매월 1개 · 즉시 사용</small></div>':
     '<div class="stat-preview"><div class="stat-values"><span>'+g.label+'</span><b>'+before+' → '+after+'</b><strong>'+signed(after-before)+'</strong></div>'+
     '<div class="stat-track" aria-hidden="true"><i style="width:'+Math.min(before,after)+'%"></i><i class="stat-change" style="width:'+Math.abs(after-before)+'%"></i></div></div>';
   return '<div class="lau-counter">'+framedStanding("라우","assets/npc-lau.webp","lau-standing")+
@@ -1113,10 +1174,12 @@ function marketPanel(){
     btn(money(g.cost)+" 구매","buy:"+selectedGood,Boolean(reason),"shop-buy")+'</div>'+
     (reason?'<small>'+reason+'</small>':'')+'</section></div>';
 }
-const panels={market:marketPanel,title:titlePanel,plan:planPanel,status:statusPanel,estate:managementPanel,townhouse:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
+const panels={market:marketPanel,title:titlePanel,continue:coverPanel,album:coverPanel,settings:coverPanel,exit:coverPanel,plan:planPanel,status:statusPanel,estate:managementPanel,townhouse:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
 state=normalizeSave(state);
+restoreCGRecords();
 
 function sheetTitle(){
+  if(coverPages.includes(tab))return gameString(tab==="exit"?"exitTitle":tab);
   if(tab==="plan"){
     if(state.phase==="vow")return "마지막 명령";
     if(state.phase==="event")return castName(pendingEvent());
@@ -1151,6 +1214,8 @@ function render(focus=false,playbackOffset=0){
     $("home-standing").classList.remove("greeting-hop");
   }
   const panel=$("panel");
+  $("scene").dataset.cover=String(tab==="title"||coverPages.includes(tab));
+  $("scene").dataset.albumReplay=String(tab==="endingMemory"&&endingReplay?.origin==="album");
   const sameDesk=(tab==="estate"||tab==="company"||tab==="townhouse"||tab==="staffing") && $("scene").dataset.mode===tab && !$("sheet").hidden;
   const deskScroll=sameDesk?panel.scrollTop:0;
   const openSections=new Set(sameDesk
@@ -1186,6 +1251,11 @@ function render(focus=false,playbackOffset=0){
   $("playback").hidden=!stage;
   $("playback").innerHTML=stage?playMarkup():"";
   const vn=faceDialogue();
+  if(vn&&state.choiceImpact?.owner===tab&&state.choiceImpact.next){
+    const con=$("conversation");
+    con.querySelectorAll(".dialogue,.answers,.review-slip").forEach(el=>el.remove());
+    con.insertAdjacentHTML("beforeend",impactMarkup(state.choiceImpact));
+  }
   if(!vn)playNovelCue($("conversation"),null);
   if(vn){
     const conversation=$("conversation");
@@ -1245,7 +1315,11 @@ function render(focus=false,playbackOffset=0){
     }
   }
   panel.scrollTop=deskScroll;
-  if(focus)(tab==="title"?panel.querySelector(".cover-actions button"):title).focus({preventScroll:true});
+  if(focus){
+    const target=tab==="title"?panel.querySelector(".cover-actions button"):
+      coverPages.includes(tab)?panel.querySelector(".cover-leaf h2"):title;
+    target.focus({preventScroll:true});
+  }
 }
 let flashTimer;
 function announce(message){
@@ -1267,7 +1341,7 @@ function respond(kind,rect,target){
   emitPress(kind,rect);
 }
 function emitPress(kind,rect){
-  playSound();
+  if(tab!=="exit")playSound();
   if(matchMedia("(prefers-reduced-motion: reduce)").matches||!rect||rect.width<=0||rect.height<=0)return;
   const x=rect.xPoint??rect.left+rect.width/2,y=rect.yPoint??rect.top+rect.height/2;
   const mark=document.createElement("i");
@@ -1396,12 +1470,34 @@ function askConfirmation(key,title,description,label,rect,extra=""){
 }
 function handleAction(key,rect,confirmed=false){
   const [action,id,value]=key.split(":");
-  if(action==="fair-entry"){selectFestival(id);return;}
+  const impact=state.choiceImpact;
+  if(impact?.next && (tab===impact.owner||action==="impact-close")){
+    if(action!=="impact-close")return;
+    const next=impact.next;
+    delete state.choiceImpact;
+    if(next==="event")finishEventChoice(pendingEvent());
+    else if(next==="visit")finishVisit();
+    else handleAction(next,rect);
+    return;
+  }
+  if(tab==="chat"&&["back","system-back"].includes(action)&&openChoiceImpact("back"))return;
+  if(storyDemo&&!["choose","term-next","term-close","music"].includes(action))return;
+  if(previewFair){
+    if(action==="fair-close"){location.reload();return;}
+    if(action==="fair-reveal" && !state.fairBook?.[previewFair.id] && Number.isInteger(state.sequence.duel.choice)){
+      settleFestival(state,state.sequence.duel);render(true);return;
+    }
+    if(action!=="fair-play" && action!=="music")return;
+  }
+  if(action==="fair-notices"&&tab==="plan"&&state.phase==="plan"){openFairNotices();return;}
+  if(action==="fair-entry"){selectFestival(id,value);return;}
+  if(festivalAction(action,id))return;
   if(encounterAction(action,id))return;
   if(tab==="plan"&&["slotEvent","event"].includes(state.phase)&&["term-close","term-next"].includes(action)){
     const event=pendingEvent();
     if(!event||(!termPages(event)&&!state.termOutcome?.response))return;
     if(action==="term-close"&&state.termOutcome?.id===event.id){
+      if(openChoiceImpact("term-close"))return;
       const next=state.termOutcome.nextScene;
       if(next&&events.some(scene=>scene.id===next&&scene.linkedOnly)){
         state.pending=next;
@@ -1415,7 +1511,7 @@ function handleAction(key,rect,confirmed=false){
     }
     return;
   }
-  if(action==="ending-art"&&(tab==="record"||(tab==="plan"&&state.phase==="ending"))&&hasEndingRecord(id)){
+  if(action==="ending-art"&&(tab==="record"||tab==="album"||(tab==="plan"&&state.phase==="ending"))&&hasEndingRecord(id)){
     stopRecruitAuto();endingReplay={id,at:0,origin:tab};tab="endingMemory";render(true);return;
   }
   if(tab==="endingMemory"&&["back","system-back"].includes(action)){
@@ -1426,7 +1522,24 @@ function handleAction(key,rect,confirmed=false){
   const fund=state.fund;
   if(openingAction(action,id,confirmed,rect))return;
   if(tab==="recollection"&&["system-back","back"].includes(action)){finishOpening();return;}
-  if(tab==="title"&&action==="resume"&&saves.auto?.v===1){
+  if(tab==="album"&&action==="cg"&&cgAlbumEntries()[Number(id)]?.seen){
+    albumScroll=$("panel").scrollTop;albumPicture=Number(id);render();$("panel").scrollTop=0;
+    $("panel").querySelector("h2")?.focus({preventScroll:true});return;
+  }
+  if(tab==="album"&&albumPicture!==null&&["back","system-back"].includes(action)){
+    const index=albumPicture;albumPicture=null;render();$("panel").scrollTop=albumScroll;focusAction("cg:"+index);return;
+  }
+  if(tab==="title"&&action==="cover"&&coverPages.includes(id)){
+    if(id==="continue"){
+      if(!coverSaveSlots.some(hasCoverSave))return;
+      if(hasCoverSave("auto")&&!coverSaveSlots.slice(1).some(hasCoverSave)){handleAction("resume",rect);return;}
+    }
+    tab=id;render(true);
+    if(id==="exit"&&(storageOk||!hasCoverSave("auto"))&&window.opener&&window.parent===window)window.close();
+    return;
+  }
+  if((tab==="title"||tab==="continue")&&action==="resume"&&hasCoverSave("auto")){
+    utilityOrigin=null;
     tab=state.phase==="plan"?"home":"plan";render(true);
     if(state.phase==="guide")showGuidePage(0);
     return;
@@ -1440,7 +1553,7 @@ function handleAction(key,rect,confirmed=false){
     panel.scrollTop=scroll;
     focusAction(key);respond("choose",rect);return;
   }
-  if(action==="motion"&&tab==="save"&&Object.hasOwn(motionLabels,id)){
+  if(action==="motion"&&(tab==="save"||tab==="settings")&&Object.hasOwn(motionLabels,id)){
     motionMode=id;try{localStorage.setItem(motionKey,id);}catch{}
     syncMotion();render();focusAction("motion:"+id);return;
   }
@@ -1493,7 +1606,6 @@ function handleAction(key,rect,confirmed=false){
     const spoken=state.spoken;
     const follow=chatFollowups[spoken?.topic]?.[Number(id)];
     if(tab==="chat"&&spoken?.turn===state.month&&spoken.replyRead&&spoken.followIndex==null&&follow){
-      showChoiceImpact(follow[0],choiceSnapshot());
       spoken.followIndex=Number(id);persist();render(true);
     }
     return;
@@ -1572,6 +1684,10 @@ function handleAction(key,rect,confirmed=false){
   }
   if(action==="back"){
     if(tab==="title")return;
+    if(coverPages.includes(tab)){
+      const from=tab;
+      tab="title";render();focusAction("cover:"+from);return;
+    }
     if(tab==="save"&&utilityOrigin==="title"){utilityOrigin=null;tab="title";render(true);return;}
     if(tab==="staffing"){tab="estate";render();$("panel").scrollTop=estateReturnScroll;focusAction("tab:staffing");return;}
     if(["contract","guide"].includes(state.phase)){tab="plan";render(true);return;}
@@ -1594,6 +1710,7 @@ function handleAction(key,rect,confirmed=false){
     respond("tap",rect);return;
   }
   if(action==="pick"){
+    if(Number(id)===contestSlot&&reservedContest(state))return;
     editingVisit=false;
     selectedSlot=Number(id);
     const scroll=$("panel").scrollTop;
@@ -1603,7 +1720,10 @@ function handleAction(key,rect,confirmed=false){
   }
   if(action==="close"){
     pendingConfirmation=null;
-    $("picker").close();respond("back",rect);return;
+    const fairDialog=$("picker").querySelector(".fair-dialog");
+    $("picker").close();
+    if(fairDialog)focusAction("fair-notices");
+    respond("back",rect);return;
   }
   if(action==="confirm"){
     const operation=pendingConfirmation;
@@ -1616,12 +1736,15 @@ function handleAction(key,rect,confirmed=false){
     setNumber(id,state[id]+Number(value));respond("step",rect,"#market-balance");return;
   }
   if(action==="execute"&&state.phase==="plan"&&!planReady()){
-    const vacant=state.plan.findIndex(id=>!actions[id]);
+    const vacant=scheduledActivities(state).findIndex(id=>!actions[id]);
     tab="plan";editingVisit=vacant===-1;selectedSlot=editingVisit?0:vacant;
     render(true);return;
   }
   if(action==="execute"&&!confirmed&&state.phase==="plan"){
-    const periods=state.plan.map((id,index)=>'<li><small>'+slotNames[index]+'</small>'+plannerIcon(id)+'<b>'+courseName(id)+'</b></li>').join("");
+    const contest=reservedContest(state);
+    const periods=state.plan.map((id,index)=>contest&&index===contestSlot
+      ?'<li class="contest-period"><small>하순 · 경연</small><b>'+contest.title+'</b></li>'
+      :'<li><small>'+slotNames[index]+'</small>'+plannerIcon(id)+'<b>'+courseName(id)+'</b></li>').join("");
     const instructions='<details class="desk-review"><summary>이달 운영 지시 확인·변경</summary>'+
       '<div><p><b>저택</b><br>'+(state.people.tanaka?"타나카 · "+dutyName(state.jobs.tanaka)+" · ":"")+'시설 상태 '+houseValues().시설상태+'</p>'+btn("저택 지시 변경","inspect:estate")+'</div>'+
       '<div><p><b>팬텀사</b><br>'+products[state.product].name+' '+state.qty+'개 · 판매가 '+money(state.price)+'</p>'+btn("팬텀사 지시 변경","inspect:company")+'</div></details>';
@@ -1655,11 +1778,13 @@ function handleAction(key,rect,confirmed=false){
     if(action==="buy"){
       const g=marketGoods[id];
       if(tab!=="market"||!Object.hasOwn(marketGoods,id)||state.fund<g.cost)return;
-      if(g.lesson){
-        state.lessonKit??={};
-        if(state.lessonKit[g.lesson])return;
-        state.lessonKit[g.lesson]=true;
-        message=g.name+" · 다음 "+actions[g.lesson].name+"에 사용합니다.";
+      if(g.raise){
+        const quote=exchangeQuote(g);
+        if(quote.reason)return;
+        state.stats[g.raise]+=quote.gain;
+        state.stats[g.lower]-=exchangeAmount;
+        state.flags.lauExchangeMonth=state.month;
+        message=g.name+" · "+g.raise+" "+signed(quote.gain)+" / "+g.lower+" −"+exchangeAmount;
       }else{
         const after=cap(state[g.stat]+g.amount);
         if(after===state[g.stat])return;
@@ -1668,6 +1793,7 @@ function handleAction(key,rect,confirmed=false){
       }
       state.fund-=g.cost;
     }else if(action==="activity"){
+      if(Number(id)===contestSlot&&reservedContest(state))return;
       pattern="schedule";state.plan[Number(id)]=value;
       message=slotNames[Number(id)]+" · "+actions[value].name;
     }else if(action==="visit"){
@@ -1757,8 +1883,34 @@ document.addEventListener("click",event=>{
 document.addEventListener("keydown",event=>{
   if(event.isTrusted&&!event.altKey&&!event.metaKey&&!event.ctrlKey&&!event.repeat)musicPlayer.unlock();
 });
+function openFairPreview(fair){
+  tab="plan";
+  state=normalizeSave(initial());
+  state.month=state.planMonth=fair.month;
+  state.owlSeed=482;
+  state.quality="fine";
+  state.productHistory.toys={reputation:9,units:36,orders:2};
+  const index=previewQuery.get("entry")==="1"?1:0;
+  if(!fair.company)state.stats[fair.options[index].stat]=contestCutoffs(fair)[1]-5;
+  state.fairTickets={[fair.id]:fair.company?{product:"toys"}:{index,start:0}};
+  state.sequence={contest:fair.id};
+  document.documentElement.dataset.fairPreview="true";
+  document.addEventListener("change",event=>{
+    if(event.target.id==="preview-fair")location.search="?fair-preview="+encodeURIComponent(event.target.value);
+  });
+  prepareContest(state);
+}
+if(storyDemo){
+  tab="plan";state=normalizeSave(initial());
+  state.month=state.planMonth={"season-16":16,jubilee:18,birthday2:24}[previewStory];
+  const directions=Object.keys(middleObservations[previewStory]),selected=previewQuery.get("stat");
+  state.stats[directions.includes(selected)?selected:directions[0]]=400;
+  state.phase="event";state.pending=previewStory;
+  document.documentElement.dataset.storyPreview="true";
+}else if(previewFair)openFairPreview(previewFair);
 render();
 if(state.phase==="guide"&&tab==="plan")showGuidePage(0);
+document.documentElement.lang=gameLanguage;
 syncMotion();
 matchMedia("(prefers-reduced-motion: reduce)").addEventListener?.("change",syncMotion);
 $("launch-help").hidden=true;
