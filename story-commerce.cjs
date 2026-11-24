@@ -140,7 +140,7 @@ for(const [key,first] of [["study",3],["music",4],["practicum",4]]){
 setup('tab="plan";state.plan=["study","practicum","rest"];state.visit="none";state.qty=0');
 assertOk('courseTuition(state,"study")===20 && courseTuition(state,"practicum")===4 && plannedTuition()===30');
 run('execute();state.flags["exam-study"]=true;state=normalizeSave(state)');
-assertOk('state.sequence.bookedFees[0]===20&&state.sequence.trainingPaid===20&&courseTuition(state,"study")===28');
+assertOk('state.sequence.bookedFees[0]===20&&state.sequence.trainingPaid===20&&courseTuition(state,"study")===39');
 setup('state.fund=-8;state.visit="none";state.plan=["study","study","study"];tab="plan"');
 assertOk('marketStats().shortfall===cashNeeded()&&!plannerContents().match(/<button[^>]*data-action="execute"[^>]*disabled/)');
 run('handleAction("execute",null,true)');

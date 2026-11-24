@@ -16,7 +16,7 @@ function planReady(){
 function courseTuition(run,id){
   if(!actions[id])return 0;
   const base=actions[id].cost;
-  if(advancedCourse(run,id))return Math.ceil(base*1.15);
+  if(advancedCourse(run,id))return Math.ceil(base*1.6);
   return trainingTradeoffs[id]?Math.floor(base*.85):base;
 }
 function plannedTuition(){
