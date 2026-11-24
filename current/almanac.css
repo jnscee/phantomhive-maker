@@ -615,3 +615,10 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 .estate-support button::before {content:"";width:16px;height:16px;flex:none;background-size:contain;background-repeat:no-repeat;image-rendering:pixelated}
 .estate-support button[data-action="doctor"]::before {background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAhElEQVR4nGNkQAPOZob/kfl7T51nRFeDonh6jj9cw/Qc///oBjCha1pz6hFWNgzArUM3CR3AnMYCUxxiJodPPQMDA8P/vafOM2I4iYGBgSGuspQhrrIUqy4MDXGVpQybkzoZNid1YtWE1QZ8gAVdYFF7N0PcvHI4m6AGXAphgORgJRkAAF3pLV4AskjrAAAAAElFTkSuQmCC)}
 .estate-support button[data-action="loan"]::before {background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAhUlEQVR4nGNgIBEw4pJIctf/j8yft/MiIwMDAwMLLsVthWoM4vreDAwMDAwvL25lYGBg+D9v50VGrBoYGBgYDu19ysCwdxaGOFwDuhPsnKVRFO64dAuhAZsTqvpvMXjoceO2AZsTkG1BsQGXEw7tfUrABjRAsg1V/bfgfFg8wCMOV0RRDABxfjq4WAcQHQAAAABJRU5ErkJggg==)}
+
+#scene[data-mode=market] .goods-list {display:flex;flex-direction:column;gap:.45rem;min-width:0}
+.goods-section {min-width:0}
+#panel .goods-section h4 {margin:0 0 .22rem;padding:.15rem .4rem;color:#fff5dd;background:#203246e8;text-align:left;font-size:.78rem}
+.goods-shelf {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+#scene[data-mode=market] .goods-shelf button {min-width:0;min-height:3rem;height:auto}
+#scene[data-mode=market] .goods-shelf button b {overflow-wrap:anywhere}

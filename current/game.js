@@ -10,8 +10,16 @@ function emptyPlan(){return [null,null,null];}
 function scheduledActivities(run,contest=reservedContest(run)){
   return contest?run.plan.slice(0,contestSlot):run.plan;
 }
+function canSchedule(run,id){
+  return Object.hasOwn(actions,id) && (id!=="recovery" || Boolean(run.ill));
+}
+function clearUnavailableRecovery(run){
+  if(run.phase==="plan" && !run.ill && run.plan.includes("recovery")){
+    run.plan=run.plan.map(id=>id==="recovery"?null:id);
+  }
+}
 function planReady(){
-  return state.plan.length===3&&scheduledActivities(state).every(id=>Object.hasOwn(actions,id))&&canVisit(state.visit);
+  return state.plan.length===3&&scheduledActivities(state).every(id=>canSchedule(state,id))&&canVisit(state.visit);
 }
 function courseTuition(run,id){
   if(!actions[id])return 0;
@@ -74,6 +82,7 @@ function updateIllness(run){
 function persist(){
   if(tourSession||previewLesson||previewFair||storyDemo)return;
   updateIllness(state);
+  clearUnavailableRecovery(state);
   saves.auto=structuredClone(state);
   writeSaveBook(saves);
 }
@@ -85,9 +94,9 @@ function btn(label,action,disabled=false,style=""){
   return '<button type="button" class="'+style+'" data-action="'+action+'" '+(disabled?"disabled":"")+'>'+label+'</button>';
 }
 const masteryThreshold=485;
-const masteryFinish=497;
+const finalPolishStart=abilityMax-3;
 function ordinaryAbilityGain(current,gain){
-  return Math.min(gain,Math.max(0,masteryFinish-current));
+  return Math.min(gain,Math.max(0,abilityMax-current),Math.max(0,finalPolishStart-current)+1);
 }
 function lessonGain(key,current,base,month,flags=state.flags,primarySuccess=false,foundation=state.foundation||0){
   const rate=1.1+Math.min(month-1,12)*0.065;
@@ -100,7 +109,7 @@ function lessonGain(key,current,base,month,flags=state.flags,primarySuccess=fals
   const gain=Math.max(primarySuccess?1:0,Math.round(raw*advancedRate));
   const remaining=max-current;
   if(flags.lateDispatch&&primarySuccess){
-    return Math.min(remaining,gain,Math.max(0,masteryFinish-current)+2);
+    return Math.min(remaining,gain,Math.max(0,finalPolishStart-current)+2);
   }
   const ordinary=ordinaryAbilityGain(current,gain);
   if(flags.lateDispatch)return ordinary;
@@ -741,7 +750,7 @@ function plannerContents() {
     : categories[lessonPage][1].map(id => {
         const tier=advancedCourse(state,id)?"고급 · ":"";
         return option(plannerIcon(id)+'<b>'+actions[id].name+'</b><small>'+tier+money(courseTuition(state,id))+'</small>',
-          'activity:'+selectedSlot+':'+id, id===chosen, false, 'lesson');
+          'activity:'+selectedSlot+':'+id, id===chosen, !canSchedule(state,id), 'lesson');
       });
   const half = Math.ceil(cards.length / 2);
   const periods = state.plan.map((id,index) =>
@@ -1033,6 +1042,7 @@ function normalizeSave(run){
       copy.advancedStudy[id]=Math.min(2,after,Math.max(0,(copy.counts[id]||0)-2));
     }
   }
+  if(copy.phase==="plan"){updateIllness(copy);clearUnavailableRecovery(copy);}
   return copy;
 }
 function recordPanel(){
@@ -1161,9 +1171,6 @@ function propertyMap(company){
   return '<div class="property-map '+(company?'company-map':'estate-map')+'" role="group" aria-label="시설 선택"><img alt="" class="map-base" src="'+businessArt[company?"company":"estate"]+'">'+
     additions+people+(company&&state.qty>0?'<img alt="" class="delivery-cart" src="'+businessArt["cart-"+state.product]+'">':"")+pins+'</div>';
 }
-function canCallDoctor(run){
-  return run.phase==="plan" && run.ill && run.fund>=55 && !run.flags["doctor"+run.month];
-}
 function roomDetail(){
   const id=selectedRoom, room=estateRooms[id], auxiliary=Object.hasOwn(annex,id), level=(auxiliary?state.annex:state.level)[id], active=state.phase==="plan";
   const steps=[1,2,3].map(n=>'<i class="'+(n<=level?'filled':'')+'"></i>').join('');
@@ -1171,8 +1178,8 @@ function roomDetail(){
     '<div class="facility-steps" aria-hidden="true">'+steps+'</div>'+
     '<dl class="facility-data"><dt>시설 효과</dt><dd>'+room.desc+'</dd><dt>월 유지비</dt><dd>'+money(auxiliary?(level-1)*2:level*4)+(level<3?' → '+money(auxiliary?level*2:(level+1)*4):'')+'</dd></dl>'+
     btn(level===3?"개수 완료":"시설 개수 · "+money(room.cost*level),(auxiliary?"annex:":"upgrade:")+id,!active||level===3||state.fund<room.cost*level,"work-order")+
-    '<h4>저택 지원</h4><div class="work-actions estate-support">'+btn("왕진 · £55","doctor",!canCallDoctor(state))+
-    btn("대출 · £144","loan",!active||state.usedLoan)+'</div><small class="estate-support-note">병중 왕진 시 컨디션 +24 · 대출은 월 £24씩 상환</small>';
+    '<h4>저택 지원</h4><div class="work-actions estate-support">'+btn("왕진 · £55","doctor",!active||state.fund<55||state.flags["doctor"+state.month])+
+    btn("대출 · £144","loan",!active||state.usedLoan)+'</div><small class="estate-support-note">왕진 시 컨디션 +24 · 대출은 월 £24씩 상환</small>';
 }
 function ledgerFigure(label,value){
   return '<div><dt>'+label+'</dt><dd>'+value+'</dd></div>';
@@ -1332,9 +1339,13 @@ function exchangeQuote(g){
   return {gain,reason};
 }
 function marketPanel(){
-  const cards=Object.entries(marketGoods).map(([id,g])=>
-    '<button type="button" class="goods-ticket" data-action="goods:'+id+'" aria-pressed="'+(selectedGood===id)+'">'+
-    '<b>'+g.name+'</b><img src="'+(g.icon?"assets/planner-icons/"+g.icon+".png":"assets/goods-"+id+".webp")+'" alt=""><strong>'+money(g.cost)+'</strong></button>').join("");
+  const sections=[["hp","컨디션 회복"],["stress","스트레스 완화"],["motivation","의욕 회복"],["exchange","능력치 교환 교본"]];
+  const cards=sections.map(([purpose,label])=>{
+    const items=Object.entries(marketGoods).filter(([,g])=>(g.raise?"exchange":g.stat)===purpose);
+    return '<section class="goods-section"><h4>'+label+'</h4><div class="goods-shelf">'+items.map(([id,g])=>
+      '<button type="button" class="goods-ticket" data-action="goods:'+id+'" aria-pressed="'+(selectedGood===id)+'">'+
+      '<b>'+g.name+'</b><img src="'+(g.icon?"assets/planner-icons/"+g.icon+".png":"assets/goods-"+id+".webp")+'" alt=""><strong>'+money(g.cost)+'</strong></button>').join("")+'</div></section>';
+  }).join("");
   const g=marketGoods[selectedGood],before=state[g.stat],after=g.raise?null:cap(before+g.amount);
   const exchange=g.raise?exchangeQuote(g):null;
   const reason=state.phase!=="plan"?"일정 편성 중에 구매할 수 있습니다.":state.fund<g.cost?"보유금이 부족합니다.":
@@ -1421,6 +1432,7 @@ function render(focus=false,playbackOffset=0){
   setPortraitAge($("scene"),visibleAge);
   greetButton.style.aspectRatio=["403 / 1000","1024 / 1530","910 / 1530"][visibleAge-10];
   updateIllness(state);
+  clearUnavailableRecovery(state);
   musicPlayer.sync(trackForView());
   stopPlayback();
   $("system-back").disabled=tab==="home"||tab==="title";
@@ -1943,7 +1955,7 @@ function handleAction(key,rect,confirmed=false){
     setNumber(id,state[id]+Number(value));respond("step",rect,"#market-balance");return;
   }
   if(action==="execute"&&state.phase==="plan"&&!planReady()){
-    const vacant=scheduledActivities(state).findIndex(id=>!actions[id]);
+    const vacant=scheduledActivities(state).findIndex(id=>!canSchedule(state,id));
     tab="plan";editingVisit=vacant===-1;selectedSlot=editingVisit?0:vacant;
     render(true);return;
   }
@@ -2003,7 +2015,7 @@ function handleAction(key,rect,confirmed=false){
       }
       state.fund-=g.cost;
     }else if(action==="activity"){
-      if(Number(id)===contestSlot&&reservedContest(state))return;
+      if(!canSchedule(state,value)||(Number(id)===contestSlot&&reservedContest(state)))return;
       pattern="schedule";state.plan[Number(id)]=value;
       message=slotNames[Number(id)]+" · "+actions[value].name;
     }else if(action==="visit"){
@@ -2022,7 +2034,7 @@ function handleAction(key,rect,confirmed=false){
       message=facilities[id].name+" Lv. "+(level+1);pattern="build";
     }else if(action==="doctor"){
       const marker="doctor"+state.month;
-      if(!canCallDoctor(state))return;
+      if(state.fund<55||state.flags[marker])return;
       const before=state.hp;
       flagEvent(marker,()=>{state.fund-=55;state.hp=cap(state.hp+24);});
       message="왕진 완료 · 컨디션 +"+(state.hp-before);
