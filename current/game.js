@@ -529,6 +529,7 @@ function linkedSubject(first,second){
 }
 function foundationWeight(month){return month<=3?3:month<=6?2:month<=12?1:0;}
 function recordStudyLink(run,id){
+  if(id==="rest")return null;
   const linked=run.linkMonth===run.month&&linkedSubject(run.linkFrom,id);
   if(linked)run.foundation=Math.min(24,(run.foundation||0)+foundationWeight(run.month));
   run.linkMonth=run.month;run.linkFrom=id;
@@ -1009,6 +1010,7 @@ function normalizeSave(run){
       for(const id of (row.plan||[]).slice(0,length)){
         if((completed[id]||0)>0){
           completed[id]--;
+          if(id==="rest")continue;
           const linked=copy.linkMonth===row.month&&linkedSubject(copy.linkFrom,id);
           if(linked)copy.foundation=Math.min(24,copy.foundation+foundationWeight(row.month));
           copy.linkFrom=id;
@@ -1016,6 +1018,12 @@ function normalizeSave(run){
         copy.linkMonth=row.month;
       }
     }
+  }
+  // An older mid-month save recorded rest as the last subject.
+  if(copy.linkFrom==="rest"&&copy.linkMonth===copy.month&&copy.sequence?.index===1&&copy.plan[1]==="rest"){
+    const first=copy.plan[0],prefix="상순 · ";
+    const attended=copy.log.find(line=>line.startsWith(prefix))?.slice(prefix.length).replace(/^고급 · /,"").split(" · ")[0];
+    if(actions[first]?.name===attended)copy.linkFrom=first;
   }
   if(!copy.advancedStudy){
     copy.advancedStudy={};

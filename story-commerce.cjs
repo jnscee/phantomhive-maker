@@ -598,9 +598,15 @@ assertOk('state.foundation===0&&!state.linkFrom');
 run('applyActivity(state,"study","steady");state=normalizeSave(state);applyActivity(state,"inquiry","steady");applyActivity(state,"casework","steady")');
 assertOk('state.foundation===6');
 run('state.month=2;applyActivity(state,"inquiry","steady");applyActivity(state,"rest");applyActivity(state,"casework","steady")');
-assertOk('state.foundation===6');
+assertOk('state.foundation===9');
 run('state.month=14;applyActivity(state,"study","steady");applyActivity(state,"inquiry","steady")');
-assertOk('state.foundation===6');
+assertOk('state.foundation===9');
+setup('state.plan=["accounts","rest","study"];state.month=1');
+assertOk('projectTraining().foundation===3&&state.foundation===0');
+run('state.plan=["accounts","study","rest"]');assertOk('projectTraining().foundation===3');
+run('applyActivity(state,"accounts","steady");applyActivity(state,"rest");state=normalizeSave(state);applyActivity(state,"study","steady")');
+assertOk('state.foundation===3');
+run('state.month=2;applyActivity(state,"rest");applyActivity(state,"inquiry","steady")');assertOk('state.foundation===3');
 // High stress spends condition on work; sick leave requires low condition as well.
 setup('state.hp=76;state.stats.체력=50;state.motivation=70;state.stress=75;updateIllness(state)');
 assertOk('!state.ill && healthNotice(state).includes("손이 떨리") && careActivity(state,"accounts")==="accounts"');
