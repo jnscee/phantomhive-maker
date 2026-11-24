@@ -263,7 +263,7 @@ async function check(browserType){
         },{will,approved});
         if(approved)await page.locator('[data-action="read-verdict"]').click();
         assert.equal(await page.locator('.ending-cg').getAttribute('data-ending'),id);
-        assert.equal(await page.locator('.ending-cg').getAttribute('src'),'assets/endings/royal-letter.webp');
+        assert.equal(await page.locator('.ending-cg').getAttribute('src'),await page.evaluate(id=>{const first=endingScenes[id].lines[0];return 'assets/endings/'+(first[3]?.cg||first[2]||id)+'.webp';},id));
         await page.locator('.ending-cg').evaluate(im=>im.decode());
         await page.locator('#conversation [data-read="next"]').click();
         const line=await page.locator('#conversation .dialogue p').textContent();
