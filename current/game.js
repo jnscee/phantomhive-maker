@@ -38,7 +38,7 @@ function initial(){
     shop:{design:1,works:1,store:1},salesBook:[],productHistory:{},fineStock:{},order:null,
     product:"toys",unlocked:["toys"],quality:"standard",price:14,qty:15,stock:Object.fromEntries(Object.keys(products).map(id=>[id,0])),
     trust:1,royal:0,renown:0,flags:{},events:[],past:[],log:[],pending:null,ending:null,elizabethMeetings:[],lauPurchases:0,
-    debt:0,unwell:0,relapseStage:0,arrears:0,poverty:false,usedLoan:false,counts:{},advancedStudy:{},foundation:0,linkFrom:null,linkMonth:0});
+    debt:0,unwell:0,relapseStage:0,arrears:0,poverty:false,usedLoan:false,counts:{},advancedStudy:{},linkFrom:null,linkMonth:0});
 }
 const previewQuery=new URL(document.baseURI).searchParams;
 const previewFair=previewQuery.has("fair-preview")?(contestArchive.find(f=>f.id===(previewQuery.get("fair-preview")==="newYear-1886"?"newYear-1887":previewQuery.get("fair-preview")))||contests[0]):null;
@@ -98,18 +98,16 @@ const finalPolishStart=abilityMax-3;
 function ordinaryAbilityGain(current,gain){
   return Math.min(gain,Math.max(0,abilityMax-current),Math.max(0,finalPolishStart-current)+1);
 }
-function lessonGain(key,current,base,month,flags=state.flags,primarySuccess=false,foundation=state.foundation||0){
+function lessonGain(key,current,base,month,flags=state.flags,primarySuccess=false){
   const rate=1.1+Math.min(month-1,12)*0.065;
   const max=statMax(key);
   const mastery=Math.max(.14,1-Math.max(0,current-280)/235);
   const polish=1-.45*cap((current-450)/50,1);
-  const foundationRate=.24+.90*Math.min(1,foundation/24);
-  const advancedRate=1-(1-foundationRate)*cap((current-460)/30,1);
   const raw=base*rate*mastery*polish*max/abilityMax;
-  const gain=Math.max(primarySuccess?1:0,Math.round(raw*advancedRate));
+  const gain=Math.max(primarySuccess?1:0,Math.round(raw));
   const remaining=max-current;
   if(flags.lateDispatch&&primarySuccess){
-    return Math.min(remaining,gain,Math.max(0,finalPolishStart-current)+2);
+    return Math.min(remaining,gain+(current>=485?2:0));
   }
   const ordinary=ordinaryAbilityGain(current,gain);
   if(flags.lateDispatch)return ordinary;
@@ -165,7 +163,7 @@ function forecast(shop=state.shop){
     +(shop.store-1)*2+Math.min(3,Math.floor(state.stats.경영/80))+(state.visit==="town"?2:0)
     -Math.round((state.price-p.price-premium)*1.9));
   const receipt=state.price+(shop.design-1)+(shop.store-1);
-  return supplyPlan(state,shop,demand,unit,receipt);
+  return supplyPlan(state,shop,demand,unit,receipt,plannedTuition()+overhead());
 }
 function investmentEffect(order){
   const base=forecast({design:1,works:1,store:1});
@@ -291,7 +289,7 @@ function settleMonth(){
     const line=productHistory(state,product);
     state.productHistory[product]={...line,units:line.units+sold,reputation:Math.min(20,line.reputation+(sold>=6?1:0))};
   }
-  const expenses=trade?trade.holding+trade.penalty+trade.operation+(trade.freight||0):0;
+  const expenses=trade?trade.holding+trade.penalty+trade.operation+(trade.freight||0)+(trade.contribution||0):0;
   const income=sold*receipt+(trade?.wholesale||0);
   const cost=unit*state.qty;
   const debtPayment=Math.min(24,state.debt),bills=overhead();
@@ -299,11 +297,12 @@ function settleMonth(){
   state.fund+=income-cost-bills-expenses;
   // Paid sales and supply contracts belong to Funtom. Scheduled work only trains Ciel.
   state.salesBook.push({month:state.month,product,sold,revenue:income,cost,advance:visitAdvance,investment,expenses,wholesale:trade?.wholesale||0,delivery:trade?.order?{...(trade.order.tradeMonth?{tradeMonth:trade.order.tradeMonth}:{}),id:trade.order.id,shipped:trade.shipped,qty:trade.order.qty}:null});
-  state.report={weather:state.weather,income,festivalIncome,cost,expenses,storage:trade?.holding||0,freight:trade?.freight||0,operating:trade?.operation||0,guaranteeFee:trade?.guaranteeFee||0,penalty:trade?.penalty||0,wholesale:trade?.wholesale||0,advance:visitAdvance,bills,debtPayment,sold,before,investment,training:trainingPaid};
+  state.report={weather:state.weather,income,festivalIncome,cost,expenses,storage:trade?.holding||0,freight:trade?.freight||0,operating:trade?.operation||0,guaranteeFee:trade?.guaranteeFee||0,contribution:trade?.contribution||0,penalty:trade?.penalty||0,wholesale:trade?.wholesale||0,advance:visitAdvance,bills,debtPayment,sold,before,investment,training:trainingPaid};
   if(sold>=14&&income>cost+expenses+25)state.renown+=1;
   if(tradeNews(state))state.log.push(tradeNews(state));
   state.log.push(products[product].name+" "+sold+"개 소매 · 매출 "+money(sold*receipt)+" / 생산비 "+money(cost)+" / 재고 "+state.stock[product]+"개");
   state.log.push("저택 유지·채무 상환 "+money(bills));
+  if(trade?.contribution)state.log.push("수익 분담금 "+money(trade.contribution));
   if(trade?.order)state.log.push(tradeBuyer(trade.order)+" 납품 "+trade.shipped+"/"+trade.order.qty+"개 · "+money(trade.wholesale)+(trade.short?" · 미납 부담금 "+money(trade.penalty):""));
   if(state.flags.market&&state.marketMonth!==state.month){state.flags.market=false;state.renown+=1;}
   scheduleSnakeVisit(state);
@@ -499,7 +498,7 @@ function startFinnyAtTurn(run){
   run.pending="gardener";run.recruitReturn="plan";run.phase="event";
 }
 function criticalHealth(run){
-  return run.hp<25||(run.month>3&&run.hp<69&&run.stress>=70);
+  return run.hp<25||(run.month>3&&run.hp<55&&run.stress>=75);
 }
 function advance(){
   if(state.phase!=="result")return;
@@ -563,7 +562,6 @@ function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),
   const room=trainingRooms[id];
   const fieldPenalty=(categories[2][1].includes(id)&&run.stress>=55)?3:0;
   const weather=weatherWorkout(id)?weatherFor(run):null;
-  if(weather&&run.month<=12)run.foundation=Math.min(24,(run.foundation||0)+6);
   const stress=run.stress;
   const hp=run.hp;
   const worried=worriedAboutMoney(run);
@@ -584,7 +582,7 @@ function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),
     const before=run.stats[name];
     const secondary=name!==primary;
     const studyRate=grade==="poor" && secondary && before>=320 ? .75 : 1;
-    const gain=grade==="poor"&&secondary&&!advanced&&!trainingTradeoffs[id]?-1:lessonGain(name,before,(value+(linked===name?3:0)+(advanced?3:0)+(room?(run.level[room]-1)*4:0))*studyRate*conditionFactor*(grade?lessonGrades[grade].factor:1)*(weather?1.5:1)*(run.neglect>=2?.85:1),run.month,run.flags,!secondary&&a.stress>0&&grade!=="poor",run.foundation);
+    const gain=grade==="poor"&&secondary&&!advanced&&!trainingTradeoffs[id]?-1:lessonGain(name,before,(value+(linked===name?3:0)+(advanced?3:0)+(room?(run.level[room]-1)*4:0))*studyRate*conditionFactor*(grade?lessonGrades[grade].factor:1)*(weather?1.5:1)*(run.neglect>=2?.85:1),run.month,run.flags,!secondary&&a.stress>0&&grade!=="poor");
     run.stats[name]=cap(before+gain,statMax(name));
     return statLabel(name)+" "+signed(run.stats[name]-before);
   });
@@ -1028,7 +1026,7 @@ function normalizeSave(run){
     const opening=copy.accounts?.opening??copy.sequence?.opening?.fund??copy.fund;
     copy.poverty=povertyAfterClosing(copy,opening);
   }
-  if(!Number.isFinite(copy.foundation))copy.foundation=0;
+  delete copy.foundation;
   // An older mid-month save recorded rest as the last subject.
   if(copy.linkFrom==="rest"&&copy.linkMonth===copy.month&&copy.sequence?.index===1&&copy.plan[1]==="rest"){
     const first=copy.plan[0],prefix="상순 · ";
@@ -1309,7 +1307,7 @@ function managementPanel(){
   const actual=state.salesBook.at(-1);
   const settled=["event","result","vow","investiture","ending"].includes(state.phase);
   const remaining=state.sequence?(state.sequence.bookedFees||state.plan.map(id=>actions[id]?.cost||0)).slice(state.sequence.index+1).reduce((sum,fee)=>sum+fee,0):0;
-  const live=state.sequence?'<section class="budget-book"><h3>확정된 이달 예산</h3>'+amountRow("남은 교육·활동비",remaining)+amountRow("저택 운영",overhead()-Math.min(24,state.debt))+amountRow("팬텀사 운영",state.qty*state.sequence.unit+(state.sequence.trade?.holding||0)+(state.sequence.trade?.operation||0)+(state.sequence.trade?.penalty||0))+(state.debt?amountRow("채무 상환",Math.min(24,state.debt)):"")+'</section>':"";
+  const live=state.sequence?'<section class="budget-book"><h3>확정된 이달 예산</h3>'+amountRow("남은 교육·활동비",remaining)+amountRow("저택 운영",overhead()-Math.min(24,state.debt))+amountRow("팬텀사 운영",state.qty*state.sequence.unit+(state.sequence.trade?.holding||0)+(state.sequence.trade?.operation||0)+(state.sequence.trade?.penalty||0)+(state.sequence.trade?.freight||0)+(state.sequence.trade?.contribution||0))+(state.debt?amountRow("채무 상환",Math.min(24,state.debt)):"")+'</section>':"";
   const budget=active?'<div id="live-budget">'+budgetTable()+'</div>':settled&&state.report?actualBudget():live;
   const bottom=company?(active?businessForecast():settled&&actual?'<div class="work-ledger"><span>'+monthText(actual.month)+' 영업 수입</span><b>'+money(actual.revenue+actual.advance)+'</b></div>':'')+budget+salesBooks():budget;
   return header+

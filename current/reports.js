@@ -28,7 +28,8 @@ function tradeCosts(trade){
   return '<dl class="trade-fees">'+fee("설비 운영",trade.operation-(trade.guaranteeFee||0))+(trade.guaranteeFee?fee("거래 보증료",trade.guaranteeFee):"")+
     fee("운송",trade.freight,"소매·납품 합계 <strong>"+trade.freightAllowance+"</strong>개까지 무료<br>초과 <strong>1</strong>개당 <strong>£3</strong>")+
     fee("월말 보관",trade.holding,"전 품목 합산 <strong>8</strong>개까지 무료<br>초과 <strong>1</strong>개당 <strong>£1</strong>")+
-    (trade.order?fee("미납 부담",trade.penalty,"예상 납품 "+trade.shipped+" / "+trade.order.qty+"개"):"")+'</dl>';
+    (trade.order?fee("미납 부담",trade.penalty,"예상 납품 "+trade.shipped+" / "+trade.order.qty+"개"):"")+
+    (trade.contribution?fee("수익 분담금",trade.contribution,"가용 자금 "+money(profitContributionFloor)+"를 넘겨 남는 순이익에 단계 적용"):"")+'</dl>';
 }
 function budgetTable(compact=false){
   const b=monthlyBudget();
@@ -75,9 +76,9 @@ function actualBudget(){
   const expenseRows=[
     [r.debtPayment==null?"저택 유지·채무 합산":"저택 유지",r.bills-debt-(weather?.fee||0)],[weather?.charge,weather?.fee],["돌발 사건 지출",a.setbacks],["저택 개수·지원",a.estate],
     ["생산비",r.cost],["투자·사업 지출",a.company],["설비 운영",r.operating-(r.guaranteeFee||0)],["거래 보증료",r.guaranteeFee||0],["운송",r.freight],
-    ["보관",r.storage],["미납 부담",r.penalty],["교육·활동비",r.training],["채무 상환",debt]
+    ["보관",r.storage],["미납 부담",r.penalty],["수익 분담금",r.contribution],["교육·활동비",r.training],["채무 상환",debt]
   ];
-  const otherFees=(r.expenses||0)-(r.operating||0)-(r.freight||0)-(r.storage||0)-(r.penalty||0);
+  const otherFees=(r.expenses||0)-(r.operating||0)-(r.freight||0)-(r.storage||0)-(r.penalty||0)-(r.contribution||0);
   if(otherFees)expenseRows.push(["기타 운영비",otherFees]);
   const total=rows=>rows.reduce((sum,[,amount])=>sum+(amount||0),0);
   const income=total(incomeRows),expense=total(expenseRows),change=state.fund-a.opening;
@@ -118,7 +119,7 @@ function deltaRow(key,before,after){
     '<strong>'+direction+' '+(change===0?'0':signed(change))+'</strong></div>';
 }
 function logEffect(text){
-  const cash=/^(매출|생산비|저택 유지·채무 상환) (£[\d,]+(?:\.\d+)?)$/.exec(text);
+  const cash=/^(매출|생산비|저택 유지·채무 상환|수익 분담금) (£[\d,]+(?:\.\d+)?)$/.exec(text);
   if(cash){
     const tone=cash[1]==="매출"?"gain":"loss";
     return cash[1]+' <strong class="log-'+tone+'">'+cash[2]+'</strong>';
