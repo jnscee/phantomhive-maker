@@ -609,7 +609,7 @@ function educationRecord(run){
   });
 }
 const courtEducation={
-  지성:[465,"서재 수업"],기품:[491,"귀족 예법"],매력:[445,"사교 수업"],
+  지성:[465,"서재 수업"],기품:[450,"귀족 예법"],매력:[445,"사교 수업"],
   통찰:[455,"가문 기록 조사"],경영:[455,"팬텀사 회계"],의지:[385,"사건 조사"],체력:[400,"승마"]
 };
 function courtEducationPriority(keys=Object.keys(courtEducation)){
