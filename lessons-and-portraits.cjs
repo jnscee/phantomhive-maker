@@ -121,7 +121,7 @@ async function checkMonthlyScreens(page){
   await dialogue.locator("p").click();
   assert.equal(await dialogue.locator("small").innerText(),"세바스찬");
   await dialogue.locator(".line-next").click();
-  assert.equal(await dialogue.locator(".answers button").count(),2);
+  assert.equal(await page.locator("#conversation .answers [data-action^='visit-choice:']").count(),2);
   await page.evaluate(()=>{
     state=initial();state.phase="plan";state.shop.works=2;tab="company";selectedDepartment="works";render();
   });
