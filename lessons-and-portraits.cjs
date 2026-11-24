@@ -190,11 +190,11 @@ async function check(browserType){
       await creditPage.evaluate(()=>{
         state=initial();state.fund=-10;state.phase="plan";state.plan=["study","study","study"];state.visit="none";tab="plan";render();
       });
-      const basis=creditPage.locator("#calendar .plan-basis");
-      assert.equal(await basis.inputValue(),"steady");
-      await basis.selectOption("poor");
-      assert.match(await creditPage.locator("#calendar .calendar-note").innerText(),/지구력\s*-4/);
-      await basis.selectOption("steady");
+      const note=creditPage.locator("#calendar .calendar-note");
+      assert.equal(await note.locator("select").count(),0);
+      assert.match(await note.innerText(),/지구력\s*▼/);
+      assert.match(await note.innerText(),/지성\s*▲/);
+      assert.doesNotMatch(await note.innerText(),/기준|[+−-]\d/);
       await creditPage.locator('.calendar-run').click();
       assert.match(await creditPage.locator('#picker').innerText(),/외상/);
       await creditPage.locator('#picker [data-action="confirm"]').click();

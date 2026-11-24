@@ -101,15 +101,16 @@ for(const [index,stat,low,high] of [[0,"기품",.31,.34],[1,"매력",.15,.18]]){
   run('state.stats[statKey]+=12');assert.ok(odds()>baseline);
   run('state.stats[statKey]-=12;state.stress+=20');assert.ok(odds()<baseline);
 }
-// Preview, execution and save/load use the same course tradeoff for each of the three grades.
+assert.equal(run('[1,4,10,-1,-4,-10,0].map(previewDelta).join(" ")'),"▲ ▲▲ ▲▲▲ ▼ ▼▼ ▼▼▼ –");
+// Preview shows the direction of tradeoffs, and execution and save/load preserve their exact values.
 for(const id of run('[...categories[0][1],...categories[2][1]]')){
   ctx.subject=id;
   for(const [grade,cost] of [["great",1],["steady",2],["poor",4]]){
     ctx.testGrade=grade;
-    setup('for(const k of stats)state.stats[k]=100;state.plan=[subject,"rest","rest"];tab="plan";selectedSlot=0;plannerGrade=testGrade');
+    setup('for(const k of stats)state.stats[k]=100;state.plan=[subject,"rest","rest"];tab="plan";selectedSlot=0');
     assertOk('!Object.hasOwn(actions[subject].gains,trainingTradeoffs[subject])');
     const key=run('trainingTradeoffs[subject]');
-    assert.ok(run('scheduleNote(subject)').includes(run('statLabel(trainingTradeoffs[subject])')+' <b class="loss">'+run('signed(-'+cost+')')));
+    assert.ok(run('scheduleNote(subject)').includes(run('statLabel(trainingTradeoffs[subject])')+' <b class="loss">'+'▼'));
     assert.equal(run('state.stats[trainingTradeoffs[subject]]'),100);
     run('applyActivity(state,subject,testGrade);state=normalizeSave(state)');
     assert.equal(run('state.stats[trainingTradeoffs[subject]]'),100-cost,id+" "+key);
@@ -219,7 +220,7 @@ for(const weather of ['heat','cold']){
       assert.ok(extreme[2]>clear[2] && extreme[3]>clear[3]);
     }else assert.deepEqual(extreme,clear);
   }
-  assertOk('plannerContents().includes(weatherFor(state).name) && scheduleNote("exercise").includes("그럭저럭 기준")');
+  assertOk('plannerContents().includes(weatherFor(state).name) && scheduleNote("exercise").includes("▲") && !scheduleNote("exercise").includes("그럭저럭 기준")');
   run('state.plan=["study","study","study"];state.visit="town";state.qty=0;execute();var quote=overhead();state.sequence.index=2;settleMonth()');
   assertOk('state.report.bills===quote && actualBudget().includes(weatherFor(state).charge)');
 }
@@ -562,7 +563,7 @@ assertOk('actualBudget().includes("−£73") && actualBudget().includes("£313")
 setup('state.month=25;state.foundation=24;state.stats.지성=484');
 assertOk('lessonGain("지성",440,20,25,{})===lessonGain("지성",440,20,25,{lateDispatch:true})');
 assertOk('lessonGain("지성",484,20,25)===2 && lessonGain("지성",485,20,25)===1 && lessonGain("지성",500,20,25)===0');
-assertOk('scheduleNote("study").replace(/<[^>]+>/g,"").includes("지성 +2") && !statusPanel().includes("과목 실기")');
+assertOk('scheduleNote("study").replace(/<[^>]+>/g,"").includes("지성 ▲") && !statusPanel().includes("과목 실기")');
 run('state.stats.지성=485;state.plan=["study","rest","walk"];const graduate=structuredClone(state);graduate.flags.lateDispatch=true;applyActivity(graduate,"study","great")');
 assertOk('graduate.stats.지성>486 && projectTraining().stats.지성===486 && state.stats.지성===485');
 run('changeStat("지성",6);state.flags.lateDispatch=true;persist();state=normalizeSave(saves.auto)');
