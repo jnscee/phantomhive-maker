@@ -519,10 +519,15 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 .london-board .tile strong .london-value[data-change="0"] {color:#c6d1df}
 .london-board .tile strong .london-value[data-change="-1"] {color:#ffb4a8}
 .london-board .tile strong .london-value {font:inherit}
-#panel .london-board .work-figures,#panel .london-board .london-book {margin:6px clamp(10px,2vw,26px);order:1}
+#panel .london-board .work-figures,#panel .london-board .london-book {
+  box-sizing:border-box;width:min(calc(100% - 1.5rem),27rem);min-width:0;
+  margin:.4rem auto;justify-self:center;order:1;
+}
+#panel .london-board .work-figures {display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+#panel .london-board .work-figures .tile {grid-template-columns:minmax(0,1fr);justify-items:start;gap:2px;padding:7px 12px}
 #panel .london-board .london-book {padding:5px 10px}
 #panel .london-board .london-map {order:0}
-#panel .london-board .london-book {order:2;margin-bottom:clamp(1.5rem,4cqw,3rem)}
+#panel .london-board .london-book {order:2;margin-bottom:clamp(2rem,5cqw,4rem);padding:.55rem .8rem}
 
 #scene[data-mode=market] .lau-counter {grid-template-rows:auto minmax(0,1fr) auto auto}
 #scene[data-mode=market] .goods-list {grid-row:1/5;overflow-y:auto;grid-auto-rows:minmax(3.3rem,1fr)}
