@@ -644,6 +644,10 @@ for(const condition of ['state.motivation=100;state.stress=illnessLimits(state).
   run('continueSequence();continueSequence();state.visit="none";continueSequence()');
   assertOk('state.report.training===actions.exercise.cost+2*actions.rest.cost');
 }
+setup('state.fund=100;state.hp=30;state.stress=0;state.ill=false;handleAction("doctor",null,true)');
+assertOk('!canCallDoctor(state)&&state.fund===100&&state.hp===30&&!state.flags["doctor"+state.month]');
+run('state.ill=true;handleAction("doctor",null,true);handleAction("doctor",null,true)');
+assertOk('state.fund===45&&state.hp===54&&state.flags["doctor"+state.month]');
 // A single rest can succeed or fail according to condition. Stronger care restores the full effect of sick leave.
 for(const [hp,stress,plan,doctor,stage,ending] of [
   [15,82,["exercise","exercise","exercise"],false,2,"ill"],
@@ -655,7 +659,7 @@ for(const [hp,stress,plan,doctor,stage,ending] of [
 ]){
   Object.assign(ctx,{hp,stress,plan});
   setup('state.relapseStage=2;state.unwell=1;state.hp=hp;state.stress=stress;state.plan=structuredClone(plan);state.qty=0;state.visit="none"');
-  if(doctor)run('handleAction("doctor",null,true)');
+  if(doctor)run('updateIllness(state);handleAction("doctor",null,true)');
   const predicted=run('projectTraining().hp');
   run('execute();state=normalizeSave(saves.auto);continueSequence();continueSequence();continueSequence()');
   assert.equal(run('state.hp'),predicted);

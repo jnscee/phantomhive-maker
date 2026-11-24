@@ -1161,6 +1161,9 @@ function propertyMap(company){
   return '<div class="property-map '+(company?'company-map':'estate-map')+'" role="group" aria-label="시설 선택"><img alt="" class="map-base" src="'+businessArt[company?"company":"estate"]+'">'+
     additions+people+(company&&state.qty>0?'<img alt="" class="delivery-cart" src="'+businessArt["cart-"+state.product]+'">':"")+pins+'</div>';
 }
+function canCallDoctor(run){
+  return run.phase==="plan" && run.ill && run.fund>=55 && !run.flags["doctor"+run.month];
+}
 function roomDetail(){
   const id=selectedRoom, room=estateRooms[id], auxiliary=Object.hasOwn(annex,id), level=(auxiliary?state.annex:state.level)[id], active=state.phase==="plan";
   const steps=[1,2,3].map(n=>'<i class="'+(n<=level?'filled':'')+'"></i>').join('');
@@ -1168,8 +1171,8 @@ function roomDetail(){
     '<div class="facility-steps" aria-hidden="true">'+steps+'</div>'+
     '<dl class="facility-data"><dt>시설 효과</dt><dd>'+room.desc+'</dd><dt>월 유지비</dt><dd>'+money(auxiliary?(level-1)*2:level*4)+(level<3?' → '+money(auxiliary?level*2:(level+1)*4):'')+'</dd></dl>'+
     btn(level===3?"개수 완료":"시설 개수 · "+money(room.cost*level),(auxiliary?"annex:":"upgrade:")+id,!active||level===3||state.fund<room.cost*level,"work-order")+
-    '<h4>저택 지원</h4><div class="work-actions estate-support">'+btn("왕진 · £55","doctor",!active||state.fund<55||state.flags["doctor"+state.month])+
-    btn("대출 · £144","loan",!active||state.usedLoan)+'</div><small class="estate-support-note">왕진 시 컨디션 +24 · 대출은 월 £24씩 상환</small>';
+    '<h4>저택 지원</h4><div class="work-actions estate-support">'+btn("왕진 · £55","doctor",!canCallDoctor(state))+
+    btn("대출 · £144","loan",!active||state.usedLoan)+'</div><small class="estate-support-note">병중 왕진 시 컨디션 +24 · 대출은 월 £24씩 상환</small>';
 }
 function ledgerFigure(label,value){
   return '<div><dt>'+label+'</dt><dd>'+value+'</dd></div>';
@@ -2019,7 +2022,7 @@ function handleAction(key,rect,confirmed=false){
       message=facilities[id].name+" Lv. "+(level+1);pattern="build";
     }else if(action==="doctor"){
       const marker="doctor"+state.month;
-      if(state.fund<55||state.flags[marker])return;
+      if(!canCallDoctor(state))return;
       const before=state.hp;
       flagEvent(marker,()=>{state.fund-=55;state.hp=cap(state.hp+24);});
       message="왕진 완료 · 컨디션 +"+(state.hp-before);

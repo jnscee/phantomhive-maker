@@ -26,8 +26,8 @@ function tradeCosts(trade){
     return '<div><dt>'+label+'</dt><dd>'+money(value)+'</dd>'+(note?'<dd class="fee-rule">'+note+'</dd>':'')+'</div>';
   }
   return '<dl class="trade-fees">'+fee("설비 운영",trade.operation-(trade.guaranteeFee||0))+(trade.guaranteeFee?fee("거래 보증료",trade.guaranteeFee):"")+
-    fee("운송",trade.freight,"소매·납품 합계 "+trade.freightAllowance+"개까지 무료<br>초과 1개당 £3")+
-    fee("월말 보관",trade.holding,"전 품목 합산 8개까지 무료<br>초과 1개당 £1")+
+    fee("운송",trade.freight,"소매·납품 합계 <strong>"+trade.freightAllowance+"</strong>개까지 무료<br>초과 <strong>1</strong>개당 <strong>£3</strong>")+
+    fee("월말 보관",trade.holding,"전 품목 합산 <strong>8</strong>개까지 무료<br>초과 <strong>1</strong>개당 <strong>£1</strong>")+
     (trade.order?fee("미납 부담",trade.penalty,"예상 납품 "+trade.shipped+" / "+trade.order.qty+"개"):"")+'</dl>';
 }
 function budgetTable(compact=false){
@@ -143,7 +143,7 @@ function monthlyResults(){
   const group=(title,keys)=>'<h4>'+title+'</h4>'+keys.map(k=>deltaRow(k,before[k],after[k])).join('');
   const healthWarning=criticalHealth(state)
     ?(state.unwell?"시엘은 아직 병상에서 일어나지 못하고 있습니다.":"시엘이 위독합니다. 곁에서 돌볼 사람이 필요합니다.")
-    :relapseNotice(state)||(state.hp<31?"컨디션이 좋지 않습니다. 다음 달에는 휴식이나 왕진을 고려하세요.":"");
+    :relapseNotice(state)||(state.hp<31?(state.ill?"컨디션이 좋지 않습니다. 다음 달에는 휴식이나 왕진을 고려하세요.":"컨디션이 좋지 않습니다. 다음 달에는 휴식을 고려하세요."):"");
   const financeWarning=state.fund<=-144?"신용 한도를 넘겨 채권단이 가문의 결산을 요구했습니다.":state.fund<0
     ?(state.arrears?"두 달 연속 월말 잔액이 음수입니다. 파산을 피할 수 없습니다.":"월말 잔액이 음수입니다. 다음 월말에도 음수면 파산합니다.")
     :(state.fund<60?"다음 달 교육비와 생산비를 확인하세요.":"");
