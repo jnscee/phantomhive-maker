@@ -544,31 +544,15 @@ for(const invest of [false,true]){
     'January',JSON.stringify(campaign.january),'final funds',campaign.fund);
 }
 
-// Liquidation uses existing stock, preserves pending orders, and reconciles with the ledger.
-setup('tab="market";shopMode="sell";selectedStock="toys";state.stock.toys=12;state.fineStock.toys=5;state.order={id:"toys",due:state.month,qty:3,rate:12};');
-assertOk('lauStockQuote(state,"toys").available===9&&marketPanel().includes("납품 예약 3개")');
-run('handleAction("shop-sell:toys:10",null,true);handleAction("shop-sell:toys:0",null,true);handleAction("shop-sell:toys:1.5",null,true)');
-assertOk('state.stock.toys===12&&state.fund===500');
-run('handleAction("shop-sell:toys:8",null,true);state=normalizeSave(saves.auto)');
-assertOk('state.stock.toys===4&&state.fineStock.toys===4&&state.fund===524&&state.accounts.lauSales===24');
-assertOk('!state.lauPurchases && productHistory(state,"toys").units===0');
-run('handleAction("shop-sell:toys:8",null,true);state.phase="scene";handleAction("shop-sell:toys:1",null,true)');
-assertOk('state.stock.toys===4&&state.fund===524');
-run('state.phase="plan";state.plan=["walk","walk","walk"];state.visit="none";state.qty=0;execute();settleMonth()');
-assertOk('state.salesBook.at(-1).delivery.shipped===3&&actualBudget().includes("라우 상점 재고 매각")&&!actualBudget().includes("내역 외 잔액 변동")');
-run('startAccounts(state);shopMode="buy"');
-assertOk("state.accounts.lauSales===undefined");
-// Used exchange books retain their benefit after resale, and recovery items cannot be sold.
-setup('state=normalizeSave(state);tab="market";shopMode="buy";state.stress=40;handleAction("buy:tea",null,true);handleAction("buy:birds",null,true)');
-assertOk('state.fund===444&&state.usedBooks.birds===1&&!state.usedBooks.tea&&state.stats.매력===14&&state.lauPurchases===2');
-run('state=normalizeSave(saves.auto);shopMode="sell";selectedStock="birds"');
-assertOk('lauSaleQuote(state,"birds").unit===22&&!lauSaleQuote(state,"tea")&&marketPanel().includes("사용한 교본")');
-run('handleAction("shop-sell:birds:2",null,true);handleAction("shop-sell:birds:1",null,true);handleAction("shop-sell:birds:1",null,true);handleAction("buy:birds",null,true)');
-assertOk('state.fund===466&&!state.usedBooks.birds&&state.accounts.lauBookSales===22&&state.stats.매력===14&&state.lauPurchases===2');
+// Lau only sells goods. Prior income remains in the ledger when an old save is restored.
+setup('tab="market";state.stock.toys=12;state.usedBooks={birds:1};state.fund+=25;state.accounts.lauSales=3;state.accounts.lauBookSales=22;state=normalizeSave(state)');
+assertOk('!marketPanel().includes("shop-mode:")&&!marketPanel().includes("shop-sell:")');
+run('handleAction("shop-sell:toys:1",null,true);handleAction("shop-sell:birds:1",null,true)');
+assertOk('state.fund===525&&state.stock.toys===12&&state.accounts.lauSales===3&&state.accounts.lauBookSales===22');
+run('handleAction("buy:birds",null,true);handleAction("buy:birds",null,true)');
+assertOk('state.fund===481&&state.stats.매력===14&&state.lauPurchases===1');
 run('state.plan=["walk","walk","walk"];state.visit="none";state.qty=0;execute();settleMonth()');
-assertOk('actualBudget().includes("라우 상점 중고 교본 매각")&&!actualBudget().includes("내역 외 잔액 변동")');
-run('shopMode="buy";const beforeSecondhand=initial();delete beforeSecondhand.usedBooks');
-assertOk('Object.keys(normalizeSave(beforeSecondhand).usedBooks).length===0');
+assertOk('actualBudget().includes("라우 상점 재고 매각")&&actualBudget().includes("라우 상점 중고 교본 매각")&&!actualBudget().includes("내역 외 잔액 변동")');
 
 // Charge excess freight exactly once, including wholesale shipments, and honor a pre-update signed quote.
 setup('state.month=26;state.qty=21;state.price=10;state.visit="town";state.plan=["walk","walk","walk"];state.order={id:"toys",qty:5,rate:14,due:26}');
