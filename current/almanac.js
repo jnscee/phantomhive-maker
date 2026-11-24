@@ -306,7 +306,7 @@ function duelScene(fair,ticket,duel,entry){
     const speaker=turn?"시엘":rival.name;
     const line=turn?contestSpeech(fair,ticket,(duel.judgment||judgeContest(state,fair,ticket,duel)).rank):
       (rival.laterQuotes?.[fair.year-1]??rival.quote);
-    const next='<button type="button" class="line-next" aria-label="다음 대사" data-action="fair-next:'+turn+'">▼</button>';
+    const next='<button type="button" class="line-next" aria-label="다음 대사" data-action="fair-next:'+turn+'"><span aria-hidden="true">▼</span></button>';
     slip=sceneLine(escapeHTML(speaker),escapeHTML(line),next,'aria-live="polite"');
   }
   return '<section class="contest-screen duel-screen'+(done?' duel-result':'')+'" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+

@@ -439,3 +439,9 @@ html[data-fair-preview] #conversation .contest-screen {padding-block-start:.6rem
   #conversation .duel-screen:not(.duel-result) .duel-plate small {grid-column:1}
   #conversation .duel-screen .dialogue {padding:.42rem .75rem}
 }
+
+/* Keep the advance control still while its cue moves. */
+#conversation .duel-screen .dialogue .line-next {animation:none; min-inline-size:2em; min-block-size:1.6em}
+@media (prefers-reduced-motion:no-preference) {
+  :root:not([data-game-motion="reduced"]):not([data-game-motion="gentle"]) .duel-screen .line-next span {display:inline-block;pointer-events:none;animation:float-next 1.45s ease-in-out infinite}
+}
