@@ -243,7 +243,7 @@ async function check(browserType){
       await page.locator('.performer img').evaluate(im=>im.decode());
       assert.equal(await page.locator('.lesson-plane').getAttribute('data-room'),await page.evaluate(()=>choreography.exercise[0]));
       assert.ok(await page.locator('.performer').evaluate(e=>e.getBoundingClientRect().height>10&&getComputedStyle(e).animationName!=='none'));
-      assert.ok(await page.evaluate(()=>!state.lessonKit.exercise));
+      assert.ok(await page.evaluate(()=>!state.lessonKit?.exercise));
       const first=await page.locator('.performer img').getAttribute('src');
       await page.waitForFunction(src=>document.querySelector('.performer img')?.getAttribute('src')!==src,first,{timeout:3800});
       await page.evaluate(()=>{state.phase='plan';tab='save';render();});
