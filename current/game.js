@@ -515,7 +515,7 @@ function lessonResult(run,id,slot){
   const salt=(Object.keys(actions).indexOf(id)+1)*101+(slot+1)*7907;
   const luck=monthlyDraw(run,salt)*26-13;
   const score=53+(run.hp-60)*.27+(run.motivation-55)*.33-(run.stress-28)*.42
-    +practice*3+preparation+(run.lessonKit?.[id]?14:0)+(room?(run.level[room]-1)*3:0)+luck;
+    +practice*3+preparation+(room?(run.level[room]-1)*3:0)+luck;
   return score>=65?"great":score>=38?"steady":"poor";
 }
 function plannedCareLevel(run){
@@ -527,7 +527,6 @@ function linkedSubject(first,second){
   const primary=Object.keys(actions[second].gains)[0];
   return Object.keys(actions[first].gains).slice(1).includes(primary)?primary:null;
 }
-function foundationWeight(month){return month<=3?3:month<=6?2:month<=12?1:0;}
 function recordStudyLink(run,id){
   if(id==="rest")return null;
   const linked=run.linkMonth===run.month&&linkedSubject(run.linkFrom,id);
@@ -536,7 +535,6 @@ function recordStudyLink(run,id){
 }
 function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),planned=id){
   const a=actions[id];
-  if(run.lessonKit?.[id])delete run.lessonKit[id];
   const tolerance=fatigueThreshold(run.stats.체력);
   const tired=(run.hp<40||run.stress>=tolerance||run.motivation<35)&&a.stress>0;
   const room=trainingRooms[id];
@@ -586,7 +584,7 @@ function applyEstateTraining(run){
   }
 }
 function projectTraining(beforeSlot=null){
-  const run={...state,plan:scheduledActivities(state),stats:{...state.stats},counts:{...state.counts},lessonKit:{...state.lessonKit}};
+  const run={...state,plan:scheduledActivities(state),stats:{...state.stats},counts:{...state.counts}};
   for(const [slot,id] of run.plan.entries()){
     if(slot===beforeSlot)break;
     if(!actions[id])continue;
@@ -824,6 +822,7 @@ const previousRecruitPages={
 };
 function normalizeSave(run){
   const copy=structuredClone(run);
+  delete copy.lessonKit;
   // Sites used these names for the same save slot and 500-point scale.
   if(copy.uniformAbilityCaps&&!copy.unifiedAbilityCaps){
     copy.unifiedAbilityCaps=true;
@@ -1001,24 +1000,7 @@ function normalizeSave(run){
     const opening=copy.accounts?.opening??copy.sequence?.opening?.fund??copy.fund;
     copy.poverty=povertyAfterClosing(copy,opening);
   }
-  if(!Number.isFinite(copy.foundation)){
-    copy.foundation=0;copy.linkMonth=0;copy.linkFrom=null;
-    const completed={...copy.counts};
-    for(const row of copy.past){
-      if(row.month>12&&row.month!==copy.month)continue;
-      const length=row.month===copy.month&&copy.sequence?copy.sequence.index+1:3;
-      for(const id of (row.plan||[]).slice(0,length)){
-        if((completed[id]||0)>0){
-          completed[id]--;
-          if(id==="rest")continue;
-          const linked=copy.linkMonth===row.month&&linkedSubject(copy.linkFrom,id);
-          if(linked)copy.foundation=Math.min(24,copy.foundation+foundationWeight(row.month));
-          copy.linkFrom=id;
-        }else copy.linkFrom=null;
-        copy.linkMonth=row.month;
-      }
-    }
-  }
+  if(!Number.isFinite(copy.foundation))copy.foundation=0;
   // An older mid-month save recorded rest as the last subject.
   if(copy.linkFrom==="rest"&&copy.linkMonth===copy.month&&copy.sequence?.index===1&&copy.plan[1]==="rest"){
     const first=copy.plan[0],prefix="상순 · ";
