@@ -97,10 +97,10 @@ function londonBoard(){
   const requestRooms=request.rooms.map(id=>'<li><span>'+londonRooms[id].name+'</span><b>'+
     (teams[id].length?teams[id].map(person=>londonHosts[person].name).join(" · "):"미배치")+'</b></li>').join("");
   return '<div class="property-grid staff-board london-board"><div class="property-grounds">'+
+    '<div class="property-map staff-map london-map" role="group" aria-label="런던 타운하우스 근무지"><img alt="" class="map-base" src="assets/map-london.webp">'+roomButtons+'</div>'+
     '<div class="work-figures" aria-label="타운하우스 배치 효과">'+figures+'</div>'+
     '<details class="sales-books london-book"><summary>런던 운영 일지</summary>'+
     (records||'<p>첫 근무를 마치면 여기에 결과가 기록됩니다.</p>')+'</details>'+
-    '<div class="property-map staff-map london-map" role="group" aria-label="런던 타운하우스 근무지"><img alt="" class="map-base" src="assets/map-london.webp">'+roomButtons+'</div>'+
     '</div><section class="property-desk london-desk" aria-label="선택 근무지와 인원 배치"><div class="work-title"><h3>'+room.name+'</h3><b>'+teams[selectedLondonRoom].length+'명 배치</b></div>'+
     '<dl class="facility-data london-duty-info" aria-live="polite"><dt>담당 업무</dt><dd>'+room.work+'</dd><dt>담당자</dt><dd>'+names+'</dd>'+
     '<dt>배치 효과</dt><dd>'+room.effect+' +'+power[selectedLondonRoom]+room.unit+'</dd></dl>'+

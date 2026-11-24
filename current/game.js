@@ -779,9 +779,10 @@ function planPanel(){
   if(state.phase==="result")return monthlyResults();
   if(state.phase==="ending"){
     const [title,description]=endingLabels[state.ending];
-    return frame(title,endingThumb(state.ending)+(description?'<p class="muted">'+description+'</p>':'')+'<div class="summary-grid">'+tile("보유 자금",money(state.fund))+
+    const recap=state.ending==="releaseNoTitle"?"":'<div class="summary-grid">'+tile("보유 자금",money(state.fund))+
       tile("경영",state.stats.경영)+tile("완료 사건",state.events.length)+'</div>'+
-      (state.ending==="vowTitle"?'':'<p>'+epilogue()+'</p>')+'<div class="inline">'+btn("장부 보기","tab:record")+btn("새 회차","reset",false,"primary")+'</div>','회차 종료');
+      (state.ending==="vowTitle"?'':'<p>'+epilogue()+'</p>');
+    return frame(title,endingThumb(state.ending)+(description?'<p class="muted">'+description+'</p>':'')+recap+'<div class="inline">'+btn("장부 보기","tab:record")+btn("새 회차","reset",false,"primary")+'</div>','회차 종료');
   }
   return "";
 }
@@ -1211,7 +1212,7 @@ function companyDetail(){
     controls='<h4>'+products[state.product].name+'</h4><p>주요 고객 · '+businessTailwind(state.product).audience+'　이달의 수요 · '+businessTailwind(state.product).trend+'</p>'+
       (active?stepper("price","판매가 (£)",4):'<p>판매가 '+money(state.price)+'</p>')+
       (active?'<div class="work-ledger"><span>이 가격의 예상 수요</span><b id="shop-demand">'+forecast().demand+'개</b></div>':'')+
-      '<h4>상품 장부</h4>'+inventoryRows()+orderDesk();
+      '<h4>상품 장부</h4><div class="stock-grid">'+inventoryRows()+'</div>'+orderDesk();
   }
   return '<div class="work-title"><h3>'+room.name+'</h3><b>Lv. '+level+' / 3</b></div>'+(tradeNews(state)?'<p class="work-ledger">'+tradeNews(state)+'</p>':'')+controls+
     '<section class="expansion-quote"><h4>사업 확장</h4><p class="facility-benefit"><b>'+room.benefit+'</b><span class="facility-rates"><span>월 운영비</span>'+[2,3].map(l=>'<span>Lv.'+l+' <strong>'+money(operatingCost({[id]:l}))+'</strong></span>').join("")+'</span></p><div id="investment-quote">'+expansionQuote(id)+'</div></section><div class="facility-actions">'+btn(level===3?"최대 규모":"증설 · "+money(room.cost*level),"expand:"+id,!active||level===3||state.fund<room.cost*level,"work-order")+(level>1?btn("설비 매각 · "+money(Math.floor(room.cost*(level-1)*.5)),"liquidate:"+id,!active):"")+"</div>";
@@ -1269,7 +1270,7 @@ function salesBooks(){
       (gain!=null?'<p class="sale-gain"><span>시설 기여 이익</span><b>'+(gain>0?"+":gain<0?"−":"")+money(Math.abs(gain))+'</b></p>':'')+'</details>';
   });
   const previous=rows.length>3?'<details class="sales-archive"><summary>이전 기록 · '+(rows.length-3)+'개월</summary>'+rows.slice(3).join("")+'</details>':'';
-  return '<details class="sales-books"><summary>월별 영업 장부</summary>'+
+  return '<details class="sales-books company-books"><summary>월별 영업 장부</summary>'+
     (rows.length?rows.slice(0,3).join("")+previous:'<p>첫 월간 결산 후 판매 내역이 기록됩니다.</p>')+'</details>';
 }
 function managementPanel(){
@@ -1331,16 +1332,21 @@ function marketPanel(){
   const exchange=g.raise?exchangeQuote(g):null;
   const reason=state.phase!=="plan"?"일정 편성 중에 구매할 수 있습니다.":state.fund<g.cost?"보유금이 부족합니다.":
     exchange?exchange.reason:after===before?g.label+" 수치가 이미 한도에 도달했습니다.":"";
-  const preview=exchange?'<div class="stat-preview"><b>'+statLabel(g.raise)+' '+state.stats[g.raise]+' → '+(state.stats[g.raise]+exchange.gain)+'</b><br>'+statLabel(g.lower)+' '+state.stats[g.lower]+' → '+Math.max(0,state.stats[g.lower]-exchangeAmount)+'<br><small>교본 전체 중 매월 1개 · 즉시 사용</small></div>':
-    '<div class="stat-preview"><div class="stat-values"><span>'+g.label+'</span><b>'+before+' → '+after+'</b><strong>'+signed(after-before)+'</strong></div>'+
-    '<div class="stat-track" aria-hidden="true"><i style="width:'+Math.min(before,after)+'%"></i><i class="stat-change" style="width:'+Math.abs(after-before)+'%"></i></div></div>';
+  function effect(label,from,to){
+    const delta=to-from;
+    return '<div class="shop-effect"><dt>'+label+'</dt><dd><span>'+from+' → '+to+'</span><b data-direction="'+Math.sign(delta)+'">'+(delta>0?"+":"")+delta+'</b></dd></div>';
+  }
+  const effects=exchange?effect(statLabel(g.raise),state.stats[g.raise],state.stats[g.raise]+exchange.gain)+
+    effect(statLabel(g.lower),state.stats[g.lower],Math.max(0,state.stats[g.lower]-exchangeAmount)):effect(g.label,before,after);
   return '<div class="lau-counter">'+framedStanding("라우","assets/npc-lau.webp","lau-standing")+
     '<div class="shop-stock"><div class="shop-purse"><span>보유금</span><strong>'+money(state.fund)+'</strong></div>'+
     '<div class="goods-list" role="group" aria-label="판매 상품">'+cards+'</div></div>'+
-    '<section class="shop-talk" aria-label="상품 설명"><h3>라우</h3><p>'+g.line+'</p>'+
-    '<div class="shop-trade">'+preview+
-    btn(money(g.cost)+" 구매","buy:"+selectedGood,Boolean(reason),"shop-buy")+'</div>'+
-    (reason?'<small>'+reason+'</small>':'')+'</section></div>';
+    '<section class="shop-talk" aria-label="라우의 대사"><h3>라우</h3><p>'+g.line+'</p></section>'+
+    '<section class="shop-purchase" aria-label="상품 구매"><header><b>'+g.name+'</b>'+
+    btn(money(g.cost)+" 구매","buy:"+selectedGood,Boolean(reason),"shop-buy")+'</header>'+
+    '<dl class="shop-effects">'+effects+'</dl>'+
+    (exchange?'<small>교본 전체 중 매월 1개 · 즉시 사용</small>':'')+
+    (reason?'<p class="shop-unavailable">'+reason+'</p>':'')+'</section></div>';
 }
 const panels={market:marketPanel,title:titlePanel,continue:coverPanel,album:coverPanel,settings:coverPanel,exit:coverPanel,plan:planPanel,status:statusPanel,estate:managementPanel,townhouse:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
 state=normalizeSave(state);
