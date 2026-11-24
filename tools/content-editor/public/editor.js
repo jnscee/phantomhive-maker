@@ -1,7 +1,7 @@
 "use strict";
 
 const $ = id => document.getElementById(id);
-const sections = {story:"스토리", events:"이벤트", dialogue:"기타 대사", score:"BGM 배정", audio:"BGM · SE", assets:"CG · 이미지", fx:"화면 효과"};
+const sections = {story:"스토리", events:"이벤트", eventScripts:"날씨 · 경영 · 경연", dialogue:"기타 대사", score:"BGM 배정", audio:"BGM · SE", assets:"CG · 이미지", fx:"화면 효과"};
 let data;
 let section = "story";
 let selected = null;
@@ -764,6 +764,11 @@ function filtered() {
       .some(term=>term.toLocaleLowerCase().includes(q)));
     return matches;
   }
+  if(section==="eventScripts") {
+    return data.groups.filter(group=>group.preview?.kind==="weather"
+      ||group.fields.some(field=>field.label==="추리 질문")
+      ||(group.preview?.kind==="fair"&&group.fields.some(field=>field.label==="상대 · 첫 인사")));
+  }
   return data.groups.filter(group=>group.section===section);
 }
 
@@ -805,7 +810,7 @@ function drawList() {
 const paneLabels={flow:"장면 흐름도",dialogue:"대사",choices:"선택지",stage:"이미지 · 소리",details:"기본 정보"};
 
 function paneFor(field){
-  if(field.type==="lines")return "dialogue";
+  if(field.type==="lines"||/^(날씨 지문$|상대 · 첫 인사$|상대 인사 ·|시엘의 답 ·|시엘 · 종목 |참여 지문 |입상 결과 |참가 결과 |추리 질문$|단서 \d+ ·|판단 \d+)/.test(field.label))return "dialogue";
   if(field.type==="choices"||/^(선택지|응답)\s*\d|마무리 버튼|^마지막 대사/.test(field.label))return "choices";
   if(field.media||field.paths||field.fixed||["cast","cue"].includes(field.type))return "stage";
   return "details";
