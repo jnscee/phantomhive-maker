@@ -329,7 +329,7 @@ run('events.find(e=>e.id==="portfolio-0-1").choices[0].effect()');assert.equal(r
 setup('state.month=25;state.stats.지성=484');
 assertOk('lessonGain("지성",440,20,25,{})===lessonGain("지성",440,20,25,{lateDispatch:true})');
 assertOk('lessonGain("지성",484,20,25)===2 && lessonGain("지성",485,20,25)===1 && lessonGain("지성",500,20,25)===0');
-assertOk('scheduleNote("study").replace(/<[^>]+>/g,"").includes("지성 +2") && statusPanel().includes("과목 실기 0/6")');
+assertOk('scheduleNote("study").replace(/<[^>]+>/g,"").includes("지성 +2") && !statusPanel().includes("과목 실기")');
 run('state.stats.지성=485;state.plan=["study","rest","walk"];const graduate=structuredClone(state);graduate.flags.lateDispatch=true;applyActivity(graduate,"study","great")');
 assertOk('graduate.stats.지성>486 && projectTraining().stats.지성===486 && state.stats.지성===485');
 run('changeStat("지성",6);state.flags.lateDispatch=true;persist();state=normalizeSave(saves.auto)');
@@ -337,7 +337,7 @@ assertOk('state.stats.지성===491 && lessonGain("지성",491,20,25)>1 && !statu
 
 // Each limit can independently trigger illness. Equality counts, and recovery has its own boundary.
 setup('state.hp=76;state.stats.체력=50;state.motivation=70;state.stress=74;updateIllness(state)');
-assertOk('!state.ill && illnessLimits(state).onset===75 && healthNotice(state).includes("발병 기준 75") && statusPanel().includes("신체 한계 75")');
+assertOk('!state.ill && illnessLimits(state).onset===75 && healthNotice(state).includes("피로") && !statusPanel().includes("신체 한계")');
 run('state.stress=75;updateIllness(state)');assertOk('state.ill');
 run('state.stress=60;state.hp=49;updateIllness(state)');assertOk('state.ill');
 run('state.hp=50;state.stress=61;updateIllness(state)');assertOk('state.ill');

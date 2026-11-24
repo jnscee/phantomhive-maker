@@ -380,17 +380,14 @@ function familyFolio(rows,history,album,extra=""){
 }
 function relapseNotice(run){
   if(!run.relapseStage)return "";
-  const care=plannedCareLevel(run);
-  if(run.phase==="plan"&&care===2)return "회복 일정 확보 · 이번 달에는 병중 결석도 정상적으로 요양합니다.";
-  const advice="스트레스가 10 이상 오르는 수업은 건강을 더 소모합니다. 건강이 50 미만이면 휴식 한 순으로는 부족할 수 있습니다. 두 순을 쉬거나 요양 한 순 또는 왕진을 선택하세요.";
-  return run.relapseStage===1?"재발 주의 · 무리한 일정이 이어지면 결석해도 건강이 더디게 회복됩니다. "+advice
-    :"지병 악화 · 지병이 깊어져 병중 결석 때도 건강이 떨어질 수 있습니다. "+advice;
+  if(run.phase==="plan"&&plannedCareLevel(run)===2)return "도련님께서 안정을 취하실 시간을 마련했습니다.";
+  return run.relapseStage===1?"도련님의 기침이 다시 잦아졌습니다.":"지병이 깊어져 도련님께서 자리를 뜨기 어렵습니다.";
 }
 function healthNotice(run){
   const relapse=relapseNotice(run);
   if(relapse)return relapse;
-  if(run.ill??run.illness)return "병중 · 수업은 요양으로 바뀌며 예약한 수업료는 전액 지불합니다. 건강 50 이상·스트레스 60 이하에서 복귀합니다.";
+  if(run.ill??run.illness)return "도련님은 요양 중입니다. 예약한 수업료는 그대로 지급됩니다.";
   const {onset}=illnessLimits(run);
-  if(run.stress>=onset-12)return "병환 주의 · 스트레스 "+run.stress+" / 발병 기준 "+onset+"입니다. 한 순 쉬면 스트레스를 낮출 수 있습니다.";
+  if(run.stress>=onset-12)return "도련님 얼굴에 피로가 짙습니다.";
   return "";
 }

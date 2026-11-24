@@ -639,7 +639,7 @@ function plannerContents() {
       '<div class="calendar-settle">'+plannerCosts(estimate)+
       '<div class="plan-balance"><span>예상 월말 자금</span><strong>'+money(estimate.balance)+'</strong></div>'+
       btn('이달 일정 실행','execute',!planReady()||estimate.blocked,'calendar-run')+'</div>'+(healthNotice(state)?'<p class="calendar-warning">'+healthNotice(state)+'</p>':'')+
-      (state.unwell>0?'<p class="calendar-warning">위독 · 이번 월말에 건강이 18 미만이면 시엘이 숨을 거둡니다.</p>':'')+
+      (state.unwell>0?'<p class="calendar-warning">시엘이 위독합니다. 당분간 곁에서 돌봐야겠습니다.</p>':'')+
       (state.arrears>0?'<p class="calendar-warning">미지급금 경고 · 이번 월말까지 잔액을 £0 이상으로 회복하세요.</p>':'')+
       (estimate.blocked?'<p class="calendar-warning">준비비가 부족합니다. 활동이나 생산량을 조정하세요.</p>':'')+'</div>';
 }
@@ -930,13 +930,6 @@ function savePanel(){
 }
 function statusPanel(){
   const predicted=state.phase==="plan"?projectTraining():state.report?.before;
-  const limits=illnessLimits(state);
-  let masteryNote="";
-  if(!state.flags.lateDispatch && stats.some(name=>state.stats[name]>=masteryThreshold-5)){
-    const passed=exams.filter(([id])=>advancedCourse(state,id)).length;
-    masteryNote='<p class="condition-detail">능력치 '+masteryThreshold+'를 넘는 일정 성장분은 한 순에 최대 1점입니다. 서로 다른 여섯 과목의 실기를 통과하고 두 번째 종합 실기를 마치면 이 한도가 풀립니다. (과목 실기 '+Math.min(6,passed)+'/6)</p>';
-  }
-  if(stats.some(name=>state.stats[name]>=450))masteryNote+='<p class="condition-detail">450부터 일정과 경연의 성장폭이 점차 줄어듭니다. 남은 순에는 부족한 능력을 함께 쓰는 과목을 편성하고, 휴식과 교재로 수업 성과를 높이세요.</p>';
   const current=[state.hp,state.stress,state.motivation];
   const properties=["hp","stress","motivation"];
   const conditions=["건강","스트레스","의욕"];
@@ -948,13 +941,12 @@ function statusPanel(){
       value+'%"></i></span><b>'+value+'</b><em class="'+((i===1?delta>0:delta<0)?"danger":"good")+'">'+(delta?signed(delta):"–")+'</em></div>';
   }).join("");
   return frame(state.ill?"시엘 상태 · 병중":"시엘 상태",'<div class="inline"><b>시엘 팬텀하이브</b><span class="small muted">'+
-    (state.phase==="plan"?"월말 예상 변동":"이번 달 변동")+'</span></div><div class="hud-group">'+(healthNotice(state)?'<p class="condition-detail">'+healthNotice(state)+'</p>':'')+meters+
-    '<p class="condition-detail">스트레스가 '+limits.onset+'에 닿으면 병이 납니다. 체력·건강으로 정해지는 신체 한계 '+limits.stamina+'와 의욕으로 정해지는 기력 한계 '+limits.spirit+' 중 낮은 쪽이 기준입니다.</p>'+
+    (state.phase==="plan"?"월말 예상 변동":"이번 달 변동")+'</span></div><div class="hud-group">'+meters+
     '</div><div class="hud-group"><div class="attributes"><div class="attribute attr-label muted"><span>능력치</span><b>현재</b><em>변동</em></div>'+
     stats.map(name=>{
       const delta=predicted?.stats?(state.phase==="plan"?predicted.stats[name]-state.stats[name]:state.stats[name]-predicted.stats[name]):0;
       return '<div class="attribute"><span>'+name+'</span><span class="gauge"><i style="width:'+(state.stats[name]/statMax(name)*100)+'%"></i></span><b>'+state.stats[name]+'</b><em>'+(delta?signed(delta):"–")+'</em></div>';
-    }).join("")+'</div>'+masteryNote+'</div>');
+    }).join("")+'</div></div>');
 }
 const businessArt={"estate": "assets/map-estate.png", "design2": "assets/map-design2.png", "library2": "assets/map-library2.png", "parlor2": "assets/map-parlor2.png", "designer": "assets/map-designer.png", "cart-candy": "assets/map-cart-candy.png", "kitchen3": "assets/map-kitchen3.png", "store2": "assets/map-store2.png", "maker": "assets/map-maker.png", "cart-sweets": "assets/map-cart-sweets.png", "cart-hamper": "assets/map-cart-hamper.png", "parlor3": "assets/map-parlor3.png", "cart-toys": "assets/map-cart-toys.png", "clerk": "assets/map-clerk.png", "works2": "assets/map-works2.png", "store3": "assets/map-store3.png", "kitchen2": "assets/map-kitchen2.png", "library3": "assets/map-library3.png", "cart-plush": "assets/map-cart-plush.png", "design3": "assets/map-design3.png", "works3": "assets/map-works3.png", "company": "assets/map-company.png", "steward": "assets/map-steward.png", "cart-game": "assets/map-cart-game.png"};
 const departments = {
