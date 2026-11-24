@@ -239,29 +239,129 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
   #impact-summary .impact-scroll p {margin:4px 0;line-height:1.2}
 }
 
-/* Leave the floral corners clear around the stock and purchase controls. */
-@media (min-width:651px) and (min-height:531px) {
-  #scene[data-mode=market] .lau-counter {
-    padding:10px 9% clamp(28px,3cqw,42px);
-    grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);
+#scene[data-mode=market] .lau-counter {
+  --shelf-card-width:6.4rem;
+  --shelf-card-gap:.42rem;
+  --shelf-inset:.5rem;
+  --shelf-scroll-gap:.45rem;
+  --shelf-scroll-width:.875rem;
+  --shelf-width:calc(3 * var(--shelf-card-width) + 2 * var(--shelf-card-gap) +
+    2 * var(--shelf-inset) + 2px + var(--shelf-scroll-gap) + var(--shelf-scroll-width));
+  position:relative;isolation:isolate;box-sizing:border-box;height:100%;min-height:18rem;
+  display:grid;grid-template-columns:minmax(0,var(--shelf-width)) minmax(0,19rem);
+  grid-template-rows:auto minmax(0,1fr) auto;justify-content:center;
+  gap:.6rem clamp(.65rem,2cqw,1.4rem);padding:.65rem 7% clamp(1.4rem,3cqw,2.6rem);
+}
+.lau-counter .shop-stock {display:contents}
+.lau-counter .shop-purse {grid-area:1/2;justify-self:end;align-self:start;margin:0}
+.lau-counter .goods-list {
+  --shelf-scroll-thumb:#d7eaff;
+  --shelf-scroll-track:#1b334e;
+  grid-area:1/1/4/2;
+  display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:.55rem;
+  width:100%;
+  min-width:0;min-height:0;overflow-y:auto;scrollbar-gutter:stable;
+  padding:0 var(--shelf-scroll-gap) .2rem 0;
+  scrollbar-color:var(--shelf-scroll-thumb) var(--shelf-scroll-track);
+  scrollbar-width:auto;
+}
+@supports selector(::-webkit-scrollbar) {
+  .lau-counter .goods-list {scrollbar-color:auto}
+  .lau-counter .goods-list::-webkit-scrollbar {width:var(--shelf-scroll-width)}
+  .lau-counter .goods-list::-webkit-scrollbar-track {
+    background:linear-gradient(90deg,#13283c,var(--shelf-scroll-track));
+    border:1px solid #93b3d4a6;border-radius:999px;
+    box-shadow:inset 0 0 4px #080f1caa;
   }
-  #scene[data-mode=market] .shop-talk {max-width:21rem;justify-self:start}
+  .lau-counter .goods-list::-webkit-scrollbar-thumb {
+    background:linear-gradient(90deg,#f2f8ff,var(--shelf-scroll-thumb) 53%,#97b9d7) padding-box;
+    border:2px solid transparent;border-radius:999px;
+  }
+  .lau-counter .goods-list::-webkit-scrollbar-thumb:hover {
+    background:linear-gradient(90deg,#fff,#e0efff) padding-box;
+  }
 }
-#scene[data-mode=market] .shop-talk {padding:6px 9px}
-#scene[data-mode=market] .shop-talk h3 {font-size:15px;line-height:1.2}
-#scene[data-mode=market] .shop-talk p {font-size:14px;line-height:1.35;margin:3px 0 5px}
-#scene[data-mode=market] .shop-talk small {font-size:12px;line-height:1.3;margin:3px 0 0}
-#scene[data-mode=market] .shop-trade {gap:4px 8px;padding-top:4px}
-#scene[data-mode=market] .shop-trade .shop-buy {width:auto;max-width:none;white-space:nowrap;padding-inline:9px}
-@media (orientation:portrait) and (max-width:650px) {
-  #scene[data-mode=market] .lau-counter {padding-inline:7%;padding-bottom:20px}
+.lau-counter .goods-section {
+  min-width:0;padding:.45rem var(--shelf-inset) .5rem;
+  background:var(--dialogue-glass);border:1px solid #c7d9ee70;border-radius:.58rem;
+  backdrop-filter:blur(5px) saturate(115%);
+  box-shadow:inset 0 1px #e1f3ff45,0 2px 8px #101d3238;
 }
-@media (orientation:landscape) and (max-height:530px) {
-  #scene[data-mode=market] .lau-counter {padding-inline:6%;padding-bottom:11px}
-  #scene[data-mode=market] .shop-talk {padding:3px 6px}
-  #scene[data-mode=market] .shop-talk p {font-size:12px;margin:2px 0}
+#panel .lau-counter .goods-section h4 {
+  margin:0 .15rem .42rem;color:#f1dbac;
+  font:700 .84rem/1.25 var(--serif);text-align:start;
 }
-@media (orientation:landscape) and (max-height:530px) {
-  #scene[data-mode=market] .lau-counter {grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
-  #scene[data-mode=market] .stat-preview {flex-basis:7rem}
+.lau-counter .goods-shelf {display:grid;grid-template-columns:repeat(3,minmax(0,var(--shelf-card-width)));gap:var(--shelf-card-gap)}
+#scene .lau-counter .goods-ticket {
+  display:grid;grid-template-areas:"icon" "name" "price";
+  grid-template-columns:minmax(0,1fr);align-content:center;justify-items:center;
+  box-sizing:border-box;width:100%;min-width:0;min-height:5.65rem;aspect-ratio:1;margin:0;
+  padding:.23rem .22rem;gap:.12rem;text-align:center;
+  color:#f1f6fb;background:linear-gradient(145deg,#b5cde33d,#7798b521 68%,#a9c7e22e);
+  border:1px solid #b8d1e870;border-radius:.36rem;
+  box-shadow:inset 0 1px #e4f3ff3b;text-shadow:0 1px 2px #14263b;
 }
+#scene .lau-counter .goods-ticket img {grid-area:icon;width:min(52%,2.75rem);height:auto;aspect-ratio:1;object-fit:contain;image-rendering:pixelated}
+#scene .lau-counter .goods-ticket b {grid-area:name;font-size:.8rem;line-height:1.12;word-break:keep-all;overflow-wrap:anywhere}
+#scene .lau-counter .goods-ticket strong {grid-area:price;font-size:.9rem;line-height:1.1;color:#d2e3f0}
+#scene .lau-counter .goods-ticket[aria-pressed="true"] {color:#fff1d5;background:linear-gradient(145deg,#765e3bdf,#473826df);border-color:#e4c389;box-shadow:inset 0 1px #ffe6b061}
+#scene .lau-counter .goods-ticket[aria-pressed="true"] strong {color:#f6dbad}
+#scene .lau-counter .goods-ticket:hover:not([aria-pressed="true"]) {background:linear-gradient(145deg,#b5cde366,#7798b543)}
+#scene .lau-counter .goods-ticket:focus-visible {outline:2px solid #e8d09c;outline-offset:-3px}
+#scene[data-mode=market] .lau-standing {
+  grid-area:1/2/4/3;inset:auto auto 0 50%;width:100%;height:95%;translate:-50% 0;
+}
+.lau-counter .shop-details {grid-area:3/2;z-index:1;display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:.45rem;min-width:0;width:min(100%,24rem);justify-self:end}
+#scene .lau-counter .shop-talk {
+  position:relative;inset:auto;box-sizing:border-box;width:100%;max-height:none;overflow:visible;
+  padding:.65rem .85rem;margin:0;text-align:start;
+  background:var(--dialogue-glass);border:1px solid #c7d9ee80;border-image:none;border-radius:12px;
+  backdrop-filter:blur(7px) saturate(115%);
+  box-shadow:inset 0 1px #effaff70,0 3px 10px #101d3245;
+  color:#eff6ff;text-shadow:0 1px 3px #061222;
+}
+#scene .lau-counter .shop-talk small {display:block;margin:0 0 .18rem;color:#bfcee4;font-size:.8rem}
+#scene .lau-counter .shop-talk p {margin:0;font:500 .94rem/1.55 var(--serif);overflow-wrap:anywhere}
+.lau-counter .shop-purchase {
+  box-sizing:border-box;width:min(100%,17.5rem);padding:.58rem .72rem;
+  background:#1c3246f2;border:1px solid #91a6b99c;border-radius:.5rem;color:#eff5fa;
+}
+.lau-counter .shop-purchase header {
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:.4rem .65rem;
+  color:#f0dfbc;text-align:start;line-height:1.3;
+}
+.lau-counter .shop-purchase header b {min-width:0;font-size:.94rem;word-break:keep-all;overflow-wrap:anywhere}
+#scene .lau-counter .shop-buy {
+  box-sizing:border-box;width:auto;min-width:max-content;max-width:none;min-height:2.15rem;margin:0;
+  padding:.25rem .62rem;white-space:nowrap;border:1px solid #adc8da;border-radius:.38rem;
+  background:#deedf5;color:#1a3044;text-shadow:none;font-size:.85rem;font-weight:700;
+}
+#scene .lau-counter .shop-buy:enabled:hover {background:#f4f9fc}
+.lau-counter .shop-effects {margin:.4rem 0 0;font-size:.83rem;font-variant-numeric:tabular-nums}
+.lau-counter .shop-effect,.lau-counter .shop-effect dd {display:flex;align-items:baseline;justify-content:space-between;gap:.45rem}
+.lau-counter .shop-effect {padding:.22rem 0 0;border-top:1px solid #aabac733}
+.lau-counter .shop-effect dt {word-break:keep-all}
+.lau-counter .shop-effect + .shop-effect {margin-top:.25rem}
+.lau-counter .shop-effect dd {margin:0;white-space:nowrap;color:#d6e2eb}
+.lau-counter .shop-effect b {min-width:3ch;text-align:center;border-radius:3px;background:#ffffff10;color:#dae3ed}
+.lau-counter .shop-effect b[data-direction="1"] {color:#acf2cd;background:#8be7bd18}
+.lau-counter .shop-effect b[data-direction="-1"] {color:#ffc3b1;background:#ee9b8d19}
+.lau-counter .shop-purchase small,.lau-counter .shop-unavailable {display:block;margin:.35rem 0 0;color:#c6d6e5;font-size:.78rem;line-height:1.4}
+.lau-counter .shop-purchase small {font-size:.68rem}
+@media(orientation:portrait) and (max-width:650px) {
+  #scene[data-mode=market] .lau-counter {
+    height:auto;min-height:100%;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;
+    gap:.4rem;padding:.45rem 8% 1.3rem;
+  }
+  #scene[data-mode=market] .sheet-head {padding:clamp(20px,6vw,34px) 12% 8px}
+  .lau-counter .shop-purse {grid-area:1/1}
+  .lau-counter .goods-list {grid-area:2/1;max-height:min(43svh,25rem)}
+  .lau-counter .shop-details {grid-area:3/1}
+  #scene[data-mode=market] .lau-standing {grid-area:1/1/4/2;width:80%}
+}
+@media(orientation:landscape) and (max-height:530px) {
+  #scene[data-mode=market] .sheet-head {padding:.18rem 12%}
+  #scene[data-mode=market] .lau-counter {padding:.25rem 6% .65rem;gap:.3rem 2.5%}
+  .lau-counter .shop-purse {padding:.1rem .5rem}
+}
+@media(pointer:coarse) {#scene .lau-counter .shop-buy {min-height:44px}}

@@ -102,8 +102,8 @@ const servants = {
 };
 const annex = {
   bedroom:{name:"침실",cost:75,desc:"개수마다 휴식·요양의 컨디션 회복 +5"},
-  garden:{name:"정원",cost:65,desc:"개수마다 산책의 스트레스 5 추가 감소"},
-  guard:{name:"경비실",cost:80,desc:"개수마다 월 손실 £8 절감 · 추가 유지비 £2를 뺀 순절감 £6"},
+  garden:{name:"정원",cost:65,effects:[["산책 스트레스","−5","개수할 때마다 추가 감소"]]},
+  guard:{name:"경비실",cost:80,effects:[["월 손실 절감","£8","개수할 때마다"],["월 순절감","£6","추가 유지비 £2 차감 후"]]},
   quarters:{name:"사용인 숙소",cost:65,desc:"월말에 영입한 사용인의 실무 숙련도가 숙소 등급만큼 성장 (월 +1 / +2 / +3)"}
 };
 const visiting = {
@@ -193,9 +193,9 @@ function weatherWorkout(id){return id==="exercise"||id==="riding";}
 
 const trainingRooms={study:"library",inquiry:"library",language:"library",etiquette:"parlor",dance:"parlor",social:"parlor"};
 const facilities = {
-  library:{name:"서재",cost:90,desc:"개수마다 서재 수업·기록 조사·라틴어의 각 성장치 +4 (피로 보정 전)"},
-  parlor:{name:"응접실",cost:100,desc:"개수마다 귀족 예법·무도·사교 수업의 각 성장치 +4 (피로 보정 전) · 첫 개수 시 명성 +1"},
-  kitchen:{name:"주방",cost:80,desc:"개수마다 월말 컨디션 회복 +6 (컨디션 상한 100)"}
+  library:{name:"서재",cost:90,effects:[["수업별 성장치","+4","서재 수업 · 기록 조사 · 라틴어","개수할 때마다 · 피로 보정 전"]]},
+  parlor:{name:"응접실",cost:100,effects:[["수업별 성장치","+4","귀족 예법 · 무도 · 사교 수업","개수할 때마다 · 피로 보정 전"],["가문 명성","+1","첫 개수 시"]]},
+  kitchen:{name:"주방",cost:80,effects:[["월말 컨디션 회복","+6","개수할 때마다 · 최대 100"]]}
 };
 const products = {
   toys:{name:"목제 완구",research:0,unit:7,demand:[13,14,15,17,19,23],price:14},

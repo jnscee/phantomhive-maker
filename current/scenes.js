@@ -21,7 +21,7 @@ function playMarkup(){
     : '<button data-action="speed">재생 ×'+speed+'</button><button data-action="skip">이 순 마치기 ›</button>';
   const weather=weatherFor(state);
   const season=weather?' <span class="season-weather" data-weather="'+state.weather+'">'+weather.name+'</span>':"";
-  return '<div class="lesson-art"><div class="lesson-plane" data-room="'+room+'"><img class="stage-room" src="'+sceneArt[room]+'" alt="">'+
+  return '<div class="lesson-art"><div class="lesson-plane" data-room="'+room+'" data-activity="'+id+'"><img class="stage-room" src="'+sceneArt[room]+'" alt="">'+
     '<div class="performer '+movement+'"'+(illustrated?' data-illustrated':'')+' data-frames="'+pose.join(" ")+'"><img src="'+actors[pose[0]]+'" alt="'+courseName(id)+' 중인 시엘"><span class="motion-object '+prop+'" aria-hidden="true">'+motionObjects[prop]+'</span></div></div></div>'+
     '<div class="stage-top"><b>'+stageNames[room]+season+'</b><span>'+slotNames[part]+' · '+courseName(id)+(outcome?' · '+outcome:'')+'</span></div>'+
     '<div class="stage-record">'+rows+'</div><div class="stage-foot"><p>'+stageText+'</p><div>'+controls+'</div></div>';
