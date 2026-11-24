@@ -336,7 +336,8 @@ function standingFit(profile,age){
   const [height,eye,chin]=standingMeasures[profile];
   const eyeLevel=referenceScale*(1-referenceEye/400)+(height-referenceHeight)/300;
   if(profile==="엘리자베스12"&&age===11){
-    return {scale:referenceScale*referenceChin/chin,window:referenceScale*1.035};
+    // Match the two portraits by their face size, then position the crown just above Ciel’s.
+    return {scale:referenceScale*referenceChin/chin*.93,window:referenceScale*1.018};
   }
   const faceRatio=profile.startsWith("엘리자베스")?1:1.08;
   const scale=Math.max(referenceScale*referenceChin*faceRatio/chin,eyeLevel/(1-eye/400));

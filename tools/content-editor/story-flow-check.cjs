@@ -65,6 +65,8 @@ async function storyEditing({page,button,label,saved,search,game,viewport}){
   await button("＋ 선택지 추가").click();
   await label("버튼 문구").fill("봉인을 살핀다");
   await label("선택 후 대사").fill("봉인이 열렸다.");
+  await label("변화하는 수치").selectOption("통찰");
+  await label("증감량").fill("3");
   await label("선택 조건").selectOption("통찰");
   await label("필요 수치 이상").fill("500");
   await button("새 장면을 만들어 연결").click();
