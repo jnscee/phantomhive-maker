@@ -531,7 +531,6 @@ function foundationWeight(month){return month<=3?3:month<=6?2:month<=12?1:0;}
 function recordStudyLink(run,id){
   if(id==="rest")return null;
   const linked=run.linkMonth===run.month&&linkedSubject(run.linkFrom,id);
-  if(linked)run.foundation=Math.min(24,(run.foundation||0)+foundationWeight(run.month));
   run.linkMonth=run.month;run.linkFrom=id;
   return linked;
 }
@@ -543,6 +542,7 @@ function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),
   const room=trainingRooms[id];
   const fieldPenalty=(categories[2][1].includes(id)&&run.stress>=55)?3:0;
   const weather=weatherWorkout(id)?weatherFor(run):null;
+  if(weather&&run.month<=12)run.foundation=Math.min(24,(run.foundation||0)+6);
   const stress=run.stress;
   const hp=run.hp;
   const worried=worriedAboutMoney(run);
