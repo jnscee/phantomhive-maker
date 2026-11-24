@@ -510,3 +510,15 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 #impact-summary .impact-scroll .affinity-rise {display:block;border:0;padding:.18em 0;color:#c4eddf;line-height:1.4}
 #impact-summary .impact-notes {display:flex;flex-wrap:wrap;gap:.25em .45em;margin-top:.35em}
 #impact-summary .impact-notes span {padding:.12em .58em;border:1px solid #a3b6cd66;border-radius:4px;color:#e6edf6;background:#273e526e;font-size:.84em}
+
+.london-board .london-growth {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:8px 0}
+.london-growth>div {padding:5px 9px;background:#1f3448;border:1px solid #8296ac75;border-radius:4px}
+.london-growth dt {font-size:.76rem;color:#cbd8e3}
+.london-growth dd {display:flex;align-items:baseline;gap:.45em;margin:2px 0 0;color:#f1f6fa;font-size:.88rem}
+.london-growth dd b,.london-board .tile strong .london-value[data-change="1"] {color:#a4ebce}
+.london-board .tile strong .london-value[data-change="0"] {color:#c6d1df}
+.london-board .tile strong .london-value[data-change="-1"] {color:#ffb4a8}
+.london-board .tile strong .london-value {font:inherit}
+#panel .london-board .work-figures,#panel .london-board .london-book {margin:6px clamp(10px,2vw,26px);order:0}
+#panel .london-board .london-book {padding:5px 10px}
+#panel .london-board .london-map {order:1}

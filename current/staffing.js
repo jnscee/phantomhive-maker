@@ -90,23 +90,24 @@ function londonBoard(){
   const records=(state.london?.book||[]).slice().reverse().map(entry=>
     '<article class="london-month"><h4>'+monthText(entry.month)+'</h4><p>'+statResultText(escapeHTML(entry.summary))+'</p>'+
     (entry.story?'<p>'+escapeHTML(entry.story)+'</p>':'')+'</article>').join("");
+  const effects=[["팬텀사 소매 수요",power.salon,"개"],["시엘 컨디션",power.kitchen,""],["시엘 통찰",power.post,""]];
   const figures=tile("배치 인원",Object.values(teams).flat().length+" / "+ids.length+"명")+
-    tile("팬텀사 소매 수요","+"+power.salon+"개")+tile("시엘 컨디션","+"+power.kitchen)+tile("시엘 통찰","+"+power.post);
+    effects.map(([label,value,unit])=>tile(label,'<span class="london-value" data-change="'+Math.sign(value)+'">'+(value>0?"+":"")+value+unit+'</span>')).join("");
   const names=teams[selectedLondonRoom].map(id=>londonHosts[id].name).join(" · ")||"배치된 인원 없음";
   const requestRooms=request.rooms.map(id=>'<li><span>'+londonRooms[id].name+'</span><b>'+
     (teams[id].length?teams[id].map(person=>londonHosts[person].name).join(" · "):"미배치")+'</b></li>').join("");
   return '<div class="property-grid staff-board london-board"><div class="property-grounds">'+
-    '<div class="property-map staff-map london-map" role="group" aria-label="런던 타운하우스 근무지"><img alt="" class="map-base" src="assets/map-london.webp">'+roomButtons+'</div>'+
     '<div class="work-figures" aria-label="타운하우스 배치 효과">'+figures+'</div>'+
     '<details class="sales-books london-book"><summary>런던 운영 일지</summary>'+
-    (records||'<p>첫 근무를 마치면 여기에 결과가 기록됩니다.</p>')+'</details></div>'+
-    '<section class="property-desk london-desk" aria-label="선택 근무지와 인원 배치"><div class="work-title"><h3>'+room.name+'</h3><b>'+teams[selectedLondonRoom].length+'명 배치</b></div>'+
+    (records||'<p>첫 근무를 마치면 여기에 결과가 기록됩니다.</p>')+'</details>'+
+    '<div class="property-map staff-map london-map" role="group" aria-label="런던 타운하우스 근무지"><img alt="" class="map-base" src="assets/map-london.webp">'+roomButtons+'</div>'+
+    '</div><section class="property-desk london-desk" aria-label="선택 근무지와 인원 배치"><div class="work-title"><h3>'+room.name+'</h3><b>'+teams[selectedLondonRoom].length+'명 배치</b></div>'+
     '<dl class="facility-data london-duty-info" aria-live="polite"><dt>담당 업무</dt><dd>'+room.work+'</dd><dt>담당자</dt><dd>'+names+'</dd>'+
     '<dt>배치 효과</dt><dd>'+room.effect+' +'+power[selectedLondonRoom]+room.unit+'</dd></dl>'+
     '<h4>이번 달 배치</h4>'+
     (!ids.length?'<p>현재 배치할 인원이 없습니다.</p>':'<p>'+(locked?'다음 달 계획에서 배치를 바꿀 수 있습니다.':'인원을 선택하거나 끌어서 원하는 방에 배치하세요. 같은 방의 업무 효과는 합산됩니다.')+'</p>')+
     (ids.length?'<div class="london-roster">'+roster+'</div><button type="button" class="london-off" data-duty="off" '+(locked?'disabled':'')+'>대기 배치</button>'+
-      '<p>근무한 달마다 숙련도 +1. 숙련도 10마다 업무 효과 +1.</p>':'')+
+      '<dl class="london-growth"><div><dt>근무 1개월</dt><dd>숙련도 <b>+1</b></dd></div><div><dt>숙련도 10마다</dt><dd>업무 효과 <b>+1</b></dd></div></dl>':'')+
     '<section class="expansion-quote london-request"><div class="work-title"><h4>'+request.name+'</h4><b>'+ (ready?'준비 완료':'준비 중')+'</b></div>'+
     '<ul>'+requestRooms+'</ul><p>두 근무지를 모두 맡기면 월말에 가문 명성 +1</p></section></section></div>';
 }
