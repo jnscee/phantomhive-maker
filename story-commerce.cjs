@@ -558,6 +558,18 @@ run('state.phase="plan";state.plan=["walk","walk","walk"];state.visit="none";sta
 assertOk('state.salesBook.at(-1).delivery.shipped===3&&actualBudget().includes("라우 상점 재고 매각")&&!actualBudget().includes("내역 외 잔액 변동")');
 run('startAccounts(state);shopMode="buy"');
 assertOk("state.accounts.lauSales===undefined");
+// Used exchange books retain their benefit after resale, and recovery items cannot be sold.
+setup('state=normalizeSave(state);tab="market";shopMode="buy";state.stress=40;handleAction("buy:tea",null,true);handleAction("buy:birds",null,true)');
+assertOk('state.fund===444&&state.usedBooks.birds===1&&!state.usedBooks.tea&&state.stats.매력===14&&state.lauPurchases===2');
+run('state=normalizeSave(saves.auto);shopMode="sell";selectedStock="birds"');
+assertOk('lauSaleQuote(state,"birds").unit===22&&!lauSaleQuote(state,"tea")&&marketPanel().includes("사용한 교본")');
+run('handleAction("shop-sell:birds:2",null,true);handleAction("shop-sell:birds:1",null,true);handleAction("shop-sell:birds:1",null,true);handleAction("buy:birds",null,true)');
+assertOk('state.fund===466&&!state.usedBooks.birds&&state.accounts.lauBookSales===22&&state.stats.매력===14&&state.lauPurchases===2');
+run('state.plan=["walk","walk","walk"];state.visit="none";state.qty=0;execute();settleMonth()');
+assertOk('actualBudget().includes("라우 상점 중고 교본 매각")&&!actualBudget().includes("내역 외 잔액 변동")');
+run('shopMode="buy";const beforeSecondhand=initial();delete beforeSecondhand.usedBooks');
+assertOk('Object.keys(normalizeSave(beforeSecondhand).usedBooks).length===0');
+
 // Charge excess freight exactly once, including wholesale shipments, and honor a pre-update signed quote.
 setup('state.month=26;state.qty=21;state.price=10;state.visit="town";state.plan=["walk","walk","walk"];state.order={id:"toys",qty:5,rate:14,due:26}');
 assertOk('forecast().sold===16 && forecast().trade.shipped===5 && forecast().trade.freight===15');
