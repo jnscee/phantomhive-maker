@@ -1131,16 +1131,16 @@ function workerSprite(role,position){
 }
 function propertyMap(company){
   const rooms=company?departments:estateRooms;
-  const visibleFittings=new Set(["design3","works3","store2","store3"]);
   const levels=company?state.shop:{...state.level,...state.annex};
   let additions="",pins="";
   for(const [id,room] of Object.entries(rooms)){
     const [x,y]=mapPositions[id]||dutyPins[id];
-    if(levels[id]>1){
-      for(let tier=2;tier<=levels[id];tier++){
-        const offset=tier===2?-10:11;
-        if(visibleFittings.has(id+tier))additions+='<img alt="" class="map-fitting" src="'+businessArt[id+tier]+'" style="left:'+(x+offset)+'%;top:'+(y-5)+'%">';
+    if(company){
+      const sparkPositions=[[3,-2],[-5,1],[8,4]];
+      for(const [dx,dy] of sparkPositions.slice(0,levels[id])){
+        additions+='<i class="map-award" aria-hidden="true" style="left:'+(x+dx)+'%;top:'+(y+dy)+'%"></i>';
       }
+    }else if(levels[id]>1){
       additions+='<i class="map-award award-'+levels[id]+'" aria-hidden="true" style="left:'+x+'%;top:'+y+'%"></i>';
     }
     const selected=id===(company?selectedDepartment:selectedRoom);
