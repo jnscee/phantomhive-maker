@@ -274,7 +274,7 @@ html:is([data-fair-preview],[data-story-preview]) :is(#system-menu,#mobile-menu)
 #picker .fair-dialog .invite-intro {
   margin:0;color:#30261f;font-size:.9375rem;line-height:1.65;
   word-break:keep-all;overflow-wrap:anywhere;
-  background:linear-gradient(90deg,#fff9eb60,#fff9eb38);text-shadow:none;
+  background:none;text-shadow:none;
 }
 .schedule-strip {display:grid;grid-template-columns:1fr 1fr 1.35fr;border:1px solid #9cb0bf77;border-radius:4px;overflow:hidden}
 .schedule-strip>* {text-align:center;padding:.25rem;color:#605345;font-size:.9rem}
