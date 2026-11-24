@@ -84,7 +84,10 @@ const bgmAssignments={
   "event:merchantTwelfthParcel": "test",
   "event:merchantCatalogue": "test",
   "event:merchantBorrowedCrest": "test",
-  "event:merchantBenefitShow": "test"
+  "event:merchantBenefitShow": "test",
+  "event:season-4": "companyFair",
+  "event:season-16": "companyFair",
+  "event:season-28": "companyFair"
 };
 const activityTrackDefaults={etiquette:"etiquette",dance:"dance",music:"violin","현장 실습":"business","휴식":"manor"};
 function activityTrack(id){
