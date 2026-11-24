@@ -1703,7 +1703,7 @@ html[data-game-motion=reduced] :is(.company-worker img,.duty-walker,.duty-walker
 #season-bulletin dd {margin:0;text-align:right}
 .cover-notice {
   display:grid; justify-items:center; max-width:34em; margin:clamp(10px,1.5cqw,20px) auto 0;
-  color:rgb(211 220 230 / 72%); font-size:clamp(.65625rem,.92cqw,.8rem); line-height:1.45; word-break:keep-all;
+  color:rgb(211 220 230 / 72%); font-size:clamp(.59375rem,.84cqw,.725rem); line-height:1.45; word-break:keep-all;
 }
 .cover-notice strong {margin-bottom:2px; color:rgb(239 219 182 / 80%); font-size:1.08em}
 .cover-actions {display:grid; width:100%; gap:3px}
