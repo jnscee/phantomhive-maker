@@ -252,13 +252,24 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
   grid-template-rows:auto minmax(0,1fr) auto;justify-content:center;
   gap:.6rem clamp(.65rem,2cqw,1.4rem);padding:.65rem 7% clamp(1.4rem,3cqw,2.6rem);
 }
-.lau-counter .shop-stock {display:contents}
+.lau-counter .shop-modes {
+  grid-area:1/1;z-index:1;display:flex;gap:.25rem;justify-self:start;align-self:start;
+  padding:.2rem;border:1px solid #c7d9ee70;border-radius:.5rem;background:var(--dialogue-glass);
+}
+#scene .lau-counter .shop-modes button,#scene .lau-counter .shop-sale-qty button {
+  width:auto;min-width:2.4rem;min-height:2rem;margin:0;padding:.18rem .52rem;
+  font-size:.81rem;line-height:1.2;white-space:nowrap;
+}
+#scene .lau-counter .shop-modes button[aria-pressed="true"] {
+  border-color:#e4c389;background:#5e4d35;color:#fff1d5;
+}
+.lau-counter .shop-empty {margin:.3rem .15rem;color:#d6e2eb;font-size:.84rem}
 .lau-counter .shop-purse {grid-area:1/2;justify-self:end;align-self:start;margin:0}
-.lau-counter .goods-list {
+#scene[data-mode=market] .lau-counter .goods-list {
   --shelf-scroll-thumb:#d7eaff;
   --shelf-scroll-track:#1b334e;
-  grid-area:1/1/4/2;
-  display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:.55rem;
+  grid-area:2/1/4/2;
+  display:grid;grid-template-columns:minmax(0,1fr);grid-auto-rows:max-content;align-content:start;gap:.55rem;
   width:100%;
   min-width:0;min-height:0;overflow-y:auto;scrollbar-gutter:stable;
   padding:0 var(--shelf-scroll-gap) .2rem 0;
@@ -266,7 +277,7 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
   scrollbar-width:auto;
 }
 @supports selector(::-webkit-scrollbar) {
-  .lau-counter .goods-list {scrollbar-color:auto}
+  #scene[data-mode=market] .lau-counter .goods-list {scrollbar-color:auto}
   .lau-counter .goods-list::-webkit-scrollbar {width:var(--shelf-scroll-width)}
   .lau-counter .goods-list::-webkit-scrollbar-track {
     background:linear-gradient(90deg,#13283c,var(--shelf-scroll-track));
@@ -348,6 +359,12 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
 .lau-counter .shop-effect b[data-direction="-1"] {color:#ffc3b1;background:#ee9b8d19}
 .lau-counter .shop-purchase small,.lau-counter .shop-unavailable {display:block;margin:.35rem 0 0;color:#c6d6e5;font-size:.78rem;line-height:1.4}
 .lau-counter .shop-purchase small {font-size:.68rem}
+.lau-counter .shop-sale header strong {font-size:.8rem;white-space:nowrap}
+.lau-counter .shop-sale-qty {
+  display:grid;grid-template-columns:auto minmax(2.5rem,1fr) auto auto;align-items:center;gap:.27rem;margin:.45rem 0;
+}
+.lau-counter .shop-sale-qty output {text-align:center;font-size:.86rem;font-variant-numeric:tabular-nums}
+#scene .lau-counter .shop-sell {width:100%;margin-top:.32rem}
 @media(orientation:portrait) and (max-width:650px) {
   #scene[data-mode=market] .lau-counter {
     height:auto;min-height:100%;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;
@@ -355,7 +372,7 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
   }
   #scene[data-mode=market] .sheet-head {padding:clamp(20px,6vw,34px) 12% 8px}
   .lau-counter .shop-purse {grid-area:1/1}
-  .lau-counter .goods-list {grid-area:2/1;max-height:min(43svh,25rem)}
+  #scene[data-mode=market] .lau-counter .goods-list {grid-area:2/1;max-height:min(43svh,25rem)}
   .lau-counter .shop-details {grid-area:3/1}
   #scene[data-mode=market] .lau-standing {grid-area:1/1/4/2;width:80%}
 }

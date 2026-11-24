@@ -303,6 +303,7 @@ function settleMonth(){
   state.log.push(products[product].name+" "+sold+"개 소매 · 매출 "+money(sold*receipt)+" / 생산비 "+money(cost)+" / 재고 "+state.stock[product]+"개");
   state.log.push("저택 유지·채무 상환 "+money(bills));
   if(trade?.contribution)state.log.push("수익 분담금 "+money(trade.contribution));
+  if(state.accounts.lauSales)state.log.push("라우 상점 재고 매각 "+money(state.accounts.lauSales));
   if(trade?.order)state.log.push(tradeBuyer(trade.order)+" 납품 "+trade.shipped+"/"+trade.order.qty+"개 · "+money(trade.wholesale)+(trade.short?" · 미납 부담금 "+money(trade.penalty):""));
   if(state.flags.market&&state.marketMonth!==state.month){state.flags.market=false;state.renown+=1;}
   scheduleSnakeVisit(state);
@@ -1334,6 +1335,62 @@ const marketGoods={
   rope:{name:"선원의 매듭줄",cost:44,icon:"exercise",raise:"체력",lower:"경영",line:"짐꾼이 묶은 매듭을 직접 풀어 보겠어? 오늘 장부는 내가 봐 줄까?"}
 };
 let selectedGood="tea";
+let shopMode="buy",selectedStock=null,stockQuantity=1;
+function lauStockQuote(run,id){
+  const stock=run.stock[id]||0;
+  const reserved=run.order?.id===id&&run.order.due>=run.month?Math.min(stock,run.order.qty):0;
+  return {stock,reserved,available:stock-reserved,unit:Math.floor(products[id].unit/2)};
+}
+function shopPurse(){
+  return '<div class="shop-purse"><span>보유금</span><strong>'+money(state.fund)+'</strong></div>';
+}
+function shopModes(){
+  return '<div class="shop-modes" role="group" aria-label="거래 방식">'+[["buy","구매"],["sell","판매"]].map(([id,label])=>
+    '<button type="button" data-action="shop-mode:'+id+'" aria-pressed="'+(shopMode===id)+'">'+label+'</button>').join("")+'</div>';
+}
+function shopDialogue(line){
+  return '<section class="shop-talk dialogue" aria-label="라우의 대사"><small>라우</small><p>'+line+'</p></section>';
+}
+function saleQuantity(available){
+  return Math.max(1,Math.min(stockQuantity,available));
+}
+function lauSalesPanel(){
+  const stocked=Object.keys(products).filter(id=>state.stock[id]>0);
+  if(!stocked.includes(selectedStock))selectedStock=stocked.find(id=>lauStockQuote(state,id).available>0)??stocked[0]??null;
+  const cards=stocked.map(id=>{
+    const {available,unit}=lauStockQuote(state,id);
+    return '<button type="button" class="goods-ticket" data-action="shop-stock:'+id+'" aria-pressed="'+(selectedStock===id)+'">'+
+      '<b>'+products[id].name+'</b><img src="'+businessArt["cart-"+id]+'" alt=""><strong>'+
+      (available?money(unit)+' · '+available+'개':'납품 예약')+'</strong></button>';
+  }).join("");
+  const details=selectedStock?lauSaleDetails(selectedStock):"";
+  return '<div class="lau-counter">'+framedStanding("라우","assets/npc-lau.webp","lau-standing")+shopModes()+shopPurse()+
+    '<div class="goods-list" role="group" aria-label="매각할 팬텀사 재고"><section class="goods-section"><h4>팬텀사 창고</h4>'+
+    (cards?'<div class="goods-shelf">'+cards+'</div>':'<p class="shop-empty">창고에 남은 상품이 없습니다.</p>')+
+    '</section></div><div class="shop-details">'+shopDialogue("창고에 남는 물건이 있으면 가져와. 여기서 현금으로 쳐 줄게.")+
+    details+'</div></div>';
+}
+function lauSaleDetails(id){
+  const {stock,reserved,available,unit}=lauStockQuote(state,id);
+  const qty=saleQuantity(available);
+  const locked=state.phase!=="plan";
+  const reason=locked?"일정 편성 중에 판매할 수 있습니다.":available?"":"납품에 예약된 재고만 남았습니다.";
+  return '<section class="shop-purchase shop-sale" aria-label="재고 판매"><header><b>'+products[id].name+'</b><strong>개당 '+money(unit)+'</strong></header>'+
+    '<small>창고 '+stock+'개'+(reserved?' · 납품 예약 '+reserved+'개':'')+'</small>'+
+    (available?'<div class="shop-sale-qty" role="group" aria-label="판매 수량">'+
+    '<button type="button" data-action="shop-qty:down" aria-label="판매 수량 줄이기"'+(locked||qty<=1?' disabled':'')+'>−</button>'+
+    '<output aria-live="polite">'+qty+'개</output>'+
+    '<button type="button" data-action="shop-qty:up" aria-label="판매 수량 늘리기"'+(locked||qty>=available?' disabled':'')+'>+</button>'+
+    btn("전부","shop-qty:all",locked||qty>=available)+'</div>':'')+
+    btn(available?money(unit*qty)+"에 판매":"판매", "shop-sell:"+id+":"+qty,Boolean(reason),"shop-buy shop-sell")+
+    (reason?'<p class="shop-unavailable">'+reason+'</p>':'')+'</section>';
+}
+function redrawShop(){
+  const panel=$("panel"),scroll=panel.scrollTop,itemsScroll=panel.querySelector(".goods-list")?.scrollTop||0;
+  panel.innerHTML=marketPanel();
+  panel.querySelector(".goods-list").scrollTop=itemsScroll;
+  panel.scrollTop=scroll;
+}
 const exchangeAmount=6;
 function exchangeQuote(g){
   const current=state.stats[g.raise];
@@ -1345,6 +1402,7 @@ function exchangeQuote(g){
   return {gain,reason};
 }
 function marketPanel(){
+  if(shopMode==="sell")return lauSalesPanel();
   const sections=[["hp","컨디션 회복"],["stress","스트레스 완화"],["motivation","의욕 회복"],["exchange","능력치 교환 교본"]];
   const cards=sections.map(([purpose,label])=>{
     const items=Object.entries(marketGoods).filter(([,g])=>(g.raise?"exchange":g.stat)===purpose);
@@ -1363,14 +1421,13 @@ function marketPanel(){
   const effects=exchange?effect(statLabel(g.raise),state.stats[g.raise],state.stats[g.raise]+exchange.gain)+
     effect(statLabel(g.lower),state.stats[g.lower],Math.max(0,state.stats[g.lower]-exchangeAmount)):effect(g.label,before,after);
   return '<div class="lau-counter">'+framedStanding("라우","assets/npc-lau.webp","lau-standing")+
-    '<div class="shop-stock"><div class="shop-purse"><span>보유금</span><strong>'+money(state.fund)+'</strong></div>'+
-    '<div class="goods-list" role="group" aria-label="판매 상품">'+cards+'</div></div>'+
-    '<section class="shop-talk" aria-label="라우의 대사"><h3>라우</h3><p>'+g.line+'</p></section>'+
+    shopModes()+shopPurse()+'<div class="goods-list" role="group" aria-label="판매 상품">'+cards+'</div>'+
+    '<div class="shop-details">'+shopDialogue(g.line)+
     '<section class="shop-purchase" aria-label="상품 구매"><header><b>'+g.name+'</b>'+
     btn(money(g.cost)+" 구매","buy:"+selectedGood,Boolean(reason),"shop-buy")+'</header>'+
     '<dl class="shop-effects">'+effects+'</dl>'+
     (exchange?'<small>교본 전체 중 매월 1개 · 즉시 사용</small>':'')+
-    (reason?'<p class="shop-unavailable">'+reason+'</p>':'')+'</section></div>';
+    (reason?'<p class="shop-unavailable">'+reason+'</p>':'')+'</section></div></div>';
 }
 const panels={market:marketPanel,title:titlePanel,continue:coverPanel,album:coverPanel,settings:coverPanel,exit:coverPanel,plan:planPanel,status:statusPanel,estate:managementPanel,townhouse:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
 state=normalizeSave(state);
@@ -1775,13 +1832,24 @@ function handleAction(key,rect,confirmed=false){
     return;
   }
   if(action==="open-guide"){showGuidePage(0);return;}
-  if(action==="goods"&&tab==="market"&&Object.hasOwn(marketGoods,id)){
-    selectedGood=id;
-    const panel=$("panel"),scroll=panel.scrollTop,itemsScroll=panel.querySelector(".goods-list").scrollTop;
-    panel.innerHTML=marketPanel();
-    panel.querySelector(".goods-list").scrollTop=itemsScroll;
-    panel.scrollTop=scroll;
-    focusAction(key);respond("choose",rect);return;
+  if(tab==="market"){
+    if(action==="shop-mode"&&["buy","sell"].includes(id)){
+      shopMode=id;stockQuantity=1;redrawShop();focusAction(key);return;
+    }
+    if(action==="goods"&&shopMode==="buy"&&Object.hasOwn(marketGoods,id)){
+      selectedGood=id;redrawShop();focusAction(key);respond("choose",rect);return;
+    }
+    if(action==="shop-stock"&&shopMode==="sell"&&Object.hasOwn(products,id)&&state.stock[id]>0){
+      selectedStock=id;stockQuantity=1;redrawShop();focusAction(key);return;
+    }
+    if(action==="shop-qty"&&shopMode==="sell"&&state.phase==="plan"&&selectedStock){
+      const {available}=lauStockQuote(state,selectedStock);
+      if(!available||!["down","up","all"].includes(id))return;
+      stockQuantity=id==="all"?available:Math.max(1,Math.min(available,saleQuantity(available)+(id==="up"?1:-1)));
+      redrawShop();
+      const next=stockQuantity===1&&id==="down"?"shop-qty:up":stockQuantity===available?"shop-sell:"+selectedStock+":"+stockQuantity:key;
+      focusAction(next);return;
+    }
   }
   if(action==="motion"&&(tab==="save"||tab==="settings")&&Object.hasOwn(motionLabels,id)){
     motionMode=id;try{localStorage.setItem(motionKey,id);}catch{}
@@ -2008,7 +2076,19 @@ function handleAction(key,rect,confirmed=false){
     message="불러오기 완료";
   }else{
     if(state.phase!=="plan")return;
-    if(action==="buy"){
+    if(action==="shop-sell"){
+      if(tab!=="market"||shopMode!=="sell"||id!==selectedStock||!Object.hasOwn(products,id))return;
+      const qty=Number(value),{stock,available,unit}=lauStockQuote(state,id);
+      if(!Number.isSafeInteger(qty)||qty<1||qty>available)return;
+      state.stock[id]=stock-qty;
+      // Sell standard stock first, retaining any remaining fine items.
+      state.fineStock[id]=Math.min(state.fineStock[id]||0,state.stock[id]);
+      const proceeds=qty*unit;
+      state.fund+=proceeds;
+      state.accounts.lauSales=(state.accounts.lauSales||0)+proceeds;
+      stockQuantity=1;
+      message=products[id].name+" "+qty+"개 판매 · "+money(proceeds)+" 입금";
+    }else if(action==="buy"){
       const g=marketGoods[id];
       if(tab!=="market"||!Object.hasOwn(marketGoods,id)||state.fund<g.cost)return;
       if(g.raise){
@@ -2079,7 +2159,7 @@ function handleAction(key,rect,confirmed=false){
   const keepScroll=action==="activity"||action==="visit"||tab==="company"||tab==="estate"||tab==="townhouse"||tab==="staffing";
   render(!keepScroll);
   if(keepScroll)$("panel").scrollTop=scroll;
-  focusAction(key);
+  focusAction(action==="shop-sell"?(selectedStock?"shop-stock:"+selectedStock:"shop-mode:sell"):key);
   announce(message);
   let highlight=null;
   if(action==="activity")highlight='[data-action="pick:'+id+'"]';
