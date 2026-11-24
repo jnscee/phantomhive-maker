@@ -1689,6 +1689,11 @@ html[data-game-motion=reduced] :is(.company-worker img,.duty-walker,.duty-walker
   font:normal clamp(25px,4.55cqw,68px)/1.03 Georgia,serif; letter-spacing:.035em;
 }
 .cover-name p {margin:0; color:#e0e6ed; font-size:clamp(14px,1.28cqw,19px); letter-spacing:.06em}
+.cover-notice {
+  display:grid; justify-items:center; max-width:34em; margin:clamp(10px,1.5cqw,20px) auto 0;
+  color:#d3dce6; font-size:clamp(12px,1.08cqw,15px); line-height:1.5; word-break:keep-all;
+}
+.cover-notice strong {margin-bottom:2px; color:#efdbb6; font-size:1.08em}
 .cover-actions {display:grid; width:100%; gap:3px}
 #scene .cover-actions button {
   width:100%; min-width:0; min-height:44px; border:1px solid transparent; border-bottom-color:#cdbb9f5c;

@@ -160,6 +160,17 @@ async function check(browserType){
       page.setDefaultTimeout(12000); console.log(browserType.name(),viewport.width);
       await openGame(page);
       assert.ok(await page.locator('.book-cover').isVisible());
+      const notice=page.locator('.cover-notice');
+      assert.match(await notice.innerText(),/『흑집사』 비공식 2차 창작 팬게임/);
+      assert.match(await notice.innerText(),/원작과 다른 IF 세계관/);
+      assert.match(await notice.innerText(),/허구이며 현실과 무관합니다/);
+      const coverFits=await notice.evaluate(el=>{
+        const bounds=document.querySelector('#panel').getBoundingClientRect();
+        const note=el.getBoundingClientRect();
+        return note.left>=bounds.left-1 && note.right<=bounds.right+1 &&
+          note.top>=bounds.top-1 && note.bottom<=bounds.bottom+1;
+      });
+      assert.ok(coverFits,'The fan game notice must be visible when the cover opens');
       const fairPage=await browser.newPage({viewport});
       await fairPage.goto(base+'?fair-preview=newYear-1886&entry=1');
       assert.equal(await fairPage.locator('.duel-plate b').first().textContent(),'에드워드 미드포드');
