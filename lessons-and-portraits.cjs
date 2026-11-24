@@ -133,7 +133,12 @@ async function checkMonthlyScreens(page){
   assert.equal(buttons.length,2);
   assert.ok(Math.abs(buttons[0][0]-buttons[1][0])<=1&&buttons[0][1]===buttons[1][1]);
   await page.locator('#picker .panel-body [data-action="close"]').click();
-  assert.equal(await page.locator("#money .sign-mark").evaluate(el=>getComputedStyle(el,"::after").transform),"matrix(0.85, 0, 0, 0.85, 0, 0)");
+  await page.evaluate(()=>{tab="home";render();});
+  const mark=await page.locator("#money .sign-mark").evaluate(el=>{
+    const glyph=getComputedStyle(el,"::after");
+    return [parseFloat(glyph.width),parseFloat(glyph.height)];
+  });
+  assert.ok(mark.every(size=>Math.abs(size-13.6)<.1),JSON.stringify(mark));
 }
 
 async function check(browserType){
