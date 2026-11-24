@@ -11,11 +11,12 @@ function titlePanel() {
     btn(gameString("continue")+(canContinue?"":'<small>'+gameString("noSave")+'</small>'),"cover:continue",!canContinue) +
     btn(gameString("album"),"cover:album") + btn(gameString("settings"),"cover:settings") +
     btn(gameString("exit"),"cover:exit");
-  return '<article class="book-cover"><header class="cover-name"><small>1886 — 1888</small>'+
+  return '<div><article class="book-cover"><header class="cover-name"><small>1886 — 1888</small>'+
     '<h2 lang="en" aria-label="Earl Phantomhive Maker"><span>Earl</span> <span>Phantomhive</span> <span>Maker</span></h2><p>'+gameString("title")+'</p>'+
     '<aside class="cover-notice" aria-labelledby="fan-game-notice"><strong id="fan-game-notice">'+gameString("fanGame")+'</strong>'+
-    '<span>'+gameString("alternateStory")+'</span><span>'+gameString("fictionNotice")+'</span><span style="margin-block-start:1lh">'+gameString("aiNotice")+'</span></aside></header>'+
-    '<nav class="cover-actions" aria-label="'+gameString("menu")+'">'+actions+languageControls(true)+'</nav></article>';
+    '<span>'+gameString("alternateStory")+'</span><span>'+gameString("fictionNotice")+'</span></aside></header>'+
+    '<nav class="cover-actions" aria-label="'+gameString("menu")+'">'+actions+languageControls(true)+'</nav></article>'+
+    '<footer class="cover-notice" style="max-width:none;text-align:center">'+gameString("aiNotice")+'</footer></div>';
 }
 function coverPanel() {
   let body;
