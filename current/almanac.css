@@ -580,7 +580,24 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 .property-desk .stock-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:.45rem}
 .property-desk .stock-grid .stock-entry {min-width:0;margin:0;padding:.42rem .55rem;overflow-wrap:anywhere}
 .stock-grid .stock-entry header {gap:.1rem .35rem}
+/* Product marks in the sales ledger. */
+.stock-entry .stock-name {display:inline-flex;align-items:center;gap:.3rem;min-width:0;word-break:keep-all}
+.stock-name i {width:20px;height:20px;flex:none;background-size:contain;background-repeat:no-repeat;image-rendering:pixelated}
+.stock-icon-toys {background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAiElEQVR4nGNgoDVghDGMtQ3/w9hnr55nxK6cgYEJmaMfGYmhwFjb8D+yYUwYKrCALfUmcDYLsoTf530Mfj7iDM0MCBPRASPM2lofcbigubEshkKfxjMMZ6+eZ2TBkGFgYDh59jFO58E1NG95iVMRMmBiYEAEIyyUzl49z4hNDEM3cvDhEyMJAACycCgboKxycgAAAABJRU5ErkJggg==)}
+.stock-icon-sweets {background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAiElEQVR4nGNgoDVgRBdIdTD4j8yffeACihoWdIUd1R4MDAwMDEKqGgzvbt9gYGBg+I+skRGmGKbwzL5zDCZORhhOqWjdwTD7wAVGJpiAkKoGAwMDA4riM/vOYWiEa4Baj6IQm01M6IqQFcLEkOVYEB4y+M/AgGnymX3nGNYcf4XqaWRAKFhpDwAYITe+gT9hPQAAAABJRU5ErkJggg==)}
+.stock-icon-game {background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAbElEQVR4nGNgoDVghDEcTB3+41N44PQBRgYGBgYWZMH185IZGBgYGCaW7GBgYGBgyO/xYGBgYGAITJoLV8NEqpNQbEA3GcZHBpTZgG4yjH8AyQ8oGpbPXcvAwMDAIKaJysdpw6qjH0h1IQ0AADBFG1khVbkPAAAAAElFTkSuQmCC)}
+.stock-icon-plush {background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAl0lEQVR4nGNgIBeE2pr/D7U1/09InAUmmOCmChND0YQsvvrwSUZGZJOQJFHAgl23GVYfPsnIwMDAwIRNEhsbxUnoTjBxtsNqEwMDAwMjMgfmrMvHfjIwMDAw6FqxozgHRQOyH2A2nNl7CLsfYIqxuXnBrtsMCW6qDLCgZWFgYIDphgcnzGRkTVhDCeakBbtuw23DFdREAwBNLkkzQoNBjgAAAABJRU5ErkJggg==)}
+.stock-icon-candy {background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAiElEQVR4nGNgGJwg0y32f6Zb7H9i+Cwwwe6SVIYQWZn/ax4/YeguSYUJ/w+RlWEwD/dkKO2ZzQDXMH3XYkaYJAwwabIxwPilPbNhahiYsDmRSZON4d/1X1idzwRzI5IzGI43bGQ4uXI7w5rHT+DOxfADsrUMUMnpuxYzTmdgYMh8/AQeAIMQAAAhkDpJ7ae5ygAAAABJRU5ErkJggg==)}
+.stock-icon-hamper {background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAArklEQVR4nGNgIBEwoguEOFv8R+av2XsCQw2K4lUlPnANq0p8/qMbgNd0bGKMyBJh/BoQkz/eYOgrtmdgYGBgOLHvKsOq82/gTmOEKYYpgIETc14yWKSIw/lFvQcZ1uw9wQjXgO6UMH4NhlUfb6CIwTXAnWQowmDhpI1iA7qTmJBNsHDSZjix7yoDuhgyYEG2joGB4X+YoQhUkwiGZhQNMLDq/Bso6w0Dw3kM9aQDACfyS3WsAjusAAAAAElFTkSuQmCC)}
 .stock-grid .stock-entry header span {white-space:nowrap}
 .stock-grid .stock-entry .ledger-figures {grid-template-columns:repeat(2,minmax(0,1fr));gap:.18rem .45rem}
 #calendar .plan-effect b>[role="img"] {font-family:Arial,sans-serif;font-size:max(11px,.85em);font-weight:800;letter-spacing:.025em;-webkit-text-stroke:.22px currentColor}
 #scene[data-mode=market] .lau-counter>.shop-talk {max-width:none;width:100%;justify-self:stretch}
+
+.london-roster {grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+.london-roster .staff-card {
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  height:auto;margin:0;padding:.5rem .3rem;gap:.25rem;text-align:center;
+  white-space:normal;word-break:keep-all;overflow-wrap:anywhere;line-height:1.35;
+}
+.london-roster .staff-card img {flex:none;object-fit:contain}

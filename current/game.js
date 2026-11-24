@@ -1178,7 +1178,7 @@ function inventoryRows(){
   return state.unlocked.map(id=>{
     const line=productHistory(state,id),stock=state.stock[id]||0,fine=state.fineStock[id]||0;
     const pressure=businessTerms(state,id).pressure;
-    return '<article class="stock-entry"><header><strong>'+products[id].name+'</strong><span>평판 <b>'+line.reputation+'/20</b></span></header>'+
+    return '<article class="stock-entry"><header><strong class="stock-name"><i aria-hidden="true" class="stock-icon-'+id+'"></i>'+products[id].name+'</strong><span>평판 <b>'+line.reputation+'/20</b></span></header>'+
       '<progress aria-label="상품 평판" max="20" value="'+line.reputation+'"></progress><dl class="ledger-figures">'+
       ledgerFigure("표준품",stock-fine+"개")+ledgerFigure("고급품",fine+"개")+ledgerFigure("누적 판매",line.units+"개")+ledgerFigure("완납",line.orders+"회")+'</dl>'+
       (state.royalWarrants?.[id]?'<small>로열 워런트 · 왕실 납품 인증 · 월 수요 +2개</small>':'')+
