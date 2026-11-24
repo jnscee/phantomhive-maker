@@ -722,15 +722,15 @@ function plannerContents() {
     ? Object.entries(visits).filter(([id])=>canVisit(id)).map(([id, name]) =>
         option(plannerIcon(id)+'<b>'+name+'</b>', 'visit:'+id, state.visit===id, false, 'lesson visit-card'))
     : categories[lessonPage][1].map(id => {
-        const activity=actions[id];
-        return option(plannerIcon(id)+'<b>'+activity.name+'</b><small>'+money(courseTuition(state,id))+'</small>',
+        const tier=advancedCourse(state,id)?"고급 · ":"";
+        return option(plannerIcon(id)+'<b>'+actions[id].name+'</b><small>'+tier+money(courseTuition(state,id))+'</small>',
           'activity:'+selectedSlot+':'+id, id===chosen, false, 'lesson');
       });
   const half = Math.ceil(cards.length / 2);
   const periods = state.plan.map((id,index) =>
     contest&&index===contestSlot
       ?calendarSlot("하순 · 경연",contest.title,"pick:"+index,false,true)
-      :calendarSlot(slotNames[index],actions[id]?.name??"","pick:"+index,!editingVisit&&selectedSlot===index));
+      :calendarSlot(slotNames[index],actions[id]?courseName(id):"","pick:"+index,!editingVisit&&selectedSlot===index));
   periods.push(calendarSlot("자유행동", visits[state.visit]??"", "pick-visit", editingVisit));
   const estimate = marketStats();
   const invitations=openContests(state);
@@ -739,7 +739,7 @@ function plannerContents() {
   const date=monthText(state.month)+(weather?' <button type="button" class="season-weather" data-weather="'+state.weather+'" popovertarget="season-bulletin" aria-label="'+weather.name+' 소식">'+weather.name+'</button>':"");
   const bulletin=weather?'<aside popover id="season-bulletin" aria-labelledby="season-title"><header><strong id="season-title">'+weather.name+'</strong><button type="button" popovertarget="season-bulletin" popovertargetaction="hide">닫기</button></header><p>'+weather.scene+'</p>'+
     '<dl><div><dt>승마 · 체력 단련</dt><dd>성장 기본량 ×1.5<br>컨디션 −'+weather.strain+' · 스트레스 +'+weather.stress+'</dd></div><div><dt>실내 공부</dt><dd>평소와 같음</dd></div><div><dt>'+weather.charge+'</dt><dd>이달 저택 지출 +£'+weather.fee+'</dd></div></dl></aside>':"";
-  return (editingVisit?'<div class="lesson-index visit-index"><span class="index-tab">자유행동 · 월 1회</span></div>':'<div class="lesson-index">'+categories.map(([name],i)=>option(name,"category:"+i,i===lessonPage,false,"index-tab")).join("")+'</div>')+
+  return (editingVisit?'<div class="lesson-index visit-index"><span class="index-tab">자유행동 · 월 1회</span></div>':'<div class="lesson-index">'+categories.map(([name,ids],i)=>option(i===0&&ids.some(id=>advancedCourse(state,id))?"기초·고급 수업":name,"category:"+i,i===lessonPage,false,"index-tab")).join("")+'</div>')+
     '<div class="card-field" role="group" aria-label="'+(editingVisit?'자유행동':slotNames[selectedSlot]+' 활동 목록')+'">'+
       '<div class="card-bank">'+cards.slice(0,half).join('')+'</div>'+
       '<div class="card-bank">'+cards.slice(half).join('')+'</div></div>'+
