@@ -72,7 +72,19 @@ const bgmAssignments={
   "event:supplierReply": "extra-bgm-23734dde",
   "event:postalReply": "extra-bgm-23734dde",
   "event:snakeReturn": "extra-bgm-23734dde",
-  "event:unasked": "extra-bgm-23734dde"
+  "event:unasked": "extra-bgm-23734dde",
+  "event:merchantDeliveryBell": "test",
+  "event:merchantRedDeck": "test",
+  "event:merchantBiscuitTin": "test",
+  "event:merchantAlphabet": "test",
+  "event:merchantBlueReceipt": "test",
+  "event:merchantWindowStock": "test",
+  "event:merchantRabbitEar": "test",
+  "event:merchantBlackcurrant": "test",
+  "event:merchantTwelfthParcel": "test",
+  "event:merchantCatalogue": "test",
+  "event:merchantBorrowedCrest": "test",
+  "event:merchantBenefitShow": "test"
 };
 const activityTrackDefaults={etiquette:"etiquette",dance:"dance",music:"violin","현장 실습":"business","휴식":"manor"};
 function activityTrack(id){
