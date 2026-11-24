@@ -75,7 +75,7 @@ const endingTracks={
 function trackForView(){
   if(tourSession||(tab==="plan"&&state.phase==="guide"))return "tutorial";
   if(inOpening()){
-    const line=openingLines[openingIndex()];
+    const line=openingNeedsSlot()?null:openingLines[openingIndex()];
     return line?.cue?.bgm||line?.scene.music||"prologue";
   }
   if(tab==="plan"&&state.phase==="investiture")return "titleApproval";

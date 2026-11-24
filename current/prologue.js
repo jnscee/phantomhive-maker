@@ -68,7 +68,23 @@ const openingScenes=[
     ["세바스찬","알겠습니다."]
   ]}
 ];
-const openingLines=openingScenes.flatMap((scene,sceneIndex)=>scene.lines.map(([speaker,text,,cue],beat)=>({scene,sceneIndex,beat,speaker,text,cue})));
+const openingHandoffScene={
+  art:"handoff", room:"library", music:"romantic", alt:"팬텀하이브 저택의 서재",
+  lines:[
+    ["장면","타나카가 서재 문을 두드렸다. 아직 정양 중인 그는 모자를 벗으며 세바스찬을 불렀다.",null,{fx:"fade"}],
+    ["타나카","아직 저택에 돌아와 일할 몸은 아닙니다만, 이것만은 먼저 전해 두고 싶었습니다. 세바스찬 씨, 잠시 손을 펴 주시겠습니까?"],
+    ["장면","타나카가 조끼에서 회중시계를 꺼내 세바스찬의 흰 장갑 위에 올려놓았다. 은제 뚜껑에는 팬텀하이브가의 문장이 새겨져 있었다."],
+    ["세바스찬","이 시계를 제게 주시는 겁니까?"],
+    ["타나카","이 가문의 집사장이 대대로 물려받는 시계입니다."],
+    ["타나카","제가 아직 당신이 어떤 분인지는 다 알지 못합니다만…… 도련님을 잘 부탁드립니다."],
+    ["세바스찬","……예. 팬텀하이브가의 집사로서, 성심을 다해 도련님을 모시겠습니다."],
+    ["독백","나는 시계 뚜껑을 닫고 도련님의 첫 일정표를 펼쳤다."],
+    ["독백","도련님의 수업과 휴식, 저택의 살림, 팬텀사의 경영까지. 이제부터 그 모든 시간을 짜는 건 집사인 내 일이다."]
+  ]
+};
+const openingPlayback=[...openingScenes,openingHandoffScene];
+const openingLines=openingPlayback.flatMap((scene,sceneIndex)=>scene.lines.map(([speaker,text,,cue],beat)=>({scene,sceneIndex,beat,speaker,text,cue})));
+const openingSigningLine=openingLines.findIndex(({scene})=>scene===openingHandoffScene);
 let recollectionLine=0, openingAuto=false, openingTimer=0, openingSession=false;
 
 function openingHold(entry){
@@ -79,9 +95,11 @@ function openingHold(entry){
 
 function inOpening(){return tab==="recollection"||(state.phase==="contract"&&tab==="plan");}
 function openingIndex(){return tab==="recollection"?recollectionLine:state.openingLine;}
+function openingNeedsSlot(){return tab==="plan"&&!state.contractFiled&&openingIndex()>=openingSigningLine;}
 function clearOpeningTimer(){clearTimeout(openingTimer);openingTimer=0;}
 function stopOpeningAuto(){clearOpeningTimer();openingAuto=false;}
 function openingImage(scene){
+  if(scene.room)return sceneArt[scene.room];
   if(!scene.title&&scene.art==="cell")return "assets/endings/black.webp";
   return "assets/"+(scene.title?"endings":"prologue")+"/"+scene.art+".webp";
 }
@@ -105,7 +123,7 @@ function openingArt(scene,picture){
       img.addEventListener("error",()=>img.remove(),{once:true});
     }
   }else img.classList.add("ready");
-  const next=openingScenes[openingScenes.indexOf(scene)+1];
+  const next=openingPlayback[openingPlayback.indexOf(scene)+1];
   if(next){
     const preload=new Image();
     preload.src=openingImage(next);
@@ -114,9 +132,9 @@ function openingArt(scene,picture){
 function drawOpening(focus=false){
   clearOpeningTimer();
   delete $("overture").dataset.pause;
-  const i=openingIndex(), signing=i===openingLines.length, replay=tab==="recollection";
+  const i=openingIndex(), signing=openingNeedsSlot(), replay=tab==="recollection";
   const entry=openingLines[signing?i-1:i];
-  const scene=signing?openingScenes.findLast(page=>!page.title):entry.scene;
+  const scene=entry.scene;
   const surface=$("overture");
   if(!openingSession){openingAuto=true;openingSession=true;}
   surface.dataset.art=scene.title?"custom":scene.art;
@@ -124,7 +142,8 @@ function drawOpening(focus=false){
   surface.dataset.establish=String(!signing&&!scene.title&&entry.beat===0&&["fire","manor"].includes(scene.art));
   surface.dataset.signing=String(signing);
   const cue=signing?null:entry.cue;
-  const actors=novelCast(cue,recruitArtwork(currentCielAge()))??"";
+  const castCue=scene===openingHandoffScene?{left:"tanaka",right:"seb",...cue}:cue;
+  const actors=novelCast(castCue,recruitArtwork(currentCielAge()))??"";
   const cast=$("opening-cast");
   if(cast.innerHTML!==actors)cast.innerHTML=actors;
   const voiceOnly=!actors&&!cue?.cg&&!scene.title&&scene.art==="cell"&&entry.speaker==="악마";
@@ -155,7 +174,7 @@ function drawOpening(focus=false){
   $("opening-prev").disabled=i===0;
   $("opening-read").disabled=signing;
   $("opening-next").hidden=signing;
-  $("opening-next").setAttribute("aria-label",i===openingLines.length-1?(replay?"수첩으로":state.contractFiled?"조작 안내로":"수첩 선택"):"다음 대사");
+  $("opening-next").setAttribute("aria-label",i===openingLines.length-1?(replay?"수첩으로":"조작 안내로"):!replay&&!state.contractFiled&&i===openingSigningLine-1?"수첩 선택":"다음 대사");
   $("opening-skip").textContent=replay?"다시보기 종료":"건너뛰기";
   $("opening-skip").hidden=signing;
   $("opening-auto").hidden=signing;
@@ -168,15 +187,21 @@ function drawOpening(focus=false){
 function finishOpening(){
   stopOpeningAuto();
   if(tab==="recollection"){tab="save";render(true);focusAction("recollect");return;}
-  if(state.contractFiled){state.phase="guide";state.guidePage=0;persist();render();showGuidePage(0);return;}
-  state.openingLine=openingLines.length;persist();drawOpening(true);
+  if(!state.contractFiled){state.openingLine=openingSigningLine;persist();drawOpening(true);return;}
+  state.phase="guide";state.guidePage=0;
+  const slot=state.openingSlot;
+  delete state.openingSlot;
+  if(slot&&saves[slot]?.owlSeed===state.owlSeed)saves[slot]=structuredClone(state);
+  persist();render();showGuidePage(0);
 }
 function stepOpening(step){
   if(!inOpening()||$("picker").open||$("scene").dataset.artOnly==="true")return;
   if($("overture").dataset.pause&&step>0){drawOpening(true);return;}
   const i=openingIndex();
+  if(step>0&&openingNeedsSlot())return;
   if(i+step>=openingLines.length){finishOpening();return;}
   const next=Math.max(0,i+step);
+  if(tab==="plan"&&!state.contractFiled&&next===openingSigningLine){finishOpening();return;}
   if(tab==="recollection")recollectionLine=next;
   else {state.openingLine=next;persist();}
   const auto=openingAuto;
@@ -196,10 +221,10 @@ function openingAction(action,id,confirmed,rect){
   if(action==="opening-prev"){stopOpeningAuto();stepOpening(-1);return true;}
   if(action==="opening-auto"){openingAuto=!openingAuto;drawOpening();return true;}
   if(action==="opening-skip"){finishOpening();return true;}
-  if(action==="contract-slot"&&tab==="plan"&&openingIndex()===openingLines.length&&["1","2","3"].includes(id)){
+  if(action==="contract-slot"&&openingNeedsSlot()&&["1","2","3"].includes(id)){
     if(saves[id]&&!confirmed){askConfirmation("contract-slot:"+id,"수첩 "+id+" 덮어쓰기","이 수첩의 저장 기록을 새 회차로 교체할까요?","저장",rect);return true;}
-    state.contractFiled=true;state.phase="guide";state.guidePage=0;
-    saves[id]=structuredClone(state);persist();render();showGuidePage(0);return true;
+    state.contractFiled=true;state.openingSlot=id;state.openingLine=openingSigningLine;
+    stopOpeningAuto();saves[id]=structuredClone(state);persist();drawOpening(true);return true;
   }
   return false;
 }

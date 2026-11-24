@@ -1066,7 +1066,7 @@ if(isWeb){
     if(kind!=="fx")input("name",kind==="expression"?"표정 이름":"이름").maxLength=120;
     if(kind==="fx")input("symbol","화면에 뿌릴 문자").maxLength=20;
     if(["scene","opening"].includes(kind)){
-      fields.append(node("p",kind==="opening"?"프롤로그 마지막에 이어집니다.":"고른 영입 이벤트의 마지막 장면 뒤에 이어집니다.","muted"));
+      fields.append(node("p",kind==="opening"?"프롤로그에서 수첩을 고르기 전에 이어집니다.":"고른 영입 이벤트의 마지막 장면 뒤에 이어집니다.","muted"));
       const optionsList=kind==="scene"?[["target","영입 이벤트",data.recruits],["art","배경",data.recruitArtOptions]]:[];
       optionsList.push(["music","BGM",[["","기본 음악"],...data.trackOptions]],["picture","CG",kind==="opening"?data.artOptions:[["","사용 안 함"],...data.artOptions]]);
       for(const [key,label,options] of optionsList){
@@ -1145,7 +1145,7 @@ if(isWeb){
       }
       if(input.kind==="opening"){
         section="story";
-        selected="opening-"+data.groups.filter(group=>group.preview?.kind==="opening").length;
+        selected="opening-"+data.groups.filter(group=>group.preview?.kind==="opening"&&!group.preview.handoff).length;
         activePane="dialogue";
         $("search").value="";
       }

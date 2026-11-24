@@ -15,7 +15,7 @@ function plannedTuition(){
 }
 function careActivity(run,planned){return run.ill && planned!=="rest" && planned!=="recovery"?"recovery":planned;}
 function initial(){
-  return startAccounts({owlSeed:Math.floor(Math.random()*0x100000000),v:1,unifiedAbilityCaps:true,abilityScale:abilityMax,duration:35,people:{},jobs:{},annex:{bedroom:1,garden:1,guard:1,quarters:1},month:1,phase:"contract",openingLine:0,openingEdition:2,storyPageEdition:2,fund:500,hp:76,stress:20,motivation:70,
+  return startAccounts({owlSeed:Math.floor(Math.random()*0x100000000),v:1,unifiedAbilityCaps:true,abilityScale:abilityMax,duration:35,people:{},jobs:{},annex:{bedroom:1,garden:1,guard:1,quarters:1},month:1,phase:"contract",openingLine:0,openingEdition:3,storyPageEdition:2,fund:500,hp:76,stress:20,motivation:70,
     stats:{지성:18,기품:14,매력:8,경영:5,통찰:30,의지:125,체력:50},
     planMonth:1,plan:emptyPlan(),visit:null,level:{library:1,parlor:1,kitchen:1},staff:null,
     shop:{design:1,works:1,store:1},salesBook:[],productHistory:{},fineStock:{},order:null,
@@ -728,13 +728,13 @@ function normalizeSave(run){
   if(copy.phase==="contract"){
     if(!Number.isInteger(copy.openingLine)){
       const first=art=>openingLines.findIndex(entry=>entry.scene.art===art);
-      const legacyPages=[0,first("seal"),first("ring"),openingLines.length,first("manor"),first("lesson")];
+      const legacyPages=[0,first("seal"),first("ring"),openingSigningLine,first("manor"),first("lesson")];
       copy.openingLine=legacyPages[copy.introPage]??0;
       copy.contractFiled=(copy.introPage||0)>=4;
     }
-    else if(copy.openingEdition!==2)copy.openingLine=previousOpeningPages[cap(copy.openingLine,previousOpeningPages.length-1)];
-    copy.openingEdition=2;
-    copy.openingLine=cap(copy.openingLine,openingLines.length);
+    else if(copy.openingEdition!==2&&copy.openingEdition!==3)copy.openingLine=previousOpeningPages[cap(copy.openingLine,previousOpeningPages.length-1)];
+    copy.openingEdition=3;
+    copy.openingLine=cap(copy.openingLine,copy.contractFiled?openingLines.length-1:openingSigningLine);
   }
   copy.annex={...defaults.annex,...copy.annex};
   copy.people={...defaults.people,...copy.people};

@@ -114,6 +114,25 @@ async function check(browserType){
       await page.locator('#dialogue-visibility').click();
       assert.equal(await page.locator('#opening-line').textContent(),prologue);
       assert.equal(await page.evaluate(()=>openingAuto),false);
+      await page.locator('#opening-skip').click();
+      assert.match(await page.locator('#opening-line').textContent(),/어느 수첩에 보관/);
+      await page.locator('#opening-slots [data-action="contract-slot:1"]').click();
+      assert.match(await page.locator('#opening-line').textContent(),/타나카가 서재 문을 두드렸다/);
+      assert.equal(await page.locator('#opening-slots').isVisible(),false);
+      assert.deepEqual(await page.evaluate(()=>[state.phase,saves[1].phase]),['contract','contract']);
+      await page.locator('#opening-next').click();
+      assert.equal(await page.locator('#opening-speaker').textContent(),'타나카');
+      await page.locator('#opening-next').click();
+      const handoffLine=await page.locator('#opening-line').textContent();
+      assert.match(handoffLine,/회중시계/);
+      await page.evaluate(()=>{state=normalizeSave(saves.auto);render();});
+      assert.equal(await page.locator('#opening-line').textContent(),handoffLine);
+      const remaining=await page.evaluate(()=>openingLines.length-openingIndex());
+      for(let i=0;i<remaining;i++)await page.locator('#opening-next').click();
+      assert.ok(await page.locator('#guide-replay').isVisible());
+      assert.deepEqual(await page.evaluate(()=>[tourSession.saves.auto.phase,tourSession.saves[1].phase]),['guide','guide']);
+      assert.equal(await page.evaluate(()=>recruitScenes.homecoming.lines.some(line=>line.text.includes('회중시계'))),false);
+      await page.locator('#guide-replay [data-action="guide-close"]').click();
       if(viewport.width===390){
         for(const [width,height,month] of [[319,866,14],[375,667,1],[390,844,26],[430,932,14]]){
           const phone=await browser.newPage({viewport:{width,height},reducedMotion:'reduce'});

@@ -10,6 +10,7 @@ tab="plan";
 if(editorPreview?.kind==="opening"){
   openingSession=true;
   openingAuto=false;
+  state.contractFiled=Boolean(editorPreview.handoff);
   state.openingLine=openingLines.findIndex(line=>line.sceneIndex===editorPreview.scene);
 }else if(editorPreview?.kind==="ending"){
   endingReplay={id:editorPreview.id,at:0,origin:"record"};

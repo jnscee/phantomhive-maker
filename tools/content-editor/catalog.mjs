@@ -140,6 +140,15 @@ export function catalog(files, publishedAssets = [], version = "") {
     add(g,"prologue.js",prop(scene,"lines"),"대사 순서","lines",undefined,{cues:true});
   });
 
+  const handoff=variable("prologue.js","openingHandoffScene");
+  if(handoff){
+    const g=group("story","opening-handoff","프롤로그 · 집사장의 회중시계","수첩을 고른 뒤",{kind:"opening",scene:opening.length,handoff:true});
+    add(g,"prologue.js",prop(handoff,"room"),"배경","select",roomOptions,{media:"room"});
+    add(g,"prologue.js",prop(handoff,"music"),"장면 BGM","select",trackOptions,{media:"track"});
+    add(g,"prologue.js",prop(handoff,"alt"),"배경 대체 설명");
+    add(g,"prologue.js",prop(handoff,"lines"),"대사 순서","lines",undefined,{cues:true});
+  }
+
   for (const p of properties(variable("chapters.js","endingScenes"))) {
     const id=propertyName(p);
     const title=value(rows(endingLabels.find(label=>propertyName(label)===id)?.value)[0])??id;
