@@ -609,8 +609,8 @@ function educationRecord(run){
   });
 }
 const courtEducation={
-  지성:[485,"서재 수업"],기품:[495,"귀족 예법"],매력:[470,"사교 수업"],
-  통찰:[480,"가문 기록 조사"],경영:[480,"팬텀사 회계"],의지:[400,"사건 조사"],체력:[420,"승마"]
+  지성:[465,"서재 수업"],기품:[491,"귀족 예법"],매력:[445,"사교 수업"],
+  통찰:[455,"가문 기록 조사"],경영:[455,"팬텀사 회계"],의지:[385,"사건 조사"],체력:[400,"승마"]
 };
 function courtEducationPriority(keys=Object.keys(courtEducation)){
   return keys.filter(k=>state.stats[k]<courtEducation[k][0])
@@ -632,10 +632,10 @@ function courtRows(){
     statRow("사업과 결단","경영","의지"),
     statRow("현장 수행","체력"),
     ["저택 재건",rooms>=2,"서재와 응접실, 주방을 개수하세요."],
-    ["회사 기반",profitableMonths>=8,"판매·납품 흑자 "+profitableMonths+"/8개월 (상금 제외)"],
+    ["회사 기반",profitableMonths>=7,"판매·납품 흑자 "+profitableMonths+"/7개월 (상금 제외)"],
     ["왕실 신임",state.royal>=6,"왕실 서신에 답하거나 납품 인증으로 신임을 얻으세요."],
-    ["가문 명성",state.renown>=32,"접객과 팬텀사 판매로 명성 쌓기"],
-    ["재정 안정",state.fund>=1200 && state.debt===0,"채무를 상환하고 가문 자금을 비축하세요."]
+    ["가문 명성",state.renown>=30,"접객과 팬텀사 판매로 명성 쌓기"],
+    ["재정 안정",state.fund>=1100 && state.debt===0,"채무를 상환하고 가문 자금을 비축하세요."]
   ];
 }
 function titleRequirements(){return courtRows().map(row=>row[1]);}
