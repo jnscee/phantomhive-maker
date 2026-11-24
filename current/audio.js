@@ -1,6 +1,8 @@
 "use strict";
 
 const musicTracks = {
+  "extra-bgm-23734dde":{"title":"자유행동","file":"assets/audio/extra-bgm-23734dde.mp3"},
+
   sakura:{title:"SAKURA",file:"assets/audio/sakura.mp3"},
   illness:{title:"Illness",file:"assets/audio/illness.mp3"},
   harvest:{title:"Harvest Festival",file:"assets/audio/harvest.mp3"},
@@ -48,7 +50,22 @@ const eventTracks={
   greenhouseKey:"romantic",unasked:"romantic",teaPrivilege:"romantic",snakeReturn:"romantic",
   trade:"daily",linenMarks:"daily",bardSupper:"daily",supplierReply:"daily"
 };
-const bgmAssignments={};
+const bgmAssignments={
+  "event:visitLibraryWax": "extra-bgm-23734dde",
+  "event:visitLibraryCarbon": "extra-bgm-23734dde",
+  "event:visitGardenMorning": "extra-bgm-23734dde",
+  "event:visitGardenPace": "extra-bgm-23734dde",
+  "event:visitLibrarySeal": "extra-bgm-23734dde",
+  "event:visitGardenGraft": "extra-bgm-23734dde",
+  "event:visitKitchenBowl": "extra-bgm-23734dde",
+  "event:visitQuartersHem": "extra-bgm-23734dde",
+  "event:visitQuartersLedge": "extra-bgm-23734dde",
+  "event:visitParlorDance": "extra-bgm-23734dde",
+  "event:visitCompanyBox": "extra-bgm-23734dde",
+  "event:visitTownRain": "extra-bgm-23734dde",
+  "event:visitTownhouseChess": "extra-bgm-23734dde",
+  "event:visitTownhouseKnock": "extra-bgm-23734dde"
+};
 const activityTrackDefaults={etiquette:"etiquette",dance:"dance",music:"violin","현장 실습":"business","휴식":"manor"};
 function activityTrack(id){
   const category=categories.find(([,ids])=>ids.includes(id))?.[0];
