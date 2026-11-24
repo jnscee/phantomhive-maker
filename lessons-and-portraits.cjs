@@ -189,22 +189,27 @@ async function check(browserType){
       await creditPage.evaluate(()=>{
         state=initial();state.fund=-10;state.phase="plan";state.plan=["study","study","study"];state.visit="none";tab="plan";render();
       });
+      const basis=creditPage.locator("#calendar .plan-basis");
+      assert.equal(await basis.inputValue(),"steady");
+      await basis.selectOption("poor");
+      assert.match(await creditPage.locator("#calendar .calendar-note").innerText(),/지구력\s*-4/);
+      await basis.selectOption("steady");
       await creditPage.locator('.calendar-run').click();
       assert.match(await creditPage.locator('#picker').innerText(),/외상/);
       await creditPage.locator('#picker [data-action="confirm"]').click();
       assert.equal(await creditPage.evaluate(()=>state.phase),"scene");
-      assert.equal(await creditPage.evaluate(()=>state.fund),-34);
+      assert.equal(await creditPage.evaluate(()=>state.fund),-30);
       await creditPage.close();
       const fairPage=await browser.newPage({viewport});
-      await fairPage.goto(base+'?fair-preview=newYear-1886&entry=1');
+      await fairPage.goto(base+'?fair-preview=newYear-1887&entry=1');
       assert.equal(await fairPage.locator('.duel-plate b').first().textContent(),'에드워드 미드포드');
       await fairPage.locator('.duel-portrait').evaluate(img=>img.decode());
       assert.equal(await fairPage.locator('[data-action^="fair-play"]').count(),0);
       await fairPage.locator('.dialogue [data-action="fair-next:0"]').click();
       assert.equal(await fairPage.locator('.duel-screen .dialogue small').textContent(),'시엘');
-      assert.match(await fairPage.locator('.dialogue p').innerText(),/인정해 달랬어/);
+      assert.match(await fairPage.locator('.duel-screen .dialogue p').innerText(),/인정해 달랬어/);
       await fairPage.locator('.dialogue [data-action="fair-next:1"]').click();
-      assert.match(await fairPage.locator('.dialogue p').innerText(),/우유/);
+      assert.match(await fairPage.locator('.duel-screen .dialogue p').innerText(),/그 잔은|우유를|첫 잔은/);
       // Exercise the victory slip on every viewport. The loss and reroll are tested in story-commerce.
       await fairPage.evaluate(()=>{Math.random=()=>0;});
       await fairPage.locator('.dialogue [data-action="fair-next:2"]').click();

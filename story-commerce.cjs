@@ -13,7 +13,7 @@ const assertOk=source=>assert.ok(run(source),source);
 const setup=(code="")=>run('state=initial();state.owlSeed=1;state.phase="plan";tab="company";'+code);
 // Both tea-party events in each of the three years use Edward, including on a restored scorecard.
 const teaParties=run('contests.filter(f=>f.id.startsWith("newYear-")).map(f=>f.id)');
-assert.equal(teaParties.length,3);
+assert.equal(teaParties.length,2);
 for(const id of teaParties){
   ctx.teaId=id;
   for(const index of [0,1]){
@@ -30,8 +30,8 @@ for(const [rank,score,expected] of [[0,5,"입상권 밖"],[1,40,"은상"],[2,44,
   assert.ok(slip.includes("<h3>"+expected+"</h3>")&&slip.includes(ctx.legacyEntry.scoreNote));
   assert.doesNotMatch(slip,/undefined|NaN|입상 보상/);
 }
-assert.deepEqual(Array.from(run('contests.map(f=>f.month)')),[1,4,9,13,16,21,25,28,33]);
-assert.deepEqual(Array.from(run('contests.slice(0,3).map(f=>f.title)')),["신년 다과회","이스터(부활절)","로열 워런트(수확제)"]);
+assert.deepEqual(Array.from(run('contests.map(f=>f.month)')),[4,9,13,16,21,25,28,33]);
+assert.deepEqual(Array.from(run('contests.slice(0,3).map(f=>f.title)')),["이스터(부활절)","로열 워런트(수확제)","신년 다과회"]);
 assertOk('contests.every(f=>f.track===(f.warrant?"companyFair":f.id.startsWith("easter-")?"sakura":"newYear"))');
 for(const [month,extra,qty] of [[5,4,8],[18,2,9],[29,3,8]]){
   ctx.marketMonth=month;
@@ -67,11 +67,13 @@ for(const fairId of run('contests.map(f=>f.id)')){
   })()`);
 }
 // A real manual slot saved on the last line can be replayed. Once awarded, the saved result is final.
+setup('state.fairTickets={"newYear-1886":{index:0}};state.plan=["study","study","study"];state.visit="none";state=normalizeSave(state)');
+assertOk('!reservedContest(state)&&openContests(state).length===0&&scheduledActivities(state).length===3&&settleFestival(state)===null');
 for(const [index,stat,low,high] of [[0,"기품",.31,.34],[1,"매력",.15,.18]]){
-  setup('tab="plan";state.fairTickets={"newYear-1886":{index:'+index+'}};state.sequence={contest:"newYear-1886"};prepareContest(state)');
+  setup('tab="plan";state.month=state.planMonth=13;state.stats.기품=124;state.stats.매력=71;state.fairTickets={"newYear-1887":{index:'+index+'}};state.sequence={contest:"newYear-1887"};prepareContest(state)');
   const chance=run('state.sequence.duel.judgment.chance');
   assert.ok(chance>low&&chance<high);
-  assert.equal(run('state.sequence.duel.rivalScore'),22);
+  assert.equal(run('state.sequence.duel.rivalScore'),195);
   run('state.sequence.duel.page=2;handleAction("store:1",null,true)');
   const before=run('JSON.stringify([state.fund,state.renown,state.stats])');
   for(const won of [false,true]){
@@ -79,32 +81,72 @@ for(const [index,stat,low,high] of [[0,"기품",.31,.34],[1,"매력",.15,.18]]){
     assert.equal(run('JSON.stringify([state.fund,state.renown,state.stats])'),before);
     ctx.roll=won?chance/2:(1+chance)/2;
     run('(()=>{const rng=Math.random;try{Math.random=()=>roll;settleFestival(state,state.sequence.duel);}finally{Math.random=rng;}})()');
-    const entry=run('state.fairBook["newYear-1886"]');
+    const entry=run('state.fairBook["newYear-1887"]');
     assert.equal(entry.rank,won?2:0);
-    assert.equal(entry.purse,won?36:0);
+    assert.equal(entry.purse,won?46:0);
     assert.equal(entry.prize,won?"은제 찻숟가락":"");
     assert.equal(entry.growth?.length||0,won?2:0);
     if(!won)assert.equal(run('JSON.stringify([state.fund,state.renown,state.stats])'),before);
-    const slip=run('contestResultSlip(contests[0],state.fairBook["newYear-1886"],"심사평")');
+    const slip=run('contestResultSlip(contests[2],state.fairBook["newYear-1887"],"심사평")');
     assert.match(slip,won?/<h3>승리/:/<h3>패배/);assert.doesNotMatch(slip,/금상|은상|동점/);
     assert.equal(slip.includes("승리 보상"),won);
     const paid=run('JSON.stringify([state.fairBook,state.fund,state.renown,state.stats])');
     run('handleAction("store:2",null,true);handleAction("load:2",null,true);settleFestival(state,state.sequence.duel)');
     assert.equal(run('JSON.stringify([state.fairBook,state.fund,state.renown,state.stats])'),paid);
   }
-  setup();
+  setup('state.stats.기품=124;state.stats.매력=71');
   ctx.optionIndex=index; ctx.statKey=stat;
-  const odds=()=>run('judgeContest(state,contests[0],{index:optionIndex}).chance');
+  const odds=()=>run('judgeContest(state,contests[2],{index:optionIndex}).chance');
   const baseline=odds();
   run('state.stats[statKey]+=12');assert.ok(odds()>baseline);
   run('state.stats[statKey]-=12;state.stress+=20');assert.ok(odds()<baseline);
 }
+// Preview, execution and save/load use the same course tradeoff for each of the three grades.
+for(const id of run('[...categories[0][1],...categories[2][1]]')){
+  ctx.subject=id;
+  for(const [grade,cost] of [["great",1],["steady",2],["poor",4]]){
+    ctx.testGrade=grade;
+    setup('for(const k of stats)state.stats[k]=100;state.plan=[subject,"rest","rest"];tab="plan";selectedSlot=0;plannerGrade=testGrade');
+    assertOk('!Object.hasOwn(actions[subject].gains,trainingTradeoffs[subject])');
+    const key=run('trainingTradeoffs[subject]');
+    assert.ok(run('scheduleNote(subject)').includes(run('statLabel(trainingTradeoffs[subject])')+' <b class="loss">'+run('signed(-'+cost+')')));
+    assert.equal(run('state.stats[trainingTradeoffs[subject]]'),100);
+    run('applyActivity(state,subject,testGrade);state=normalizeSave(state)');
+    assert.equal(run('state.stats[trainingTradeoffs[subject]]'),100-cost,id+" "+key);
+    setup('state.stats[trainingTradeoffs[subject]]=1;applyActivity(state,subject,testGrade)');
+    assert.equal(run('state.stats[trainingTradeoffs[subject]]'),0);
+  }
+}
+for(const subject of run('Object.keys(advancedLessons)')){
+  ctx.subject=subject;
+  for(const grade of ['great','steady','poor']){
+    ctx.testGrade=grade;
+    setup('for(const k of stats)state.stats[k]=100;state.flags["exam-"+subject]=true;applyActivity(state,subject,testGrade)');
+    assertOk('stats.every(k=>state.stats[k]>=100)');
+  }
+}
+setup('state.ill=true;state.hp=10;state.stress=99;state.plan=["study","rest","rest"];state.sequence={index:0};enterSlot()');
+assertOk('state.sequence.activity==="recovery"&&state.stats.체력===50');
+run('plannerGrade="steady"');
+for(const [key,first] of [["study",3],["music",4],["practicum",4]]){
+  ctx.subject=key;
+  for(let count=1;count<=first;count++){
+    ctx.attended=count;
+    setup('state.phase="scene";state.stats.의지=state.stats.경영=450;state.counts[subject]=attended;state.plan=[subject,"rest","rest"];state.sequence={index:0,activity:subject};finishScene()');
+    const queued=run('[state.pending,...state.sequence.slotQueue].filter(id=>id&&(id.startsWith("exam-")||id.startsWith("portfolio-")))');
+    assert.equal(queued.length>0,count===first,key+" attendance "+count);
+  }
+}
+setup('tab="plan";state.plan=["study","practicum","rest"];state.visit="none";state.qty=0');
+assertOk('courseTuition(state,"study")===20 && courseTuition(state,"practicum")===4 && plannedTuition()===30');
+run('execute();state.flags["exam-study"]=true;state=normalizeSave(state)');
+assertOk('state.sequence.bookedFees[0]===20&&state.sequence.trainingPaid===20&&courseTuition(state,"study")===28');
 setup('state.fund=-8;state.visit="none";state.plan=["study","study","study"];tab="plan"');
 assertOk('marketStats().shortfall===cashNeeded()&&!plannerContents().match(/<button[^>]*data-action="execute"[^>]*disabled/)');
 run('handleAction("execute",null,true)');
-assertOk('state.phase==="scene"&&state.fund===-8-actions.study.cost');
+assertOk('state.phase==="scene"&&state.fund===-8-courseTuition(state,"study")');
 run('state=normalizeSave(state)');
-assertOk('state.sequence.trainingPaid===actions.study.cost&&state.fund===-8-actions.study.cost');
+assertOk('state.sequence.trainingPaid===courseTuition(state,"study")&&state.fund===-8-courseTuition(state,"study")');
 setup('state.fund=50;state.stats.의지=149');
 assertOk('povertyAfterClosing(state)');
 run('state.stats.의지=150');
@@ -470,7 +512,7 @@ for(const invest of [false,true]){
   }
   assert.ok(campaign.january.stats.filter(value=>value<500).length>=4);
   assert.ok(campaign.stats.some((value,i)=>value>campaign.january.stats[i]));
-  assert.equal(campaign.exams,14);
+  assert.equal(campaign.exams,invest?13:12);
   assert.deepEqual(Array.from(campaign.birthdays),[12,24]);
   assert.deepEqual(Array.from(campaign.decisions),[26,29,32]);
   if(invest)assert.equal(campaign.ending,"vowNoTitle");
@@ -500,7 +542,7 @@ assertOk('state.fund===3000 && stats.every(key=>state.stats[key]===500)');
 for(const [activity,index] of [["language",0],["dance",1],["letters",2],["accounts",3],["casework",4],["music",5],["exercise",6],["study",null],["rest",null],["walk",null],["recovery",null]]){
   for(const rank of [0,1]){
     Object.assign(ctx,{activity,index,rank});
-    setup('state.month=25;state.phase="scene";state.plan=["music","dance","exercise"];state.sequence={activity,index:1};for(const k of stats)state.stats[k]=400;if(rank)for(let i=0;i<7;i++)state.flags["portfolio-"+i+"-0"]=true;finishScene()');
+    setup('state.month=25;state.phase="scene";state.plan=["music","dance","exercise"];state.sequence={activity,index:1};state.counts[activity]=4;for(const k of stats)state.stats[k]=400;if(rank)for(let i=0;i<7;i++)state.flags["portfolio-"+i+"-0"]=true;finishScene()');
     const queued=run('[state.pending,...state.sequence.slotQueue].filter(id=>id?.startsWith("portfolio-"))');
     assert.deepEqual(Array.from(queued),index==null?[]:["portfolio-"+index+"-"+rank],activity);
   }

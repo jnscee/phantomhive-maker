@@ -48,7 +48,7 @@ function encounterAction(action,argument){
 
 function openContests(run){
   if(run.duration!==35)return [];
-  const booked=retiredContests.filter(f=>run.fairTickets?.[f.id]);
+  const booked=retiredContests.filter(f=>f.id!=="newYear-1886"&&run.fairTickets?.[f.id]);
   return [...booked,...contests].filter(fair=>
     (run.month===fair.month-1||run.month===fair.month) &&
     !contestArchive.some(f=>f.month===fair.month&&run.fairBook?.[f.id]) &&
@@ -183,7 +183,7 @@ function matchAssessment(run,fair,ticket,duel){
 }
 function settleFestival(run,duel){
   const scheduled=duel?.fairId||run.sequence?.contest;
-  const fair=run.duration===35&&contestArchive.find(f=>f.month===run.month&&contestTicket(run,f)&&(!scheduled||scheduled===f.id));
+  const fair=run.duration===35&&contestArchive.find(f=>f.month===run.month&&(f.id!=="newYear-1886"||scheduled===f.id)&&contestTicket(run,f)&&(!scheduled||scheduled===f.id));
   const ticket=fair&&contestTicket(run,fair);
   if(!ticket||contestArchive.some(f=>f.month===run.month&&run.fairBook?.[f.id]))return null;
   const assessment=matchAssessment(run,fair,ticket,duel);
@@ -282,6 +282,9 @@ function contestResultSlip(fair,entry,line){
     (fair.warrant&&entry.rank===2?'<div><dt>왕실 인증</dt><dd>인증 품목 수요 매달 +2개</dd></div>':'')+
     '</dl><div class="duel-controls">'+btn("행사 마치기","fair-close",false,"primary")+'</div></div></article>';
 }
+function contestAppearance(fair){
+  return fair.id.startsWith("newYear-")?Math.max(0,fair.year-1):fair.year;
+}
 function duelScene(fair,ticket,duel,entry){
   const rival=contestOpponent(fair),option=fair.options?.[ticket.index];
   const turn=duel.page??(Number.isInteger(duel.choice)?1:0),done=Boolean(entry);
@@ -302,8 +305,9 @@ function duelScene(fair,ticket,duel,entry){
     slip=contestResultSlip(fair,entry,line);
   }else{
     const speaker=turn?"시엘":rival.name;
-    const reply=rival.replies?.[fair.year];
-    const line=turn===0?(rival.laterQuotes?.[fair.year-1]??rival.quote):
+    const appearance=contestAppearance(fair);
+    const reply=rival.replies?.[appearance];
+    const line=turn===0?(rival.laterQuotes?.[appearance-1]??rival.quote):
       turn===1&&reply?reply:contestSpeech(fair,ticket,matchAssessment(state,fair,ticket,duel).speechTier);
     const next='<button type="button" class="line-next" aria-label="다음 대사" data-action="fair-next:'+turn+'"><span aria-hidden="true">▼</span></button>';
     slip=sceneLine(escapeHTML(speaker),escapeHTML(line),next,'aria-live="polite"');
@@ -359,7 +363,7 @@ function festivalAction(action,id){
   if(!entry&&duel){
     const page=duel.page??(Number.isInteger(duel.choice)?1:0);
     if(action!=="fair-next"||id!==String(page))return true;
-    const finalPage=contestOpponent(fair).replies?.[fair.year]?2:1;
+    const finalPage=contestOpponent(fair).replies?.[contestAppearance(fair)]?2:1;
     if(page<finalPage){duel.page=page+1;persist();render(true);}
     else if(previewFair){settleFestival(state,duel);render(true);}
     else settleMonth();

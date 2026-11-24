@@ -132,7 +132,7 @@ const harvestWarrant={...annualContests.find(f=>f.id==="warrant"),
   id:"royalWarrant",month:9,title:"로열 워런트(수확제)",room:"field",warrant:true,
   invitation:"수확제 장터에 왕실 납품 심사대가 섰습니다. 팬텀사에서 만든 제품 한 점을 골라 출품하세요. 담당관이 견본과 지금까지의 납품 장부를 살핍니다."};
 const contests=[annualContests[0],easterFair,harvestWarrant].flatMap(fair=>
-  [0,1,2].map(year=>({...fair,id:fair.id+"-"+(1886+year),month:fair.month+12*year,year}))
+  (fair.id==="newYear"?[1,2]:[0,1,2]).map(year=>({...fair,id:fair.id+"-"+(1886+year),month:fair.month+12*year,year}))
 ).sort((a,b)=>a.month-b.month);
 // Completed pages and previously booked invitations retain their original rules and dates.
 const retiredContests=oldContests.filter(f=>!contests.some(active=>active.id===f.id));

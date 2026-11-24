@@ -83,6 +83,11 @@ const extraActivities = {
   reception:["사교 행사",24,{매력:11,기품:6},13,-2],casework:["사건 조사",14,{의지:12,통찰:8},13,-3],
   reading:["자유 독서",0,{지성:3},-11,3],recovery:["요양",22,{},-28,23],outing:["시내 외출",10,{매력:3},-17,5]
 };
+// Each basic course or field assignment draws time from one other area of training.
+const trainingTradeoffs={
+  study:"체력", etiquette:"의지", accounts:"매력", inquiry:"기품", riding:"지성", letters:"경영",
+  practicum:"기품", developToy:"체력", supplier:"통찰", estateWork:"매력", reception:"체력", casework:"기품"
+};
 const categories = [
   ["기초 수업",["study","etiquette","accounts","inquiry","riding","letters"]],
   ["특별 수업",["language","music","dance","social","negotiate","exercise"]],

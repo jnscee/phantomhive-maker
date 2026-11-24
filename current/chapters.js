@@ -212,8 +212,12 @@ const advancedLessons={
 };
 function advancedCourse(run,id){return advancedLessons[id] && run.flags?.["exam-"+id];}
 function courseName(id){return (advancedCourse(state,id)?"고급 · ":"")+actions[id].name;}
+function examAttendanceReady(run,id){
+  const required=categories[0][1].includes(id)?3:4;
+  return (run.counts[id]||0)>=required;
+}
 function examEvents(){return exams.map(([slot,stat,title,text,a,b])=>({id:"exam-"+slot,slot,title,text,speaker:"세바스찬",exam:true,
- sees:s=>(s.counts[slot]||0)>=2,
+ sees:s=>examAttendanceReady(s,slot),
  choices:[choice(a,"합격 · 고급 과정 진급",()=>{changeStat(stat,14);changeStat(examPartners[slot],8);}),
           choice(b,"보충 · 다음 수강 후 재시험",()=>{if(!state.events.some(e=>e.id==="exam-"+slot&&e.index===1)){changeStat(stat,8);changeStat(examPartners[slot],4);shift("motivation",5);}delete state.flags["exam-"+slot];})]}));}
 function calendarEvents(){

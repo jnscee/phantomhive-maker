@@ -13,8 +13,14 @@ function scheduledActivities(run,contest=reservedContest(run)){
 function planReady(){
   return state.plan.length===3&&scheduledActivities(state).every(id=>Object.hasOwn(actions,id))&&canVisit(state.visit);
 }
+function courseTuition(run,id){
+  if(!actions[id])return 0;
+  const base=actions[id].cost;
+  if(advancedCourse(run,id))return Math.ceil(base*1.15);
+  return trainingTradeoffs[id]?Math.floor(base*.85):base;
+}
 function plannedTuition(){
-  return scheduledActivities(state).reduce((sum,id)=>sum+(actions[id]?.cost||0),0);
+  return scheduledActivities(state).reduce((sum,id)=>sum+courseTuition(state,id),0);
 }
 function careActivity(run,planned){return run.ill && planned!=="rest" && planned!=="recovery"?"recovery":planned;}
 function initial(){
@@ -27,7 +33,7 @@ function initial(){
     debt:0,unwell:0,relapseStage:0,arrears:0,poverty:false,usedLoan:false,counts:{},advancedStudy:{},foundation:0,linkFrom:null,linkMonth:0});
 }
 const previewQuery=new URL(document.baseURI).searchParams;
-const previewFair=previewQuery.has("fair-preview")?(contests.find(f=>f.id===previewQuery.get("fair-preview"))||contests[0]):null;
+const previewFair=previewQuery.has("fair-preview")?(contests.find(f=>f.id===(previewQuery.get("fair-preview")==="newYear-1886"?"newYear-1887":previewQuery.get("fair-preview")))||contests[0]):null;
 const previewStory=previewQuery.get("story-preview");
 const previewSetback=monthlySetbacks.find(item=>item.id===previewStory);
 const previewCompanyCase=companyCases.find(item=>item.id===previewStory);
@@ -40,6 +46,7 @@ let state=saves.auto?.v===1?saves.auto:initial();
 state=structuredClone(state);
 let tab="title";
 let selectedSlot=0;
+let plannerGrade="steady";
 let editingVisit=false;
 const $=id=>document.getElementById(id);
 observePortraitStage($("scene"));
@@ -110,13 +117,16 @@ function scheduleNote(id){
   updateIllness(projection);
   const actual=careActivity(projection,id);
   const hp=projection.hp,stress=projection.stress,prior={...projection.stats};
-  applyActivity(projection,actual,"steady",id);
+  applyActivity(projection,actual,plannerGrade,id);
   if(actual!==id)return "병환 · "+actions[actual].name+" 예정";
-  const effects=Object.keys(a.gains).map(k=>[k,projection.stats[k]-prior[k]]);
+  const keys=Object.keys(a.gains);
+  if(trainingTradeoffs[id]&&!advancedCourse(projection,id))keys.push(trainingTradeoffs[id]);
+  const effects=keys.map(k=>[k,projection.stats[k]-prior[k]]);
   if(projection.hp!==hp)effects.push(["건강",projection.hp-hp]);
   effects.push(["스트레스",projection.stress-stress]);
   const markers=effects.map(([name,delta])=>'<span class="plan-effect">'+escapeHTML(statLabel(name))+' <b class="'+deltaTone(name,delta)+'">'+signed(delta)+'</b></span>');
-  const basis=a.stress>0?'<small class="plan-basis">그럭저럭 기준</small> ':'';
+  const basis=a.stress>0?'<select class="plan-basis" data-preview-subject="'+id+'" aria-label="미리 볼 수업 판정">'+
+    Object.entries(lessonGrades).map(([key,g])=>'<option value="'+key+'"'+(key===plannerGrade?' selected':'')+'>'+g.label+' 기준</option>').join("")+'</select> ':'';
   return basis+'<span class="plan-effects">'+markers.join(" ")+'</span>';
 }
 function forecast(shop=state.shop){
@@ -176,7 +186,7 @@ function execute(){
   if(contest)state.plan[contestSlot]=null;
   state.past.push({month:state.month,plan:[...state.plan],...(contest?{contest:contest.id}:{})});
   const order=forecast();
-  state.sequence={index:0,contest:contest?.id,trainingPaid:0,unit:order.unit,demand:order.demand,receipt:order.receipt,trade:order.trade,retailSold:order.sold,investment:investmentEffect(order),opening:{fund:state.fund,hp:state.hp,stress:state.stress,motivation:state.motivation,stats:{...state.stats}}};
+  state.sequence={index:0,contest:contest?.id,bookedFees:state.plan.map(id=>courseTuition(state,id)),trainingPaid:0,unit:order.unit,demand:order.demand,receipt:order.receipt,trade:order.trade,retailSold:order.sold,investment:investmentEffect(order),opening:{fund:state.fund,hp:state.hp,stress:state.stress,motivation:state.motivation,stats:{...state.stats}}};
   enterSlot();
 }
 // A stable per-campaign draw for each eligible month, including after loading a save.
@@ -478,7 +488,7 @@ function fatigueThreshold(stamina){
   return 65+Math.floor(cap(stamina,abilityMax)*10/abilityMax);
 }
 const lessonGrades={
-  great:{label:"대성공",factor:1.65}, steady:{label:"그럭저럭",factor:1}, poor:{label:"별로",factor:.55}
+  great:{label:"대성공",factor:1.65,loss:1}, steady:{label:"그럭저럭",factor:1,loss:2}, poor:{label:"별로",factor:.55,loss:4}
 };
 function lessonResult(run,id,slot){
   if(actions[id].stress<=0)return null;
@@ -529,14 +539,21 @@ function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),
   if(id==="walk")run.stress=cap(run.stress-(run.annex.garden-1)*5-(shiftAssigned("garden")?2:0));
   run.motivation=cap(run.motivation+(a.stress<0?8:tired?-7:-2)-(worried&&["music","dance"].includes(id)?3:0));
   const primary=Object.keys(a.gains)[0];
+  const advanced=advancedCourse(run,id);
   const linked=recordStudyLink(run,id);
   const changes=Object.entries(a.gains).map(([name,value])=>{
     const before=run.stats[name];
     const secondary=name!==primary;
-    const gain=grade==="poor"&&secondary?-1:lessonGain(name,before,(value+(linked===name?3:0)+(advancedCourse(run,id)?3:0)+(room?(run.level[room]-1)*4:0))*(grade?lessonGrades[grade].factor:1)*(weather?1.5:1)*(run.neglect>=2?.85:1),run.month,run.flags,!secondary&&a.stress>0&&grade!=="poor",run.foundation);
+    const gain=grade==="poor"&&secondary&&!advanced&&!trainingTradeoffs[id]?-1:lessonGain(name,before,(value+(linked===name?3:0)+(advanced?3:0)+(room?(run.level[room]-1)*4:0))*(grade?lessonGrades[grade].factor:1)*(weather?1.5:1)*(run.neglect>=2?.85:1),run.month,run.flags,!secondary&&a.stress>0&&grade!=="poor",run.foundation);
     run.stats[name]=cap(before+gain,statMax(name));
     return statLabel(name)+" "+signed(run.stats[name]-before);
   });
+  const tradeoff=trainingTradeoffs[id];
+  if(tradeoff&&!advanced&&grade){
+    const loss=Math.min(run.stats[tradeoff],lessonGrades[grade].loss);
+    run.stats[tradeoff]-=loss;
+    changes.push(statLabel(tradeoff)+" "+signed(-loss));
+  }
   if(linked)changes.push(statLabel(linked)+" · 앞 수업 응용");
   changes.push("스트레스 "+signed(run.stress-stress));
   if(run.hp!==hp)changes.push("컨디션 "+signed(run.hp-hp));
@@ -667,7 +684,7 @@ function plannerNote(id){
 
 function previewPlannerCard(event){
   const calendar=event.currentTarget,note=calendar.querySelector(".calendar-note");
-  if(!note)return;
+  if(!note||note.contains(event.target)||(event.relatedTarget instanceof Element&&note.contains(event.relatedTarget)))return;
   const leaving=event.type==="pointerout"||event.type==="focusout";
   const target=leaving?event.relatedTarget:event.target;
   const card=target instanceof Element?target.closest(".lesson[data-action]"):null;
@@ -678,6 +695,15 @@ for(const type of ["pointerover","pointerout","focusin","focusout"]){
   $("calendar").addEventListener(type,previewPlannerCard);
 }
 
+$("calendar").addEventListener("change",event=>{
+  const select=event.target;
+  if(!select.matches("select[data-preview-subject]")||!Object.hasOwn(lessonGrades,select.value))return;
+  plannerGrade=select.value;
+  const note=select.closest(".calendar-note");
+  note.innerHTML=plannerNote(select.dataset.previewSubject);
+  note.querySelector("select")?.focus();
+});
+
 function plannerContents() {
   const contest=reservedContest(state);
   if(contest&&selectedSlot===contestSlot)selectedSlot=0;
@@ -687,7 +713,7 @@ function plannerContents() {
         option(plannerIcon(id)+'<b>'+name+'</b>', 'visit:'+id, state.visit===id, false, 'lesson visit-card'))
     : categories[lessonPage][1].map(id => {
         const activity=actions[id];
-        return option(plannerIcon(id)+'<b>'+activity.name+'</b><small>'+money(activity.cost)+'</small>',
+        return option(plannerIcon(id)+'<b>'+activity.name+'</b><small>'+money(courseTuition(state,id))+'</small>',
           'activity:'+selectedSlot+':'+id, id===chosen, false, 'lesson');
       });
   const half = Math.ceil(cards.length / 2);
@@ -1229,7 +1255,7 @@ function managementPanel(){
   if(tab==="staffing")return header+staffBoard();
   const actual=state.salesBook.at(-1);
   const settled=["event","result","vow","investiture","ending"].includes(state.phase);
-  const remaining=state.sequence?state.plan.slice(state.sequence.index+1).reduce((n,id)=>n+(actions[id]?.cost||0),0):0;
+  const remaining=state.sequence?(state.sequence.bookedFees||state.plan.map(id=>actions[id]?.cost||0)).slice(state.sequence.index+1).reduce((sum,fee)=>sum+fee,0):0;
   const live=state.sequence?'<section class="budget-book"><h3>확정된 이달 예산</h3>'+amountRow("남은 교육·활동비",remaining)+amountRow("저택 운영",overhead()-Math.min(24,state.debt))+amountRow("팬텀사 운영",state.qty*state.sequence.unit+(state.sequence.trade?.holding||0)+(state.sequence.trade?.operation||0)+(state.sequence.trade?.penalty||0))+(state.debt?amountRow("채무 상환",Math.min(24,state.debt)):"")+'</section>':"";
   const budget=active?'<div id="live-budget">'+budgetTable()+'</div>':settled&&state.report?actualBudget():live;
   const bottom=company?(active?businessForecast():settled&&actual?'<div class="work-ledger"><span>'+monthText(actual.month)+' 영업 수입</span><b>'+money(actual.revenue+actual.advance)+'</b></div>':'')+budget+salesBooks():budget;

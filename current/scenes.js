@@ -71,7 +71,8 @@ function enterSlot(){
   updateIllness(state);
   const id=careActivity(state,planned);
   seq.activity=id;seq.onSickLeave=Boolean(state.ill);
-  const paid=actions[planned].cost;
+  // A month already booked keeps its tuition, including absences and mid-month promotions.
+  const paid=seq.bookedFees?.[seq.index]??actions[planned].cost;
   seq.trainingPaid??=state.plan.slice(0,seq.index).reduce((total,key)=>total+actions[key].cost,0);
   seq.trainingPaid+=paid;
   seq.before=snapStats(state);
@@ -115,7 +116,7 @@ function finishScene(){
   if(state.phase!=="scene")return;
   stopPlayback();
   const id=state.sequence.activity||state.plan[state.sequence.index];
-  const eligible=state.duration===35&&!state.sequence.onSickLeave&&!state.ill?events.filter(e=>matchesSlot(e,id)&&!state.flags[e.id]&&e.sees(state)):[];
+  const eligible=state.duration===35&&!state.sequence.onSickLeave&&!state.ill?events.filter(e=>matchesSlot(e,id)&&(!e.examSubjects||examAttendanceReady(state,id))&&!state.flags[e.id]&&e.sees(state)):[];
   state.sequence.slotQueue=eligible.map(e=>e.id);
   nextSlotEvent(state);persist();render(true);
 }
