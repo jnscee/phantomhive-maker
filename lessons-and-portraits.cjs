@@ -184,6 +184,17 @@ async function check(browserType){
       await bulletin.getByRole('button',{name:'닫기'}).click();
       assert.ok(await bulletin.isHidden());
       await weatherPage.close();
+      const creditPage=await browser.newPage({viewport});
+      await openGame(creditPage);
+      await creditPage.evaluate(()=>{
+        state=initial();state.fund=-10;state.phase="plan";state.plan=["study","study","study"];state.visit="none";tab="plan";render();
+      });
+      await creditPage.locator('.calendar-run').click();
+      assert.match(await creditPage.locator('#picker').innerText(),/외상/);
+      await creditPage.locator('#picker [data-action="confirm"]').click();
+      assert.equal(await creditPage.evaluate(()=>state.phase),"scene");
+      assert.equal(await creditPage.evaluate(()=>state.fund),-34);
+      await creditPage.close();
       const fairPage=await browser.newPage({viewport});
       await fairPage.goto(base+'?fair-preview=newYear-1886&entry=1');
       assert.equal(await fairPage.locator('.duel-plate b').first().textContent(),'에드워드 미드포드');

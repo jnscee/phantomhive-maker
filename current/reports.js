@@ -147,11 +147,15 @@ function monthlyResults(){
   const financeWarning=state.fund<0
     ?(state.arrears?"두 달 연속 월말 잔액이 음수입니다. 파산을 피할 수 없습니다.":"월말 잔액이 음수입니다. 다음 월말에도 음수면 파산합니다.")
     :(state.fund<60?"다음 달 교육비와 생산비를 확인하세요.":"");
+  const povertyNext=povertyAfterClosing(state);
+  const moneyRemark=state.ill||povertyNext===state.poverty?"":povertyNext
+    ?"시엘은 다음 달 초청장에 답을 쓰기 전에 우편 요금부터 확인했습니다."
+    :"시엘이 차 주문서에 줄을 긋고 한 통을 더 적어 넣었습니다.";
   const warnings=[healthWarning,financeWarning].filter(Boolean).map(note=>'<p class="danger">'+note+'</p>').join("");
   const best=stats.slice().sort((a,b)=>(after[b]-before[b])/statMax(b)-(after[a]-before[a])/statMax(a))[0];
   const growth=after[best]-before[best];
   const words=(growth>0?"이번 달에는 "+statLabel(best)+"에서 가장 진전이 컸습니다. "+before[best]+"에서 "+after[best]+"까지 올리셨군요. ":"이번 달 능력에는 큰 변동이 없었습니다. ")+(state.report?"팬텀사에서는 "+state.report.sold+"개를 판매했습니다. ":"")+"도련님께서 다음 달에 쓰실 수 있는 돈은 "+money(state.fund)+"입니다.";
-  return '<div class="month-report"><div class="butler-account"><img src="assets/sebastian.webp" alt="세바스찬"><p><b>세바스찬의 월말 보고</b><br>'+words+'</p></div>'+warnings+'<div class="report-date">'+monthText(state.month)+' 결산</div><div class="report-columns">'+
+  return '<div class="month-report"><div class="butler-account"><img src="assets/sebastian.webp" alt="세바스찬"><p><b>세바스찬의 월말 보고</b><br>'+words+(moneyRemark?' '+moneyRemark:'')+'</p></div>'+warnings+'<div class="report-date">'+monthText(state.month)+' 결산</div><div class="report-columns">'+
     '<section class="stat-folio"><h3>시엘의 성장 기록</h3><div class="delta-head"><span>항목</span><span>이전</span><span>현재</span><span>변화 그래프</span><span>증감</span></div>'+
     group("능력 · 500점",stats)+group("현재 상태 · 100점",["건강","스트레스","의욕"])+'</section>'+actualBudget()+'</div>'+thisMonthFairReport()+sampleReview()+
     '<details class="month-log"><summary>이달 일정·사건 기록</summary>'+monthlyTimeline(state.log)+'</details>'+
@@ -206,6 +210,7 @@ function reviewMarkup(){
   if(!seq.grade&&tired)line="끝까지 자리를 지키셨군요. 다음 순에는 차를 일찍 올리겠습니다. 오늘은 평소보다 피로가 짙으셨습니다.";
   const lead=preferred[0]||(["건강","스트레스","의욕"].find(k=>after[k]!==seq.before[k]));
   if(!changed.length&&!seq.grade)line="오늘 기록은 지난 순과 같군요. 다음에는 다른 과목을 편성해 보시겠습니까, 도련님?";
+  if(worriedAboutMoney(state)&&id==="rest")line="쉬시라고 비워 둔 오후였는데요. 도련님께서 석탄 배달표를 세 번이나 검산하셨더군요.";
   if(seq.onSickLeave)line=state.ill?"체온계를 여기 두겠습니다. 오늘 남은 일은 제가 물리겠습니다.":"열이 내렸습니다. 다음 일정은 아침 식사 뒤에 시작하지요.";
   else if(state.ill)line="오늘 수업은 여기까지입니다. 다음 선생님께는 제가 편지를 보내지요.";
   const note=lead?statLabel(lead)+' '+seq.before[lead]+' → '+after[lead]+' ('+signed(after[lead]-seq.before[lead])+')':"이번 순에는 수치 변화가 없습니다.";

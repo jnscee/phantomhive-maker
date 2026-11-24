@@ -24,7 +24,7 @@ function initial(){
     shop:{design:1,works:1,store:1},salesBook:[],productHistory:{},fineStock:{},order:null,
     product:"toys",unlocked:["toys"],quality:"standard",price:14,qty:15,stock:Object.fromEntries(Object.keys(products).map(id=>[id,0])),
     trust:1,royal:0,renown:0,flags:{},events:[],past:[],log:[],pending:null,ending:null,
-    debt:0,unwell:0,relapseStage:0,arrears:0,usedLoan:false,counts:{}});
+    debt:0,unwell:0,relapseStage:0,arrears:0,poverty:false,usedLoan:false,counts:{}});
 }
 const previewQuery=new URL(document.baseURI).searchParams;
 const previewFair=previewQuery.has("fair-preview")?(contests.find(f=>f.id===previewQuery.get("fair-preview"))||contests[0]):null;
@@ -51,6 +51,14 @@ function illnessLimits(run){
 function overworkLoss(stress,activity){
   return activity.stress>0?Math.ceil(Math.max(0,stress-70)/3):0;
 }
+// Ciel feels the household's finances after the books close. Recovery has its own threshold.
+function povertyAfterClosing(run,balance=run.fund){
+  if(run.poverty)return balance<150;
+  const willLimit=150+60*(campaignAge(run)-10);
+  return balance<=50 && run.stats.의지<willLimit;
+}
+function worriedAboutMoney(run){return Boolean(run.poverty && !run.ill);}
+function cielCondition(run){return run.ill?"병중":run.poverty?"가난":"";}
 function updateIllness(run){
   if(run.hp<=35 && run.stress>=illnessLimits(run).onset)run.ill=true;
   else if(run.hp>=50 && run.stress<=60)run.ill=false;
@@ -152,7 +160,6 @@ function pendingEvent(){
 }
 function execute(){
   if(state.phase!=="plan"||!planReady())return;
-  if(cashNeeded()>Math.max(0,state.fund)){flash("일정 비용과 생산비를 마련해 주세요.");return;}
   state.log=[];
   const contest=reservedContest(state);
   if(contest)state.plan[contestSlot]=null;
@@ -445,6 +452,7 @@ function advance(){
   if(late){state.pending=late;state.phase="event";tab="plan";persist();render(true);return;}
   if(sampleReview())return;
   state.unwell=state.hp<18?state.unwell+1:0;
+  state.poverty=povertyAfterClosing(state);
   state.arrears=state.fund<0?state.arrears+1:0;
   if(state.unwell>=2){finish("ill");return;}
   if(state.arrears>=2){finish("broke");return;}
@@ -486,7 +494,8 @@ function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),
   const weather=weatherWorkout(id)?weatherFor(run):null;
   const stress=run.stress;
   const hp=run.hp;
-  run.stress=cap(run.stress+a.stress+(weather?.stress||0));
+  const worried=worriedAboutMoney(run);
+  run.stress=cap(run.stress+(worried&&id==="rest"?3:a.stress)+(weather?.stress||0));
   const restBonus=(id==="rest"||id==="recovery")?(run.annex.bedroom-1)*5:0;
   let healthGain=a.health||0;
   const relapse=plannedCareLevel(run)<2 ? run.relapseStage||0 : 0;
@@ -494,7 +503,7 @@ function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),
   const strain=a.stress>=10 ? 3*relapse : 0;
   run.hp=cap(run.hp+healthGain-(weather?.strain||0)-strain-fieldPenalty+restBonus-overworkLoss(run.stress,a));
   if(id==="walk")run.stress=cap(run.stress-(run.annex.garden-1)*5-(shiftAssigned("garden")?2:0));
-  run.motivation=cap(run.motivation+(a.stress<0?8:tired?-7:-2));
+  run.motivation=cap(run.motivation+(a.stress<0?8:tired?-7:-2)-(worried&&["music","dance"].includes(id)?3:0));
   const primary=Object.keys(a.gains)[0];
   const changes=Object.entries(a.gains).map(([name,value])=>{
     const before=run.stats[name];
@@ -664,10 +673,10 @@ function plannerContents() {
       '<div class="calendar-periods" role="group" aria-label="편집할 기간">'+periods.join('')+'</div>'+
       '<div class="calendar-settle">'+plannerCosts(estimate)+
       '<div class="plan-balance"><span>예상 월말 자금</span><strong>'+money(estimate.balance)+'</strong></div>'+
-      btn('이달 일정 실행','execute',!planReady()||estimate.blocked,'calendar-run')+'</div>'+(healthNotice(state)?'<p class="calendar-warning">'+healthNotice(state)+'</p>':'')+
+      btn('이달 일정 실행','execute',!planReady(),'calendar-run')+'</div>'+(healthNotice(state)?'<p class="calendar-warning">'+healthNotice(state)+'</p>':'')+
       (state.unwell>0?'<p class="calendar-warning">시엘이 위독합니다. 당분간 곁에서 돌봐야겠습니다.</p>':'')+
       (state.arrears>0?'<p class="calendar-warning">미지급금 경고 · 이번 월말까지 잔액을 £0 이상으로 회복하세요.</p>':'')+
-      (estimate.blocked?'<p class="calendar-warning">준비비가 부족합니다. 활동이나 생산량을 조정하세요.</p>':'')+'</div>'+bulletin;
+      (estimate.shortfall?'<p class="calendar-warning">준비비 부족 · '+money(estimate.shortfall)+'　외상으로 진행할 수 있습니다.</p>':'')+'</div>'+bulletin;
 }
 
 function planPanel(){
@@ -690,7 +699,7 @@ function planPanel(){
 }
 function marketStats(){
   const order=forecast(), needed=cashNeeded();
-  return {...order,balance:state.fund+order.revenue-needed-overhead()-order.expenses,blocked:needed>Math.max(0,state.fund)};
+  return {...order,balance:state.fund+order.revenue-needed-overhead()-order.expenses,shortfall:Math.max(0,needed-Math.max(0,state.fund))};
 }
 function stepper(key,label,min){
   return '<div class="tile"><label class="small muted" for="'+key+'">'+label+'</label><div class="stepper">'+
@@ -700,7 +709,7 @@ function stepper(key,label,min){
 }
 const legacyEventIds={"비어 있는 천막":"circus","타운하우스의 손님":"visitPrince","돌아온 집사":"homecoming","불을 지키는 사람":"cook","서재의 열쇠":"return","새벽의 일정표":"discipline","비어 있는 장부":"proof","여왕의 초청장":"audience","상점 진열장":"trade","손님이 돌아간 뒤":"room"};
 function updateMoney(){
-  $("money").innerHTML='<div class="nameplate"><small>CIEL</small><b>PHANTOMHIVE</b></div><div class="id-details"><span>'+currentCielAge()+'세</span><span>'+(state.ill?"병중":"12.14")+'</span><span class="sign-mark" aria-label="사수자리"></span></div><strong class="wealth">'+money(state.fund)+'</strong>';
+  $("money").innerHTML='<div class="nameplate"><small>CIEL</small><b>PHANTOMHIVE</b></div><div class="id-details"><span>'+currentCielAge()+'세</span><span>'+(cielCondition(state)||"12.14")+'</span><span class="sign-mark" aria-label="사수자리"></span></div><strong class="wealth">'+money(state.fund)+'</strong>';
 }
 function relationBook(){
   return '<h3>인물 관계</h3>'+peopleInHouse().map(id=>{const r=state.people[id];return '<div class="work-ledger"><b>'+servants[id].name+'</b><span>상대 → 시엘 신뢰　'+rank(r.toward)+'</span></div>';}).join("");
@@ -913,6 +922,10 @@ function normalizeSave(run){
     const id="exam-"+slot;
     if(copy.flags[id] && copy.events?.findLast(e=>e.id===id)?.index===1) delete copy.flags[id];
   }
+  if(typeof copy.poverty!=="boolean"){
+    const opening=copy.accounts?.opening??copy.sequence?.opening?.fund??copy.fund;
+    copy.poverty=povertyAfterClosing(copy,opening);
+  }
   return copy;
 }
 function recordPanel(){
@@ -978,7 +991,7 @@ function statusPanel(){
     return '<div class="meter '+styles[i]+'"><span>'+conditions[i]+'</span><span class="track" aria-hidden="true"><i class="fill" style="width:'+
       value+'%"></i></span><b>'+value+'</b><em class="'+((i===1?delta>0:delta<0)?"danger":"good")+'">'+(delta?signed(delta):"–")+'</em></div>';
   }).join("");
-  return frame(state.ill?"시엘 상태 · 병중":"시엘 상태",'<div class="inline"><b>시엘 팬텀하이브</b><span class="small muted">'+
+  return frame(["시엘 상태",cielCondition(state)].filter(Boolean).join(" · "),'<div class="inline"><b>시엘 팬텀하이브</b><span class="small muted">'+
     (state.phase==="plan"?"편성한 일정의 예상 변동":"이번 달 변동")+'</span></div><div class="hud-group">'+meters+
     '</div><div class="hud-group"><div class="attributes"><div class="attribute attr-label muted"><span>능력치</span><b>현재</b><em>변동</em></div>'+
     stats.map(name=>{
@@ -1231,6 +1244,7 @@ function sheetTitle(){
   }
   return {market:"라우의 상점",title:"Earl Phantomhive Maker",status:"상태",estate:"저택 관리",townhouse:"런던 타운하우스",staffing:"사용인 배치",company:"팬텀 사 경영",record:"가문 장부",save:"저장 · 설정"}[tab];
 }
+const povertyRemarks=["이번 달 석탄값은 얼마지? 지난달 영수증도 가져와.","새 장갑은 됐어. 단추만 다시 달면 쓸 수 있어.","그 찻잎, 아직 한 번은 더 우릴 수 있어."];
 const homeRemarks=["무슨 일이지?","차가 식기 전에 마저 마시겠어.","오늘 일정은 확인했나?","잠깐이라면 들어주지."];
 let remarkIndex=0;
 let remarkTimeout;
@@ -1243,8 +1257,9 @@ function greetCiel(){
   sprite.classList.remove("greeting-hop");
   void sprite.offsetWidth;
   sprite.classList.add("greeting-hop");
-  bubble.textContent=homeRemarks[remarkIndex];
-  remarkIndex=(remarkIndex+1)%homeRemarks.length;
+  const remarks=worriedAboutMoney(state)?povertyRemarks:homeRemarks;
+  bubble.textContent=remarks[remarkIndex%remarks.length];
+  remarkIndex=(remarkIndex+1)%remarks.length;
   remarkTimeout=setTimeout(()=>{bubble.textContent="";},3000);
 }
 function render(focus=false,playbackOffset=0){
@@ -1742,7 +1757,7 @@ function handleAction(key,rect,confirmed=false){
     tab="home";render();focusAction(commands.find(([action])=>action===lastMenu)?.[0]||"tab:plan");respond("back",rect);return;
   }
   if(action==="run"){
-    if(state.phase==="plan"&&planReady()&&cashNeeded()<=Math.max(0,state.fund))handleAction("execute",rect);
+    if(state.phase==="plan"&&planReady())handleAction("execute",rect);
     else{tab="plan";render(true);respond("tap",rect);}
     return;
   }
@@ -1789,7 +1804,8 @@ function handleAction(key,rect,confirmed=false){
     const periods=state.plan.map((id,index)=>contest&&index===contestSlot
       ?'<li class="contest-period"><small>하순 · 경연</small><b>'+contest.title+'</b></li>'
       :'<li><small>'+slotNames[index]+'</small>'+plannerIcon(id)+'<b>'+courseName(id)+'</b></li>').join("");
-    const instructions='<details class="desk-review"><summary>이달 운영 지시 확인·변경</summary>'+
+    const shortage=marketStats().shortfall;
+    const instructions=(shortage?'<p class="calendar-warning">준비비 중 '+money(shortage)+'는 외상으로 진행합니다.</p>':'')+'<details class="desk-review"><summary>이달 운영 지시 확인·변경</summary>'+
       '<div><p><b>저택</b><br>'+(state.people.tanaka?"타나카 · "+dutyName(state.jobs.tanaka)+" · ":"")+'시설 상태 '+houseValues().시설상태+'</p>'+btn("저택 지시 변경","inspect:estate")+'</div>'+
       '<div><p><b>팬텀사</b><br>'+products[state.product].name+' '+state.qty+'개 · 판매가 '+money(state.price)+'</p>'+btn("팬텀사 지시 변경","inspect:company")+'</div></details>';
     askConfirmation(key,"이번 달 일정을 시작할까요?","","일정 시작",rect,

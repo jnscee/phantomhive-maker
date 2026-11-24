@@ -20,7 +20,8 @@ for(const id of teaParties){
     ctx.teaIndex=index;
     const intro=run('duelScene(contests.find(f=>f.id===teaId),{index:teaIndex},{rivalScore:44,focus:0})');
     assert.match(intro,/에드워드 미드포드/);assert.doesNotMatch(intro,/엘리자베스/);
-    assert.match(intro,/edward-midford.webp/);
+    assert.ok(intro.includes(index?"edward-tea.png":"edward-greeting.png"));
+    assert.match(intro,/팬텀하이브의 당주/);
   }
 }
 for(const [rank,score,expected] of [[0,5,"입상권 밖"],[1,40,"은상"],[2,44,"공동 금상"],[2,49,"금상"]]){
@@ -29,6 +30,44 @@ for(const [rank,score,expected] of [[0,5,"입상권 밖"],[1,40,"은상"],[2,44,
   assert.ok(slip.includes("<h3>"+expected+"</h3>")&&slip.includes(ctx.legacyEntry.scoreNote));
   assert.doesNotMatch(slip,/undefined|NaN|입상 보상/);
 }
+// Choices direct the demonstration. Scores, prizes and ranks depend on the entrant.
+setup();
+for(const fairId of run('contests.map(f=>f.id)')){
+  ctx.fairId=fairId;
+  run('state.fund=25;state.qty=1;state.quality="fine";state.stats.기품=44;state.stats.매력=44;');
+  assertOk(`(()=>{
+    const f=contests.find(f=>f.id===fairId);
+    const entries=f.company?[{product:"toys"}]:f.options.map((_,index)=>({index}));
+    return entries.every(t=>{
+      const duel={rivalScore:44,focus:0};
+      const first=judgeContest(state,f,t,{...duel,choice:0});
+      const second=judgeContest(state,f,t,{...duel,choice:1});
+      return JSON.stringify(first)===JSON.stringify(second)&&
+        first.score===first.scoreParts.reduce((sum,[,n])=>sum+n,0)&&
+        (f.company||first.score===state.stats[f.options[t.index].stat]);
+    });
+  })()`);
+}
+setup('state.fund=-8;state.visit="none";state.plan=["study","study","study"];tab="plan"');
+assertOk('marketStats().shortfall===cashNeeded()&&!plannerContents().match(/<button[^>]*data-action="execute"[^>]*disabled/)');
+run('handleAction("execute",null,true)');
+assertOk('state.phase==="scene"&&state.fund===-8-actions.study.cost');
+run('state=normalizeSave(state)');
+assertOk('state.sequence.trainingPaid===actions.study.cost&&state.fund===-8-actions.study.cost');
+setup('state.fund=50;state.stats.의지=149');
+assertOk('povertyAfterClosing(state)');
+run('state.stats.의지=150');
+assertOk('!povertyAfterClosing(state)');
+run('state.poverty=true;state.fund=149');
+assertOk('povertyAfterClosing(state)&&normalizeSave(state).poverty');
+run('state.fund=150');
+assertOk('!povertyAfterClosing(state)');
+setup('state.poverty=true;state.stress=30;state.ill=false;applyActivity(state,"rest",null)');
+assertOk('state.stress===33&&cielCondition(state)==="가난"');
+run('state.ill=true;state.stress=30;applyActivity(state,"rest",null)');
+assertOk('state.stress===5');
+setup('state.poverty=true;state.motivation=70;applyActivity(state,"music","steady")');
+assertOk('state.motivation===65');
 const caseIds=run('companyCases.map(item=>item.id)');
 assert.equal(new Set(caseIds).size,12);
 for(const id of caseIds){
@@ -487,7 +526,7 @@ setup('state.plan=["walk","walk","walk"];state.visit="none";state.price=40;state
 run('state.sequence.trade.holding=13;persist();state=normalizeSave(saves.auto);settleMonth()');
 assertOk('state.report.storage===13');
 setup('state.hp=24;state.stress=100;state.qty=0;state.plan=["exercise","rest","recovery"];state.visit="none";state.fund=plannedTuition()-1;execute()');
-assertOk('state.phase==="plan" && state.fund===actions.exercise.cost+actions.rest.cost+actions.recovery.cost-1');
+assertOk('state.phase==="scene" && state.sequence.onSickLeave && state.fund===actions.rest.cost+actions.recovery.cost-1');
 setup('state.hp=20;state.stress=100;state.visit="library";persist()');
 assertOk('state.ill && !hasPendingVisit()');
 run('state.hp=57;state.stress=51;persist()');
