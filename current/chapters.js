@@ -278,8 +278,8 @@ function productPlanning(){
 function sampleReview(){
  const p=state.prototype;
  if(!p||p.approved||p.review>state.month)return "";
- const notes={toys:"몸체는 튼튼합니다. 손이 작은 아이에게는 손잡이가 조금 큽니다.",sweets:"버터 향이 좋습니다. 다만 꺼낼 때 가장자리가 부서지는군요.",game:"말의 색은 쉽게 구별됩니다. 첫 수를 두는 방법은 설명서에 한 줄 더 필요합니다.",plush:"안았을 때 감촉이 좋습니다. 다만 귀 뒤의 솔기가 조금 거칩니다.",candy:"맛은 고르게 들었습니다. 포장지 끝을 조금 더 길게 남기면 풀기 쉽겠습니다.",hamper:"구성은 좋습니다. 상자를 기울이면 작은 병이 칸막이 사이로 빠집니다."};
- const note=p.reworked?"재검수 결과, 지적한 부분을 보완했습니다.":p.brief==="gift"?"진열대에서는 눈에 띕니다. 아이 혼자 리본을 풀기에는 매듭이 빡빡하군요.":notes[p.product];
+ const notes={toys:"몸체는 제법 단단합니다. 손잡이가 문제군요. 어린아이가 쥐면 엄지와 검지가 닿질 않겠습니다.",sweets:"뚜껑을 열자마자 버터 향이 납니다. 한 장을 꺼내 봤더니 가장자리만 상자에 남는군요.",game:"건너편에 놓인 말도 색깔이 잘 보입니다. 이제 첫 수를 둬야 하는데…… 설명서에서는 벌써 두 번째 수로 넘어갔군요.",plush:"품에 안기는 감촉이 좋습니다. 귀 뒤의 솔기도 한번 만져 보십시오. 이 솔기만 손끝에 걸립니다.",candy:"어느 알을 골라도 맛은 고릅니다. 포장지 끝을 조금만 더 남기면 작은 손으로도 잡고 풀 수 있겠군요.",hamper:"구성은 이대로 좋겠습니다. 다만 상자를 기울여 건네면…… 보십시오. 제일 작은 병이 칸막이 틈으로 빠집니다."};
+ const note=p.reworked?"지난번에 짚어 둔 자리입니다. 한번 보시지요. 이번 견본은 잘 고쳤습니다.":p.brief==="gift"?"진열장 너머로도 리본이 눈에 띕니다. 이 매듭대로라면 선물을 받은 아이가 맨 먼저 어른부터 찾아야겠군요.":notes[p.product];
  return '<section class="budget-book sample-review"><header><img src="assets/map-cart-'+p.product+'.png" alt=""><div><small>팬텀사 시제품 검수</small><h3>'+products[p.product].name+'</h3></div></header><p>'+note+'</p><div class="sample-actions">'+btn("출시 승인 · 다음 달 생산","sample:approve")+btn("재작업 · £12","sample:redo",state.fund<12||state.month>=state.duration-1||p.reworked)+'</div></section>';
 }
 let facilityLedgerOpen=true;
