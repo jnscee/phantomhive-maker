@@ -116,7 +116,7 @@ const contests = annualContests.flatMap(fair=>[0,1,2].map(year=>({
 
 // The two demonstrations in each class respond to the examiner's observations.
 const contestOpponents={
-  newYear:{name:"에드워드 미드포드",quote:"시엘, 제비를 보니 내가 먼저구나. 네 솜씨도 기대하고 있으마.",role:"시엘의 사촌 형",portrait:"assets/portraits/edward-midford.webp",
+  newYear:{name:"에드워드 미드포드",quote:"시엘, 난 아직 널 내 매제로 인정하지 않았다. ……뭐? 다과회랑 무슨 상관이냐고? 아무튼, 내가 먼저다!",laterQuotes:["해가 바뀌었다고 내가 마음을 바꾼 줄은 아니겠지, 시엘? 리지는 벌써 네 자리부터 봐 뒀더구나.","시엘, 잘해라. 리지가 보고 있다. ……응원한 게 아니다! 내 매제가 되려면 그 정도는 해야지."],role:"미드포드가 장남",portrait:"assets/portraits/edward-midford.webp",
     entries:[
       ["에드워드는 원고를 접어 주머니에 넣습니다. 뒷줄에 앉은 노부인이 고개를 들자, 그제야 새해 인사를 건넵니다.","목소리가 닿는가","맨 뒤 손님을 향해 축사한다","호칭이 정확한가","초청장 순서로 이름을 부른다"],
       ["에드워드는 손님이 내려놓은 잔을 받으며 두 번째 잔도 같은 농도로 드실지 묻습니다. 심사위원이 탁자 사이로 한 걸음 다가섭니다.","차의 온도","식은 잔부터 바꾸어 낸다","손님의 취향","설탕과 우유를 따로 권한다"]

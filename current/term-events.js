@@ -137,8 +137,10 @@ function termDialogue(event,buttons){
   const standing=cue?.standing||event.standing;
   const cast=novelCast(cue,recruitArtwork(currentCielAge()))??(standing&&Object.hasOwn(recruitCast,standing)
     ?sceneStanding(recruitNames[standing],"left",recruitArtwork(currentCielAge())(recruitCast[standing])):picture?"":dialogueCast(event.id==="season-16"?"엘리자베스":"세바스찬"));
+  const evidence=event.companyCase&&end&&!outcome?'<details class="company-evidence"><summary>단서 다시 보기</summary><dl>'+
+    event.companyCase.evidence.map(([label,detail])=>'<div><dt>'+escapeHTML(label)+'</dt><dd>'+escapeHTML(detail)+'</dd></div>').join("")+'</dl></details>':"";
   const speaker=novelSpeakerName(who);
   return '<div class="review-room" style="background-image:url(&quot;'+art+'&quot;)"></div>'+cast+
-    '<article class="dialogue">'+(speaker?'<small>'+escapeHTML(speaker)+'</small>':"")+'<p>'+escapeHTML(line)+'</p>'+
+    '<article class="dialogue">'+(speaker?'<small>'+escapeHTML(speaker)+'</small>':"")+'<p>'+escapeHTML(line)+'</p>'+evidence+
     (outcome?.note&&end&&!state.choiceImpact?'<small>'+escapeHTML(statResultText(outcome.note))+'</small>':'')+'<div class="answers">'+actions+'</div></article>';
 }

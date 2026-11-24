@@ -29,6 +29,27 @@ for(const [rank,score,expected] of [[0,5,"입상권 밖"],[1,40,"은상"],[2,44,
   assert.ok(slip.includes("<h3>"+expected+"</h3>")&&slip.includes(ctx.legacyEntry.scoreNote));
   assert.doesNotMatch(slip,/undefined|NaN|입상 보상/);
 }
+const caseIds=run('companyCases.map(item=>item.id)');
+assert.equal(new Set(caseIds).size,12);
+for(const id of caseIds){
+  ctx.caseId=id;
+  for(let index=0;index<3;index++){
+    ctx.answer=index;
+    setup('tab="plan";state.pending=caseId;state.phase="event";state.month=20;');
+    assertOk('termPages(pendingEvent()).length>=5');
+    run('choose(answer)');assertOk('!state.flags[caseId]');
+    run('state.termPage=termPages(pendingEvent()).length-1;state=normalizeSave(state);choose(answer);state=normalizeSave(state);choose(answer)');
+    assertOk('state.flags[caseId] && state.events.filter(e=>e.id===caseId).length===1');
+    assertOk('state.renown===(pendingEvent().companyCase.correct===answer?pendingEvent().companyCase.award:0)');
+    assertOk('state.termOutcome.response===pendingEvent().choices[answer].response');
+  }
+}
+setup('state.month=14;state.renown=8;state.productHistory.toys={units:89,reputation:5,orders:1}');
+assertOk('!companyCaseEligible(state,companyCases.find(item=>item.gate==="fame"))');
+run('state.productHistory.toys.units=90');
+assertOk('dueCompanyCase(state).gate==="fame"');
+run('state.events.push({id:"merchantAlphabet",month:13,index:0})');assertOk('!dueCompanyCase(state)');
+run('state.month++;state.flags.merchantBorrowedCrest=true');assertOk('dueCompanyCase(state)?.gate!=="fame"');
 function pick(){
   run('if(recruitScenes[state.pending])state.recruitPage={id:state.pending,version:2,at:recruitScenes[state.pending].lines.length-1};choose(0);if(state.choiceImpact?.next)handleAction("impact-close")');
 }
@@ -368,19 +389,24 @@ assertOk('graduate.stats.지성>486 && projectTraining().stats.지성===486 && s
 run('changeStat("지성",6);state.flags.lateDispatch=true;persist();state=normalizeSave(saves.auto)');
 assertOk('state.stats.지성===491 && lessonGain("지성",491,20,25)>1 && !statusPanel().includes("과목 실기 0/6")');
 
-// Each limit can independently trigger illness. Equality counts, and recovery has its own boundary.
-setup('state.hp=76;state.stats.체력=50;state.motivation=70;state.stress=74;updateIllness(state)');
-assertOk('!state.ill && illnessLimits(state).onset===75 && healthNotice(state).includes("피로") && !statusPanel().includes("신체 한계")');
-run('state.stress=75;updateIllness(state)');assertOk('state.ill');
+// High stress spends condition on work; sick leave requires low condition as well.
+setup('state.hp=76;state.stats.체력=50;state.motivation=70;state.stress=75;updateIllness(state)');
+assertOk('!state.ill && healthNotice(state).includes("손이 떨리") && careActivity(state,"accounts")==="accounts"');
+for(const [stress,loss] of [[70,0],[71,1],[80,4],[90,7],[100,10]]){
+  Object.assign(ctx,{stress,loss});
+  assertOk('overworkLoss(stress,actions.accounts)===loss && overworkLoss(stress,actions.rest)===0');
+}
+setup('state.hp=90;state.stress=79;state.plan=["accounts","rest","rest"];const hpBefore=state.hp;applyActivity(state,"accounts","steady");');
+assertOk('state.hp===hpBefore-overworkLoss(94,actions.accounts) && !state.ill');
+run('applyActivity(state,"rest")');assertOk('state.hp>hpBefore && state.stress===69');
+setup('state.hp=36;state.stress=100;updateIllness(state)');assertOk('!state.ill');
+run('state.hp=35;updateIllness(state)');assertOk('state.ill');
 run('state.stress=60;state.hp=49;updateIllness(state)');assertOk('state.ill');
 run('state.hp=50;state.stress=61;updateIllness(state)');assertOk('state.ill');
 run('state.stress=60;updateIllness(state)');assertOk('!state.ill');
-setup('state.stats.체력=500;state.hp=76;state.motivation=70;state.stress=75;updateIllness(state)');
-assertOk('!state.ill && illnessLimits(state).onset>75');
-run('state.motivation=20;updateIllness(state)');assertOk('state.ill && illnessLimits(state).spirit===72');
 setup('state.hp=25;state.stress=20;updateIllness(state)');assertOk('!state.ill');
 for(const condition of ['state.motivation=100;state.stress=illnessLimits(state).stamina','state.stats.체력=500;state.motivation=20;state.stress=illnessLimits(state).spirit']){
-  setup(condition+';state.plan=["exercise","rest","rest"];state.visit="library";state.qty=0;execute()');
+  setup('state.hp=35;'+condition+';state.plan=["exercise","rest","rest"];state.visit="library";state.qty=0;execute()');
   assertOk('state.phase==="scene" && state.sequence.activity==="recovery" && state.sequence.onSickLeave');
   assertOk('state.sequence.trainingPaid===actions.exercise.cost && state.fund===state.sequence.opening.fund-actions.exercise.cost && !state.counts.exercise');
   run('state=normalizeSave(saves.auto)');

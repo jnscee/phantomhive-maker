@@ -380,3 +380,13 @@ html:is([data-fair-preview],[data-story-preview]) :is(#system-menu,#mobile-menu)
   .award-body,.award-head {padding-inline:.62rem}
   .award-ledger>div {grid-template-columns:4.1rem minmax(0,1fr)}
 }
+
+.company-evidence {
+  margin:.45rem 0 .1rem;border-block-start:1px solid #baa47580;
+  padding-block:.32rem;font-size:.92rem;line-height:1.5;
+}
+.company-evidence summary {width:fit-content;color:inherit;font-weight:700;cursor:pointer}
+.company-evidence dl {margin:.35rem 0 0}
+.company-evidence dl>div+div {margin-top:.4rem}
+.company-evidence dt {font-weight:700}
+.company-evidence dd {margin:0;overflow-wrap:anywhere}

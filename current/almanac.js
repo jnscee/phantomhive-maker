@@ -301,7 +301,7 @@ function duelScene(fair,ticket,duel,entry){
     body='<p>'+(option?option.line:"시엘이 팬텀사의 상표를 심사위원 쪽으로 돌립니다. 담당관이 견본과 거래 기록을 받아 듭니다.")+'</p><p class="duel-detail">시엘의 대응 · '+act[2+duel.choice*2]+'</p>';
     buttons=btn("최종 점수 보기","fair-reveal",false,"primary");
   }else{
-    body='<p class="duel-quote">“'+rival.quote+'”</p><p>'+act[0]+'</p><p class="duel-cue">심사위원이 짚은 항목 <b>'+act[1+duel.focus*2]+'</b></p>';
+    body='<p class="duel-quote">“'+(rival.laterQuotes?.[fair.year-1]??rival.quote)+'”</p><p>'+act[0]+'</p><p class="duel-cue">심사위원이 짚은 항목 <b>'+act[1+duel.focus*2]+'</b></p>';
     buttons=btn(act[2],"fair-play:0")+btn(act[4],"fair-play:1");
   }
   if(!done)slip='<div class="contest-slip" aria-live="polite"><h3>'+title+'</h3>'+body+'<div class="duel-controls">'+buttons+'</div></div>';
@@ -416,6 +416,7 @@ function healthNotice(run){
   const relapse=relapseNotice(run);
   if(relapse)return relapse;
   if(run.ill??run.illness)return "도련님은 요양 중입니다. 예약한 수업료는 그대로 지급됩니다.";
+  if(run.stress>70)return "도련님, 손이 떨리십니다. 다음 일정까지 밀어붙이면 몸이 더 상할 겁니다.";
   const {onset}=illnessLimits(run);
   if(run.stress>=onset-12)return "도련님 얼굴에 피로가 짙습니다.";
   return "";

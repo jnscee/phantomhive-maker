@@ -29,7 +29,8 @@ function initial(){
 const previewQuery=new URL(document.baseURI).searchParams;
 const previewFair=previewQuery.has("fair-preview")?(contests.find(f=>f.id===previewQuery.get("fair-preview"))||contests[0]):null;
 const previewStory=previewQuery.get("story-preview");
-const storyDemo=Object.hasOwn(middleObservations,previewStory);
+const previewCompanyCase=companyCases.find(item=>item.id===previewStory);
+const storyDemo=Boolean(previewCompanyCase)||Object.hasOwn(middleObservations,previewStory);
 const storageKey="earl-phantomhive-maker-v1";
 let saves, storageOk=true;
 try{ saves=previewFair||storyDemo?{}:JSON.parse(localStorage.getItem(storageKey)||"{}"); }catch{ storageOk=false; }
@@ -46,8 +47,11 @@ function illnessLimits(run){
   const spirit=Math.round(65+35*run.motivation/100);
   return {stamina,spirit,onset:Math.min(stamina,spirit)};
 }
+function overworkLoss(stress,activity){
+  return activity.stress>0?Math.ceil(Math.max(0,stress-70)/3):0;
+}
 function updateIllness(run){
-  if(run.stress>=illnessLimits(run).onset)run.ill=true;
+  if(run.hp<=35 && run.stress>=illnessLimits(run).onset)run.ill=true;
   else if(run.hp>=50 && run.stress<=60)run.ill=false;
 }
 function persist(){
@@ -83,8 +87,14 @@ function deltaTone(name,delta){
 function scheduleNote(id){
   const a=actions[id];
   const effects=Object.entries(a.gains).map(([k,v])=>[k,lessonGain(k,state.stats[k],v+(advancedCourse(state,id)?3:0),state.month)]);
-  if(a.health)effects.push(["건강",a.health]);
-  effects.push(["스트레스",a.stress]);
+  const projection=projectTraining(selectedSlot);
+  updateIllness(projection);
+  const actual=careActivity(projection,id);
+  const hp=projection.hp,stress=projection.stress;
+  applyActivity(projection,actual,"steady",id);
+  if(actual!==id)return "병환 · "+actions[actual].name+" 예정";
+  if(projection.hp!==hp)effects.push(["건강",projection.hp-hp]);
+  effects.push(["스트레스",projection.stress-stress]);
   const markers=effects.map(([name,delta])=>'<span class="plan-effect">'+escapeHTML(statLabel(name))+' <b class="'+deltaTone(name,delta)+'">'+signed(delta)+'</b></span>');
   const basis=a.stress>0?'<small class="plan-basis">그럭저럭 기준</small> ':'';
   return basis+'<span class="plan-effects">'+markers.join(" ")+'</span>';
@@ -134,7 +144,7 @@ function flagEvent(id,effect){
   state.flags[id]=true;
   effect();
 }
-const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),finalYearDecisions(),followupEvents(),appliedExams(),portfolioEvents(),visitorEvents(),authoredStoryEvents(),contests.map(contestEvent)).map(appendAuthoredOptions);
+const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),finalYearDecisions(),followupEvents(),appliedExams(),portfolioEvents(),visitorEvents(),companyCaseEvents(),authoredStoryEvents(),contests.map(contestEvent)).map(appendAuthoredOptions);
 
 function pendingEvent(){
   return events.find(event=>event.id===state.pending);
@@ -243,7 +253,7 @@ function settleMonth(){
   if(trade?.order)state.log.push(productBuyers[trade.order.id]+" 납품 "+trade.shipped+"/"+trade.order.qty+"개 · "+money(trade.wholesale)+(trade.short?" · 미납 부담금 "+money(trade.penalty):""));
   if(state.flags.market&&state.marketMonth!==state.month){state.flags.market=false;state.renown+=1;}
   scheduleSnakeVisit(state);
-  const candidates=events.filter(e=>!e.authored&&!e.slot&&!e.examSubjects&&!e.season&&!e.household&&!e.visitOnly&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
+  const candidates=events.filter(e=>!e.companyCase&&!e.authored&&!e.slot&&!e.examSubjects&&!e.season&&!e.household&&!e.visitOnly&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
   const event=state.duration===35?(candidates.find(e=>birthdayDialogue[e.id]&&[12,24].includes(state.month))||candidates.find(e=>e.chapter)||candidates[0]):candidates.find(e=>!e.chapter);
   const seasonal=state.duration===35?events.find(e=>e.season&&e.sees(state)&&!state.flags[e.id]):null;
   const queue=[contest&&"contest-"+contest.id,event?.id,seasonal?.id].filter(Boolean);
@@ -254,6 +264,8 @@ function settleMonth(){
   const overdue=overdueArrival(state);
   if(overdue&&!queue.includes(overdue))queue.push(overdue);
   queue.push(...events.filter(e=>e.authored&&!state.flags[e.id]&&e.sees(state)).map(e=>e.id));
+  const inquiry=dueCompanyCase(state);
+  if(inquiry)queue.push(inquiry.id);
   state.pending=queue.shift()||null;
   state.eventQueue=queue;
   state.phase=state.pending?"event":"result";
@@ -473,7 +485,7 @@ function applyActivity(run,id,grade=lessonResult(run,id,run.sequence?.index??0),
   const relapse=plannedCareLevel(run)<2 ? run.relapseStage||0 : 0;
   if(id!==planned && relapse)healthGain=relapse===1?8:-6;
   const strain=a.stress>=10 ? 3*relapse : 0;
-  run.hp=cap(run.hp+healthGain-strain-fieldPenalty+restBonus-(run.stress>=75?6:0));
+  run.hp=cap(run.hp+healthGain-strain-fieldPenalty+restBonus-overworkLoss(run.stress,a));
   if(id==="walk")run.stress=cap(run.stress-(run.annex.garden-1)*5-(shiftAssigned("garden")?2:0));
   run.motivation=cap(run.motivation+(a.stress<0?8:tired?-7:-2));
   const primary=Object.keys(a.gains)[0];
@@ -497,16 +509,17 @@ function applyEstateTraining(run){
     run.stats.지성=cap(run.stats.지성+(run.trust>=3?4:2),abilityMax);
   }
 }
-function projectTraining(){
+function projectTraining(beforeSlot=null){
   const run={...state,plan:scheduledActivities(state),stats:{...state.stats},counts:{...state.counts},lessonKit:{...state.lessonKit}};
   for(const [slot,id] of run.plan.entries()){
+    if(slot===beforeSlot)break;
     if(!actions[id])continue;
     updateIllness(run);
     const actual=careActivity(run,id);
     applyActivity(run,actual,lessonResult(run,actual,slot),id);
     run.counts[actual]=(run.counts[actual]||0)+1;
   }
-  applyEstateTraining(run);
+  if(beforeSlot===null)applyEstateTraining(run);
   return run;
 }
 const courtEducation={
@@ -651,7 +664,7 @@ function planPanel(){
     const event=pendingEvent();
     return frame(castName(event),'<p class="muted">'+storyLine(event)+'</p><div class="report-grid">'+event.choices.map((choice,index)=>{
       const locked=choice.when&&!choice.when(state);
-      return btn(choice.label+'<br><span class="small '+(locked?"muted":"good")+'">'+(locked?"필요 조건 · "+choice.hint:choice.result)+'</span>',
+      return btn(choice.label+'<br><span class="small '+(locked?"muted":"good")+'">'+(locked?"필요 조건 · "+choice.hint:event.companyCase?"":choice.result)+'</span>',
         "choose:"+index,Boolean(locked),"option");
     }).join("")+'</div>');
   }
@@ -1916,9 +1929,11 @@ function openFairPreview(fair){
 }
 if(storyDemo){
   tab="plan";state=normalizeSave(initial());
-  state.month=state.planMonth={"season-16":16,jubilee:18,birthday2:24}[previewStory];
-  const directions=Object.keys(middleObservations[previewStory]),selected=previewQuery.get("stat");
-  state.stats[directions.includes(selected)?selected:directions[0]]=400;
+  state.month=state.planMonth=previewCompanyCase?.month??{"season-16":16,jubilee:18,birthday2:24}[previewStory];
+  if(!previewCompanyCase){
+    const directions=Object.keys(middleObservations[previewStory]),selected=previewQuery.get("stat");
+    state.stats[directions.includes(selected)?selected:directions[0]]=400;
+  }
   state.phase="event";state.pending=previewStory;
   document.documentElement.dataset.storyPreview="true";
 }else if(previewFair)openFairPreview(previewFair);

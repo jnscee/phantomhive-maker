@@ -281,6 +281,19 @@ export function catalog(files, publishedAssets = [], version = "") {
     const g=event(id,value(prop(node,"title")),id==="snakeArrival"?"타운하우스 보유 · 소마·아그니 교류 후 발생":"기존 발생 조건");
     for (const [key,label] of [["title","제목"],["speaker","화자"],["text","이벤트 본문"],["source","출처"]]) add(g,file,prop(node,key),label);
     add(g,file,prop(node,"lines"),"대사 순서","lines",undefined,{cues:true});
+    if(prop(node,"evidence")&&prop(node,"answers")){
+      add(g,file,prop(node,"question"),"추리 질문");
+      for(const [i,row] of rows(prop(node,"evidence")).entries()){
+        const [label,clue]=rows(row);
+        add(g,file,label,"단서 "+(i+1)+" · 자료명");
+        add(g,file,clue,"단서 "+(i+1)+" · 내용");
+      }
+      for(const [i,row] of rows(prop(node,"answers")).entries()){
+        const [label,response]=rows(row);
+        add(g,file,label,"판단 "+(i+1));
+        add(g,file,response,"판단 "+(i+1)+" · 후일담");
+      }
+    }
     literalChoices(g,file,prop(node,"choices"));
     if(value(prop(node,"visitOnly"))===true){
       rows(prop(node,"responses")).forEach((response,i)=>add(g,file,response,"응답 "+(i+1)));
