@@ -97,6 +97,44 @@ async function checkRoomCamera(page,activity){
   assert.ok(lesson.actor.left>=lesson.crop.left-1&&lesson.actor.right<=lesson.crop.right+1);
 }
 
+async function checkMonthlyScreens(page){
+  await page.evaluate(()=>{
+    state=initial();tab="plan";state.phase="plan";
+    state.plan=["exercise","exercise","exercise"];state.visit="company";
+    execute();stopPlayback();state.sequence.index=2;state.phase="review";render();
+  });
+  const review=page.locator(".review-slip");
+  assert.match(await review.innerText(),/지구력/);
+  assert.match(await review.innerText(),/컨디션/);
+  assert.equal(await review.locator("button").innerText(),"자유행동으로");
+  await review.locator("button").click();
+  await page.evaluate(()=>{state.sequence.visitEvent="visitCompanyBox";state.sequence.encounterPage=0;render();});
+  const dialogue=page.locator("#conversation article.dialogue"), toggle=page.locator("#dialogue-visibility");
+  await dialogue.locator(".line-next").click();
+  assert.equal(await dialogue.locator("small").innerText(),"시엘");
+  assert.equal(await dialogue.locator("h2").count(),0);
+  const date=await page.locator("#date").boundingBox(),control=await toggle.boundingBox();
+  assert.ok(control);
+  if(date)assert.ok(control.x+control.width<=date.x||control.x>=date.x+date.width||control.y>=date.y+date.height||control.y+control.height<=date.y);
+  await toggle.click();assert.ok(!await dialogue.isVisible());await toggle.click();
+  await dialogue.locator("p").click();
+  assert.equal(await dialogue.locator("small").innerText(),"세바스찬");
+  await dialogue.locator(".line-next").click();
+  assert.equal(await dialogue.locator(".answers button").count(),2);
+  await page.evaluate(()=>{
+    state=initial();state.phase="plan";state.shop.works=2;tab="company";selectedDepartment="works";render();
+  });
+  const box=page.locator(".facility-actions");
+  const sale=await box.locator('[data-action^="liquidate:"]').boundingBox(),row=await box.boundingBox();
+  assert.ok(Math.abs(sale.x+sale.width-row.x-row.width)<2);
+  await box.locator('[data-action^="liquidate:"]').click();
+  const buttons=await page.locator("#picker .panel-body>.inline>button").evaluateAll(items=>items.map(e=>[e.offsetWidth,e.offsetHeight]));
+  assert.equal(buttons.length,2);
+  assert.ok(Math.abs(buttons[0][0]-buttons[1][0])<=1&&buttons[0][1]===buttons[1][1]);
+  await page.locator('#picker .panel-body [data-action="close"]').click();
+  assert.equal(await page.locator("#money .sign-mark").evaluate(el=>getComputedStyle(el,"::after").transform),"matrix(0.85, 0, 0, 0.85, 0, 0)");
+}
+
 async function check(browserType){
   const browser=await browserType.launch({headless:true,...(browserType===chromium&&process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
   try{
@@ -193,6 +231,7 @@ async function check(browserType){
         }
       }
       for(const activity of ["study","exercise"])await checkRoomCamera(page,activity);
+      await checkMonthlyScreens(page);
       for(const [month,age] of [[1,10],[14,11],[26,12]]){
         await page.evaluate(month=>{state=initial();state.month=month;state.planMonth=month;state.phase='plan';tab='home';render();},month);
         const portrait=page.locator('#ciel-greet > #home-standing');
