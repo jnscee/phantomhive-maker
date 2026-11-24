@@ -100,6 +100,7 @@ async function checkRoomCamera(page,activity){
 async function checkMonthlyScreens(page){
   await page.evaluate(()=>{
     state=initial();tab="plan";state.phase="plan";
+    state.month=state.planMonth=2;state.salesBook.push({month:1,product:"toys",sold:2,revenue:20,cost:10});
     state.plan=["exercise","exercise","exercise"];state.visit="company";
     execute();stopPlayback();state.sequence.index=2;state.phase="review";render();
   });
