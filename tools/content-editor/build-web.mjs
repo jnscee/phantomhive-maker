@@ -24,6 +24,7 @@ for(const folder of ["public","web"]){
   }
 }
 uiHash.update(await readFile(path.join(source,"catalog.mjs")));
+uiHash.update(await readFile(path.join(source,"preview.js")));
 const uiVersion=uiHash.digest("hex").slice(0,16);
 await mkdir(editor,{recursive:true});
 await cp(path.join(source,"public"),editor,{recursive:true});
@@ -47,7 +48,7 @@ const catalog=(await readFile(path.join(source,"catalog.mjs"),"utf8")).replace('
   .replace('"./public/story-routes.mjs"','"./story-routes.mjs?v='+uiVersion+'"');
 await writeFile(path.join(editor,"catalog.mjs"),catalog);
 const adapter=await readFile(path.join(editor,"web.mjs"),"utf8");
-await writeFile(path.join(editor,"web.mjs"),adapter.replace('"./catalog.mjs"','"./catalog.mjs?v='+uiVersion+'"'));
+await writeFile(path.join(editor,"web.mjs"),adapter.replace('"preview.js?v="+release',JSON.stringify("preview.js?v="+uiVersion)).replace('"./catalog.mjs"','"./catalog.mjs?v='+uiVersion+'"'));
 const html=(await readFile(path.join(editor,"index.html"),"utf8"))
   .replace("<body>",'<body data-web-editor>')
   .replace('sandbox="allow-scripts"','sandbox="allow-scripts allow-same-origin"')

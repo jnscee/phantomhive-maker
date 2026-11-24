@@ -282,6 +282,7 @@ export function catalog(files, publishedAssets = [], version = "") {
     for (const [key,label] of [["title","제목"],["speaker","화자"],["text","이벤트 본문"],["source","출처"]]) add(g,file,prop(node,key),label);
     add(g,file,prop(node,"lines"),"대사 순서","lines",undefined,{cues:true});
     if(prop(node,"evidence")&&prop(node,"answers")){
+      g.detail="팬텀사 경영 추리 · "+value(prop(node,"month"))+"개월차부터";
       add(g,file,prop(node,"question"),"추리 질문");
       for(const [i,row] of rows(prop(node,"evidence")).entries()){
         const [label,clue]=rows(row);
@@ -462,14 +463,46 @@ export function catalog(files, publishedAssets = [], version = "") {
     });
     addChoices(g,id);
   }
-  for(const entry of [...rows(variable("festivals.js","annualContests")),...rows(variable("festivals.js","historicalContests"))]){
+  for(const entry of [...rows(variable("festivals.js","annualContests")),...rows(variable("festivals.js","historicalContests")),variable("festivals.js","easterFair"),variable("festivals.js","harvestWarrant")].filter(Boolean)){
     const id=value(prop(entry,"id"));
-    const g=group("events","fair-"+id,value(prop(entry,"title")),"런던 행사",{kind:"fair",month:value(prop(entry,"month"))});
+    const g=group("events","fair-"+id,value(prop(entry,"title")),"런던 행사",{kind:"fair",month:id==="newYear"?13:value(prop(entry,"month"))});
     for(const [key,label] of [["title","행사 제목"],["date","날짜 표기"],["historical","역사 소개"],["invitation","참여 안내"]])
       add(g,"festivals.js",prop(entry,key),label);
     rows(prop(entry,"options")).forEach((option,i)=>{
       for(const [key,label] of [["label","종목"],["line","참여 지문"],["placed","입상 결과"],["missed","참가 결과"]])
         add(g,"festivals.js",prop(option,key),label+" "+(i+1));
+    });
+  }
+  for(const property of properties(variable("content.js","seasonalWeather"))){
+    const id=propertyName(property),weather=property.value;
+    const g=group("events","weather-"+id,value(prop(weather,"name")),"계절 날씨 · 일정 첫 장면",{kind:"weather",id});
+    add(g,"content.js",prop(weather,"scene"),"날씨 지문");
+    add(g,"content.js",prop(weather,"charge"),"추가 관리비 항목");
+  }
+  const opponents=variable("festivals.js","contestOpponents");
+  const speeches=variable("festivals.js","contestSpeeches");
+  for(const [id,rival] of [["newYear","newYear"],["easter","easter"],["royalWarrant","warrant"]]){
+    const g=groups.find(item=>item.key==="fair-"+id);
+    if(!g)continue;
+    const opponent=prop(opponents,rival);
+    add(g,"festivals.js",prop(opponent,"quote"),"상대 · 첫 인사");
+    for(const [key,label,start] of [["laterQuotes","상대 인사",2],["replies","시엘의 답",1]]){
+      rows(prop(opponent,key)).slice(0,(id==="newYear"?2:3)-start+1).forEach((line,i)=>
+        add(g,"festivals.js",line,label+" · "+(start+i)+"번째 행사"));
+    }
+    rows(prop(speeches,rival)).forEach((entry,i)=>rows(entry).forEach((line,tier)=>
+      add(g,"festivals.js",line,"시엘 · 종목 "+(i+1)+" · "+["열세","접전","우세"][tier])));
+  }
+  for(const item of properties(variable("term-events.js","middleObservations"))){
+    const id=propertyName(item),g=eventGroups.get(id);
+    if(!g)continue;
+    const replies=rows(prop(variable("term-events.js","observationReplies"),id));
+    properties(item.value).forEach((variant,i)=>{
+      const stat=propertyName(variant);
+      add(g,"term-events.js",variant.value,stat+" · 시엘의 관찰");
+      const [speaker,line]=rows(replies[i]);
+      add(g,"term-events.js",speaker,stat+" · 응답 화자");
+      add(g,"term-events.js",line,stat+" · 응답");
     });
   }
   const extraDialogue = {

@@ -67,6 +67,11 @@ if(editorPreview?.kind==="opening"){
   state.london={jobs:{soma,agni}};
   settleLondon(state);
   tab="townhouse";
+}else if(editorPreview?.kind==="weather"){
+  state.month=state.planMonth=editorPreview.id==="heat"?6:12;
+  state.weather=editorPreview.id;
+  state.phase="plan";state.visit="none";state.plan=["exercise","rest","rest"];
+  execute();
 }else if(editorPreview?.kind==="activity"){
   state.phase="plan";
   state.visit="none";
