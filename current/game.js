@@ -110,6 +110,14 @@ function deltaTone(name,delta){
   const burden=name==="스트레스"||name==="채무";
   return (burden?delta<0:delta>0)?"gain":"loss";
 }
+function previewDelta(delta){
+  if(!delta)return "–";
+  const size=Math.abs(delta);
+  const count=size<=5?1:size<=12?2:3;
+  const arrows=(delta>0?"▲":"▼").repeat(count);
+  const label=["","소폭","중간","대폭"][count]+(delta>0?" 상승":" 하락");
+  return '<span role="img" aria-label="'+label+'">'+arrows+'</span>';
+}
 function scheduleNote(id){
   const a=actions[id];
   const projection=projectTraining(selectedSlot);
@@ -123,13 +131,8 @@ function scheduleNote(id){
   const effects=keys.map(k=>[k,projection.stats[k]-prior[k]]);
   if(projection.hp!==hp)effects.push(["건강",projection.hp-hp]);
   effects.push(["스트레스",projection.stress-stress]);
-  const markers=effects.filter(([,delta])=>delta!==0).map(([name,delta])=>{
-    const size=Math.abs(delta);
-    const count=size<=5?1:size<=12?2:3;
-    const arrows=(delta>0?"▲":"▼").repeat(count);
-    const label=["","소폭","중간","대폭"][count]+(delta>0?" 상승":" 하락");
-    return '<span class="plan-effect">'+escapeHTML(statLabel(name))+' <b class="'+deltaTone(name,delta)+'" aria-label="'+label+'">'+arrows+'</b></span>';
-  });
+  const markers=effects.filter(([,delta])=>delta!==0).map(([name,delta])=>
+    '<span class="plan-effect">'+escapeHTML(statLabel(name))+' <b class="'+deltaTone(name,delta)+'">'+previewDelta(delta)+'</b></span>');
   return '<span class="plan-effects">'+markers.join(" ")+'</span>';
 }
 function forecast(shop=state.shop){
@@ -1067,23 +1070,25 @@ function savePanel(){
     '<details class="annexes game-references"><summary>제작 참고</summary><ul><li>프린세스 메이커 3</li><li>카모카테 시리즈</li><li>카이로소프트 ‘○○○ 스토리’ 시리즈</li></ul></details>');
 }
 function statusPanel(){
-  const predicted=state.phase==="plan"?projectTraining():state.report?.before;
+  const planning=state.phase==="plan";
+  const predicted=planning?projectTraining():state.report?.before;
+  const formatChange=delta=>planning?previewDelta(delta):delta?signed(delta):"–";
   const current=[state.hp,state.stress,state.motivation];
   const properties=["hp","stress","motivation"];
   const conditions=["컨디션","스트레스","의욕"];
   const styles=["health","stress","drive"];
   const meters=current.map((value,i)=>{
     const forecast=predicted?.[properties[i]];
-    const delta=Number.isFinite(forecast)?(state.phase==="plan"?forecast-value:value-forecast):0;
+    const delta=Number.isFinite(forecast)?(planning?forecast-value:value-forecast):0;
     return '<div class="meter '+styles[i]+'"><span>'+conditions[i]+'</span><span class="track" aria-hidden="true"><i class="fill" style="width:'+
-      value+'%"></i></span><b>'+value+'</b><em class="'+((i===1?delta>0:delta<0)?"danger":"good")+'">'+(delta?signed(delta):"–")+'</em></div>';
+      value+'%"></i></span><b>'+value+'</b><em class="'+((i===1?delta>0:delta<0)?"danger":"good")+'">'+formatChange(delta)+'</em></div>';
   }).join("");
   return frame(["시엘 상태",cielCondition(state)].filter(Boolean).join(" · "),'<div class="inline"><b>시엘 팬텀하이브</b><span class="small muted">'+
-    (state.phase==="plan"?"편성한 일정의 예상 변동":"이번 달 변동")+'</span></div><div class="hud-group">'+meters+
+    (planning?"편성한 일정의 예상 변동":"이번 달 변동")+'</span></div><div class="hud-group">'+meters+
     '</div><div class="hud-group"><div class="attributes"><div class="attribute attr-label muted"><span>능력치</span><b>현재</b><em>변동</em></div>'+
     stats.map(name=>{
-      const delta=predicted?.stats?(state.phase==="plan"?predicted.stats[name]-state.stats[name]:state.stats[name]-predicted.stats[name]):0;
-      return '<div class="attribute"><span>'+statLabel(name)+'</span><span class="gauge"><i style="width:'+(state.stats[name]/statMax(name)*100)+'%"></i></span><b>'+state.stats[name]+'</b><em>'+(delta?signed(delta):"–")+'</em></div>';
+      const delta=predicted?.stats?(planning?predicted.stats[name]-state.stats[name]:state.stats[name]-predicted.stats[name]):0;
+      return '<div class="attribute"><span>'+statLabel(name)+'</span><span class="gauge"><i style="width:'+(state.stats[name]/statMax(name)*100)+'%"></i></span><b>'+state.stats[name]+'</b><em>'+formatChange(delta)+'</em></div>';
     }).join("")+'</div></div>');
 }
 const businessArt={"estate": "assets/map-estate.png", "design2": "assets/map-design2.png", "library2": "assets/map-library2.png", "parlor2": "assets/map-parlor2.png", "designer": "assets/map-designer.png", "cart-candy": "assets/map-cart-candy.png", "kitchen3": "assets/map-kitchen3.png", "store2": "assets/map-store2.png", "maker": "assets/map-maker.png", "cart-sweets": "assets/map-cart-sweets.png", "cart-hamper": "assets/map-cart-hamper.png", "parlor3": "assets/map-parlor3.png", "cart-toys": "assets/map-cart-toys.png", "clerk": "assets/map-clerk.png", "works2": "assets/map-works2.png", "store3": "assets/map-store3.png", "kitchen2": "assets/map-kitchen2.png", "library3": "assets/map-library3.png", "cart-plush": "assets/map-cart-plush.png", "design3": "assets/map-design3.png", "works3": "assets/map-works3.png", "company": "assets/map-company.png", "steward": "assets/map-steward.png", "cart-game": "assets/map-cart-game.png"};
