@@ -115,7 +115,7 @@ const oldContests = annualContests.flatMap(fair=>[0,1,2].map(year=>({
 }))).concat(historicalContests).sort((a,b)=>a.month-b.month);
 
 const easterFair={
-  id:"easter", month:4, title:"이스터(부활절)", track:"sakura", room:"garden",
+  id:"easter", month:4, title:"부활절 가든파티", track:"sakura", room:"garden",
   invitation:"부활절 예배가 끝나자 엘리자베스가 정원의 문을 엽니다. 리본을 단 달걀을 찾거나, 예배를 마친 손님들에게 바이올린 한 곡을 들려주세요.",
   options:[
     {label:"부활절 연주",stat:"기품",poses:["bowOut","bowIn"],

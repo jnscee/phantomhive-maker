@@ -31,7 +31,7 @@ for(const [rank,score,expected] of [[0,5,"입상권 밖"],[1,40,"은상"],[2,44,
   assert.doesNotMatch(slip,/undefined|NaN|입상 보상/);
 }
 assert.deepEqual(Array.from(run('contests.map(f=>f.month)')),[4,9,13,16,21,25,28,33]);
-assert.deepEqual(Array.from(run('contests.slice(0,3).map(f=>f.title)')),["이스터(부활절)","로열 워런트(수확제)","신년 다과회"]);
+assert.deepEqual(Array.from(run('contests.slice(0,3).map(f=>f.title)')),["부활절 가든파티","로열 워런트(수확제)","신년 다과회"]);
 assertOk('contests.every(f=>f.track===(f.warrant?"companyFair":f.id.startsWith("easter-")?"sakura":"newYear"))');
 for(const [month,extra,qty] of [[5,4,8],[18,2,9],[29,3,8]]){
   ctx.marketMonth=month;
