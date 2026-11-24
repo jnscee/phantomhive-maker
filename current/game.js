@@ -458,9 +458,10 @@ function finish(id){
 }
 function isApprovedEnding(id){return id==="vowTitle"||id==="releaseTitle";}
 // Above the title review's own will minimum so both approved endings are reachable.
-const vengeanceWill=459;
-function cielEndingId(will,approved){
-  if(will>=vengeanceWill)return approved?"vowTitle":"vowNoTitle";
+const vengeanceWill=460;
+function cielEndingId(will,approved,motivation){
+  const resolveBonus=motivation>=70?1:motivation<40?-1:0;
+  if(will+resolveBonus>=vengeanceWill)return approved?"vowTitle":"vowNoTitle";
   return approved?"releaseTitle":"releaseNoTitle";
 }
 function beginFinale(id){
@@ -491,7 +492,7 @@ function advance(){
   state.arrears=state.fund<0?state.arrears+1:0;
   if(state.unwell>=2){finish("ill");return;}
   if(creditExhausted||state.arrears>=2){finish("broke");return;}
-  if(state.month===state.duration){beginFinale(cielEndingId(state.stats.의지,qualifies()));return;}
+  if(state.month===state.duration){beginFinale(cielEndingId(state.stats.의지,qualifies(),state.motivation));return;}
   if(state.prototype?.approved){
     const p=state.prototype;if(!state.unlocked.includes(p.product))state.unlocked.push(p.product);state.productNotes??={};state.productNotes[p.product]=p;delete state.prototype;
   }
@@ -1356,7 +1357,7 @@ function greetCiel(){
 }
 function render(focus=false,playbackOffset=0){
   if(tab==="plan"&&state.phase==="guide"&&!tourSession){showGuidePage(savedGuideStep(state));return;}
-  if(state.phase==="vow"&&tab==="plan"){beginFinale(cielEndingId(state.stats.의지,qualifies()));return;}
+  if(state.phase==="vow"&&tab==="plan"){beginFinale(cielEndingId(state.stats.의지,qualifies(),state.motivation));return;}
   if($("scene").dataset.artOnly==="true")setArtOnly($("scene"),false);
   if(tab!=="home"){
     clearTimeout(remarkTimeout);
