@@ -152,10 +152,25 @@ async function check(browserType){
       await openGame(page);
       assert.ok(await page.locator('.book-cover').isVisible());
       const fairPage=await browser.newPage({viewport});
-      await fairPage.goto(base+'?fair-preview=newYear-1886');
+      await fairPage.goto(base+'?fair-preview=newYear-1886&entry=1');
+      assert.equal(await fairPage.locator('.duel-plate b').first().textContent(),'에드워드 미드포드');
+      await fairPage.locator('.duel-portrait').evaluate(img=>img.decode());
       await fairPage.locator('[data-action="fair-play:0"]').click();
       await fairPage.locator('[data-action="fair-reveal"]').click();
       assert.ok(await fairPage.locator('[data-action="fair-close"]').isVisible());
+      const award=fairPage.getByRole('article',{name:'경연 결과'});
+      assert.match(await award.locator('.award-parts').innerText(),/매력/);
+      assert.equal(await award.locator('.award-gain').count(),2);
+      assert.match(await award.locator('.award-purse').innerText(),/상금 £/);
+      const awardLayout=await fairPage.locator('.duel-result').evaluate(screen=>{
+        const card=screen.querySelector('.award-sheet');
+        const side=screen.querySelector('.duel-side:last-child');
+        const plate=side.querySelector('.duel-plate').getBoundingClientRect();
+        const sprite=side.querySelector('.contest-actor img').getBoundingClientRect();
+        return card.scrollWidth<=card.clientWidth+1&&sprite.bottom<=plate.top+1&&
+          plate.bottom<=card.getBoundingClientRect().top+1;
+      });
+      assert.ok(awardLayout,'Result card and character nameplates must remain unobstructed');
       await fairPage.close();
       assert.equal(await page.locator('#overture').isVisible(),false);
       await page.locator('.book-cover [data-action="reset"]').click();

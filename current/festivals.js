@@ -116,10 +116,10 @@ const contests = annualContests.flatMap(fair=>[0,1,2].map(year=>({
 
 // The two demonstrations in each class respond to the examiner's observations.
 const contestOpponents={
-  newYear:{name:"엘리자베스 미드포드",quote:"시엘, 오늘은 나도 양보 안 할 거야!",role:"미드포드 가문",actor:"lizzy",
+  newYear:{name:"에드워드 미드포드",quote:"시엘, 제비를 보니 내가 먼저구나. 네 솜씨도 기대하고 있으마.",role:"시엘의 사촌 형",portrait:"assets/portraits/edward-midford.webp",
     entries:[
-      ["연단의 꽃을 살짝 옮긴 엘리자베스가 뒷줄까지 눈을 맞추며 새해 인사를 건넵니다.","목소리가 닿는가","맨 뒤 손님을 향해 축사한다","호칭이 정확한가","초청장 순서로 이름을 부른다"],
-      ["엘리자베스가 손님의 빈 찻잔을 보고 먼저 차를 권합니다. 심사위원이 탁자 사이로 한 걸음 다가섭니다.","차의 온도","식은 잔부터 바꾸어 낸다","손님의 취향","설탕과 우유를 따로 권한다"]
+      ["에드워드는 원고를 접어 주머니에 넣습니다. 뒷줄에 앉은 노부인이 고개를 들자, 그제야 새해 인사를 건넵니다.","목소리가 닿는가","맨 뒤 손님을 향해 축사한다","호칭이 정확한가","초청장 순서로 이름을 부른다"],
+      ["에드워드는 손님이 내려놓은 잔을 받으며 두 번째 잔도 같은 농도로 드실지 묻습니다. 심사위원이 탁자 사이로 한 걸음 다가섭니다.","차의 온도","식은 잔부터 바꾸어 낸다","손님의 취향","설탕과 우유를 따로 권한다"]
     ]},
   spring:{name:"클라라 벨",quote:"정원에서는 바람도 심사에 끼어들지요.",role:"교구 원예회",actor:"designer",
     entries:[

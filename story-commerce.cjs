@@ -11,6 +11,24 @@ const run=s=>vm.runInContext(s,ctx,{timeout:1800});run('let tourSession=false;re
 run('render=()=>{};respond=()=>{};announce=()=>{};focusAction=()=>{};popMoney=()=>{};document.querySelector=()=>null;');
 const assertOk=source=>assert.ok(run(source),source);
 const setup=(code="")=>run('state=initial();state.owlSeed=1;state.phase="plan";tab="company";'+code);
+// Both tea-party events in each of the three years use Edward, including on a restored scorecard.
+const teaParties=run('contests.filter(f=>f.id.startsWith("newYear-")).map(f=>f.id)');
+assert.equal(teaParties.length,3);
+for(const id of teaParties){
+  ctx.teaId=id;
+  for(const index of [0,1]){
+    ctx.teaIndex=index;
+    const intro=run('duelScene(contests.find(f=>f.id===teaId),{index:teaIndex},{rivalScore:44,focus:0})');
+    assert.match(intro,/에드워드 미드포드/);assert.doesNotMatch(intro,/엘리자베스/);
+    assert.match(intro,/edward-midford.webp/);
+  }
+}
+for(const [rank,score,expected] of [[0,5,"입상권 밖"],[1,40,"은상"],[2,44,"공동 금상"],[2,49,"금상"]]){
+  ctx.legacyEntry={rank,score,duel:{rivalScore:44},scoreNote:"매력 41 + 심사 대응 8"};
+  const slip=run('contestResultSlip(contests[0],legacyEntry,"심사평")');
+  assert.ok(slip.includes("<h3>"+expected+"</h3>")&&slip.includes(ctx.legacyEntry.scoreNote));
+  assert.doesNotMatch(slip,/undefined|NaN|입상 보상/);
+}
 function pick(){
   run('if(recruitScenes[state.pending])state.recruitPage={id:state.pending,version:2,at:recruitScenes[state.pending].lines.length-1};choose(0);if(state.choiceImpact?.next)handleAction("impact-close")');
 }
