@@ -60,7 +60,7 @@ function reservedContest(run){
 }
 function contestRivalAbility(fair){
   if(fair.warrant)return [82,90,96][fair.year];
-  if(fair.company)return fair.month===5?62:fair.month===18?76:84;
+  if(fair.company)return Math.max(fair.month===5?62:fair.month===18?76:84,...(fair.exhibitors||[]).map(entrant=>entrant.score));
   const levels={1:[22,195,365],4:[73,230,390],9:[115,275,420]};
   return levels[(fair.month-1)%12+1][fair.year];
 }
@@ -260,7 +260,8 @@ function contestResultSlip(fair,entry,line){
   const duel=entry.duel;
   const margin=duel&&!entry.match?entry.score-duel.rivalScore:null;
   const rank=margin===0&&entry.rank===2?"공동 금상":contestRank(entry);
-  const verdict=entry.match?(entry.rank===2?"시엘 팬텀하이브":contestOpponent(fair).name)+" 승리":margin===null?"심사 결과":margin===0?"동점":(margin>0?"시엘":contestOpponent(fair).name)+" 승리";
+  const entrant=fair.entrant||"시엘 팬텀하이브";
+  const verdict=entry.match?(entry.rank===2?entrant:contestOpponent(fair).name)+" 승리":margin===null?"심사 결과":margin===0?"동점":(margin>0?(fair.entrant||"시엘"):contestOpponent(fair).name)+" 승리";
   const parts=entry.scoreParts?.map(([label,n])=>'<span>'+escapeHTML(label)+' <b>'+n+'</b></span>').join('<i aria-hidden="true">+</i>');
   const growth=(entry.growth||[]).map(change=>{
     const match=/^(.*) ([+-]\d+)$/.exec(change);
@@ -268,18 +269,19 @@ function contestResultSlip(fair,entry,line){
   }).join("");
   return '<article class="contest-slip award-sheet" data-rank="'+entry.rank+'" aria-label="경연 결과" aria-live="polite">'+
     '<header class="award-head"><h3>'+escapeHTML(rank)+'</h3><strong>'+escapeHTML(verdict)+'</strong>'+
-    (entry.match?'<span>시엘 승률 '+Math.round(entry.chance*100)+'%</span>':'')+
+    (entry.match?'<span>'+(fair.entrant||"시엘")+' 승률 '+Math.round(entry.chance*100)+'%</span>':'')+
     (margin?'<span>'+Math.abs(margin)+'점 차</span>':'')+'</header>'+
     '<div class="award-body"><p class="award-comment">'+escapeHTML(line)+'</p><dl class="award-ledger">'+
     '<div><dt>'+(entry.match?'환산 실력':'심사 점수')+'</dt><dd><strong class="award-total">'+entry.score+'점</strong>'+
     (parts?'<span class="award-parts">'+parts+'</span>':entry.scoreNote?'<span>'+escapeHTML(entry.scoreNote)+'</span>':'')+
     (entry.factors?'<small>'+entry.factors.map(([label,n])=>escapeHTML(label)+' ×'+n.toFixed(2)).join(' · ')+'</small>':'')+
     (entry.scoreCondition?'<small>'+escapeHTML(entry.scoreCondition)+'</small>':'')+'</dd></div>'+
-    (growth?'<div><dt>능력 변화</dt><dd>'+growth+'</dd></div>':'')+
-    (entry.purse||entry.prize?'<div><dt>'+(entry.match?'승리 보상':'입상 보상')+'</dt><dd>'+
-      (entry.purse?'<strong class="award-purse">상금 '+money(entry.purse)+'</strong>':'')+
-      (entry.prize?'<span>'+escapeHTML(entry.prize)+'</span>':'')+'</dd></div>':'')+
-    (fair.warrant&&entry.rank===2?'<div><dt>왕실 인증</dt><dd>인증 품목 수요 매달 +2개</dd></div>':'')+
+    '<div><dt>능력 변화</dt><dd>'+(growth||'—')+'</dd></div>'+
+    (entry.purse||entry.prize||fair.exhibitors?'<div><dt>'+(entry.match?'승리 보상':'입상 보상')+'</dt><dd>'+
+    (entry.purse?'<strong class="award-purse">상금 '+money(entry.purse)+'</strong>':'')+
+    (entry.prize?'<span>'+escapeHTML(entry.prize)+'</span>':'')+
+    (!entry.purse&&!entry.prize?'—':'')+'</dd></div>':'')+
+    (fair.warrant&&entry.rank===2?'<div class="award-certification"><dt>왕실 인증</dt><dd>인증 품목 수요 매달 +2개</dd></div>':'')+
     '</dl><div class="duel-controls">'+btn("행사 마치기","fair-close",false,"primary")+'</div></div></article>';
 }
 function contestAppearance(fair){
@@ -290,13 +292,17 @@ function duelScene(fair,ticket,duel,entry){
   const turn=duel.page??(Number.isInteger(duel.choice)?1:0),done=Boolean(entry);
   const poses=option?.poses||["inspect","write"];
   const sample=id=>'<img class="duel-sample" src="assets/map-cart-'+id+'.png" alt="'+products[id].name+'">';
-  const portrait=rival.poses?.[ticket.index]||rival.portrait;
-  const rivalArt=portrait?'<img class="duel-portrait" src="'+portrait+'" alt="">':
-    '<i class="duel-sprite" style="background-image:url(assets/staff/'+rival.actor+'.png)" aria-hidden="true"></i>';
+  function rivalArtwork(exhibitor){
+    const portrait=exhibitor.poses?.[ticket.index]||exhibitor.portrait;
+    return portrait?'<img class="duel-portrait" src="'+portrait+'" alt="">':
+      '<i class="duel-sprite" style="background-image:url(assets/staff/'+exhibitor.actor+'.png)" aria-hidden="true"></i>';
+  }
   const actor='<div class="contest-actor" aria-hidden="true"><img src="'+actors[poses[0]]+'" alt=""><img src="'+actors[poses[1]]+'" alt=""></div>';
   function side(name,caption,art,score,active){
     return '<div class="duel-side'+(active?' performing':'')+'"><div class="duel-art">'+art+'</div><div class="duel-plate"><b>'+name+'</b><small>'+caption+'</small><strong>'+score+'</strong></div></div>';
   }
+  const exhibition=fair.exhibitors?.map(exhibitor=>side(exhibitor.name,products[exhibitor.product].name,
+    rivalArtwork(exhibitor)+sample(exhibitor.product),exhibitor.score+"점",false)).join("")||"";
   let slip;
   if(done){
     const line=option?(entry.rank?option.placed:option.missed):entry.rank?
@@ -304,7 +310,7 @@ function duelScene(fair,ticket,duel,entry){
       "담당관이 견본을 돌려줍니다. 시엘은 심사표의 낮은 항목에 밑줄을 긋습니다.";
     slip=contestResultSlip(fair,entry,line);
   }else{
-    const speaker=turn?"시엘":rival.name;
+    const speaker=turn?(fair.entrant||"시엘"):rival.name;
     const appearance=contestAppearance(fair);
     const reply=rival.replies?.[appearance];
     const line=turn===0?(rival.laterQuotes?.[appearance-1]??rival.quote):
@@ -314,10 +320,10 @@ function duelScene(fair,ticket,duel,entry){
   }
   return '<section class="contest-screen duel-screen'+(done?' duel-result':'')+'" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+
     '<header><span>'+monthText(fair.month)+' · '+(fair.company?'출품 심사':option.label)+'</span><h2 id="contest-title">'+fair.title+'</h2></header>'+
-    '<div class="duel-stage'+(done?' is-revealed':'')+'">'+
-    side(rival.name,fair.company?products[rival.product].name:rival.role,rivalArt+(fair.company?sample(rival.product):''),(entry?duel.rivalScore:contestRivalAbility(fair))+"점",!turn&&!done)+
-    '<b class="duel-vs" lang="en">vs.</b>'+
-    side("시엘 팬텀하이브",fair.company?products[ticket.product].name:"팬텀하이브의 당주",actor+(fair.company?sample(ticket.product):''),done?entry.score+"점":"심사 중",turn&&!done)+'</div>'+
+    '<div class="duel-stage'+(fair.exhibitors?" exhibition-stage":"")+(done?' is-revealed':'')+'">'+
+    side(rival.name,fair.company?products[rival.product].name:rival.role,rivalArtwork(rival)+(fair.company?sample(rival.product):''),(entry?duel.rivalScore:contestRivalAbility(fair))+"점",!turn&&!done)+
+    (fair.exhibitors?exhibition:'<b class="duel-vs" lang="en">vs.</b>')+
+    side(fair.entrant||"시엘 팬텀하이브",fair.company?products[ticket.product].name:"팬텀하이브의 당주",actor+(fair.company?sample(ticket.product):''),done?entry.score+"점":"심사 중",turn&&!done)+'</div>'+
     slip+'</section>';
 }
 
@@ -327,7 +333,8 @@ function contestScene(event){
   if(duel){
     const scene=duelScene(fair,entry||contestTicket(state,fair),duel,entry);
     if(!previewFair)return scene;
-    const options=contests.map(f=>'<option value="'+f.id+'"'+(f.id===fair.id?' selected':'')+'>'+monthText(f.month)+' · '+f.title+'</option>').join("");
+    const fairs=contests.includes(fair)?contests:[...contests,fair].sort((a,b)=>a.month-b.month);
+    const options=fairs.map(f=>'<option value="'+f.id+'"'+(f.id===fair.id?' selected':'')+'>'+monthText(f.month)+' · '+f.title+'</option>').join("");
     return '<nav class="preview-fairs" aria-label="경연 미리보기"><label>경연 미리보기 <select id="preview-fair">'+options+'</select></label>'+
       (!fair.company?'<a href="?fair-preview='+fair.id+'&amp;entry='+(contestTicket(state,fair).index===0?1:0)+'">다른 종목</a>':'')+
       '<a href="?fair-preview='+fair.id+'&amp;entry='+String(contestTicket(state,fair).index||0)+'">다시 보기</a><a href="./">게임 표지</a></nav>'+scene;
@@ -389,8 +396,14 @@ function courtFolio(rows){
   const description=approved?"왕실이 백작 작위를 승인했습니다.":held?"이번 회차의 작위 승인이 유보되었습니다.":wording[stage];
   const steps=stages.map((label,index)=>
     '<li'+(index<=stage?' class="reached"':'')+(index===stage?' aria-current="step"':'')+'><i aria-hidden="true"></i>'+label+'</li>').join("");
+  const renownGoal=50, renown=state.renown;
+  const renownMeter='<div class="court-renown" style="--renown-mark:'+(100*courtRenownRequirement/renownGoal)+'%">'+
+    '<strong>현재 '+renown+'점</strong><div class="court-renown-track">'+
+    '<progress max="'+renownGoal+'" value="'+Math.min(renown,renownGoal)+'" aria-label="가문 명성" aria-valuetext="'+renown+'점, 목표 '+renownGoal+'점"></progress></div>'+
+    '<div class="court-renown-scale"><span>0</span><span>심의 기준 '+courtRenownRequirement+'점</span><span>목표 '+renownGoal+'점</span></div></div>';
   const checks=rows.map(([label,ok])=>
-    '<li><div><b>'+label+'</b></div><span class="court-status'+(ok?' met':'')+'">'+(ok?'✓ 충족':'미충족')+'</span></li>').join("");
+    '<li><div><b>'+label+'</b></div><span class="court-status'+(ok?' met':'')+'">'+(ok?'✓ 충족':'미충족')+'</span>'+
+    (label==="가문 명성"?renownMeter:"")+'</li>').join("");
   return '<section class="court-folio"><div class="court-ruling"><header><span>왕실 작위 심의</span><small>'+monthText(state.month)+'</small></header>'+
     '<h3>'+title+'</h3><p>'+description+'</p><ol class="court-stages" aria-label="왕실 평가 단계">'+steps+'</ol></div>'+
     '<details class="court-register" open><summary><b>심의 현황</b></summary>'+
@@ -398,15 +411,19 @@ function courtFolio(rows){
 }
 function familyFolio(rows,history,album,extra=""){
   const allies=peopleInHouse();
-  const relations=allies.length?allies.map(id=>{
-    const trust=state.people[id].toward,tier=trustTier(trust);
+  const relations=allies.map(id=>({name:servants[id].name,trust:state.people[id].toward,icon:"assets/staff/"+id+".png"}));
+  const affinity=elizabethAffinity(state);
+  if(affinity)relations.push({name:"엘리자베스",trust:affinity,icon:elizabethPortrait(),affinity:true});
+  const relationshipRows=relations.map(({name,trust,icon,affinity})=>{
+    const tier=trustTier(trust);
     const marks=[0,1,2,3].map(n=>'<i class="'+(n<=tier?'filled':'')+'"></i>').join("");
-    return '<div class="trust-entry" data-tier="'+tier+'"><img src="assets/staff/'+id+'.png" alt=""><b>'+servants[id].name+'</b><span class="trust-stage"><span aria-hidden="true">'+marks+'</span>'+rank(trust)+'</span></div>';
-  }).join(""):"아직 기록된 인물이 없습니다.";
+    return '<div class="trust-entry" data-tier="'+tier+'"><img src="'+icon+'" alt=""><b>'+name+'</b><span class="trust-stage">'+
+      '<span aria-hidden="true">'+marks+'</span>'+(affinity?"호감도 "+trust:rank(trust))+'</span></div>';
+  }).join("")||"아직 기록된 인물이 없습니다.";
   const fairHistory=[...contestArchive].reverse().map(fairReport).filter(Boolean);
   const warrants=Object.keys(state.royalWarrants||{}).map(id=>products[id].name).join(" · ");
   return '<div class="family-folio">'+courtFolio(rows)+'<aside class="folio-files"><dl class="folio-finance"><div><dt>가문 자금</dt><dd>'+money(state.fund)+'</dd></div><div><dt>남은 채무</dt><dd>'+money(state.debt)+'</dd></div></dl>'+
-    filedSection("인물 관계",'<p>각 인물이 시엘에게 보내는 신뢰입니다.</p>'+relations,allies.length+"명")+
+    filedSection("인물 관계",'<p>각 인물이 시엘에게 보내는 신뢰와 호감도입니다.</p>'+relationshipRows,relations.length+"명")+
     filedSection("사건 기록",history||"첫 사건을 마치면 선택이 기록됩니다.",state.events.length+"건")+
     filedSection("계절 경연 · 박람회",(warrants?'<p><b>왕실 납품 인증</b> '+warrants+'</p>':"")+(fairHistory.join("")||"참가한 행사의 결과가 기록됩니다."),fairHistory.length+"건")+
     filedSection("엔딩 도감",album,Object.keys(endingScenes).filter(hasEndingRecord).length+"개 기록")+extra+'</aside></div>';

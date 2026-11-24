@@ -86,9 +86,10 @@ function actualBudget(){
     return '<div class="ledger-flow '+kind+'"><span>'+title+'</span><strong>'+money(amount)+'</strong>'+
       '<i aria-hidden="true"><i style="width:'+100*amount/limit+'%"></i></i></div>';
   }
-  function ledgerRows(label,items){
+  function ledgerRows(label,items,kind){
     const rows=items.filter(([,amount])=>amount);
-    return rows.length?'<h4>'+label+'</h4><dl>'+rows.map(([name,amount])=>'<div><dt>'+name+'</dt><dd>'+money(amount)+'</dd></div>').join("")+'</dl>':"";
+    return rows.length?'<div class="ledger-entries '+kind+'"><h4>'+label+'</h4><dl>'+
+      rows.map(([name,amount])=>'<div><dt>'+name+'</dt><dd>'+money(amount)+'</dd></div>').join("")+'</dl></div>':"";
   }
   const signedMoney=n=>(n>0?"+":n<0?"−":"")+money(Math.abs(n));
   const other=change-(income-expense);
@@ -99,9 +100,12 @@ function actualBudget(){
     '<b class="'+(change>0?'gain':change<0?'loss':'flat')+'">'+signedMoney(change)+'</b></div>'+
     '<div class="ledger-flows">'+flow("입금",income,"income")+flow("지출",expense,"expense")+'</div>'+
     (other?'<div class="ledger-other"><span>내역 외 잔액 변동</span><b>'+signedMoney(other)+'</b></div>':'')+
-    '<details class="ledger-fold"><summary>입출금 내역</summary>'+ledgerRows("입금",incomeRows)+ledgerRows("지출",expenseRows)+
+    '<div class="ledger-detail-grid"><details class="ledger-fold"><summary>입출금 내역</summary>'+
+    ledgerRows("입금",incomeRows,"income")+ledgerRows("지출",expenseRows,"expense")+
     (!income&&!expense?'<p>이번 달 입출금이 없습니다.</p>':'')+'</details>'+
-    (effect?'<details class="ledger-fold"><summary>시설 효과 <b>'+signedMoney((r.investment?.total||0)+(a.researchSaved||0))+'</b></summary>'+effect+'</details>':'')+
+    '<details class="ledger-fold"><summary>시설 효과'+
+    (effect?' <b>'+signedMoney((r.investment?.total||0)+(a.researchSaved||0))+'</b>':'')+'</summary>'+
+    (effect||'<p>이번 달에 집계된 시설 효과가 없습니다.</p>')+'</details></div>'+
     (a.partial?'<p>기록 시작 시점부터 집계했습니다.</p>':'')+'</section>';
 }
 function deltaRow(key,before,after){
@@ -131,9 +135,9 @@ function logEffect(text){
 function monthlyTimeline(entries){
   const items=entries.map(entry=>String(entry).split(' · ').filter(part=>!/^타나카 (?:협력 상승|신뢰 [+-]\d+)$/.test(part)).join(' · ')).filter(Boolean).map(entry=>{
     const match=/^(상순|중순|하순) · (.+?)(?: · (.*))?$/.exec(entry);
-    if(!match)return '<li>'+String(entry).split(/( · | \/ )/).map(logEffect).join('')+'</li>';
-    const effects=match[3]?match[3].split(' / ').map(effect=>'<span>'+logEffect(effect)+'</span>').join(''):'';
-    return '<li><header><small>'+match[1]+'</small><b>'+escapeHTML(match[2])+'</b></header>'+
+    if(!match)return '<li class="log-event">'+entry.split(/( · | \/ )/).map(logEffect).join('')+'</li>';
+    const effects=match[3]?match[3].split(/ · | \/ /).map(effect=>'<span>'+logEffect(effect)+'</span>').join(''):'';
+    return '<li class="log-period"><header><small>'+match[1]+'</small><b>'+escapeHTML(match[2])+'</b></header>'+
       (effects?'<div class="log-effects">'+effects+'</div>':'')+'</li>';
   });
   return '<ol class="report-timeline">'+items.join('')+'</ol>';
@@ -154,7 +158,12 @@ function monthlyResults(){
   const warnings=[healthWarning,financeWarning].filter(Boolean).map(note=>'<p class="danger">'+note+'</p>').join("");
   const best=stats.slice().sort((a,b)=>(after[b]-before[b])/statMax(b)-(after[a]-before[a])/statMax(a))[0];
   const growth=after[best]-before[best];
-  const words=(growth>0?"이번 달에는 "+statLabel(best)+"에서 가장 진전이 컸습니다. "+before[best]+"에서 "+after[best]+"까지 올리셨군요. ":"이번 달 능력에는 큰 변동이 없었습니다. ")+(state.report?"팬텀사에서는 "+state.report.sold+"개를 판매했습니다. ":"")+"도련님께서 다음 달에 쓰실 수 있는 돈은 "+money(state.fund)+"입니다.";
+  const highlight=value=>'<strong class="report-key">'+value+'</strong>';
+  const growthLine=growth>0
+    ?"이번 달에는 "+highlight(escapeHTML(statLabel(best)))+"에서 가장 진전이 컸습니다. "+highlight(before[best])+"에서 "+highlight(after[best])+"까지 올리셨군요. "
+    :"이번 달 능력에는 큰 변동이 없었습니다. ";
+  const salesLine=state.report?"팬텀사에서는 "+highlight(state.report.sold+"개")+"를 판매했습니다. ":"";
+  const words=growthLine+salesLine+"도련님께서 다음 달에 쓰실 수 있는 돈은 "+highlight(money(state.fund))+"입니다.";
   return '<div class="month-report"><div class="butler-account"><img src="assets/sebastian.webp" alt="세바스찬"><p><b>세바스찬의 월말 보고</b><br>'+words+(moneyRemark?' '+moneyRemark:'')+'</p></div>'+warnings+'<div class="report-date">'+monthText(state.month)+' 결산</div><div class="report-columns">'+
     '<section class="stat-folio"><h3>시엘의 성장 기록</h3><div class="delta-head"><span>항목</span><span>이전</span><span>현재</span><span>변화 그래프</span><span>증감</span></div>'+
     group("능력 · 500점",stats)+group("현재 상태 · 100점",["건강","스트레스","의욕"])+'</section>'+actualBudget()+'</div>'+thisMonthFairReport()+sampleReview()+

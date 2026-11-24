@@ -81,7 +81,7 @@ function londonBoard(){
     const team=teams[id];
     const walkers=team.map((person,i)=>{
       const span=(right-left)/team.length;
-      return '<span aria-hidden="true" class="duty-lane" style="left:'+(left+i*span)+'%;width:'+span+'%;top:'+feet+'%;--pace:11s;--delay:-'+(i+1)*3+'s"><span class="duty-walker" data-servant="'+person+'"><img alt="" src="assets/staff/'+person+'.png"></span></span>';
+      return '<span aria-hidden="true" class="duty-lane" style="left:'+(left+i*span)+'%;width:'+span+'%;top:'+feet+'%;--pace:11s;--delay:-'+(i+1)*3+'s"><span class="duty-walker" data-servant="'+person+'"><img alt="" src="assets/staff/'+person+'.png?v=978e5a61424e"></span></span>';
     }).join("");
     const names=team.map(person=>londonHosts[person].name).join(" · ")||"미배치";
     const skill=Math.max(0,...team.map(person=>state.london?.skill?.[person]||0));

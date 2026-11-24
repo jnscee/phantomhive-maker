@@ -102,7 +102,11 @@ const historicalContests = [
   {id:"jubilee1887",month:18,date:"1887년 6월 21일 기념 예배",
     title:"여왕의 골든 주빌리 · 기념품 경연", track:"companyFair", room:"street", company:true,
     invitation:"여왕의 즉위 50주년을 기념하는 주간입니다. 런던 상인들이 여는 기념품 경연에 팬텀사 제품을 냅니다.",
-    prize:"골든 주빌리 기념 메달"},
+    prize:"골든 주빌리 기념 메달",entrant:"팬텀 사",
+    exhibitors:[
+      {name:"하트웰 완구점",product:"toys",actor:"maker",score:71},
+      {name:"리버티 완구점",product:"plush",actor:"designer",score:74}
+    ]},
   {id:"earlsCourt1888",month:29,date:"1888년 5월 얼스 코트 박람회",
     title:"얼스 코트 이탈리아 박람회 · 공예품 품평", track:"companyFair", room:"street", company:true,
     invitation:"얼스 코트 이탈리아 박람회가 열리는 달입니다. 인근 상인회가 여는 공예품 견본 품평에 팬텀사도 참가합니다.",

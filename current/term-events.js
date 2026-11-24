@@ -129,7 +129,7 @@ function termDialogue(event,buttons){
   if(!pages&&!outcome?.response)return "";
   const script=outcome?.responseLines??(outcome?.response?[["",outcome.response]]:outcome?(event.authored?[["",event.response]]:birthdayDialogue[event.id]?.replies[outcome.index]||(observationReplies[event.id]?.[outcome.index]?[observationReplies[event.id][outcome.index]]:null)||[["세바스찬",examDialogue[event.slot][2+outcome.index]]]):pages);
   const at=Math.min(state.termPage||0,script.length-1),[who,line]=script[at];
-  const end=at===script.length-1,actions=end?(outcome?btn(outcome.nextScene?"다음 장면":"기록을 덮는다","term-close"):buttons):btn("다음 ▸","term-next:"+at);
+  const end=at===script.length-1;
   const room=event.room||(event.id==="season-16"?"garden":null)||birthdayDialogue[event.id]?.room||choreography[event.slot]?.[0]||"ballroom";
   const cue=termCue(event),picture=cue?.cg||event.picture;
   const art=picture?"assets/endings/"+picture+".webp":sceneArt[room];
@@ -137,10 +137,18 @@ function termDialogue(event,buttons){
   const standing=cue?.standing||event.standing;
   const cast=novelCast(cue,recruitArtwork(currentCielAge()))??(standing&&Object.hasOwn(recruitCast,standing)
     ?sceneStanding(recruitNames[standing],"left",recruitArtwork(currentCielAge())(recruitCast[standing])):picture?"":dialogueCast(event.id==="season-16"?"엘리자베스":"세바스찬"));
-  const evidence=event.companyCase&&end&&!outcome?'<details class="company-evidence"><summary>단서 다시 보기</summary><dl>'+
-    event.companyCase.evidence.map(([label,detail])=>'<div><dt>'+escapeHTML(label)+'</dt><dd>'+escapeHTML(detail)+'</dd></div>').join("")+'</dl></details>':"";
-  const speaker=novelSpeakerName(who);
-  return '<div class="review-room" style="background-image:url(&quot;'+art+'&quot;)"></div>'+cast+
-    '<article class="dialogue">'+(speaker?'<small>'+escapeHTML(speaker)+'</small>':"")+'<p>'+escapeHTML(line)+'</p>'+evidence+
-    (outcome?.note&&end&&!state.choiceImpact?'<small>'+escapeHTML(statResultText(outcome.note))+'</small>':'')+'<div class="answers">'+actions+'</div></article>';
+  const backdrop='<div class="review-room" style="background-image:url(&quot;'+art+'&quot;)"></div>'+cast;
+  const speaker=escapeHTML(novelSpeakerName(who)), text=escapeHTML(line);
+  if(!end){
+    const next='<button type="button" class="line-next" aria-label="다음 대사" data-action="term-next:'+at+'">▼</button>';
+    return backdrop+sceneLine(speaker,text,next);
+  }
+  const companyQuestion=Boolean(event.companyCase&&!outcome);
+  const evidence=companyQuestion?'<button type="button" class="company-evidence-trigger" popovertarget="company-evidence">'+plannerIcon("inquiry")+'단서 다시 보기</button>'+
+    '<section id="company-evidence" class="company-evidence" popover aria-labelledby="company-evidence-title"><header><h3 id="company-evidence-title">사건 단서</h3>'+
+    '<button type="button" popovertarget="company-evidence" popovertargetaction="hide">닫기</button></header><dl>'+
+    event.companyCase.evidence.map(([label,detail])=>'<div><dt>'+escapeHTML(label)+'</dt><dd>'+escapeHTML(detail)+'</dd></div>').join("")+'</dl></section>':"";
+  const actions=outcome?btn(outcome.nextScene?"다음 장면":"기록을 덮는다","term-close"):buttons;
+  return backdrop+'<article class="dialogue'+(companyQuestion?' company-case-dialogue':'')+'">'+(speaker?'<small>'+speaker+'</small>':"")+'<p>'+text+'</p>'+evidence+
+    (outcome?.note&&!state.choiceImpact?'<small>'+escapeHTML(statResultText(outcome.note))+'</small>':'')+'<div class="answers">'+actions+'</div></article>';
 }

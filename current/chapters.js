@@ -1,8 +1,12 @@
 "use strict";
-const portraits={라우:"assets/npc-lau.webp",세바스찬:"assets/sebastian.webp",타나카:"assets/npc-tanaka.webp",피니안:"assets/npc-finny.webp",메이린:"assets/npc-mey.webp",바르도:"assets/npc-bard.webp",스네이크:"assets/npc-snake.webp",소마:"assets/portraits/soma.webp",아그니:"assets/portraits/agni.webp",get 엘리자베스(){const age=elizabethAge();return age===12?"assets/portraits/elizabeth-12.webp?v=3":age===13?"assets/npc-lizzy.webp":"assets/npc-lizzy-11.webp";},get 시엘(){return cielArt(currentCielAge());}};
+const portraits={라우:"assets/npc-lau.webp",세바스찬:"assets/sebastian.webp",타나카:"assets/npc-tanaka.webp",피니안:"assets/npc-finny.webp",메이린:"assets/npc-mey.webp",바르도:"assets/npc-bard.webp",스네이크:"assets/npc-snake.webp",소마:"assets/portraits/soma.webp",아그니:"assets/portraits/agni.webp",get 엘리자베스(){return elizabethPortrait();},get 시엘(){return cielArt(currentCielAge());}};
 const castByEvent={gardener:"피니안",maid:"메이린",cook:"바르도",circus:"스네이크",visitPrince:"소마",jubilee:"세바스찬",agniTray:"아그니",greenhouseKey:"피니안"};
 function castName(e){return castByEvent[e.id]||((e.speaker in portraits)?e.speaker:"세바스찬");}
-function elizabethAge(){return Math.max(11,Math.min(13,currentCielAge()+1));}
+function elizabethAge(cielAge=currentCielAge()){return Math.max(11,Math.min(13,cielAge+1));}
+function elizabethPortrait(cielAge=currentCielAge()){
+  const age=elizabethAge(cielAge);
+  return age===12?"assets/portraits/elizabeth-12.webp?v=3":age===13?"assets/npc-lizzy.webp":"assets/npc-lizzy-11.webp";
+}
 function dialogueCast(speaker){
   const left=speaker==="시엘"?"세바스찬":speaker;
   return [left,"시엘"].map((name,index)=>
@@ -264,10 +268,12 @@ function houseDesk(){
 function productPlanning(){
  const project=state.prototype;
  if(project)return '<h4>시제품 기획</h4><p>'+products[project.product].name+' · '+(project.brief==="gift"?"선물용":"가정용")+' · '+(project.material==="select"?"엄선 재료":"일반 재료")+' · '+(project.lead==="sales"?"판매 담당":"제작 담당")+' · '+(project.approved?"출시 승인":"월말 검수 예정")+'</p>';
- const pick=(title,action,options,value)=>'<fieldset><legend>'+title+'</legend><div class="work-actions">'+options.map(([id,label])=>option(label,action+":"+id,id===value,state.phase!=="plan")).join("")+'</div></fieldset>';
- return '<h4>시제품 기획</h4>'+pick("구매 목적","brief",[["family","가정용"],["gift","선물용 · 연말 수요"]],state.brief||"family")+
-  pick("재료","material",[["common","일반 재료"],["select","엄선 재료 · 원가 +£2, 높은 가격 수용"]],state.material||"common")+
-  pick("담당","lead",[["maker","제작 담당 · 원가 최대 £1 절감"],["sales","판매 담당 · 수요 +2개"]],state.lead||"maker");
+ const pick=(title,action,options,value)=>'<fieldset class="design-choice"><legend>'+title+'</legend><div class="design-options">'+options.map(([id,label,effect])=>
+   option('<strong>'+label+'</strong>'+(effect?'<small>'+effect+'</small>':""),action+":"+id,id===value,state.phase!=="plan")
+ ).join("")+'</div></fieldset>';
+ return '<h4>시제품 기획</h4>'+pick("구매 목적","brief",[["family","가정용"],["gift","선물용","연말 수요"]],state.brief||"family")+
+  pick("재료","material",[["common","일반 재료"],["select","엄선 재료","원가 <b>+£2</b> · 높은 가격 수용"]],state.material||"common")+
+  pick("담당","lead",[["maker","제작 담당","원가 최대 <b>£1 절감</b>"],["sales","판매 담당","수요 <b>+2개</b>"]],state.lead||"maker");
 }
 function sampleReview(){
  const p=state.prototype;
@@ -872,19 +878,80 @@ const endingFarewells={
       "왕자님께 무슨 말씀을 드릴지, 오늘만은 시엘 님께 여쭙고 싶었습니다.",
       "저희 집 계단에서 시엘 님이 내려오시는 소리를 아직도 기억합니다. 왕자님께서도 그러시겠지요."
     ]
+  },
+  elizabeth:{
+    parting:[
+      "시엘, 다음에 올 땐 편지부터 보내 줘. 내가 정원까지 마중 나갈게!",
+      "시엘, 네 몫 리본을 하나 더 골라 놨어. 다음엔 네가 먼저 색을 고르는 거야.",
+      "그때 우리가 춤췄던 곡 말이야. 한 소절만 들려도 자꾸 네가 고개를 들던 게 생각나.",
+      "시엘, 오늘은 내가 먼저 손 내밀어도 되지? 다음에 만나면 네가 그래 줘."
+    ],
+    mourning:[
+      "아까 문이 열리길래 네가 온 줄 알았어, 시엘.",
+      "오늘 고른 리본, 네가 보면 너무 화려하다고 했을 텐데. 그래도 그대로 맸어.",
+      "이번엔 끝까지 박자를 셌어. 네가 내 손을 놓던 데서는 잠깐 틀렸지만.",
+      "시엘, 네가 먼저 손을 내밀던 날을 기억해. 오늘은 그 생각으로 여기까지 왔어."
+    ]
+  },
+  lau:{
+    parting:[
+      "백작, 다음에 들르면 차 한 잔은 내가 내지. 그 정도는 장부에 안 적어도 되겠어.",
+      "백작이 자주 고르던 건 서랍에 따로 넣어 뒀어. 아무한테나 내주면 섭섭할 테니까.",
+      "이상하지. 장사가 잘된 날보다 백작이 뭘 고를지 맞힌 날이 더 기억에 남더군.",
+      "백작, 차가 식기 전에 와. 자네가 주문을 할 때까지는 나도 이 가게를 닫을 생각이 없거든."
+    ],
+    mourning:[
+      "오늘은 찻잔이 하나 남았네. 손님이 올 때까지 치우지 말지.",
+      "백작 앞으로 빼 둔 물건이 하나 있어. 장부에는 적지 않았네.",
+      "그 손님 몫은 진열하지 마. 팔아야 될 물건이라면 애초에 거기 두지 않았지.",
+      "차를 한 잔 더 우리게. 누구 몫인지는 묻지 말고."
+    ]
   }
 };
+const farewellGuestNames={elizabeth:"엘리자베스",lau:"라우"};
+function elizabethAppears(event){
+  return event?.speaker==="엘리자베스" || event?.lines?.some(([speaker])=>speaker==="엘리자베스") ||
+    event?.contest?.id.startsWith("easter-");
+}
+function elizabethMeetings(run){
+  if(Array.isArray(run.elizabethMeetings))return run.elizabethMeetings;
+  const ids=new Set((run.events||[]).filter(entry=>!entry.id?.startsWith("contest-")&&
+    elizabethAppears(events.find(event=>event.id===entry.id))).map(entry=>entry.id));
+  for(const [id,entry] of Object.entries(run.fairBook||{})){
+    if(id.startsWith("easter-")&&!entry.reason&&entry.outcome!=="absent")ids.add("contest-"+id);
+  }
+  return [...ids];
+}
+function recordElizabethMeeting(run){
+  const visit=run.phase==="visit"?run.sequence?.visitEvent:null;
+  const eventId=visit||(["event","slotEvent"].includes(run.phase)?run.pending:null);
+  const event=events.find(item=>item.id===eventId);
+  if(!elizabethAppears(event))return false;
+  if(event.contest){
+    const result=run.fairBook?.[event.contest.id];
+    if(!(run.sequence?.duel||result&&!result.reason&&result.outcome!=="absent"))return false;
+  }
+  const seen=elizabethMeetings(run);
+  if(seen.includes(eventId))return false;
+  run.elizabethMeetings=[...seen,eventId];
+  return true;
+}
+function elizabethAffinity(run){return elizabethMeetings(run).length*3;}
 function endingFarewellRecord(run){
-  return {
-    age:campaignAge(run),
-    cast:Object.keys(endingFarewells).filter(id=>run.people?.[id]).map(id=>[id,trustTier(run.people[id].toward)])
-  };
+  const cast=Object.keys(servants).filter(id=>run.people?.[id]&&Object.hasOwn(endingFarewells,id))
+    .map(id=>[id,trustTier(run.people[id].toward)]);
+  const affinity=elizabethAffinity(run);
+  if(affinity)cast.push(["elizabeth",trustTier(affinity)]);
+  if(run.lauPurchases>0)cast.push(["lau",trustTier(run.lauPurchases)]);
+  return {age:campaignAge(run),cast,guestsTracked:true};
 }
 function savedEndingFarewells(id,replay){
   if(!replay||state.phase==="ending"&&state.ending===id)return endingFarewellRecord(state);
-  if(saves.farewellGallery?.[id])return saves.farewellGallery[id];
+  const recorded=saves.farewellGallery?.[id];
+  if(recorded?.guestsTracked)return recorded;
   const run=[saves.auto,saves[1],saves[2],saves[3]].find(r=>r?.phase==="ending"&&r.ending===id);
   if(run)return endingFarewellRecord(run);
+  if(recorded)return recorded;
   const year=saves.growthGallery?.[id]?.at(-1);
   return year?{age:year.age,cast:(year.cast||[]).filter(id=>Object.hasOwn(endingFarewells,id)).map(id=>[id,0])}:null;
 }
@@ -913,9 +980,10 @@ function showEndingFarewells(host,id,record,start,onPage,onFinish){
   }
   function draw(){
     const [person,tier]=record.cast[at];
-    const name=servants[person].name;
+    const name=farewellGuestNames[person]||servants[person].name;
+    const portrait=person==="elizabeth"?elizabethPortrait(record.age):portraits[name];
     const line=endingFarewells[person][mourning?"mourning":"parting"][tier];
-    exchange.innerHTML='<img class="farewell-person" src="'+portraits[name]+'" alt="">'+
+    exchange.innerHTML='<img class="farewell-person" src="'+portrait+'" alt="">'+
       '<div class="farewell-bubble"><strong>'+name+'</strong><p>'+escapeHTML(line)+'</p></div>';
     prev.disabled=at===0;
     next.textContent=at===record.cast.length-1?"마치기":"다음";
@@ -958,6 +1026,33 @@ function showEndingFarewells(host,id,record,start,onPage,onFinish){
   label();
   requestAnimationFrame(frame);
 }
+function campaignRecap(run){
+  const counts=new Map();
+  for(const {plan,contest} of run.past||[]){
+    for(const [slot,id] of (plan||[]).entries()){
+      if(actions[id]&&(!contest||slot!==contestSlot))counts.set(id,(counts.get(id)||0)+1);
+    }
+  }
+  const top=[...counts].sort((a,b)=>b[1]-a[1]).slice(0,3).map(([id,count])=>[actions[id].name,count]);
+  const fairs=new Map();
+  for(const fair of contestArchive){
+    const entry=run.fairBook?.[fair.id];
+    if(!entry||entry.reason||entry.outcome==="absent")continue;
+    const result=fairs.get(fair.title)||{title:fair.title,entered:0,won:0};
+    result.entered++;
+    if(entry.rank===2)result.won++;
+    fairs.set(fair.title,result);
+  }
+  const sales=(run.salesBook||[]).reduce((total,row)=>{
+    total.revenue+=row.revenue||0;
+    total.retail+=row.sold||0;
+    total.delivered+=row.delivery?.shipped||0;
+    return total;
+  },{revenue:0,retail:0,delivered:0});
+  return {top,fairs:[...fairs.values()],sales,months:new Set((run.past||[]).map(entry=>entry.month)).size,
+    scheduled:[...counts.values()].reduce((sum,count)=>sum+count,0),events:(run.events||[]).filter(entry=>entry.id).length,
+    staff:Object.keys(servants).filter(id=>run.people?.[id]).length,meetings:elizabethMeetings(run).length,purchases:run.lauPurchases??null};
+}
 function growthRecord(run){
   const years=new Map();
   function yearFor(month){
@@ -987,14 +1082,16 @@ function growthRecord(run){
     entries:group.entries.sort((a,b)=>a.month-b.month)
   }));
   record.at(-1).lastMonth=lastMonth;
+  record.at(-1).recap=campaignRecap(run);
   if(run.ending==="vowTitle" && stats.every(key=>run.stats?.[key]===abilityMax))record.at(-1).allMastered=true;
   return record;
 }
 function savedGrowthRecord(id,replay){
   if(!replay||state.phase==="ending"&&state.ending===id)return growthRecord(state);
-  if(saves.growthGallery?.[id]?.length)return saves.growthGallery[id];
+  const saved=saves.growthGallery?.[id];
+  if(saved?.at(-1)?.recap)return saved;
   const run=[saves.auto,saves[1],saves[2],saves[3]].find(r=>r?.phase==="ending"&&r.ending===id);
-  return run?growthRecord(run):null;
+  return run?growthRecord(run):saved||null;
 }
 function showGrowthCredits(host,id,years,onFinish){
   host.hidden=false;host.dataset.review="false";
@@ -1005,6 +1102,42 @@ function showGrowthCredits(host,id,years,onFinish){
   }
   add(roll.querySelector("header"),"p",endingLabels[id][0]);
   if(!years.length)add(roll,"p","이 회차의 세부 장부는 남아 있지 않습니다.");
+  const recap=years.at(-1)?.recap;
+  if(recap){
+    const section=add(roll,"section","");
+    section.className="growth-recap";
+    add(section,"h3","이번 회차의 발자취");
+    const tiles=add(section,"dl","");
+    tiles.className="growth-metrics";
+    const wins=recap.fairs.reduce((sum,fair)=>sum+fair.won,0);
+    const metrics=[
+      ["팬텀사 누적 매출",money(recap.sales.revenue)],
+      ["경연 우승",wins+"회"],
+      ["진행한 달",recap.months+"개월"],
+      ["편성한 일정",recap.scheduled+"회"],
+      ["판매·납품",recap.sales.retail+recap.sales.delivered+"개"],
+      ["기록한 사건",recap.events+"건"],
+      ["함께한 사용인",recap.staff+"명"],
+      ["엘리자베스와 만남",recap.meetings+"회"]
+    ];
+    if(recap.purchases!==null)metrics.push(["라우 상점 구매",recap.purchases+"회"]);
+    for(const [label,value] of metrics){
+      const tile=add(tiles,"div","");
+      add(tile,"dt",label);add(tile,"dd",value);
+    }
+    add(section,"h4","가장 많이 편성한 일정");
+    if(!recap.top.length)add(section,"p","편성 기록이 없습니다.");
+    for(const [name,count] of recap.top){
+      const row=add(section,"div","");row.className="growth-recap-row";
+      add(row,"span",statResultText(name));add(row,"strong",count+"회");
+    }
+    add(section,"h4","참가 경연별 우승");
+    if(!recap.fairs.length)add(section,"p","참가한 경연이 없습니다.");
+    for(const fair of recap.fairs){
+      const row=add(section,"div","");row.className="growth-recap-row";
+      add(row,"span",fair.title);add(row,"strong",fair.won+"회 / "+fair.entered+"회 참가");
+    }
+  }
   for(const {year,age,plans,entries} of years){
     const section=add(roll,"section","");
     const portrait=document.createElement("img");

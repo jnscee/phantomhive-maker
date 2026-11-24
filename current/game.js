@@ -37,11 +37,11 @@ function initial(){
     planMonth:1,plan:emptyPlan(),visit:null,level:{library:1,parlor:1,kitchen:1},staff:null,
     shop:{design:1,works:1,store:1},salesBook:[],productHistory:{},fineStock:{},order:null,
     product:"toys",unlocked:["toys"],quality:"standard",price:14,qty:15,stock:Object.fromEntries(Object.keys(products).map(id=>[id,0])),
-    trust:1,royal:0,renown:0,flags:{},events:[],past:[],log:[],pending:null,ending:null,
+    trust:1,royal:0,renown:0,flags:{},events:[],past:[],log:[],pending:null,ending:null,elizabethMeetings:[],lauPurchases:0,
     debt:0,unwell:0,relapseStage:0,arrears:0,poverty:false,usedLoan:false,counts:{},advancedStudy:{},foundation:0,linkFrom:null,linkMonth:0});
 }
 const previewQuery=new URL(document.baseURI).searchParams;
-const previewFair=previewQuery.has("fair-preview")?(contests.find(f=>f.id===(previewQuery.get("fair-preview")==="newYear-1886"?"newYear-1887":previewQuery.get("fair-preview")))||contests[0]):null;
+const previewFair=previewQuery.has("fair-preview")?(contestArchive.find(f=>f.id===(previewQuery.get("fair-preview")==="newYear-1886"?"newYear-1887":previewQuery.get("fair-preview")))||contests[0]):null;
 const requestedLesson=previewQuery.get("lesson-preview");
 const previewLesson=Object.hasOwn(choreography,requestedLesson)?requestedLesson:null;
 const previewStory=previewQuery.get("story-preview");
@@ -640,6 +640,7 @@ function courtEducationPriority(keys=Object.keys(courtEducation)){
   return keys.filter(k=>state.stats[k]<courtEducation[k][0])
     .sort((a,b)=>state.stats[a]/courtEducation[a][0]-state.stats[b]/courtEducation[b][0])[0];
 }
+const courtRenownRequirement=30;
 function courtRows(){
   const rooms=Object.values(state.level).filter(level=>level>=2).length;
   const profitableMonths=state.salesBook.filter(row=>row.revenue>row.cost+(row.expenses||0)).length;
@@ -658,7 +659,7 @@ function courtRows(){
     ["저택 재건",rooms>=2,"서재와 응접실, 주방을 개수하세요."],
     ["회사 기반",profitableMonths>=7,"판매·납품 흑자 "+profitableMonths+"/7개월 (상금 제외)"],
     ["왕실 신임",state.royal>=6,"왕실 서신에 답하거나 납품 인증으로 신임을 얻으세요."],
-    ["가문 명성",state.renown>=30,"접객과 팬텀사 판매로 명성 쌓기"],
+    ["가문 명성",state.renown>=courtRenownRequirement,"접객과 팬텀사 판매로 명성 쌓기"],
     ["재정 안정",state.fund>=1200 && state.debt===0,"채무를 상환하고 가문 자금을 비축하세요."]
   ];
 }
@@ -701,7 +702,8 @@ function visitButtonName(id,name){
   return id==="townhouse"?'<span class="townhouse-words">런던 <span>타운</span><wbr><span>하우스</span></span>':name;
 }
 function calendarSlot(label, value, action, selected, reserved=false) {
-  return option('<span>'+label+'</span><b>'+value+'</b>', action, selected, reserved, reserved?"period contest-period":"period");
+  const title=reserved?escapeHTML(value).split(" · ").join("<br>"):value;
+  return option('<span>'+label+'</span><b>'+title+'</b>', action, selected, reserved, reserved?"period contest-period":"period");
 }
 
 function plannerCosts(estimate){
@@ -835,7 +837,7 @@ function startTownhouseGuests(run){
 }
 function annexDesk(){
   const locked=state.phase!=="plan";
-  const rooms=Object.entries(annex).filter(([id])=>!Object.hasOwn(dutyPins,id)).map(([id,r])=>'<div class="annex-line"><div><b>'+r.name+' · Lv.'+state.annex[id]+'</b><small>'+r.desc+'</small></div>'+btn(state.annex[id]===3?"완료":money(r.cost*state.annex[id]),"annex:"+id,locked||state.annex[id]>=3||state.fund<r.cost*state.annex[id])+'</div>').join("");
+  const rooms=Object.entries(annex).filter(([id])=>!Object.hasOwn(dutyPins,id)).map(([id,r])=>'<div class="annex-line"><div><b class="estate-facility-title">'+plannerIcon(id==="bedroom"?"rest":id)+r.name+' · Lv.'+state.annex[id]+'</b><small>'+r.desc+'</small></div>'+btn(state.annex[id]===3?"완료":money(r.cost*state.annex[id]),"annex:"+id,locked||state.annex[id]>=3||state.fund<r.cost*state.annex[id])+'</div>').join("");
   return '<section class="estate-annex"><h3>부속 시설</h3>'+rooms+'</section>'+
     (state.flags.townhouse
       ?btn('<span>런던 타운하우스 <small>보유 중</small></span><strong>관리 열기</strong>',"tab:townhouse",false,"townhouse-entry")
@@ -1155,7 +1157,7 @@ function propertyMap(company){
     additions+=facilitySparkles(levels[id],x,y);
     const selected=id===(company?selectedDepartment:selectedRoom);
     const [pinX,pinY]=company?companyPinPositions[id]:dutyPins[id];
-    pins+='<button type="button" data-action="station:'+id+'" aria-pressed="'+selected+'" class="map-pin" style="left:'+pinX+'%;top:'+pinY+'%">'+
+    pins+='<button type="button" data-action="station:'+id+'" aria-pressed="'+selected+'" class="map-pin" data-level="'+levels[id]+'" style="left:'+pinX+'%;top:'+pinY+'%">'+
       room.name+' <small>Lv.'+levels[id]+'</small></button>';
   }
   const people=company
@@ -1167,9 +1169,16 @@ function propertyMap(company){
 function roomDetail(){
   const id=selectedRoom, room=estateRooms[id], auxiliary=Object.hasOwn(annex,id), level=(auxiliary?state.annex:state.level)[id], active=state.phase==="plan";
   const steps=[1,2,3].map(n=>'<i class="'+(n<=level?'filled':'')+'"></i>').join('');
-  return '<div class="work-title"><h3>'+room.name+'</h3><b>'+level+' / 3단계</b></div>'+
+  const upkeep=auxiliary?(level-1)*2:level*4;
+  const nextUpkeep=upkeep+(auxiliary?2:4);
+  const effects=room.effects.map(([label,value,...notes])=>
+    '<li><div class="estate-effect-heading"><span>'+label+'</span><strong>'+value+'</strong></div>'+
+    notes.map(note=>'<small>'+note+'</small>').join("")+'</li>').join("");
+  return '<div class="work-title"><h3 class="estate-facility-title">'+plannerIcon(id==="guard"?"casework":id)+room.name+'</h3><b>'+level+' / 3단계</b></div>'+
     '<div class="facility-steps" aria-hidden="true">'+steps+'</div>'+
-    '<dl class="facility-data"><dt>시설 효과</dt><dd>'+room.desc+'</dd><dt>월 유지비</dt><dd>'+money(auxiliary?(level-1)*2:level*4)+(level<3?' → '+money(auxiliary?level*2:(level+1)*4):'')+'</dd></dl>'+
+    '<dl class="facility-data estate-facility-data"><div><dt>시설 효과</dt><dd><ul class="estate-effects">'+effects+'</ul></dd></div>'+
+    '<div><dt>월 유지비</dt><dd><strong>'+money(upkeep)+'</strong>'+
+    (level<3?'<small>다음 단계 '+money(nextUpkeep)+'</small>':'')+'</dd></div></dl>'+
     btn(level===3?"개수 완료":"시설 개수 · "+money(room.cost*level),(auxiliary?"annex:":"upgrade:")+id,!active||level===3||state.fund<room.cost*level,"work-order")+
     '<h4>저택 지원</h4><div class="work-actions estate-support">'+btn("왕진 · £55","doctor",!active||state.fund<55||state.flags["doctor"+state.month])+
     btn("대출 · £144","loan",!active||state.usedLoan)+'</div><small class="estate-support-note">왕진 시 컨디션 +24 · 대출은 월 £24씩 상환</small>';
@@ -1188,9 +1197,13 @@ function inventoryRows(){
       (pressure?'<small>최근 판매로 이번 달 소매 수요 −'+pressure+'개</small>':'')+'</article>';
   }).join("");
 }
+function productLabel(id){
+  return '<span class="stock-name"><i aria-hidden="true" class="stock-icon-'+id+'"></i><span>'+products[id].name+'</span></span>';
+}
 function purchaseOrder(order,accepted){
-  return '<article class="purchase-order"><header><span>발주처</span><strong>'+escapeHTML(tradeBuyer(order))+'</strong></header>'+
-    '<p class="order-subject">'+products[order.id].name+'</p><dl class="ledger-figures">'+
+  const buyer=historicalTradeEvents[order.tradeMonth]?order.tradeMonth:order.id;
+  return '<article class="purchase-order" data-buyer="'+buyer+'"><header><span>발주처</span><strong class="buyer-sign">'+escapeHTML(tradeBuyer(order))+'</strong></header>'+
+    '<p class="order-subject">'+productLabel(order.id)+'</p><dl class="ledger-figures">'+
     ledgerFigure("발주 수량",order.qty+"개")+ledgerFigure("개당 단가",money(order.rate))+ledgerFigure("완납 시 대금",money(order.qty*order.rate))+'</dl>'+
     '<p class="order-due"><b>납기</b> '+monthText(order.due)+' 월말</p><small>미납 1개당 '+money(order.shortFee??2)+' 부담</small>'+
     (accepted?'<strong class="order-stamp">수락 완료 · 월말 자동 납품</strong>':btn('발주 수락','order:'+order.id,state.phase!=="plan","order-accept"))+'</article>';
@@ -1205,18 +1218,20 @@ function companyDetail(){
   let controls="";
   if(id==="design"){
     controls=productPlanning()+'<h4>상품 개발　'+state.unlocked.length+' / '+Object.keys(products).length+'</h4>'+
-      Object.entries(products).map(([key,p])=>{
+      '<div class="research-grid">'+Object.keys(products).map(key=>{
         const done=state.unlocked.includes(key),fee=researchFee(key);
-        return '<div class="work-ledger"><span>'+p.name+'</span>'+
-          (done&&!canDesign(key)?'<b>'+(state.productNotes?.[key]?.revised?'개량 완료':'평판 4부터 개량')+'</b>':btn((done?'개량 · ':'개발 · ')+money(fee),'develop:'+key,!active||!!state.prototype||state.month===state.duration||state.fund-fee<cashNeeded()))+'</div>';
-      }).join("");
+        const action=done&&!canDesign(key)
+          ?'<small class="research-status">'+(state.productNotes?.[key]?.revised?'개량 완료':'평판 4부터 개량')+'</small>'
+          :btn((done?'개량 · ':'개발 · ')+money(fee),'develop:'+key,!active||!!state.prototype||state.month===state.duration||state.fund-fee<cashNeeded());
+        return '<article class="research-card"><strong>'+productLabel(key)+'</strong>'+action+'</article>';
+      }).join("")+'</div>';
   }else if(id==="works"){
-    controls='<h4>이달 생산품</h4><div class="work-actions production-grid">'+state.unlocked.map(key=>option(products[key].name,"product:"+key,state.product===key,!active)).join("")+'</div>'+
+    controls='<h4>이달 생산품</h4><div class="work-actions production-grid">'+state.unlocked.map(key=>option(productLabel(key),"product:"+key,state.product===key,!active)).join("")+'</div>'+
       '<h4>생산·소매 등급</h4><div class="work-actions">'+[["standard","표준품"],["fine","고급품"]].map(([key,label])=>option(label,"quality:"+key,state.quality===key,!active)).join("")+'</div>'+
       (active?stepper("qty","생산량 (개)",0):'<p>생산량 '+state.qty+'개</p>')+
       '<div class="work-cost" id="work-cost">'+productionCost(forecast().unit)+'</div>';
   }else{
-    controls='<h4>'+products[state.product].name+'</h4><p>주요 고객 · '+businessTailwind(state.product).audience+'　이달의 수요 · '+businessTailwind(state.product).trend+'</p>'+
+    controls='<h4 class="shop-product-title">'+productLabel(state.product)+'</h4><p>주요 고객 · '+businessTailwind(state.product).audience+'　이달의 수요 · '+businessTailwind(state.product).trend+'</p>'+
       (active?stepper("price","판매가 (£)",4):'<p>판매가 '+money(state.price)+'</p>')+
       (active?'<div class="work-ledger"><span>이 가격의 예상 수요</span><b id="shop-demand">'+forecast().demand+'개</b></div>':'')+
       '<h4>상품 장부</h4><div class="stock-grid">'+inventoryRows()+'</div>'+orderDesk();
@@ -1361,12 +1376,13 @@ function marketPanel(){
 }
 const panels={market:marketPanel,title:titlePanel,continue:coverPanel,album:coverPanel,settings:coverPanel,exit:coverPanel,plan:planPanel,status:statusPanel,estate:managementPanel,townhouse:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
 state=normalizeSave(state);
-// Keep a recoverable old ending before its autosave or manual slot is reused.
+// Preserve recoverable ending data before a saved campaign is replaced.
 for(const run of [saves.auto,saves[1],saves[2],saves[3]]){
-  if(run?.phase!=="ending" || !Object.hasOwn(endingScenes,run.ending) || saves.growthGallery?.[run.ending]?.length)continue;
-  if(!run.past?.length && !run.events?.length)continue;
+  if(run?.phase!=="ending"||!Object.hasOwn(endingScenes,run.ending))continue;
+  saves.farewellGallery??={};
+  if(!saves.farewellGallery[run.ending]?.guestsTracked)saves.farewellGallery[run.ending]=endingFarewellRecord(run);
   saves.growthGallery??={};
-  saves.growthGallery[run.ending]=growthRecord(run);
+  if(!saves.growthGallery[run.ending]?.at(-1)?.recap)saves.growthGallery[run.ending]=growthRecord(run);
 }
 
 restoreCGRecords();
@@ -1449,6 +1465,10 @@ function render(focus=false,playbackOffset=0){
   $("playback").hidden=!stage;
   $("playback").innerHTML=stage?playMarkup():"";
   const vn=faceDialogue();
+  if(vn&&tab==="plan"&&!tourSession&&!previewFair&&!storyDemo&&recordElizabethMeeting(state)){
+    persist();
+    $("conversation").insertAdjacentHTML("beforeend",'<p class="meeting-notice" role="status">엘리자베스 호감도 +3</p>');
+  }
   if(vn&&state.choiceImpact?.owner===tab&&state.choiceImpact.next){
     const con=$("conversation");
     con.querySelectorAll(".dialogue,.answers,.review-slip").forEach(el=>el.remove());
@@ -1959,7 +1979,7 @@ function handleAction(key,rect,confirmed=false){
       :'<li><small>'+slotNames[index]+'</small>'+plannerIcon(id)+'<b>'+courseName(id)+'</b></li>').join("");
     const shortage=marketStats().shortfall;
     const instructions=(shortage?'<p class="calendar-warning">준비비 중 '+money(shortage)+'는 외상으로 진행합니다.</p>':'')+'<details class="desk-review"><summary>이달 운영 지시 확인·변경</summary>'+
-      '<div><p><b>저택</b><br>'+(state.people.tanaka?"타나카 · "+dutyName(state.jobs.tanaka)+" · ":"")+'시설 상태 '+houseValues().시설상태+'</p>'+btn("저택 지시 변경","inspect:estate")+'</div>'+
+      '<div><p><b>저택</b><br>시설 상태 '+houseValues().시설상태+'</p>'+btn("저택 지시 변경","inspect:estate")+'</div>'+
       '<div><p><b>팬텀사</b><br>'+products[state.product].name+' '+state.qty+'개 · 판매가 '+money(state.price)+'</p>'+btn("팬텀사 지시 변경","inspect:company")+'</div></details>';
     askConfirmation(key,"이번 달 일정을 시작할까요?","","일정 시작",rect,
       '<ol class="confirm-periods">'+periods+'</ol><div class="confirm-funds"><span>준비비</span><strong>'+money(cashNeeded())+'</strong></div>'+budgetTable(true)+instructions);
@@ -2007,6 +2027,7 @@ function handleAction(key,rect,confirmed=false){
         state[g.stat]=after;
       }
       state.fund-=g.cost;
+      state.lauPurchases=(state.lauPurchases||0)+1;
     }else if(action==="activity"){
       if(!canSchedule(state,value)||(Number(id)===contestSlot&&reservedContest(state)))return;
       pattern="schedule";state.plan[Number(id)]=value;

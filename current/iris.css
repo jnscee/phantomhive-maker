@@ -951,7 +951,7 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
   padding:10px clamp(12px,1.5cqw,20px);color:#eff5fa;
 }
 #calendar .calendar-summary {justify-content:space-between;gap:3px 10px}
-#calendar .calendar-note {color:#d4e0ed;font-size:clamp(12px,1.3cqw,14px)}
+#calendar .calendar-note {color:#d4e0ed;font-size:clamp(10px,1.06cqw,12px)}
 #calendar .calendar-settle {
   display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;
   gap:8px 14px;border-top:1px solid #99adc353;padding-top:8px;
@@ -1121,6 +1121,7 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
 #picker .desk-review h3 {font-size:15px;margin:0 0 4px}
 #picker .desk-review > div + div {border-top:1px solid #9bb2ca38;margin-top:4px}
 #picker .desk-review button {flex:none;margin:0}
+#picker[data-confirmation=execute] .desk-review > div > p {font-size:.875rem;line-height:1.45}
 #picker .forecast {padding:12px 14px;border-radius:6px}
 #picker .forecast .cash-head {background:#233b50;padding:8px;border-radius:4px}
 #picker .forecast .cash-head strong {color:#f0d8a5;font-size:24px}
@@ -1140,7 +1141,7 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
 #picker .desk-review[open] summary,#picker .expense-details[open] summary {margin-bottom:8px}
 
 /* Place the sprite on the same 480 × 320 coordinate plane as its background. */
-#playback:not([hidden]) {display:grid;grid-template-rows:minmax(0,1fr) auto;grid-template-columns:7% minmax(0,1fr) minmax(0,2fr) 7%;gap:6px 1%;padding-bottom:2.6%;background:transparent}
+#playback:not([hidden]) {display:grid;grid-template-rows:minmax(0,1fr) auto;grid-template-columns:1fr minmax(0,min(26%,17rem)) minmax(0,min(44%,29rem)) 1fr;gap:6px 1.25%;padding-bottom:2.6%;background:transparent}
 .lesson-art {position:absolute;inset:0;overflow:hidden;pointer-events:none}
 .lesson-plane {position:absolute;inset:0;isolation:isolate}
 .lesson-plane > img.stage-room {display:block;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}
@@ -1150,6 +1151,9 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
   left:50%;bottom:calc(50% - var(--sprite-size) * .5);
   translate:-50% 0;transform-origin:50% 100%;animation-name:lesson-idle;
 }
+.lesson-plane[data-activity="negotiate"] .performer {left:43%}
+.lesson-plane[data-activity="inquiry"] .performer {left:36%}
+.lesson-plane[data-activity="walk"] .performer {--actor-ratio:.23;bottom:calc(48% - var(--sprite-size) * .5)}
 .lesson-plane .performer[data-illustrated] > img {translate:0 2.5%}
 .lesson-plane[data-room=gym] .performer.calisthenics {--actor-ratio:.42}
 .lesson-plane .performer.ride {animation-name:lesson-ride}
@@ -1173,25 +1177,38 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
 @keyframes lesson-waltz {0%,100% {transform:translateX(-8%) rotate(-2deg)} 50% {transform:translateX(8%) rotate(2deg)}}
 #playback .stage-foot {
   grid-row:2;grid-column:3;position:relative;inset:auto;margin:0;width:100%;min-width:0;align-self:end;
-  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 12px;
-  padding:6px clamp(8px,1.3cqw,18px);border:1px solid #b6cce19c;box-sizing:border-box;
-  border-radius:12px;background:var(--dialogue-glass);color:#f1f6ff;box-shadow:inset 0 1px #effaff55;
+  display:grid;grid-template-columns:minmax(0,1fr);gap:8px;
+  padding:clamp(9px,1.1cqw,14px) clamp(12px,1.8cqw,23px);
 }
-#playback .stage-foot p {margin:0;line-height:1.5;font-family:var(--serif);overflow-wrap:anywhere}
+#playback :is(.stage-foot,.stage-record) {
+  border:1px solid #c7d9ee80;border-radius:12px;background:var(--dialogue-glass);color:#f1f6ff;
+  box-shadow:inset 0 1px #eaf5ff70,0 4px 16px #07132340;text-shadow:0 1px 3px #061222;
+  -webkit-backdrop-filter:blur(7px) saturate(115%);backdrop-filter:blur(7px) saturate(115%);
+}
+#playback .stage-foot p {
+  margin:0;line-height:1.65;font-family:var(--serif);word-break:keep-all;overflow-wrap:anywhere;
+}
 #playback .stage-record {position:relative;inset:auto;grid-area:2/2;align-self:end;width:100%;min-width:0;max-width:none;box-sizing:border-box}
 #playback .stage-foot > div {
-  display:grid;grid-template-columns:repeat(2,auto);gap:6px;
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;
+  width:max-content;max-width:100%;justify-self:end;
 }
+#playback .stage-foot > div:has(select) {grid-template-columns:minmax(0,1fr) auto}
 #playback .stage-foot button {
-  box-sizing:border-box;width:100%;min-height:38px;margin:0;
-  padding:7px clamp(6px,1cqw,12px);line-height:1.3;white-space:nowrap;
+  width:100%;min-height:36px;margin:0;padding:6px clamp(8px,1cqw,14px);
+  border:1px solid #a9c1d86b;border-radius:5px;background:var(--dialogue-glass);
+  box-shadow:inset 0 1px #effaff40,0 2px 5px #0b172a45;color:#f3f6fb;
+  line-height:1.35;white-space:nowrap;
 }
+#playback .stage-foot button:is(:hover,:focus-visible) {background:#6587a780;border-color:#d5e7fa}
 @media(max-width:700px) and (orientation:portrait) {
-  #playback:not([hidden]) {grid-template-columns:4% minmax(0,1fr) 4%;grid-template-rows:minmax(0,1fr) auto auto}
+  #playback:not([hidden]) {grid-template-columns:7% minmax(0,1fr) 7%;grid-template-rows:minmax(0,1fr) auto auto}
   #playback .stage-record {grid-area:2/2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 12px}
-  #playback .stage-foot {grid-area:3/2;grid-template-columns:minmax(0,1fr)}
-  #playback .stage-foot > div {justify-content:end}
-  #playback .stage-foot button {min-height:44px;padding-inline:12px}
+  #playback .stage-foot {grid-area:3/2}
+  #playback .stage-foot button {min-height:44px}
+}
+@media(max-width:580px) {
+  #playback .stage-record {grid-template-columns:minmax(0,1fr)}
 }
 
 .report-timeline .log-gain {color:#a9d8ff}
@@ -1223,6 +1240,10 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
 #picker[data-confirmation=execute] :is(.inline,.desk-review) button {
   padding:8px 17px;border:0;border-radius:7px;background:var(--plate-image) center/100% 100% no-repeat;
   color:#f1f5fc;text-shadow:0 1px 2px #132237;box-shadow:none;
+}
+#picker[data-confirmation=execute] .desk-review button {
+  box-sizing:border-box;flex:0 0 min(10rem,54%);min-height:44px;padding:7px clamp(14px,2.5vw,24px);
+  font-size:.875rem;line-height:1.3;text-align:center;word-break:keep-all;
 }
 #picker[data-confirmation=execute] :is(.inline,.desk-review) button:is(:hover,:focus-visible),
 #picker[data-confirmation=execute] .inline [data-action=confirm] {background-image:var(--gold-image)}
@@ -1291,7 +1312,7 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
 
 /* Reserve a shared label column; let the lesson meter take the remaining width. */
 #playback .stage-stat {
-  grid-template-columns: 4.5em 3ch minmax(0, 1fr) 4ch;
+  grid-template-columns: minmax(3.7em,auto) 3ch minmax(0, 1fr) 4ch;
   font-variant-numeric: tabular-nums;
 }
 .review-slip .delta-row {
@@ -1375,6 +1396,7 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
 #scene .london-map button.map-pin { transform:translate(-50%,-50%); max-width:none; }
 .london-map .map-pin em { font-style:normal; }
 .london-map .map-pin:is(:focus-visible,.drop-active) { outline:2px solid #efd699; }
+.london-map .duty-walker:is([data-servant="soma"],[data-servant="agni"]) { width:clamp(21px,2.4vw,32px); }
 .london-map .duty-walker img { max-width:100%; }
 .london-duty-info { margin:10px 0 12px; }
 .london-desk { min-width:0; }
@@ -1599,7 +1621,7 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
   .audio-mixer .volume-slider::-webkit-slider-thumb { appearance:auto; }
 }
 
-.property-map:is(.estate-map,.company-map,.staff-map) :is(img,.map-award) { filter:url(#management-ink) saturate(.88) brightness(1.04); }
+.property-map:is(.estate-map,.company-map,.staff-map) :is(img,.map-award.award-2) { filter:url(#management-ink) saturate(.88) brightness(1.04); }
 #scene .estate-map button.map-pin { transform:translate(-50%,-50%); }
 .duty-lane { position:absolute; pointer-events:none; height:0; }
 .duty-walker { position:absolute; bottom:0; width:clamp(15px,1.9vw,26px); animation:duty-patrol var(--pace) ease-in-out var(--delay) infinite alternate; }
@@ -1964,3 +1986,5 @@ html[data-game-motion=reduced] :is(.company-worker img,.duty-walker,.duty-walker
 .facility-actions {display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem .8rem}
 #scene .facility-actions button {margin:0;white-space:nowrap}
 #scene .facility-actions [data-action^="liquidate:"] {margin-inline-start:auto}
+
+#conversation > .meeting-notice {position:absolute;z-index:3;left:50%;top:12%;translate:-50% 0;width:max-content;max-width:90%;margin:0;padding:5px 10px;border:1px solid #c1d9e9;border-radius:5px;background:#213b54;color:#e4f2ff;font-size:.82rem;pointer-events:none}
