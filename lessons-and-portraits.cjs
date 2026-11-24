@@ -235,10 +235,10 @@ async function check(browserType){
       assert.ok((await page.locator('#sheet').evaluate(e=>+getComputedStyle(e).zIndex))>(await page.locator('#date').evaluate(e=>+getComputedStyle(e).zIndex)));
       await page.evaluate(()=>{tab='market';render();});
       assert.equal(await page.locator('.goods-ticket').count(),await page.evaluate(()=>Object.keys(marketGoods).length));
-      const before=await page.evaluate(()=>state.stats.매력);
+      const charmBefore=await page.evaluate(()=>state.stats.매력);
       await page.locator('[data-action="goods:birds"]').click();
       await page.locator('[data-action="buy:birds"]').click();
-      assert.ok(await page.evaluate(()=>state.stats.매력)>before);
+      assert.ok(await page.evaluate(()=>state.stats.매력)>charmBefore);
       await page.evaluate(()=>{tab='plan';state.plan=['exercise','study','walk'];state.visit='none';execute();});
       await page.locator('.performer img').evaluate(im=>im.decode());
       assert.equal(await page.locator('.lesson-plane').getAttribute('data-room'),await page.evaluate(()=>choreography.exercise[0]));
