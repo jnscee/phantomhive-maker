@@ -686,16 +686,13 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 }
 .research-status { color:#425b72; font-size:.7rem; line-height:1.2; }
 
-#scene #conversation:not([data-review=true]):has(> .company-case-dialogue):has(> .answers) {
-  grid-template-rows:minmax(0,1fr) auto auto;row-gap:8px;
-}
 #scene #conversation:not([data-review=true]):has(> .company-case-dialogue):has(> .answers) > article.dialogue {
-  grid-area:2/1;min-height:0;max-height:none;width:min(94%,34rem);
+  grid-area:2/1;min-height:0;max-height:none;
   padding:clamp(.55rem,1.6cqw,1rem) clamp(.65rem,2cqw,1.25rem);
 }
 #scene #conversation:not([data-review=true]):has(> .company-case-dialogue):has(> .answers) > .answers {
-  grid-area:3/1;width:min(94%,34rem);max-height:none;overflow:visible;
-  align-self:start;padding:0;
+  grid-area:1/1;width:min(94%,18rem);max-height:none;overflow:visible;
+  align-self:end;padding:0;
 }
 #scene #conversation:not([data-review=true]):has(> .company-case-dialogue):has(> .answers) > .answers button {padding-block:6px}
 #scene .company-evidence-trigger {
@@ -704,22 +701,37 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 }
 .company-evidence-trigger .planner-icon {width:18px;height:18px;image-rendering:pixelated}
 .company-evidence {
-  box-sizing:border-box;width:min(calc(100% - 24px),36rem);max-height:75dvh;margin:auto;padding:12px;
-  color:#edf5ff;background:#172e45f7;border:1px solid #acbed2;border-radius:10px;
-  box-shadow:0 6px 24px #081324aa;font:inherit;overflow:auto;
+  box-sizing:border-box;width:min(calc(100% - 28px),36rem);max-height:85dvh;
+  margin:auto;padding:clamp(.7rem,2.4vw,1.35rem);
+  color:#eef5fb;background:#142b42;border:1px solid #acbed2;border-radius:12px;
+  box-shadow:0 8px 28px #081324aa;font:inherit;overflow:auto;overscroll-behavior:contain;
 }
-.company-evidence::backdrop {background:#07162378}
-.company-evidence header {display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-.company-evidence h3 {font-size:1rem;margin:0}
-.company-evidence header button {min-height:32px;padding:3px 10px}
-.company-evidence dl {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0}
+.company-evidence::backdrop {background:#07162385}
+.company-evidence header {
+  display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin-bottom:.9rem;
+}
+#company-evidence header p {margin:0;color:#b6cee2;font:600 .78rem/1.35 system-ui,sans-serif}
+.company-evidence h3 {margin:.18rem 0 0;font-size:clamp(1rem,2.4vw,1.24rem);color:#fff2d2}
+.company-evidence header button {min-height:36px;padding:4px 12px;flex:none}
+.company-evidence dl {display:grid;gap:.65rem;margin:0}
 .company-evidence dl > div {
-  min-width:0;padding:9px 11px;border:1px solid #b2cad96b;border-radius:5px;
-  background:#e5eff5;color:#263f56;text-shadow:none;
+  min-width:0;padding:clamp(.65rem,2vw,1rem);border:1px solid #afc5d4;
+  border-radius:8px;background:#eff4f7;color:#1e3549;text-shadow:none;
 }
-.company-evidence dt {padding-bottom:4px;border-bottom:1px solid #8ba2b978;font-size:.86rem;font-weight:700}
-.company-evidence dd {margin:5px 0 0;font-size:.84rem;line-height:1.65;word-break:keep-all;overflow-wrap:anywhere}
-@media(max-width:540px){.company-evidence dl{grid-template-columns:minmax(0,1fr)}}
+.company-evidence dt {
+  padding:0 0 .45rem;border-bottom:1px solid #abbfd0;
+  font:700 .98rem/1.45 system-ui,sans-serif;color:#173950;
+}
+.company-evidence dd {margin:.48rem 0 0}
+#company-evidence .evidence-copy p {
+  margin:0;font:500 .95rem/1.65 system-ui,sans-serif;
+  word-break:keep-all;overflow-wrap:anywhere;text-shadow:none;
+}
+#company-evidence .evidence-copy p+p {margin-top:.26rem}
+.evidence-copy mark {
+  padding:0 .12em;border-radius:2px;color:#4a320e;background:#f4e6bc;font-weight:700;
+  box-decoration-break:clone;-webkit-box-decoration-break:clone;
+}
 
 .court-renown {grid-column:1/-1;color:#324b63;font-size:.76rem;padding-bottom:4px}
 .court-renown > strong {display:block;margin-bottom:5px;font-variant-numeric:tabular-nums}

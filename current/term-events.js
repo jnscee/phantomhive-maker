@@ -123,6 +123,17 @@ function termCue(event){
   const lines=state.termOutcome?.id===event?.id?state.termOutcome?.responseLines:termPages(event);
   return lines?.[Math.min(state.termPage||0,lines.length-1)]?.[3];
 }
+function companyEvidenceEntry([label, detail], emphasis=[]){
+  const paragraphs=detail.split(/(?<=[.!?])\s+(?=[^’”])/u).map(sentence=>{
+    let text=escapeHTML(sentence);
+    for(const phrase of emphasis){
+      const escaped=escapeHTML(phrase);
+      text=text.replace(escaped,()=>'<mark>'+escaped+'</mark>');
+    }
+    return '<p>'+text+'</p>';
+  }).join("");
+  return '<div><dt>'+escapeHTML(label)+'</dt><dd class="evidence-copy">'+paragraphs+'</dd></div>';
+}
 function termDialogue(event,buttons){
   const pages=termPages(event);
   const outcome=state.termOutcome?.id===event.id?state.termOutcome:null;
@@ -145,9 +156,9 @@ function termDialogue(event,buttons){
   }
   const companyQuestion=Boolean(event.companyCase&&!outcome);
   const evidence=companyQuestion?'<button type="button" class="company-evidence-trigger" popovertarget="company-evidence">'+plannerIcon("inquiry")+'단서 다시 보기</button>'+
-    '<section id="company-evidence" class="company-evidence" popover aria-labelledby="company-evidence-title"><header><h3 id="company-evidence-title">사건 단서</h3>'+
+    '<section id="company-evidence" class="company-evidence" popover aria-labelledby="company-evidence-title"><header><div><p>사건 단서</p><h3 id="company-evidence-title">'+escapeHTML(event.title)+'</h3></div>'+
     '<button type="button" popovertarget="company-evidence" popovertargetaction="hide">닫기</button></header><dl>'+
-    event.companyCase.evidence.map(([label,detail])=>'<div><dt>'+escapeHTML(label)+'</dt><dd>'+escapeHTML(detail)+'</dd></div>').join("")+'</dl></section>':"";
+    event.companyCase.evidence.map((item,index)=>companyEvidenceEntry(item,event.companyCase.evidenceEmphasis?.[index])).join("")+'</dl></section>':"";
   const actions=outcome?btn(outcome.nextScene?"다음 장면":"기록을 덮는다","term-close"):buttons;
   return backdrop+'<article class="dialogue'+(companyQuestion?' company-case-dialogue':'')+'">'+(speaker?'<small>'+speaker+'</small>':"")+'<p>'+text+'</p>'+evidence+
     (outcome?.note&&!state.choiceImpact?'<small>'+escapeHTML(statResultText(outcome.note))+'</small>':'')+'<div class="answers">'+actions+'</div></article>';
