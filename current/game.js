@@ -46,7 +46,6 @@ let state=saves.auto?.v===1?saves.auto:initial();
 state=structuredClone(state);
 let tab="title";
 let selectedSlot=0;
-let plannerGrade="steady";
 let editingVisit=false;
 const $=id=>document.getElementById(id);
 observePortraitStage($("scene"));
@@ -117,17 +116,21 @@ function scheduleNote(id){
   updateIllness(projection);
   const actual=careActivity(projection,id);
   const hp=projection.hp,stress=projection.stress,prior={...projection.stats};
-  applyActivity(projection,actual,plannerGrade,id);
+  applyActivity(projection,actual,"steady",id);
   if(actual!==id)return "병환 · "+actions[actual].name+" 예정";
   const keys=Object.keys(a.gains);
   if(trainingTradeoffs[id]&&!advancedCourse(projection,id))keys.push(trainingTradeoffs[id]);
   const effects=keys.map(k=>[k,projection.stats[k]-prior[k]]);
   if(projection.hp!==hp)effects.push(["건강",projection.hp-hp]);
   effects.push(["스트레스",projection.stress-stress]);
-  const markers=effects.map(([name,delta])=>'<span class="plan-effect">'+escapeHTML(statLabel(name))+' <b class="'+deltaTone(name,delta)+'">'+signed(delta)+'</b></span>');
-  const basis=a.stress>0?'<select class="plan-basis" data-preview-subject="'+id+'" aria-label="미리 볼 수업 판정">'+
-    Object.entries(lessonGrades).map(([key,g])=>'<option value="'+key+'"'+(key===plannerGrade?' selected':'')+'>'+g.label+' 기준</option>').join("")+'</select> ':'';
-  return basis+'<span class="plan-effects">'+markers.join(" ")+'</span>';
+  const markers=effects.filter(([,delta])=>delta!==0).map(([name,delta])=>{
+    const size=Math.abs(delta);
+    const count=size<=5?1:size<=12?2:3;
+    const arrows=(delta>0?"▲":"▼").repeat(count);
+    const label=["","소폭","중간","대폭"][count]+(delta>0?" 상승":" 하락");
+    return '<span class="plan-effect">'+escapeHTML(statLabel(name))+' <b class="'+deltaTone(name,delta)+'" aria-label="'+label+'">'+arrows+'</b></span>';
+  });
+  return '<span class="plan-effects">'+markers.join(" ")+'</span>';
 }
 function forecast(shop=state.shop){
   const p=products[state.product];
@@ -695,14 +698,7 @@ for(const type of ["pointerover","pointerout","focusin","focusout"]){
   $("calendar").addEventListener(type,previewPlannerCard);
 }
 
-$("calendar").addEventListener("change",event=>{
-  const select=event.target;
-  if(!select.matches("select[data-preview-subject]")||!Object.hasOwn(lessonGrades,select.value))return;
-  plannerGrade=select.value;
-  const note=select.closest(".calendar-note");
-  note.innerHTML=plannerNote(select.dataset.previewSubject);
-  note.querySelector("select")?.focus();
-});
+
 
 function plannerContents() {
   const contest=reservedContest(state);
