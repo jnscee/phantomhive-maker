@@ -368,16 +368,19 @@ async function check(browserType){
         await portrait.evaluate(im=>im.decode());
         const file=age===10?'ciel.png':'ciel-'+age+'.webp';
         assert.ok((await portrait.getAttribute('src')).endsWith(file));
+        if(age===10)assert.doesNotMatch(await portrait.evaluate(im=>getComputedStyle(im).filter),/ciel-tailoring/);
         await page.locator('#system-save').click();
         await page.locator('[data-action="motion:full"]').click();
         await page.locator('#system-back').click();
         const geometry=await portrait.evaluate(im=>{
           const r=im.getBoundingClientRect(),b=im.parentElement.getBoundingClientRect();
           const point={x:r.x+r.width*.52,y:r.y+r.height*.32};
-          return {point,w:r.width,h:r.height,bw:b.width,bh:b.height,hit:document.elementFromPoint(point.x,point.y)?.closest('button')?.id};
+          return {point,w:r.width,h:r.height,bw:b.width,bh:b.height,aspect:im.naturalWidth/im.naturalHeight,
+            hit:document.elementFromPoint(point.x,point.y)?.closest('button')?.id};
         });
         assert.ok(geometry.w>30&&geometry.h>50);
         assert.ok(Math.abs(geometry.w-geometry.bw)<1&&Math.abs(geometry.h-geometry.bh)<1);
+        assert.ok(Math.abs(geometry.w-geometry.h*geometry.aspect)<1,JSON.stringify(geometry));
         assert.equal(geometry.hit,'ciel-greet');
         await page.mouse.click(geometry.point.x,geometry.point.y);
         assert.ok(await page.locator('#ciel-aside').textContent());

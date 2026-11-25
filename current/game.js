@@ -1447,6 +1447,11 @@ const homeRemarks=["무슨 일이지?","차가 식기 전에 마저 마시겠어
 let remarkIndex=0;
 let remarkTimeout;
 
+function fitHomeStanding(){
+  const image=$("home-standing");
+  if(image.naturalWidth&&image.naturalHeight)
+    $("ciel-greet").style.setProperty("--home-art-ratio",String(image.naturalWidth/image.naturalHeight));
+}
 function greetCiel(){
   if(tab!=="home")return;
   const bubble=$("ciel-aside");
@@ -1483,7 +1488,6 @@ function render(focus=false,playbackOffset=0){
   if(standing.getAttribute("src")!==portraits.시엘)standing.src=portraits.시엘;
   const visibleAge=tab==="staffMemory"&&recruitMemory?recruitMemory.age:currentCielAge();
   setPortraitAge($("scene"),visibleAge);
-  greetButton.style.aspectRatio=["403 / 1000","1024 / 1530","910 / 1530"][visibleAge-10];
   updateIllness(state);
   clearUnavailableRecovery(state);
   musicPlayer.sync(trackForView());
@@ -2206,6 +2210,8 @@ if(previewLesson){
   state.phase="event";state.pending=previewStory;
   document.documentElement.dataset.storyPreview="true";
 }else if(previewFair)openFairPreview(previewFair);
+$("home-standing").addEventListener("load",fitHomeStanding);
+fitHomeStanding();
 render();
 
 document.documentElement.lang=gameLanguage;
