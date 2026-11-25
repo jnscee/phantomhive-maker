@@ -317,8 +317,8 @@ for(const [book,version,oldPage,newPage] of [['gardener',null,11,10],['maid',3,4
   assert.equal(run('normalizeSave(state).recruitPage.at'),newPage);
 }
 setup('delete state.storyPageEdition;state.phase="ending";state.ending="broke";state.endingBeat=43;state=normalizeSave(state)');
-assert.equal(run('state.endingBeat'),41);
-assert.equal(run('normalizeSave(state).endingBeat'),41);
+assert.equal(run('state.endingBeat'),42);
+assert.equal(run('normalizeSave(state).endingBeat'),42);
 const princePages=run('recruitScenes.visitPrince.lines');
 assert.ok(princePages.length>0);
 const welcome=princePages.findIndex(p=>typeof p.withTanaka==="string");
@@ -766,6 +766,10 @@ for(const index of [0,1]){
   assertOk('state.sequence.visitEvent===(replyIndex===0?"visitLibraryWax":"visitLibraryCarbon")');
 }
 assert.deepEqual(Array.from(run('Object.keys(endingScenes).sort()')),['broke','ill','releaseNoTitle','releaseTitle','vowNoTitle','vowTitle']);
-const minimumEndingLines={broke:47,ill:43,releaseNoTitle:41,releaseTitle:48,vowNoTitle:46,vowTitle:48};
+const minimumEndingLines={broke:46,ill:43,releaseNoTitle:41,releaseTitle:48,vowNoTitle:46,vowTitle:47};
 for(const [id,minimum] of Object.entries(minimumEndingLines))assert.ok(run('endingScenes.'+id+'.lines.length')>=minimum,id);
+for(const [ending,beat,expected] of [["vowTitle",26,26],["vowTitle",27,26],["vowTitle",28,27],["broke",5,5],["broke",6,7],["broke",44,45],["broke",46,45],["ill",20,20]]){
+  Object.assign(ctx,{ending,beat,expected});
+  assertOk('(()=>{const saved=normalizeSave({...initial(),storyPageEdition:2,phase:"ending",ending,endingBeat:beat});return saved.endingBeat===expected&&normalizeSave(saved).endingBeat===expected;})()');
+}
 console.log('PASS illness, reserved tuition during sick leave, recovery, optional fair outcomes and demand, both library follow-ups after loading, one-way trust, and all six ending scripts.');
