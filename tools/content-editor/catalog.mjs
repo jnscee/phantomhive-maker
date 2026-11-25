@@ -203,6 +203,11 @@ export function catalog(files, publishedAssets = [], version = "") {
     return [id,{actor,name,file:path}];
   }));
   inventory.standing=Object.fromEntries(recruitCast.map(p=>[propertyName(p),value(p.value)]));
+  // Dialogue selects Ciel once. The image catalog exposes each age's replaceable file.
+  for(const [id,age] of [["ciel",10],["ciel11",11],["ciel12",12]]){
+    const path=inventory.standing[id];
+    if(path)group("assets","standing-"+id,"인물 스탠딩 · 시엘 "+age+"세",path).asset=path;
+  }
   for(const [id,title] of recruitCastOptions){
     if(!id.startsWith("extra-"))continue;
     group("assets","standing-"+id,"스탠딩 · "+title,id).asset=inventory.standing[id];
