@@ -399,31 +399,14 @@ function festivalAction(action,id){
 function filedSection(title,body,count){
   return '<details class="file-section"><summary><span>'+title+'</span><small>'+count+'</small></summary><div>'+body+'</div></details>';
 }
-function courtFolio(rows){
-  const stages=["관심 밖","가문에 주목","왕실 검토","재가 가능"];
-  const complete=rows.filter(row=>row[1]).length;
+function courtFolio(){
   const approved=isApprovedEnding(state.ending);
   const held=["vowNoTitle","releaseNoTitle"].includes(state.ending);
-  const stage=approved||complete===rows.length?3:state.royal>0&&complete>=rows.length*0.7?2:state.royal>0||state.renown>0||complete>=rows.length*.4?1:0;
-  const wording=["왕실 서신에 가문의 이름이 아직 오르지 않았습니다.","궁정에서 팬텀하이브의 근황을 묻기 시작했습니다.","왕실 서기관이 가문의 평판과 살림을 함께 검토하고 있습니다.","작위 회복에 필요한 조건을 모두 갖췄습니다."];
-  const title=approved?"작위 회복":held?"이번 심의 유보":stages[stage];
-  const description=approved?"왕실이 백작 작위를 승인했습니다.":held?"이번 회차의 작위 승인이 유보되었습니다.":wording[stage];
-  const steps=stages.map((label,index)=>
-    '<li'+(index<=stage?' class="reached"':'')+(index===stage?' aria-current="step"':'')+'><i aria-hidden="true"></i>'+label+'</li>').join("");
-  const renownGoal=50, renown=state.renown;
-  const renownMeter='<div class="court-renown" style="--renown-mark:'+(100*courtRenownRequirement/renownGoal)+'%">'+
-    '<strong>현재 '+renown+'점</strong><div class="court-renown-track">'+
-    '<progress max="'+renownGoal+'" value="'+Math.min(renown,renownGoal)+'" aria-label="가문 명성" aria-valuetext="'+renown+'점, 목표 '+renownGoal+'점"></progress></div>'+
-    '<div class="court-renown-scale"><span>0</span><span>심의 기준 '+courtRenownRequirement+'점</span><span>목표 '+renownGoal+'점</span></div></div>';
-  const checks=rows.map(([label,ok])=>
-    '<li><div><b>'+label+'</b></div><span class="court-status'+(ok?' met':'')+'">'+(ok?'✓ 충족':'미충족')+'</span>'+
-    (label==="가문 명성"?renownMeter:"")+'</li>').join("");
+  const title=approved?"작위 회복":held?"이번 심의 유보":"왕실의 동향";
   return '<section class="court-folio"><div class="court-ruling"><header><span>왕실 작위 심의</span><small>'+monthText(state.month)+'</small></header>'+
-    '<h3>'+title+'</h3><p>'+description+'</p><ol class="court-stages" aria-label="왕실 평가 단계">'+steps+'</ol></div>'+
-    '<details class="court-register" open><summary><b>심의 현황</b></summary>'+
-    '<ul class="court-checks">'+checks+'</ul></details></section>';
+    '<h3>'+title+'</h3><p>'+courtImpression()+'</p><dl class="court-standing"><dt>현재 가문 명성</dt><dd>'+state.renown+'점</dd></dl></div></section>';
 }
-function familyFolio(rows,history,album,extra=""){
+function familyFolio(history,album,extra=""){
   const allies=peopleInHouse();
   const relations=allies.map(id=>({name:servants[id].name,trust:state.people[id].toward,icon:"assets/staff/"+id+".png"}));
   const affinity=elizabethAffinity(state);
@@ -436,7 +419,7 @@ function familyFolio(rows,history,album,extra=""){
   }).join("")||"아직 기록된 인물이 없습니다.";
   const fairHistory=[...contestArchive].reverse().map(fairReport).filter(Boolean);
   const warrants=Object.keys(state.royalWarrants||{}).map(id=>products[id].name).join(" · ");
-  return '<div class="family-folio">'+courtFolio(rows)+'<aside class="folio-files"><dl class="folio-finance"><div><dt>가문 자금</dt><dd>'+money(state.fund)+'</dd></div><div><dt>남은 채무</dt><dd>'+money(state.debt)+'</dd></div></dl>'+
+  return '<div class="family-folio">'+courtFolio()+'<aside class="folio-files"><dl class="folio-finance"><div><dt>가문 자금</dt><dd>'+money(state.fund)+'</dd></div><div><dt>남은 채무</dt><dd>'+money(state.debt)+'</dd></div></dl>'+
     filedSection("인물 관계",'<p>각 인물이 시엘에게 보내는 신뢰와 호감도입니다.</p>'+relationshipRows,relations.length+"명")+
     filedSection("사건 기록",history||"첫 사건을 마치면 선택이 기록됩니다.",state.events.length+"건")+
     filedSection("계절 경연 · 박람회",(warrants?'<p><b>왕실 납품 인증</b> '+warrants+'</p>':"")+(fairHistory.join("")||"참가한 행사의 결과가 기록됩니다."),fairHistory.length+"건")+

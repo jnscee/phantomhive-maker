@@ -763,8 +763,7 @@ function plannerContents() {
   const note = plannerNote(editingVisit?state.visit:chosen);
   const weather=weatherFor(state);
   const date=monthText(state.month)+(weather?' <button type="button" class="season-weather" data-weather="'+state.weather+'" popovertarget="season-bulletin" aria-label="'+weather.name+' 소식">'+weather.name+'</button>':"");
-  const bulletin=weather?'<aside popover id="season-bulletin" aria-labelledby="season-title"><header><strong id="season-title">'+weather.name+'</strong><button type="button" popovertarget="season-bulletin" popovertargetaction="hide">닫기</button></header><p>'+weather.scene+'</p>'+
-    '<dl><div><dt>승마 · 체력 단련</dt><dd>성장 기본량 ×1.5<br>컨디션 −'+weather.strain+' · 스트레스 +'+weather.stress+'</dd></div><div><dt>실내 공부</dt><dd>평소와 같음</dd></div><div><dt>'+weather.charge+'</dt><dd>이달 저택 지출 +£'+weather.fee+'</dd></div></dl></aside>':"";
+  const bulletin=weather?'<aside popover id="season-bulletin" aria-labelledby="season-title"><header><div><small>세바스찬</small><strong id="season-title">'+weather.name+'</strong></div><button type="button" popovertarget="season-bulletin" popovertargetaction="hide">닫기</button></header><p>'+escapeHTML(weather.scene)+'</p></aside>':"";
   return (editingVisit?'<div class="lesson-index visit-index"><span class="index-tab">자유행동 · 월 1회</span></div>':'<div class="lesson-index">'+categories.map(([name,ids],i)=>option(i===0&&ids.some(id=>advancedCourse(state,id))?"기초·고급 수업":name,"category:"+i,i===lessonPage,false,"index-tab")).join("")+'</div>')+
     '<div class="card-field" role="group" aria-label="'+(editingVisit?'자유행동':slotNames[selectedSlot]+' 활동 목록')+'">'+
       '<div class="card-bank">'+cards.slice(0,half).join('')+'</div>'+
@@ -1077,7 +1076,7 @@ function recordPanel(){
     return '<details><summary>'+(record.month?monthText(record.month)+' · ':'')+escapeHTML(event.title)+'</summary>'+(sourceNote(event)?'<small>'+sourceNote(event)+'</small>':'')+'<p>'+storyLine(event)+'</p><p class="small muted">'+(choice?choice.label+" · "+statResultText(record.examNote||choice.result):"처리 완료")+'</p></details>';
   }).join("");
   const album='<div class="ending-album">'+(endingGalleryEntries().map(([id,route])=>endingThumb(id,route)).join("")||"아직 기록된 엔딩이 없습니다.")+'</div>';
-  return frame("가문 장부",familyFolio(courtRows(),history,album));
+  return frame("가문 장부",familyFolio(history,album));
 }
 const motionLabels={auto:"기기 설정 따르기",full:"항상 재생",reduced:"동작 줄이기"};
 const motionKey="earl-phantomhive-motion";

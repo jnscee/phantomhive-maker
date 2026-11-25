@@ -226,8 +226,9 @@ function finishScene(){
 function faceDialogue(){
   const con=$("conversation"),event=["slotEvent","event"].includes(state.phase)&&tab==="plan"?pendingEvent():null;
   if(tab==="plan"&&state.phase==="weatherBriefing"){
+    const weather=weatherFor(state);
     con.hidden=false;con.dataset.review="false";
-    con.innerHTML=staged("세바스찬","",escapeHTML(weatherFor(state).scene),"","","library","세바스찬","weather-close");
+    con.innerHTML=staged("세바스찬",weather?.name||"",escapeHTML(weather?.scene||"도련님, 오늘 일정을 준비해 두었습니다."),"","","library","세바스찬","weather-close");
     playNovelCue(con,null);
     return true;
   }

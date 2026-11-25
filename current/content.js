@@ -201,9 +201,9 @@ const actions = {
 for (const [id,[name,cost,gains,stress,health=0]] of Object.entries(extraActivities))
   actions[id]={name,cost,gains,stress,health};
 const seasonalWeather={
-  heat:{name:"폭염",charge:"빙고 얼음값",fee:22,strain:7,stress:3,
+  heat:{name:"폭염",fee:22,strain:7,stress:3,
     scene:"도련님, 오늘은 차를 테라스에 내지 않는 편이 좋겠습니다. 아침부터 온도계가 이 눈금까지 오른 건 저택의 6월 기록에도 없더군요."},
-  cold:{name:"한파",charge:"난방 석탄값",fee:30,strain:9,stress:2,
+  cold:{name:"한파",fee:30,strain:9,stress:2,
     scene:"도련님, 커튼은 잠시 그대로 두시지요. 밤새 창 안쪽까지 얼었습니다. 올 12월은 기록적인 한파로 남겠군요. 차는 난롯가에 준비했습니다."}
 };
 function rollSeasonWeather(month,random=Math.random){

@@ -42,7 +42,7 @@ function budgetTable(compact=false){
   return '<section class="budget-book forecast">'+(compact?'':'<h3>이달 자금 예상</h3>')+
     '<div class="cash-head"><span>예상 월말 잔액</span><strong>'+money(b.closing)+'</strong><b class="cash-change">'+(change>0?'▲ '+money(change)+' 증가':change<0?'▼ '+money(-change)+' 감소':'변동 없음')+'</b></div>'+
     amountRow("현재 가용 자금",state.fund)+flow("팬텀사 예상 매출",b.revenue,false)+flow("남은 지출 합계",b.total,true)+
-    ('<details class="expense-details"><summary>지출 내역·시설 효과</summary>')+'<div class="cash-detail">'+amountRow("저택 운영 · 시설 유지",b.estate-(weatherFor(state)?.fee||0))+(weatherFor(state)?amountRow(weatherFor(state).charge,weatherFor(state).fee):"")+amountRow("팬텀사 운영 · 생산비",b.company)+
+    ('<details class="expense-details"><summary>지출 내역·시설 효과</summary>')+'<div class="cash-detail">'+amountRow("저택 운영 · 시설 유지",b.estate)+amountRow("팬텀사 운영 · 생산비",b.company)+
     tradeCosts(b.trade)+amountRow("교육·활동비",b.tuition)+
     (b.debt?amountRow("채무 상환",b.debt):"")+'</div>'+
     contributionNote(investmentEffect(forecast()),state.accounts.researchSaved)+ '</details></section>';
@@ -71,10 +71,9 @@ function actualBudget(){
     ["팬텀사 소매 매출",r.income-(r.wholesale||0)],["거래처 납품 대금",r.wholesale],
     ["라우 상점 재고 매각",a.lauSales],["라우 상점 중고 교본 매각",a.lauBookSales],["설비 매각 대금",a.divest],["납품 선금",r.advance],["경연 상금",r.festivalIncome],["대출 입금",a.borrowed]
   ];
-  const weather=weatherFor(r);
   const debt=r.debtPayment||0;
   const expenseRows=[
-    [r.debtPayment==null?"저택 유지·채무 합산":"저택 유지",r.bills-debt-(weather?.fee||0)],[weather?.charge,weather?.fee],["돌발 사건 지출",a.setbacks],["저택 개수·지원",a.estate],
+    [r.debtPayment==null?"저택 유지·채무 합산":"저택 유지",r.bills-debt],["돌발 사건 지출",a.setbacks],["저택 개수·지원",a.estate],
     ["생산비",r.cost],["투자·사업 지출",a.company],["설비 운영",r.operating-(r.guaranteeFee||0)],["거래 보증료",r.guaranteeFee||0],["운송",r.freight],
     ["보관",r.storage],["미납 부담",r.penalty],["수익 분담금",r.contribution],["교육·활동비",r.training],["채무 상환",debt]
   ];
