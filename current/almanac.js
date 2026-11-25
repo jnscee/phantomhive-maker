@@ -59,9 +59,9 @@ function reservedContest(run){
   return openContests(run).find(fair=>fair.month===run.month&&contestTicket(run,fair));
 }
 function contestRivalAbility(fair){
-  if(fair.warrant)return [104,124,140][fair.year];
-  if(fair.company)return Math.max(fair.month===5?76:fair.month===18?108:124,...(fair.exhibitors||[]).map(entrant=>entrant.score));
-  const levels={1:[22,225,440],4:[84,300,465],9:[130,335,475]};
+  if(fair.warrant)return [112,132,148][fair.year];
+  if(fair.company)return Math.max(fair.month===5?84:fair.month===18?116:132,...(fair.exhibitors||[]).map(entrant=>entrant.score));
+  const levels={1:[28,275,490],4:[112,365,515],9:[155,370,515]};
   return levels[(fair.month-1)%12+1][fair.year];
 }
 function winningPurse(fair){return fair.warrant?65:fair.company?55:36+fair.year*10;}
@@ -97,6 +97,7 @@ function festivalNotice(){
       ["심사","종목 능력치에 그날의 컨디션·의욕·스트레스가 반영됩니다."],
       ["참가 조건","병중에는 개인 경연에 출전할 수 없습니다."]
     ];
+    criteria.push(["승패","심사 점수가 높은 쪽이 우승합니다. 동점이면 양측이 함께 우승합니다."]);
     const ruleRows=criteria.map(([label,value])=>'<div><dt>'+label+'</dt><dd>'+value+'</dd></div>').join("");
     return '<details class="fair-notice" data-fair="'+fair.id+'"><summary><small>'+when+'</small><b>'+fair.title+'</b><span>'+(selected!=null?'✓ 참가 확정':'참가 접수 중')+' ▾</span></summary><div class="fair-body">'+
       '<p class="invite-intro">'+fair.invitation+'</p>'+
@@ -151,7 +152,7 @@ function prepareContest(run){
   run.pending="contest-"+fair.id;run.phase="event";
   persist();render(true);return true;
 }
-// The saved assessment contains the odds. The draw is made only when the verdict is read.
+// Freeze the score before month-end settlement changes the entrant's stats and sales.
 function judgeContest(run,fair,ticket){
   const base={index:ticket.index,product:ticket.product,match:true,purse:0};
   const o=fair.options?.[ticket.index];
@@ -173,10 +174,8 @@ function judgeContest(run,fair,ticket){
     if(fair.warrant&&history.units<18)condition="누적 판매·납품 18개 미달";
   }
   const strength=factors.reduce((n,[,factor])=>n*factor,basis[1]);
-  const ratio=strength/contestRivalAbility(fair),weight=Math.pow(ratio,2.25);
-  // Equal performance is even odds. Exceptional preparation still leaves room for an upset.
-  const chance=condition?0:Math.min(.85,weight/(1+weight));
-  return {...base,score:Math.round(strength),chance,speechTier:ratio<.7?0:ratio<1.1?1:2,
+  const score=Math.round(strength),ratio=score/contestRivalAbility(fair);
+  return {...base,score,speechTier:ratio<.7?0:ratio<1.1?1:2,
     scoreParts:[basis],factors,scoreCondition:condition};
 }
 function matchAssessment(run,fair,ticket,duel){
@@ -188,10 +187,12 @@ function settleFestival(run,duel){
   const ticket=fair&&contestTicket(run,fair);
   if(!ticket||contestArchive.some(f=>f.month===run.month&&run.fairBook?.[f.id]))return null;
   const assessment=matchAssessment(run,fair,ticket,duel);
-  const won=!assessment.reason&&Math.random()<assessment.chance;
+  const rivalScore=duel?.rivalScore??contestRivalAbility(fair);
+  const won=!assessment.reason&&!assessment.scoreCondition&&assessment.score>=rivalScore;
   const rank=won?2:0;
   const entry={...assessment,rank,purse:won?winningPurse(fair):0,prize:won?fair.prize:""};
-  if(duel&&!entry.reason){entry.duel={rivalScore:duel.rivalScore??contestRivalAbility(fair)};entry.revealed=true;}
+  if(won&&assessment.score===rivalScore)entry.tied=true;
+  if(duel&&!entry.reason){entry.duel={rivalScore};entry.revealed=true;}
   if(fair.company&&!fair.warrant&&!entry.reason)entry.demand=[0,2,4][rank];
   if(!entry.reason)run.renown+=rank;
   if(fair.warrant&&rank===2){
@@ -227,7 +228,10 @@ function fairDemand(run,product){
   return bonus+(entry.outcome!=="absent"&&former?.product===product?(entry.outcome==="success"?4:2):0);
 }
 function contestRank(entry){
-  return entry.reason||(entry.match?(entry.rank===2?"승리":"패배"):["입상권 밖","은상","금상"][entry.rank]);
+  if(entry.reason)return entry.reason;
+  if(entry.match&&entry.scoreCondition)return "인증 요건 미달";
+  if(entry.tied)return "공동 우승";
+  return entry.match?(entry.rank===2?"승리":"패배"):["입상권 밖","은상","금상"][entry.rank];
 }
 function contestEntryName(fair,entry){
   return (fair.company?products[entry.product]?.name:fair.options[entry.index]?.label)||"견본 출품";
@@ -248,6 +252,7 @@ function fairReport(fair){
     '<p>'+contestEntryName(fair,entry)+(entry.score==null?'':' · '+entry.score+'점')+
     (entry.purse?' · 상금 '+money(entry.purse)+' · '+entry.prize:'')+'</p>'+
     (entry.duel?'<p>'+contestOpponent(fair).name+' '+entry.duel.rivalScore+'점'+(entry.growth?.length?' · '+entry.growth.join(' · '):'')+'</p>':'')+
+    (entry.scoreCondition?'<p>'+escapeHTML(entry.scoreCondition)+'</p>':'')+
     (entry.demand?'<b>다음 달 '+products[entry.product].name+' 수요 +'+entry.demand+'개</b>':'')+'</article>';
 }
 function thisMonthFairReport(){
@@ -261,8 +266,14 @@ function contestResultSlip(fair,entry,line){
   const duel=entry.duel;
   const margin=duel&&!entry.match?entry.score-duel.rivalScore:null;
   const rank=margin===0&&entry.rank===2?"공동 금상":contestRank(entry);
-  const entrant=fair.entrant||"시엘 팬텀하이브";
-  const verdict=entry.match?(entry.rank===2?entrant:contestOpponent(fair).name)+" 승리":margin===null?"심사 결과":margin===0?"동점":(margin>0?(fair.entrant||"시엘"):contestOpponent(fair).name)+" 승리";
+  const entrant=fair.entrant||(fair.company?"팬텀사":"시엘 팬텀하이브");
+  let verdict="심사 결과";
+  if(entry.match&&entry.scoreCondition)verdict="왕실 인증 보류";
+  else if(entry.tied||margin===0)verdict="동점";
+  else if(entry.match||margin!==null){
+    const won=entry.match?entry.rank===2:margin>0;
+    verdict=(won?entrant:contestOpponent(fair).name)+" 승리";
+  }
   const growth=(entry.growth||[]).map(change=>{
     const match=/^(.*) ([+-]\d+)$/.exec(change);
     return '<span class="award-gain">'+(match?escapeHTML(match[1])+' <b>'+escapeHTML(match[2])+'</b>':escapeHTML(change))+'</span>';
@@ -271,7 +282,7 @@ function contestResultSlip(fair,entry,line){
     '<header class="award-head"><h3>'+escapeHTML(rank)+'</h3><strong>'+escapeHTML(verdict)+'</strong>'+
     (margin?'<span>'+Math.abs(margin)+'점 차</span>':'')+'</header>'+
     '<div class="award-body"><p class="award-comment">'+escapeHTML(line)+'</p><dl class="award-ledger">'+
-    '<div><dt>'+(entry.match?'환산 실력':'심사 점수')+'</dt><dd><strong class="award-total">'+entry.score+'점</strong>'+
+    '<div><dt>심사 점수</dt><dd><strong class="award-total">'+entry.score+'점</strong>'+
     (entry.scoreCondition?'<small>'+escapeHTML(entry.scoreCondition)+'</small>':'')+'</dd></div>'+
     '<div><dt>능력 변화</dt><dd>'+(growth||'—')+'</dd></div>'+
     (entry.purse||entry.prize||fair.exhibitors?'<div><dt>'+(entry.match?'승리 보상':'입상 보상')+'</dt><dd>'+
@@ -283,6 +294,17 @@ function contestResultSlip(fair,entry,line){
 }
 function contestAppearance(fair){
   return fair.id.startsWith("newYear-")?Math.max(0,fair.year-1):fair.year;
+}
+function contestResultLine(fair,entry){
+  if(entry.match&&entry.scoreCondition)return "담당관이 납품 장부의 수량을 짚습니다. 시엘은 인증에 필요한 열여덟 개까지 몇 개가 남았는지 확인합니다.";
+  if(entry.tied)return fair.company?"담당관이 같은 점수를 받은 두 상회의 이름을 나란히 적고 양쪽 견본 앞에 상장을 놓습니다.":"심사위원이 같은 점수를 받은 두 사람의 이름을 차례로 부릅니다. 시엘이 상대와 나란히 서서 인사합니다.";
+  const option=fair.options?.[entry.index];
+  if(option){
+    if(entry.match&&!entry.rank&&entry.duel&&entry.score>=entry.duel.rivalScore*.95)
+      return "심사위원이 상대의 이름을 부릅니다. 시엘은 자리에서 일어나 먼저 박수를 보냅니다.";
+    return entry.rank?option.placed:option.missed;
+  }
+  return entry.rank?"심사위원이 팬텀사의 견본 옆에 상장을 놓습니다.":"시엘은 심사표를 접어 견본 상자에 넣고, 상장을 받는 상대에게 고개를 숙입니다.";
 }
 function duelScene(fair,ticket,duel,entry){
   const rival=contestOpponent(fair),option=fair.options?.[ticket.index];
@@ -302,10 +324,7 @@ function duelScene(fair,ticket,duel,entry){
     rivalArtwork(exhibitor)+sample(exhibitor.product),exhibitor.score+"점",false)).join("")||"";
   let slip;
   if(done){
-    const line=option?(entry.rank?option.placed:option.missed):entry.rank?
-      "심사위원이 팬텀사의 견본 옆에 상장을 놓습니다.":
-      "담당관이 견본을 돌려줍니다. 시엘은 심사표의 낮은 항목에 밑줄을 긋습니다.";
-    slip=contestResultSlip(fair,entry,line);
+    slip=contestResultSlip(fair,entry,contestResultLine(fair,entry));
   }else{
     const speaker=turn?(fair.entrant||"시엘"):rival.name;
     const appearance=contestAppearance(fair);
@@ -340,9 +359,7 @@ function contestScene(event){
   const revealed=entry.revealed||entry.reason;
   const heading=revealed?contestRank(entry):label;
   const line=entry.reason?"세바스찬이 접수처에서 돌려받은 참가표를 수첩에 끼워 둡니다.":
-    o?(revealed?(entry.rank?o.placed:o.missed):o.line):
-    revealed?(entry.rank?"심사위원이 견본 옆에 상장을 놓습니다. 세바스찬은 품목을 확인하고 상금을 받아 장부의 빈 줄을 채웁니다.":"담당관이 견본을 돌려줍니다. 시엘은 심사표에서 점수가 낮았던 항목에 연필로 줄을 긋습니다."):
-    "팬텀사의 상표를 단 견본을 흰 천 위에 올립니다. 심사위원이 견본을 들어 마감을 살피고 납품 기록을 펼칩니다.";
+    revealed?contestResultLine(fair,entry):o?.line??"팬텀사의 상표를 단 견본을 흰 천 위에 올립니다. 심사위원이 견본을 들어 마감을 살피고 납품 기록을 펼칩니다.";
   const poses=o?.poses||["inspect","write"];
   const display=entry.reason?"":'<div class="contest-display'+(revealed?" is-revealed":"")+'">'+
     (entry.product?'<img class="contest-sample" src="assets/map-cart-'+entry.product+'.png" alt="'+label+' 견본">':'')+

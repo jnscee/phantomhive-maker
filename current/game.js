@@ -2143,7 +2143,7 @@ function openFairPreview(fair){
   state.quality="fine";
   state.productHistory.toys={reputation:9,units:36,orders:2};
   const index=previewQuery.get("entry")==="1"?1:0;
-  if(!fair.company)state.stats[fair.options[index].stat]=contestRivalAbility(fair)-5;
+  if(!fair.company)state.stats[fair.options[index].stat]=Math.min(abilityMax,contestRivalAbility(fair)-5);
   state.fairTickets={[fair.id]:fair.company?{product:"toys"}:{index,start:0}};
   state.sequence={contest:fair.id};
   document.documentElement.dataset.fairPreview="true";
