@@ -66,6 +66,9 @@ function cgAlbumEntries(){
     for(const line of scene.lines)add("endings",line[3]?.cg||line[2]||id);
     add("endings",id);
   }
+  for(const cg of Object.values(londonEndingCGs)){
+    entries.set("assets/endings/"+cg.id+".webp",cg.title);
+  }
   for(const path of Object.keys(saves.cgSeen||{})){
     if(!entries.has(path)&&/^assets\/(prologue|endings)\/[\w-]+\.webp$/.test(path))entries.set(path,path.split("/").pop().slice(0,-5));
   }

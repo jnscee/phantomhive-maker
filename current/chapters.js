@@ -612,6 +612,12 @@ const endingScenes={
   ]}
 };
 
+const londonEndingCGs={
+  merchant:{id:"london-merchant",title:"런던의 사업가",alt:"안개 낀 템스강 하역장에서 운송장을 확인하는 시엘과 세바스찬."},
+  broker:{id:"london-broker",title:"정보상의 연락망",alt:"이스트엔드 전당포에서 정보상에게 금화 한 닢을 내미는 시엘."},
+  pursuit:{id:"london-pursuit",title:"문장 없는 마차",alt:"비에 젖은 마차 창가에서 반쪽짜리 기차표를 쥔 시엘."}
+};
+
 const londonEndingScenes={
   "merchant": [
     [
@@ -1223,7 +1229,8 @@ function showEndingScene(host){
   const last=at===end;
   const routeAct=Boolean(act && at>=scene.lines.length-act.length);
   const story=routeAct && !cue?.cg && !last;
-  const endingPicture=last&&routeAct?id:legacyPicture||id;
+  const careerCG=last&&id==="vowNoTitle"?londonEndingCGs[route]||londonEndingCGs.pursuit:null;
+  const endingPicture=careerCG?.id||legacyPicture||id;
   const room=route==="broker"?"street":"library";
   const picture=cue?.cg || (story?"room-"+room:endingPicture);
   const castCue=story&&!cue?.hideCast&&!cue?.left&&!cue?.right
@@ -1238,7 +1245,7 @@ function showEndingScene(host){
   }
   if(!story)rememberCG("assets/endings/"+picture+".webp");
   if(art.dataset.picture!==picture){
-    art.dataset.picture=picture;art.src=(story?"assets/":"assets/endings/")+picture+".webp";art.alt=story?"":endingArtDescriptions[picture]||scene.alt;
+    art.dataset.picture=picture;art.src=(story?"assets/":"assets/endings/")+picture+".webp";art.alt=story?"":careerCG?.alt||endingArtDescriptions[picture]||scene.alt;
   }
   host.replaceChildren(art);
   host.insertAdjacentHTML("beforeend",(novelCast(castCue,recruitArtwork(currentCielAge()))??"")+sceneLine(who,line,arrow,'data-book="ending-'+id+'" aria-live="polite" aria-atomic="true"')+readerControls(at,last,recruitAuto));
