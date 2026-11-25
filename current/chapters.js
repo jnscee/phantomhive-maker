@@ -603,7 +603,7 @@ const endingScenes={
     ["세바스찬","역시 인간 아이에게 가문의 경영은 너무 이른 분야였을까요.","broke",{"fx":"fade","bgm":"extra-bgm-23734dde"}],
     ["시엘","네가 관리를 잘못한 거잖아, 세바스찬!","broke",{"fx":"shake","bgm":"extra-bgm-23734dde"}],
     ["세바스찬","제가 그 케이크를 열일곱 접시나 먹었습니까?","broke",{"bgm":"extra-bgm-23734dde"}],
-    ["시엘","내가 한 입 먹을 때마다 눈치도 없이 새 접시를 내온 게 누군데!","broke",{"fx":"shake","bgm":"extra-bgm-23734dde"}]
+    ["시엘","내가 한 입 먹을 때마다 눈치도 없이 새 접시를 내온 게 누군데―!","broke",{"fx":"shake","bgm":"extra-bgm-23734dde"}]
   ]}
 };
 
