@@ -86,8 +86,9 @@ function visitPreview(id){
    forecast.people={...state.people,[person]:{...relation,toward:Math.min(20,relation.toward+1)}};
  }
  const possible=events.filter(e=>e.visitPlace===id&&!state.flags[e.id]&&e.sees(forecast));
- const encounter=visitName(person)+" · "+visitsVN[id][2];
- return possible.length?encounter+" / "+castName(possible[0])+" · "+possible[0].title:encounter;
+ const people=[...new Set([visitName(person),...possible.map(castName)])].join(", ");
+ const event=possible[0];
+ return event?people+" / "+castName(event)+" · "+event.title:people;
 }
 const visitGrowth={library:"통찰",garden:"체력",kitchen:"지성",quarters:"통찰",parlor:"기품",company:"경영",town:"매력",townhouse:"매력"};
 function visitScene(){
