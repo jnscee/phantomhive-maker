@@ -87,7 +87,8 @@ const bgmAssignments={
   "event:merchantBenefitShow": "test",
   "event:season-4": "companyFair",
   "event:season-16": "companyFair",
-  "event:season-28": "companyFair"
+  "event:season-28": "companyFair",
+  "event:birthday": "daily"
 };
 const activityTrackDefaults={etiquette:"etiquette",dance:"dance",music:"violin","현장 실습":"business","휴식":"manor"};
 function activityTrack(id){
