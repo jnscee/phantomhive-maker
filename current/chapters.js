@@ -1159,7 +1159,7 @@ function showEndingScene(host){
   const [who,line,legacyPicture,cue]=row;
   const last=at===end;
   const story=routeAct && !cue?.cg && !last;
-  const careerCG=last?endingCareerArt(id,route):null;
+  const careerCG=last&&route!=="pursuit"?endingCareerArt(id,route):null;
   const endingPicture=careerCG?.id||legacyPicture||id;
   const room=route==="broker"?"street":"library";
   const picture=careerCG?.id || cue?.cg || (story?"room-"+room:endingPicture);
