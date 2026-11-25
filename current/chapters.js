@@ -23,13 +23,13 @@ const guide=[
  ["일정표","왼쪽 아래 ‘일정표’에 상순·중순·하순 세 칸을 마련했습니다. 쉬고 나면 다음 수업에 집중하기 쉽습니다. 바꾸실 칸을 먼저 짚고 활동을 고르시면 제가 적겠습니다. £ 옆의 숫자가 그 비용입니다."],
  ["자유행동","‘자유행동’은 도련님의 외출을 위해 비워 둔 칸입니다. 한 달에 한 곳을 정하실 수 있습니다. 누구와 무슨 이야기를 나누실지는 도착한 뒤에 정하셔도 됩니다."],
  ["팬텀사","‘관리 · 경영’에서 ‘팬텀 사(社)’를 여십시오. 개발실에서는 상품을, 제작실에서는 수량을, 판매점에서는 값을 정하시면 됩니다. 수업료가 모자라겠다면 이번 생산량을 조금 줄이는 편이 좋겠습니다."],
- ["저택","‘관리 · 경영’의 지도에서 방을 짚으시면 시설과 근무지를 살필 수 있습니다. 개수를 명하시기 전에 비용과 이달의 관리 상태를 보십시오. 간식이 필요하시면 저택 메뉴의 ‘도원향’으로 모시겠습니다."],
+ ["저택","‘관리 · 경영’의 지도에서 방을 짚으시면 시설과 근무지를 살필 수 있습니다. 개수를 명하시기 전에 비용과 이달의 관리 상태를 보십시오. 간식이 필요하시면 저택 메뉴의 ‘상점’으로 모시겠습니다."],
  ["실행","명하신 대로 준비했습니다. 저택의 ‘실행’이나 일정표의 ‘이달 일정 실행’을 고르시면 상순부터 시작하겠습니다. 매 순의 성과는 제가 보고드리겠습니다. 하순 강평 뒤에는 정해 두신 곳을 방문하고, 돌아오시면 결산을 보고드리겠습니다."],
  ["대화와 상태","저택에서 ‘대화’로 부르시면 제가 듣겠습니다. ‘상태’에서는 도련님의 컨디션과 능력을 보실 수 있습니다. 피곤하시면 다음 한 순은 비워 둘까요?"],
  ["가문 장부와 수첩","지나간 사건은 아래의 ‘가문 장부’에 적어 두었습니다. ‘저장 · 설정’에서는 저장 칸과 음량을 고르실 수 있습니다. 음악만 잠시 끄시려면 BGM 버튼을, 돌아가시려면 ‘뒤로’를 눌러 주십시오."]
 ];
 function guideMenu(page){
-  const subjects=[[],["일정표"],["일정표"],["관리 · 경영"],["관리 · 경영","도원향"],["실행"],["대화","상태"],[]][page];
+  const subjects=[[],["일정표"],["일정표"],["관리 · 경영"],["관리 · 경영","상점"],["실행"],["대화","상태"],[]][page];
   if(!subjects.length)return "";
   return '<span class="guide-menu" aria-label="저택 메뉴 위치">'+commands.map(([,label])=>
     '<span class="'+(subjects.includes(label)?"current":"")+'">'+label+'</span>').join("")+'</span>';
@@ -1073,7 +1073,7 @@ function appendEndingRecap(parent,recap,farewells,fund){
   ];
   const balance=fund??recap.finalFunds;
   if(Number.isFinite(balance))metrics.unshift(["최종 보유 자금",money(balance)]);
-  if(recap.purchases!==null)metrics.push(["도원향 구매",recap.purchases+"회"]);
+  if(recap.purchases!==null)metrics.push(["라우 상점 구매",recap.purchases+"회"]);
   for(const [index,[label,value]] of metrics.entries()){
     const tile=add(tiles,"div","");
     if(index<2)tile.className="growth-metric-lead";

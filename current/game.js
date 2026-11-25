@@ -1,7 +1,7 @@
 "use strict";
 
 const commands = [
-  ["tab:plan","일정표"],["run","실행"],["tab:estate","관리 · 경영"],["tab:market","도원향"],["tab:chat","대화"],["tab:status","상태"]
+  ["tab:plan","일정표"],["run","실행"],["tab:estate","관리 · 경영"],["tab:market","상점"],["tab:chat","대화"],["tab:status","상태"]
 ];
 const cap=(value,max=100)=>Math.min(max,Math.max(0,value));
 const money=value=>"£"+value.toLocaleString("en-GB");
@@ -304,8 +304,8 @@ function settleMonth(){
   state.log.push(products[product].name+" "+sold+"개 소매 · 매출 "+money(sold*receipt)+" / 생산비 "+money(cost)+" / 재고 "+state.stock[product]+"개");
   state.log.push("저택 유지·채무 상환 "+money(bills));
   if(trade?.contribution)state.log.push("수익 분담금 "+money(trade.contribution));
-  if(state.accounts.lauSales)state.log.push("도원향 재고 매각 "+money(state.accounts.lauSales));
-  if(state.accounts.lauBookSales)state.log.push("도원향 중고 교본 매각 "+money(state.accounts.lauBookSales));
+  if(state.accounts.lauSales)state.log.push("라우 상점 재고 매각 "+money(state.accounts.lauSales));
+  if(state.accounts.lauBookSales)state.log.push("라우 상점 중고 교본 매각 "+money(state.accounts.lauBookSales));
   if(trade?.order)state.log.push(tradeBuyer(trade.order)+" 납품 "+trade.shipped+"/"+trade.order.qty+"개 · "+money(trade.wholesale)+(trade.short?" · 미납 부담금 "+money(trade.penalty):""));
   if(state.flags.market&&state.marketMonth!==state.month){state.flags.market=false;state.renown+=1;}
   scheduleSnakeVisit(state);
