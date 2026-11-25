@@ -59,7 +59,7 @@ function reservedContest(run){
   return openContests(run).find(fair=>fair.month===run.month&&contestTicket(run,fair));
 }
 function contestRivalAbility(fair){
-  if(fair.warrant)return [112,132,148][fair.year];
+  if(fair.warrant)return [110,132,148][fair.year];
   if(fair.company)return Math.max(fair.month===5?84:fair.month===18?116:132,...(fair.exhibitors||[]).map(entrant=>entrant.score));
   const levels={1:[28,275,490],4:[112,365,515],9:[155,370,515]};
   return levels[(fair.month-1)%12+1][fair.year];
