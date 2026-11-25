@@ -306,3 +306,39 @@ dialog iframe { display: block; width: 100%; height: min(77dvh, 790px); border: 
 .diff-at {color:var(--muted)}.diff-add {color:#c6f0cb;background:#20382d}.diff-del {color:#ffd5cb;background:#452d31}
 #review-content .danger {color:var(--danger)}
 .dialogue-card .line-grip {white-space:nowrap;font-size:.86rem}
+
+/* The placement canvas embeds the game's own room and performer renderer. */
+.placement-editor {gap:1rem;padding:1rem;min-width:0}
+.placement-heading {display:grid;gap:.35rem}
+.placement-heading h3 {margin:0;color:var(--gold);font-size:1.05rem}
+.placement-heading .muted,.placement-size .muted {font-size:.9rem;line-height:1.6}
+.placement-toolbar {display:flex;align-items:end;flex-wrap:wrap;gap:.65rem}
+.placement-toolbar > label {display:grid;gap:.25rem;flex:1 1 10rem;max-width:14rem;font-size:.9rem}
+.placement-toolbar > button {min-height:2.65rem;flex:none}
+.placement-toolbar > button:first-child {color:var(--gold)}
+.placement-preview {display:grid;place-items:center;min-width:0;padding:.6rem;border:1px solid #55515e;border-radius:9px;background:#11121a}
+.placement-screen {position:relative;width:min(100%,calc(34rem * var(--placement-aspect,1.5)));aspect-ratio:var(--placement-aspect,1.5);overflow:hidden;border-radius:5px;background:#15151d}
+.placement-screen iframe {display:block;width:100%;height:100%;position:absolute;inset:0;border:0;background:#15151d}
+.placement-feedback {display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.55rem}
+.placement-note {color:var(--muted);font-size:.9rem;min-height:1.5em}
+.placement-note[data-error="true"] {color:var(--danger)}
+.placement-feedback button {font-size:.9rem}
+.placement-controls {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem}
+.placement-position {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}
+.placement-position > label,.placement-size > label {display:grid;gap:.35rem;font-size:.9rem}
+.placement-position input,.placement-size input {font-variant-numeric:tabular-nums}
+.placement-nudge {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.35rem;grid-column:1/-1}
+.placement-nudge button {padding:.45rem .15rem;min-height:2.6rem;font-size:.9rem;touch-action:manipulation}
+.placement-size {display:grid;align-content:start;gap:.7rem}
+.placement-size-row {display:grid;grid-template-columns:minmax(0,1fr) 6rem;align-items:center;gap:.65rem}
+.placement-size input[type="range"] {padding:0;accent-color:var(--gold);min-height:2.5rem;cursor:ew-resize}
+@media(max-width:1000px){.placement-controls {grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){
+  .placement-editor {padding:.65rem;gap:.8rem}
+  .placement-toolbar {gap:.5rem}
+  .placement-toolbar > label {max-width:none;min-width:8rem}
+  .placement-toolbar > button {font-size:.9rem;padding-inline:.65rem}
+  .placement-preview {padding:.25rem}
+  .placement-position {gap:.5rem}
+  .placement-position > label {font-size:.85rem}
+}

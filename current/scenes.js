@@ -1,5 +1,6 @@
 "use strict";
 let playbackTimer=0, playbackElapsed=0, speed=1, lessonPage=0;
+let lessonPlacementSession=null;
 
 const motionObjects={page:"▱",glint:"★",coin:"£",lens:"◎",dust:"·",letter:"▱",steam:"～",leaf:"♣",speech:"…",notes:"♫",beat:"♪",contract:"▤",toy:"◇",delivery:"▦",stamp:"◆",sun:"☆"};
 function stopPlayback(){clearInterval(playbackTimer);playbackTimer=0;}
@@ -8,10 +9,15 @@ function dayPlate(turn,day){
   const d=calendarDate(turn,day),m=d.getUTCMonth(),month=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"][m];
   return '<div class="date-top">'+d.getUTCFullYear()+'<span> '+turn+' / '+state.duration+'</span></div><div class="date-paper"><div><b>'+month+'</b><i>'+["SUN","MON","TUE","WED","THU","FRI","SAT"][d.getUTCDay()]+'</i></div><strong>'+String(day).padStart(2,"0")+'</strong></div>';
 }
+function lessonArtMarkup(id){
+  const [room,frames,movement,prop]=choreography[id],pose=frames.split(" ");
+  const placement=lessonPlacement(id,lessonPlacementSession?.activity===id?lessonPlacementSession.placement:undefined);
+  const style="--actor-x:"+placement.x+"%;--actor-bottom:"+placement.bottom+"%;--actor-ratio:"+placement.scale;
+  return '<div class="lesson-art"><div class="lesson-plane" data-room="'+room+'" data-activity="'+id+'"><img class="stage-room" src="'+sceneArt[room]+'" alt="">'+
+    '<div class="performer '+movement+'" style="'+style+'"'+(illustratedActivities.includes(id)?' data-illustrated':'')+' data-frames="'+pose.join(" ")+'"><img src="'+actors[pose[0]]+'" alt="'+courseName(id)+' 중인 시엘"><span class="motion-object '+prop+'" aria-hidden="true">'+motionObjects[prop]+'</span></div></div></div>';
+}
 function playMarkup(){
-  const seq=state.sequence, part=seq.index, id=seq.activity||state.plan[part], [room,frames,movement,prop,line]=choreography[id];
-  const pose=frames.split(" ");
-  const illustrated=illustratedActivities.includes(id);
+  const seq=state.sequence, part=seq.index, id=seq.activity||state.plan[part], [room,,,,line]=choreography[id];
   const outcome=lessonGrades[seq.grade]?.label;
   const stageText=(advancedCourse(state,id)?advancedLessons[id]+" ":"")+(outcome?lessonPlayback(id,seq.grade,seq.remark):line);
   const all=Object.keys(seq.after).filter(k=>seq.before[k]!==seq.after[k]);
@@ -21,8 +27,7 @@ function playMarkup(){
     : '<button data-action="speed">재생 ×'+speed+'</button><button data-action="skip">이 순 마치기 ›</button>';
   const weather=weatherFor(state);
   const season=weather?' <span class="season-weather" data-weather="'+state.weather+'">'+weather.name+'</span>':"";
-  return '<div class="lesson-art"><div class="lesson-plane" data-room="'+room+'" data-activity="'+id+'"><img class="stage-room" src="'+sceneArt[room]+'" alt="">'+
-    '<div class="performer '+movement+'"'+(illustrated?' data-illustrated':'')+' data-frames="'+pose.join(" ")+'"><img src="'+actors[pose[0]]+'" alt="'+courseName(id)+' 중인 시엘"><span class="motion-object '+prop+'" aria-hidden="true">'+motionObjects[prop]+'</span></div></div></div>'+
+  return lessonArtMarkup(id)+
     '<div class="stage-top"><b>'+stageNames[room]+season+'</b><span>'+slotNames[part]+' · '+courseName(id)+(outcome?' · '+outcome:'')+'</span></div>'+
     '<div class="stage-record">'+rows+'</div><div class="stage-foot"><p>'+stageText+'</p><div>'+controls+'</div></div>';
 }
@@ -32,6 +37,7 @@ function fitLessonRoom(image){
   if(!view.width||!view.height)return;
   const aspect=image.naturalWidth/image.naturalHeight||(plane.dataset.room==="gym"?1119/630:1.5);
   const height=Math.max(view.height,view.width/aspect);
+  plane.style.setProperty("--lesson-width",view.width+"px");
   plane.style.setProperty("--painted-width",(height*aspect)+"px");
   plane.style.setProperty("--painted-height",height+"px");
 }
@@ -53,7 +59,7 @@ function startPlayback(resumeAt=0){
   function paint(){
     if(state.phase!=="scene"||tab!=="plan"||state.sequence!==seq||!actor.isConnected){stopPlayback();return;}
     const now=performance.now();
-    if(!document.hidden)playbackElapsed+=Math.min(now-then,180)*speed;
+    if(!document.hidden&&(!lessonPlacementSession||lessonPlacementSession.playing))playbackElapsed+=Math.min(now-then,180)*speed;
     const elapsed=playbackElapsed;
     then=now;
     const pct=Math.min(1,elapsed/6200);
@@ -65,9 +71,103 @@ function startPlayback(resumeAt=0){
       const key=field.dataset.stat,v=Math.round(seq.before[key]+(seq.after[key]-seq.before[key])*Math.min(1,pct*1.35));
       field.textContent=v;field.nextElementSibling.firstElementChild.style.width=Math.min(100,v/statMax(key)*100)+"%";
     }
-    if(pct>=1){if(previewLesson)playbackElapsed=0;else finishScene();}
+    if(pct>=1){if(previewLesson||lessonPlacementSession)playbackElapsed=0;else finishScene();}
   }
   playbackTimer=setInterval(paint,85);paint();
+}
+
+// The embedded editor uses the actual schedule stage and playback, with isolated preview state.
+// A private channel and parent origin bind commands to the iframe which requested this session.
+function startLessonPlacementEditor(config){
+  if(window.parent===window||!config||typeof config.channel!=="string"||!/^[\w-]{16,128}$/.test(config.channel))return;
+  const actor=$("playback").querySelector(".performer"),plane=actor?.parentElement;
+  if(!actor||!Object.hasOwn(choreography,plane.dataset.activity))return;
+  let parentOrigin;
+  try{parentOrigin=new URL(document.referrer||location.href).origin;}catch{return;}
+  if(!/^https?:\/\//.test(parentOrigin))return;
+  lessonPlacementSession?.dispose();
+  const activity=plane.dataset.activity,controller=new AbortController(),signal=controller.signal;
+  const session=lessonPlacementSession={activity,channel:config.channel,placement:lessonPlacement(activity),playing:false,
+    dispose(){controller.abort();observer.disconnect();}};
+  document.documentElement.dataset.placementEditor="true";
+  document.documentElement.dataset.placementPlaying="false";
+  // Playback is explicitly controlled here; do not save or change the player's motion preference.
+  motionMode="full";syncMotion();
+  stopPlayback();
+  actor.tabIndex=0;
+  actor.setAttribute("role","group");
+  actor.setAttribute("aria-label","시엘 도트 · 드래그하거나 방향키로 위치 조정 · Shift와 방향키로 크게 이동");
+  actor.setAttribute("aria-keyshortcuts","ArrowUp ArrowDown ArrowLeft ArrowRight");
+  actor.querySelector("img").draggable=false;
+  const roomImage=plane.querySelector(".stage-room");
+  function notify(type){
+    window.parent.postMessage({type,channel:session.channel,activity,placement:{...session.placement},playing:session.playing},parentOrigin);
+  }
+  function place(value,report=false){
+    session.placement=lessonPlacement(activity,value);
+    actor.style.setProperty("--actor-x",session.placement.x+"%");
+    actor.style.setProperty("--actor-bottom",session.placement.bottom+"%");
+    actor.style.setProperty("--actor-ratio",String(session.placement.scale));
+    if(report)notify("placement-change");
+  }
+  function play(playing,report=true){
+    session.playing=playing===true;
+    document.documentElement.dataset.placementPlaying=String(session.playing);
+    if(report)notify("placement-playing");
+  }
+  let drag=null;
+  actor.addEventListener("pointerdown",event=>{
+    if(event.button!==0||!event.isPrimary)return;
+    event.preventDefault();event.stopPropagation();
+    actor.focus({preventScroll:true});
+    play(false);
+    const bounds=plane.getBoundingClientRect();
+    if(!bounds.width||!bounds.height)return;
+    drag={pointer:event.pointerId,x:event.clientX,y:event.clientY,bounds,placement:{...session.placement}};
+    actor.setPointerCapture(event.pointerId);
+    actor.dataset.dragging="true";
+  },{signal});
+  actor.addEventListener("pointermove",event=>{
+    if(!drag||event.pointerId!==drag.pointer)return;
+    event.preventDefault();
+    place({...drag.placement,x:drag.placement.x+(event.clientX-drag.x)/drag.bounds.width*100,
+      bottom:drag.placement.bottom-(event.clientY-drag.y)/drag.bounds.height*100},true);
+  },{signal});
+  function release(event){
+    if(!drag||event.pointerId!==drag.pointer)return;
+    drag=null;delete actor.dataset.dragging;
+    if(actor.hasPointerCapture(event.pointerId))actor.releasePointerCapture(event.pointerId);
+  }
+  actor.addEventListener("pointerup",release,{signal});
+  actor.addEventListener("pointercancel",release,{signal});
+  actor.addEventListener("lostpointercapture",release,{signal});
+  actor.addEventListener("dragstart",event=>event.preventDefault(),{signal});
+  actor.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();},{signal});
+  actor.addEventListener("keydown",event=>{
+    if(event.altKey||event.ctrlKey||event.metaKey||!["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(event.key))return;
+    event.preventDefault();event.stopPropagation();
+    play(false);
+    const step=event.shiftKey?1:0.1,next={...session.placement};
+    if(event.key==="ArrowLeft")next.x-=step;
+    if(event.key==="ArrowRight")next.x+=step;
+    if(event.key==="ArrowUp")next.bottom+=step;
+    if(event.key==="ArrowDown")next.bottom-=step;
+    place(next,true);
+  },{signal});
+  window.addEventListener("message",event=>{
+    const message=event.data;
+    if(event.source!==window.parent||event.origin!==parentOrigin||!message||message.channel!==session.channel)return;
+    if(message.type==="placement-set"&&message.placement&&typeof message.placement==="object")place(message.placement);
+    if(message.type==="placement-playing"&&typeof message.playing==="boolean")play(message.playing);
+    if(message.type==="placement-sync")notify("placement-ready");
+  },{signal});
+  const observer=new ResizeObserver(()=>fitLessonRoom(roomImage));
+  observer.observe(plane);
+  roomImage.addEventListener("load",()=>fitLessonRoom(roomImage),{signal});
+  window.addEventListener("pagehide",()=>{stopPlayback();session.dispose();},{signal,once:true});
+  fitLessonRoom(roomImage);
+  startPlayback(0);
+  notify("placement-ready");
 }
 function enterSlot(){
   const seq=state.sequence,planned=state.plan[seq.index];

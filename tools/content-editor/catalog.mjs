@@ -430,6 +430,7 @@ export function catalog(files, publishedAssets = [], version = "") {
 
   const categories=rows(variable("content.js","categories"));
   const activityDefaults=variable("audio.js","activityTrackDefaults");
+  const placementDefaults=variable("content.js","lessonPlacementDefaults");
   for (const p of properties(variable("content.js","choreography"))) {
     const id=propertyName(p);
     const [room,,movement,fx,text]=rows(p.value);
@@ -443,6 +444,16 @@ export function catalog(files, publishedAssets = [], version = "") {
       [...new Set(properties(variable("content.js","choreography")).map(row=>value(rows(row.value)[2])))].map(key=>[key,key]));
     add(g,"content.js",fx,"화면 효과","select",fxOptions);
     add(g,"content.js",text,"장면 설명");
+    if(placementDefaults){
+      const placementNode=rows(p.value)[5];
+      const defaults=Object.fromEntries(["x","bottom","scale"].map(key=>[key,
+        value(prop(prop(placementDefaults,id),key))??value(prop(prop(placementDefaults,"default"),key))]));
+      const placement=Object.fromEntries(Object.entries(defaults).map(([key,fallback])=>[key,value(prop(placementNode,key))??fallback]));
+      const field={id:"placement:"+id,label:"시엘 도트 배치",type:"placement",value:placement,defaults,
+        file:"content.js",line:(placementNode??p.value).loc.start.line,activity:id};
+      g.fields.push(field);
+      fields.set(field.id,{field,node:placementNode,placementRow:p.value});
+    }
   }
   const fx=group("fx","fx-symbols","효과 기호");
   for (const p of properties(variable("scenes.js","motionObjects"))) add(fx,"scenes.js",p.value,propertyName(p));
@@ -575,6 +586,14 @@ function lineValues(input, field = {}) {
 
 function statementValue(field, input, assetSet) {
   switch(field.type) {
+    case "placement": {
+      const limits={x:[0,100],bottom:[0,100],scale:[0.05,1]};
+      if(!input||typeof input!=="object"||Array.isArray(input)||Object.keys(input).length!==3
+        ||Object.entries(limits).some(([key,[min,max]])=>!Object.hasOwn(input,key)
+          ||typeof input[key]!=="number"||!Number.isFinite(input[key])||input[key]<min||input[key]>max))
+        throw new Error("도트 위치는 0~100%, 크기는 배경 높이의 5~100%로 입력해 주세요.");
+      return {x:Math.round(input.x*100)/100,bottom:Math.round(input.bottom*100)/100,scale:Math.round(input.scale*1000)/1000};
+    }
     case "number":
       if(!Number.isInteger(input)||input<field.min||input>field.max) throw new Error(field.label+"의 입력 범위를 확인해 주세요.");
       return input;
@@ -645,11 +664,15 @@ export function applyEdits(model, request) {
   for(const [id,input] of Object.entries(request.changes??{})) {
     const entry=model.fields.get(id);
     if(!entry) throw new Error("항목을 찾을 수 없습니다. 편집기를 새로 열어 주세요.");
-    const {field,node,cue,insert,optionId}=entry;
+    const {field,node,cue,insert,optionId,placementRow}=entry;
     if(JSON.stringify(field.value)===JSON.stringify(input)) continue;
     const checked=statementValue(field,input,model.assetSet);
     if(optionId&&optionId===request.deleteEvent) throw new Error("삭제할 이벤트의 편집 내용을 먼저 적용하거나 취소해 주세요.");
-    if(optionId&&!node)insertProperty("authoredOptions",optionId,checked);
+    if(placementRow&&!node){
+      const last=rows(placementRow).at(-1);
+      replace(field.file,last?.end??placementRow.start+1,last?.end??placementRow.start+1,(last?",":"")+quoted(checked));
+    }
+    else if(optionId&&!node)insertProperty("authoredOptions",optionId,checked);
     else if (cue) {
       if(checked) cues[cue]=checked;
       else delete cues[cue];

@@ -48,31 +48,54 @@ function activityFrames(activity){
   return ids.join(" ");
 }
 
-// Room, acting sequence, blocking, prop animation, and scene direction are authored per activity.
+// Authoring defaults are kept separately so a saved placement can always be reset.
+// x and bottom locate the sprite's centre on the visible stage; scale follows the painted room height.
+const lessonPlacementDefaults = {
+  default:{x:50,bottom:50,scale:0.255},
+  inquiry:{x:36,bottom:50,scale:0.255},
+  negotiate:{x:43,bottom:48.5,scale:0.255},
+  walk:{x:50,bottom:46.5,scale:0.23},
+  exercise:{x:50,bottom:50,scale:0.42}
+};
+for(const placement of Object.values(lessonPlacementDefaults))Object.freeze(placement);
+Object.freeze(lessonPlacementDefaults);
+function defaultLessonPlacement(id){
+  return {...lessonPlacementDefaults.default,...(Object.hasOwn(lessonPlacementDefaults,id)?lessonPlacementDefaults[id]:{})};
+}
+function lessonPlacement(id,override){
+  const fallback=defaultLessonPlacement(id),authored=override??choreography[id]?.[5]??{};
+  const finite=(key,min,max,precision)=>{
+    const value=typeof authored[key]==="number"&&Number.isFinite(authored[key])?authored[key]:fallback[key];
+    return Math.round(Math.min(max,Math.max(min,value))*precision)/precision;
+  };
+  return {x:finite("x",0,100,100),bottom:finite("bottom",0,100,100),scale:finite("scale",0.05,1,1000)};
+}
+
+// Room, acting sequence, blocking, prop animation, direction, and sprite placement are authored per activity.
 const choreography = {
-  study:["library","read turn","read","page","책갈피가 꽂힌 곳을 펴고, 어제 푼 문제의 다음 줄을 읽습니다."],
-  etiquette:["ballroom","greet bow","bow","glint","발끝을 모으고 손을 가슴에 얹습니다. 이번 인사는 정확히 세 박자입니다."],
-  accounts:["office",activityFrames("accounts"),"write","coin","주판알을 한 줄씩 밀어 매입가를 더합니다. 마지막 줄에서 검산을 시작합니다."],
-  inquiry:["archive",activityFrames("inquiry"),"search","lens","장부를 등불에 비춥니다. 종이를 긁어 고친 흔적이 보입니다."],
-  riding:["field","trot1 trot2 trot3 trot4","ride","dust","고삐를 짧게 쥐고 울타리를 따라 한 바퀴 돕니다."],
-  letters:["library",activityFrames("letters"),"write","letter","편지의 두 귀를 맞춰 접고 붉은 밀랍 위에 가문의 인장을 누릅니다."],
-  rest:["bedroom","cupUp cupDown","rest","steam","찻잔을 내려놓고 벽난로의 장작이 타는 소리를 듣습니다."],
-  walk:["garden","step1 step2","walk","leaf","정원 길을 천천히 걷습니다. 온실 앞에서 보폭이 한결 느려집니다."],
-  language:["library",activityFrames("language"),"recite","speech","라틴어 편지 한 줄을 소리 내어 읽고, 강세를 고쳐 다시 읽습니다."],
-  music:["music","bowOut bowIn","play","notes","활을 현 위에 얹습니다. 네 마디를 끊지 않고 이어 봅니다."],
-  dance:["ballroom",activityFrames("dance"),"waltz","beat","마룻바닥의 무늬를 따라 세 걸음, 반 바퀴 돌아 제자리로 옵니다."],
-  social:["ballroom",activityFrames("social"),"meet","speech","손님에게 먼저 인사를 건네고 대답이 끝날 때까지 기다립니다."],
-  negotiate:["office",activityFrames("negotiate"),"meet","contract","견적서를 밀어 둡니다. 상대가 먼저 가격을 부를 차례입니다."],
-  exercise:["gym",activityFrames("exercise"),"calisthenics","beat","체조실 거울 앞에 섭니다. 두 팔을 펴고 무릎을 번갈아 올리며 네 박자마다 숨을 고릅니다."],
-  practicum:["office",activityFrames("practicum"),"count","coin","영수증 한 장에 동전 한 닢이 모자랍니다. 맞춰 본 전표를 오른쪽 함에 넣습니다."],
-  developToy:["office",activityFrames("developToy"),"search","toy","목제 견본의 바퀴를 굴려 보고 도면의 축 길이를 고칩니다."],
-  supplier:["street",activityFrames("supplier"),"meet","delivery","진열창 앞에 멈춰 견본의 마감과 납기표를 대조합니다."],
-  estateWork:["archive",activityFrames("estateWork"),"write","stamp","수선 요청서를 먼저 읽고 결재가 끝난 문서를 왼편에 쌓습니다."],
-  reception:["ballroom",activityFrames("reception"),"meet","glint","잔을 들어 건배하고, 맞은편 손님에게 차례로 인사를 건넵니다."],
-  casework:["street",activityFrames("casework"),"search","lens","골목의 발자국을 살핀 뒤 수첩에 현장 약도를 그립니다."],
-  reading:["bedroom",activityFrames("reading"),"read","page","오늘은 교본 대신 추리소설을 무릎 위에 올려 둡니다."],
-  recovery:["bedroom",activityFrames("recovery"),"rest","sun","약속을 미룬 오후입니다. 해가 기울 때까지 안락의자에서 쉽니다."],
-  outing:["street",activityFrames("outing"),"walk","leaf","마차에서 내려 쇼윈도를 구경합니다. 약속한 시각 전에 돌아갑니다."]
+  study:["library","read turn","read","page","책갈피가 꽂힌 곳을 펴고, 어제 푼 문제의 다음 줄을 읽습니다.",{x:50,bottom:50,scale:0.255}],
+  etiquette:["ballroom","greet bow","bow","glint","발끝을 모으고 손을 가슴에 얹습니다. 이번 인사는 정확히 세 박자입니다.",{x:50,bottom:50,scale:0.255}],
+  accounts:["office",activityFrames("accounts"),"write","coin","주판알을 한 줄씩 밀어 매입가를 더합니다. 마지막 줄에서 검산을 시작합니다.",{x:50,bottom:50,scale:0.255}],
+  inquiry:["archive",activityFrames("inquiry"),"search","lens","장부를 등불에 비춥니다. 종이를 긁어 고친 흔적이 보입니다.",{x:36,bottom:50,scale:0.255}],
+  riding:["field","trot1 trot2 trot3 trot4","ride","dust","고삐를 짧게 쥐고 울타리를 따라 한 바퀴 돕니다.",{x:50,bottom:50,scale:0.255}],
+  letters:["library",activityFrames("letters"),"write","letter","편지의 두 귀를 맞춰 접고 붉은 밀랍 위에 가문의 인장을 누릅니다.",{x:50,bottom:50,scale:0.255}],
+  rest:["bedroom","cupUp cupDown","rest","steam","찻잔을 내려놓고 벽난로의 장작이 타는 소리를 듣습니다.",{x:50,bottom:50,scale:0.255}],
+  walk:["garden","step1 step2","walk","leaf","정원 길을 천천히 걷습니다. 온실 앞에서 보폭이 한결 느려집니다.",{x:50,bottom:46.5,scale:0.23}],
+  language:["library",activityFrames("language"),"recite","speech","라틴어 편지 한 줄을 소리 내어 읽고, 강세를 고쳐 다시 읽습니다.",{x:50,bottom:50,scale:0.255}],
+  music:["music","bowOut bowIn","play","notes","활을 현 위에 얹습니다. 네 마디를 끊지 않고 이어 봅니다.",{x:50,bottom:50,scale:0.255}],
+  dance:["ballroom",activityFrames("dance"),"waltz","beat","마룻바닥의 무늬를 따라 세 걸음, 반 바퀴 돌아 제자리로 옵니다.",{x:50,bottom:50,scale:0.255}],
+  social:["ballroom",activityFrames("social"),"meet","speech","손님에게 먼저 인사를 건네고 대답이 끝날 때까지 기다립니다.",{x:50,bottom:50,scale:0.255}],
+  negotiate:["office",activityFrames("negotiate"),"meet","contract","견적서를 밀어 둡니다. 상대가 먼저 가격을 부를 차례입니다.",{x:43,bottom:48.5,scale:0.255}],
+  exercise:["gym",activityFrames("exercise"),"calisthenics","beat","체조실 거울 앞에 섭니다. 두 팔을 펴고 무릎을 번갈아 올리며 네 박자마다 숨을 고릅니다.",{x:50,bottom:50,scale:0.42}],
+  practicum:["office",activityFrames("practicum"),"count","coin","영수증 한 장에 동전 한 닢이 모자랍니다. 맞춰 본 전표를 오른쪽 함에 넣습니다.",{x:50,bottom:50,scale:0.255}],
+  developToy:["office",activityFrames("developToy"),"search","toy","목제 견본의 바퀴를 굴려 보고 도면의 축 길이를 고칩니다.",{x:50,bottom:50,scale:0.255}],
+  supplier:["street",activityFrames("supplier"),"meet","delivery","진열창 앞에 멈춰 견본의 마감과 납기표를 대조합니다.",{x:50,bottom:50,scale:0.255}],
+  estateWork:["archive",activityFrames("estateWork"),"write","stamp","수선 요청서를 먼저 읽고 결재가 끝난 문서를 왼편에 쌓습니다.",{x:50,bottom:50,scale:0.255}],
+  reception:["ballroom",activityFrames("reception"),"meet","glint","잔을 들어 건배하고, 맞은편 손님에게 차례로 인사를 건넵니다.",{x:50,bottom:50,scale:0.255}],
+  casework:["street",activityFrames("casework"),"search","lens","골목의 발자국을 살핀 뒤 수첩에 현장 약도를 그립니다.",{x:50,bottom:50,scale:0.255}],
+  reading:["bedroom",activityFrames("reading"),"read","page","오늘은 교본 대신 추리소설을 무릎 위에 올려 둡니다.",{x:50,bottom:50,scale:0.255}],
+  recovery:["bedroom",activityFrames("recovery"),"rest","sun","약속을 미룬 오후입니다. 해가 기울 때까지 안락의자에서 쉽니다.",{x:50,bottom:50,scale:0.255}],
+  outing:["street",activityFrames("outing"),"walk","leaf","마차에서 내려 쇼윈도를 구경합니다. 약속한 시각 전에 돌아갑니다.",{x:50,bottom:50,scale:0.255}]
 };
 const extraActivities = {
   language:["라틴어",23,{지성:8,매력:6},10],music:["바이올린",25,{기품:8,의지:5},8],

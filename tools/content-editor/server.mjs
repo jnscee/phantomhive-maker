@@ -273,10 +273,17 @@ const server=http.createServer(async (req,res)=>{
           return json(res,{files:save(changes)});
         }
         const token=randomUUID();
-        const spec=validPreview(body.preview,changes.model,body.newEvent);
-        previews.set(token,{...changes,spec:spec?{...spec,cut:Number.isInteger(body.cut)?body.cut:0}:null});
+        const requested=validPreview(body.preview,changes.model,body.newEvent);
+        const spec=requested?{...requested,cut:Number.isInteger(body.cut)?body.cut:0}:null;
+        if(body.placementEditor){
+          if(body.placementEditor!==true||spec?.kind!=="activity"||typeof body.channel!=="string"||!/^[a-f0-9-]{36}$/.test(body.channel))
+            throw new Error("도트 배치를 편집할 일정을 다시 선택해 주세요.");
+          spec.placementEditor={channel:body.channel};
+        }
+        previews.set(token,{...changes,spec});
         if(previews.size>8) previews.delete(previews.keys().next().value);
-        return json(res,{url:"/game/"+token+"/index.html"});
+        const query=spec?.placementEditor?"?lesson-preview="+encodeURIComponent(spec.id)+"&placement-editor=1":"";
+        return json(res,{url:"/game/"+token+"/index.html"+query});
       }
     }
     const staticFiles={"/":"index.html","/story-flow.js":"story-flow.js","/editor.js":"editor.js","/editor.css":"editor.css"};

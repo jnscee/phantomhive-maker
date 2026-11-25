@@ -75,9 +75,20 @@ if(editorPreview?.kind==="opening"){
   state.weather=editorPreview.id;
   state.phase="weatherBriefing";
 }else if(editorPreview?.kind==="activity"){
-  state.phase="plan";
-  state.visit="none";
-  state.plan=[editorPreview.id,"rest","rest"];
-  execute();
+  if(editorPreview.placementEditor){
+    mixer.bgm=false;
+    mixer.sfx=false;
+    state.phase="scene";
+    state.plan=[editorPreview.id,null,null];
+    const before=snapStats(state);
+    state.sequence={index:0,activity:editorPreview.id,before,after:{...before}};
+  }else{
+    state.phase="plan";
+    state.visit="none";
+    state.plan=[editorPreview.id,"rest","rest"];
+    execute();
+  }
 }
 render();
+if(editorPreview?.kind==="activity"&&editorPreview.placementEditor)
+  startLessonPlacementEditor(editorPreview.placementEditor);

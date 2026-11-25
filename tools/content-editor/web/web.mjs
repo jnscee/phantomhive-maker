@@ -101,6 +101,11 @@ async function preview(current,body){
   if(body.preview && !current.groups.some(group=>JSON.stringify(group.preview)===JSON.stringify(body.preview))
     && body.preview.id!=="custom-"+body.newEvent?.id)throw new Error("테스트할 장면을 찾지 못했습니다.");
   const spec=body.preview?{...body.preview,cut:Number.isInteger(body.cut)?body.cut:0}:null;
+  if(body.placementEditor){
+    if(body.placementEditor!==true||spec?.kind!=="activity"||typeof body.channel!=="string"||!/^[a-f0-9-]{36}$/.test(body.channel))
+      throw new Error("도트 배치를 편집할 일정을 다시 선택해 주세요.");
+    spec.placementEditor={channel:body.channel};
+  }
   if(!navigator.serviceWorker)throw new Error("이 브라우저에서는 게임 미리보기를 열 수 없습니다.");
   registration??=navigator.serviceWorker.register(new URL("service-worker.js",scope));
   await registration;
@@ -121,7 +126,12 @@ async function preview(current,body){
   };
   await write("preview",{token,expires:Date.now()+30*60*1000,overrides});
   activeToken=token;
-  return {url:new URL("preview/"+token+"/index.html",scope).href};
+  const previewUrl=new URL("preview/"+token+"/index.html",scope);
+  if(spec?.placementEditor){
+    previewUrl.searchParams.set("lesson-preview",spec.id);
+    previewUrl.searchParams.set("placement-editor","1");
+  }
+  return {url:previewUrl.href};
 }
 
 export async function closePreview(){

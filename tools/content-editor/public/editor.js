@@ -14,6 +14,9 @@ let busy = false;
 let previewedDraft = false;
 let inspectStoryRoutes;
 let cancelLinkedScene=null;
+let placementEditor=null;
+let previewTask=Promise.resolve();
+const placementView={aspect:"3:2"};
 const assetUrls = new Map();
 const isWeb = document.body.hasAttribute("data-web-editor");
 const web = isWeb ? import("./web.mjs") : null;
@@ -71,6 +74,19 @@ function modify(field,input) {
   else changes[field.id]=input;
   updateToolbar();
   updatePaneCounts();
+}
+
+// The web preview has one active session. Keep inline previews, modal previews and
+// cleanup in order so that a slow request cannot replace a newer scene.
+function queuePreview(task) {
+  const next=previewTask.then(task);
+  previewTask=next.catch(()=>{});
+  return next;
+}
+
+function disposePlacementEditor() {
+  placementEditor?.dispose();
+  placementEditor=null;
 }
 
 function clearDraft() {
@@ -727,7 +743,175 @@ function choicesEditor(parent,field,initial){
   draw();
 }
 
+function placementFieldEditor(field,group) {
+  const block=node("section",undefined,"field placement-editor");
+  block.setAttribute("aria-label",group.title+" 시엘 도트 배치");
+  const heading=node("div",undefined,"placement-heading");
+  heading.append(node("h3","시엘 도트 배치"),node("p","시엘을 끌어서 이동합니다. 시엘을 선택한 뒤 방향키로 0.1%, Shift와 함께 누르면 1%씩 조정할 수 있습니다.","muted"));
+  const toolbar=node("div",undefined,"placement-toolbar");
+  const playback=button("애니메이션 재생",()=>setPlaying(!playing));
+  playback.disabled=true;
+  playback.setAttribute("aria-pressed","false");
+  const aspectLabel=node("label","화면 비율");
+  const aspect=select([["3:2","기본 · 3:2"],["16:9","와이드 · 16:9"],["4:3","4:3"],["9:16","세로 · 9:16"]],placementView.aspect);
+  aspect.setAttribute("aria-label","도트 배치 미리보기 화면 비율");
+  aspectLabel.append(aspect);
+  const reset=button("초기 배치로 복원",()=>{
+    setPlaying(false);
+    setPlacement(field.defaults);
+    note.textContent="이 일정의 초기 위치와 크기로 복원했습니다.";
+  });
+  reset.title="이 일정의 초기 위치와 크기로 복원";
+  toolbar.append(playback,aspectLabel,reset);
+  const preview=node("div",undefined,"placement-preview");
+  const screen=node("div",undefined,"placement-screen");
+  const frame=node("iframe");
+  frame.title=group.title+" 시엘 도트 배치 미리보기";
+  frame.setAttribute("sandbox",isWeb?"allow-scripts allow-same-origin":"allow-scripts");
+  frame.setAttribute("scrolling","no");
+  screen.append(frame);
+  preview.append(screen);
+  const note=node("p","기존 게임 장면을 불러오고 있습니다.","placement-note");
+  note.setAttribute("role","status");
+  const reload=button("미리보기 다시 불러오기",()=>void loadPreview());
+  reload.hidden=true;
+  const feedback=node("div",undefined,"placement-feedback");
+  feedback.append(note,reload);
+  const controls=node("div",undefined,"placement-controls");
+  const position=node("div",undefined,"placement-position");
+  const inputs={};
+  for(const [key,label] of [["x","가로 위치 · 왼쪽에서 (%)"],["top","세로 위치 · 위에서 (%)"]]){
+    const wrap=node("label",label);
+    const input=node("input");
+    input.type="number";input.min="0";input.max="100";input.step="0.01";
+    input.setAttribute("aria-label",label);
+    input.addEventListener("input",()=>{
+      if(!Number.isFinite(input.valueAsNumber))return;
+      const amount=Math.min(100,Math.max(0,input.valueAsNumber));
+      setPlacement({...value(field),[key==="top"?"bottom":"x"]:key==="top"?100-amount:amount});
+    });
+    input.addEventListener("change",()=>updateInputs(true));
+    inputs[key]=input;
+    wrap.append(input);position.append(wrap);
+  }
+  const nudge=node("div",undefined,"placement-nudge");
+  nudge.setAttribute("role","group");nudge.setAttribute("aria-label","시엘 위치 미세 조정");
+  for(const [name,key,direction] of [["왼쪽","x",-1],["위로","bottom",1],["아래로","bottom",-1],["오른쪽","x",1]]){
+    const move=button(name,event=>{
+      setPlaying(false);
+      setPlacement({...value(field),[key]:value(field)[key]+direction*(event.shiftKey?1:.1)});
+    });
+    move.title=name+" 0.1% 이동 · Shift를 누르면 1%";
+    nudge.append(move);
+  }
+  position.append(nudge);
+  const size=node("div",undefined,"placement-size");
+  const sizeLabel=node("label","크기 · 배경 높이 대비 (%)");
+  const slider=node("input");
+  slider.type="range";slider.min="5";slider.max="100";slider.step="0.1";
+  slider.setAttribute("aria-label","시엘 도트 크기 슬라이더");
+  const sizeInput=node("input");
+  sizeInput.type="number";sizeInput.min="5";sizeInput.max="100";sizeInput.step="0.1";
+  sizeInput.setAttribute("aria-label","시엘 도트 크기 (%)");
+  for(const input of [slider,sizeInput])input.addEventListener("input",()=>{
+    if(!Number.isFinite(input.valueAsNumber))return;
+    setPlacement({...value(field),scale:input.valueAsNumber/100});
+  });
+  sizeInput.addEventListener("change",()=>updateInputs(true));
+  const sizeRow=node("div",undefined,"placement-size-row");
+  sizeRow.append(slider,sizeInput);
+  sizeLabel.append(sizeRow);
+  size.append(sizeLabel,node("p","화면 비율을 바꾸어도 같은 배치값을 사용합니다. "+(isWeb?"브라우저에 저장한 뒤 GitHub에 업로드하면 공개 게임에 반영됩니다.":"게임 파일에 적용하면 이 일정의 배치가 저장됩니다."),"muted"));
+  controls.append(position,size);
+  block.append(heading,toolbar,preview,feedback,controls);
+
+  let disposed=false,ready=false,playing=false,channel="",timeout=0,request=0;
+  const abort=new AbortController();
+  const rounded=(number,digits=3)=>Math.round(number*10**digits)/10**digits;
+  function validPlacement(input){
+    return input&&["x","bottom","scale"].every(key=>typeof input[key]==="number"&&Number.isFinite(input[key]));
+  }
+  function normalize(input){
+    return {x:rounded(Math.min(100,Math.max(0,input.x)),2),bottom:rounded(Math.min(100,Math.max(0,input.bottom)),2),scale:rounded(Math.min(1,Math.max(.05,input.scale)),3)};
+  }
+  function send(type,extra={}){
+    if(!disposed&&channel)frame.contentWindow?.postMessage({type,channel,...extra},"*");
+  }
+  function updateInputs(force=false){
+    const current=value(field);
+    if(force||document.activeElement!==inputs.x)inputs.x.value=rounded(current.x);
+    if(force||document.activeElement!==inputs.top)inputs.top.value=rounded(100-current.bottom);
+    slider.value=rounded(current.scale*100);
+    if(force||document.activeElement!==sizeInput)sizeInput.value=rounded(current.scale*100);
+    slider.setAttribute("aria-valuetext",rounded(current.scale*100)+"%");
+  }
+  function setPlacement(input,fromFrame=false){
+    if(disposed||!validPlacement(input))return;
+    const next=normalize(input);
+    modify(field,next);
+    updateInputs();
+    if(ready&&!fromFrame)send("placement-set",{placement:next});
+  }
+  function setPlaying(next,fromFrame=false){
+    playing=Boolean(next);
+    playback.textContent=playing?"애니메이션 정지":"애니메이션 재생";
+    playback.setAttribute("aria-pressed",String(playing));
+    if(ready&&!fromFrame)send("placement-playing",{playing});
+  }
+  function setAspect(){
+    placementView.aspect=aspect.value;
+    const [width,height]=aspect.value.split(":").map(Number);
+    screen.style.setProperty("--placement-aspect",String(width/height));
+  }
+  function showFailure(message){
+    ready=false;playback.disabled=true;reload.hidden=false;reload.disabled=false;
+    note.dataset.error="true";note.textContent=message;
+  }
+  async function loadPreview(){
+    if(disposed)return;
+    const serial=++request;
+    channel=crypto.randomUUID();ready=false;setPlaying(false);
+    clearTimeout(timeout);playback.disabled=true;reload.disabled=true;reload.hidden=true;
+    note.dataset.error="false";note.textContent="기존 게임 장면을 불러오고 있습니다.";
+    frame.removeAttribute("src");
+    try{
+      const body=structuredClone({...payload(),preview:group.preview,placementEditor:true,channel});
+      const result=await queuePreview(()=>disposed||serial!==request?null:api("/api/preview",body));
+      if(disposed||serial!==request||!result)return;
+      frame.src=result.url;
+      timeout=setTimeout(()=>{
+        if(!ready&&!disposed)showFailure("미리보기가 아직 준비되지 않았습니다. 다시 불러오기를 눌러 주세요.");
+      },30000);
+    }catch(error){if(!disposed&&serial===request)showFailure(error.message);}
+  }
+  window.addEventListener("message",event=>{
+    const message=event.data;
+    if(disposed||event.source!==frame.contentWindow||!message||message.channel!==channel||message.activity!==group.preview.id)return;
+    if(message.type==="placement-ready"){
+      clearTimeout(timeout);ready=true;playback.disabled=false;reload.hidden=true;
+      note.dataset.error="false";note.textContent="시엘을 선택해 위치를 조정하세요. 재생을 멈추면 현재 동작에서 배치를 확인할 수 있습니다.";
+      send("placement-set",{placement:value(field)});
+      send("placement-playing",{playing});
+    }else if(message.type==="placement-change"){
+      setPlacement(message.placement,true);
+      if(typeof message.playing==="boolean")setPlaying(message.playing,true);
+    }else if(message.type==="placement-playing")setPlaying(message.playing,true);
+  },{signal:abort.signal});
+  frame.addEventListener("load",()=>send("placement-sync"),{signal:abort.signal});
+  aspect.addEventListener("change",setAspect);
+  updateInputs();setAspect();
+  placementEditor={dispose(){
+    disposed=true;++request;clearTimeout(timeout);abort.abort();
+    block.inert=true;
+    for(const control of block.querySelectorAll("button,input,select"))control.disabled=true;
+    frame.removeAttribute("src");
+  }};
+  void loadPreview();
+  return block;
+}
+
 function fieldEditor(field) {
+  if(field.type==="placement")return placementFieldEditor(field,currentGroup());
   const current=value(field);
   if(field.type==="lines") {
     const block=node("fieldset",undefined,"field");
@@ -850,9 +1034,10 @@ function drawList() {
   }
 }
 
-const paneLabels={flow:"장면 흐름도",dialogue:"대사",choices:"선택지",stage:"이미지 · 소리",details:"기본 정보"};
+const paneLabels={placement:"도트 배치",flow:"장면 흐름도",dialogue:"대사",choices:"선택지",stage:"이미지 · 소리",details:"기본 정보"};
 
 function paneFor(field){
+  if(field.type==="placement")return "placement";
   if(field.caseOutcome||field.caseReply)return "choices";
   if(field.type==="lines"||/^(날씨 지문$|상대 · 첫 인사$|상대 인사 ·|시엘의 답 ·|시엘 · 종목 |참여 지문 |입상 결과 |참가 결과 |추리 질문$|단서 \d+ ·|판단 \d+)/.test(field.label))return "dialogue";
   if(field.type==="choices"||/^(선택지|응답)\s*\d|마무리 버튼|^마지막 대사/.test(field.label))return "choices";
@@ -872,6 +1057,7 @@ function updatePaneCounts(){
 }
 
 function drawDesk() {
+  disposePlacementEditor();
   flowMapResize?.disconnect();
   const panel=$("fields");
   $("add-story").hidden=!isWeb||section!=="story"||Boolean(newEvent);
@@ -890,7 +1076,7 @@ function drawDesk() {
     for(const field of group.fields.filter(field=>field.assignment))panel.append(fieldEditor(field));
     return;
   }
-  const panes={dialogue:[],choices:[],stage:[],details:[]};
+  const panes={placement:[],dialogue:[],choices:[],stage:[],details:[]};
   for(const field of group.fields)panes[paneFor(field)].push(field);
   const visible=Object.keys(panes).filter(key=>panes[key].length||(key==="stage"&&group.asset));
   if(!visible.includes(activePane)&&activePane!=="flow")activePane=visible[0];
@@ -1038,21 +1224,26 @@ $("new-event").addEventListener("click",openNewEvent);
 $("preview").addEventListener("click",()=>openGamePreview());
 async function openGamePreview(cut){
   if(busy||deleteEvent)return;
+  disposePlacementEditor();
   busy=true;updateToolbar();status("게임 미리보기를 준비하고 있습니다.");
   try {
     const spec=newEvent?{kind:"event",id:"custom-"+newEvent.id}:currentGroup()?.preview??null;
-    const result=await api("/api/preview",{...payload(),preview:spec,cut});
+    const body=structuredClone({...payload(),preview:spec,cut});
+    const result=await queuePreview(()=>api("/api/preview",body));
     const dialog=$("game-dialog");
     dialog.querySelector("iframe").src=result.url;
     dialog.showModal();
     previewedDraft=Boolean(draftCount());
     status("게임 미리보기를 열었습니다.");
-  } catch(error){status(error.message,true);}
+  } catch(error){status(error.message,true);if(activePane==="placement")drawDesk();}
   finally{busy=false;updateToolbar();}
 }
 $("game-dialog").addEventListener("close",()=>{
   $("game-dialog").querySelector("iframe").removeAttribute("src");
-  if(web)void web.then(adapter=>adapter.closePreview()).catch(()=>{});
+  // Queue cleanup before the replacement preview, but redraw its controls now.
+  // Otherwise a slow storage cleanup leaves the disposed editor visible and inert.
+  if(web)void queuePreview(()=>web.then(adapter=>adapter.closePreview())).catch(()=>{});
+  if(activePane==="placement")drawDesk();
 });
 $("save").addEventListener("click",async()=>{
   busy=true;updateToolbar();status("변경 내용을 확인하고 있습니다.");

@@ -24,6 +24,7 @@ jobs:
           python3 current/build.py site
           npm ci --prefix tools/content-editor
           node tools/content-editor/build-web.mjs site
+          node tools/content-editor/placement-check.mjs
           for script in site/js/*.js; do node --check "$script"; done
           node story-commerce.cjs site
       - name: Check animation and portrait interaction in Chromium and Firefox
