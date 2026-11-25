@@ -1177,12 +1177,12 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
   gap:.2rem .55rem;
   position:relative;
   width:min(100%,12rem);
-  padding:clamp(.55rem,1.05vh,.8rem) .68rem;
-  border:1px solid #ccdeed85;
+  padding:clamp(.72rem,1.45vh,.94rem) .68rem;
+  border:1px solid #f6faffdb;
   border-radius:.4rem;
-  color:#f7fbff;
-  background:linear-gradient(115deg,#425b73e8,#21354ce8 48%,#172b40f0);
-  box-shadow:inset 0 1px #ffffff24,0 2px 6px #07132140;
+  color:#182e48;
+  background:linear-gradient(115deg,#ffffffeb,#f2f7fbe0 50%,#e2ecf5dd);
+  box-shadow:inset 0 1px #fff,0 2px 7px #0b203f42;
   backdrop-filter:blur(6px);
   text-align:start;
 }
@@ -1202,7 +1202,7 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
   left:.65rem;
   width:1.6rem;
   height:2px;
-  background:#c6d9ea;
+  background:#607c97;
 }
 #conversation .duel-screen .duel-plate b,
 #conversation .duel-screen .duel-plate small {
@@ -1211,20 +1211,20 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
   word-break:keep-all;
   overflow-wrap:anywhere;
 }
-#conversation .duel-screen .duel-plate b {font-size:.9rem;line-height:1.25}
-#conversation .duel-screen .duel-plate small {margin:0;color:#d4e1ed;font-size:.74rem}
+#conversation .duel-screen .duel-plate b {color:#172e49;font-size:.9rem;line-height:1.25}
+#conversation .duel-screen .duel-plate small {margin:0;color:#354d65;font-size:.74rem}
 #conversation .duel-screen .duel-plate strong {
   grid-column:2;
   grid-row:1 / 3;
   padding:.17rem .34rem;
   border-radius:.23rem;
-  color:#172e47;
-  background:#edf6ffed;
+  color:#f5f9ff;
+  background:#253e58f0;
   font-size:.92rem;
   font-variant-numeric:tabular-nums;
   white-space:nowrap;
 }
-#conversation .duel-screen .performing .duel-plate {border-color:#eff7ff}
+#conversation .duel-screen .performing .duel-plate {border-color:#68859f}
 #conversation .duel-stage.is-revealed .duel-plate strong {
   padding:.24rem .46rem .32rem;
   border-bottom:2px solid #9cbad3;
@@ -1233,22 +1233,22 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 }
 #conversation .duel-screen .performing .duel-plate::before {
   width:2.6rem;
-  background:#fff;
-  box-shadow:0 0 .4rem #dbedff99;
+  background:#244866;
+  box-shadow:0 0 .3rem #759ab04d;
 }
 .duel-art :is(.contest-actor,.duel-portrait,.duel-sprite) {
-  filter:drop-shadow(0 0 2px #f4faffba) drop-shadow(0 0 6px #c5dfff85) drop-shadow(0 0 12px #b6d5ff55);
+  filter:drop-shadow(0 0 2px #f4faff9e) drop-shadow(0 0 6px #c5dfff70) drop-shadow(0 0 12px #b6d5ff47);
 }
 @media (max-width:650px) {
   #conversation .duel-screen .duel-side .duel-plate {
     grid-template-columns:minmax(0,1fr);
     justify-items:center;
-    padding-block:.48rem;
+    padding-block:.62rem;
     text-align:center;
   }
   #conversation .duel-screen .duel-plate strong {grid-area:auto;margin-top:.1rem}
 }
 @media (orientation:landscape) and (max-height:450px) {
   .duel-screen .duel-side {row-gap:.15rem}
-  #conversation .duel-screen .duel-side .duel-plate {padding-block:.3rem}
+  #conversation .duel-screen .duel-side .duel-plate {padding-block:.4rem}
 }
