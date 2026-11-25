@@ -61,7 +61,7 @@ function cgAlbumEntries(){
   function add(group,id){
     if(!id||id==="black")return;
     const path="assets/"+group+"/"+id+".webp";
-    entries.set(path,cgTitles[id]||endingLabels[id]?.[0]||id);
+    if(!entries.has(path))entries.set(path,cgTitles[id]||endingLabels[id]?.[0]||id);
   }
   for(const id of ["seal","fire","ring","hillside","manor","lesson"])add("prologue",id);
   for(const [id,scene] of Object.entries(endingScenes)){
