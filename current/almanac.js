@@ -440,7 +440,7 @@ function familyFolio(rows,history,album,extra=""){
     filedSection("인물 관계",'<p>각 인물이 시엘에게 보내는 신뢰와 호감도입니다.</p>'+relationshipRows,relations.length+"명")+
     filedSection("사건 기록",history||"첫 사건을 마치면 선택이 기록됩니다.",state.events.length+"건")+
     filedSection("계절 경연 · 박람회",(warrants?'<p><b>왕실 납품 인증</b> '+warrants+'</p>':"")+(fairHistory.join("")||"참가한 행사의 결과가 기록됩니다."),fairHistory.length+"건")+
-    filedSection("엔딩 도감",album,Object.keys(endingScenes).filter(hasEndingRecord).length+"개 기록")+extra+'</aside></div>';
+    filedSection("엔딩 도감",album,endingGalleryEntries().length+"개 기록")+extra+'</aside></div>';
 }
 function relapseNotice(run){
   if(!run.relapseStage)return "";
