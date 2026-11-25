@@ -69,17 +69,19 @@ for(const fairId of run('contests.map(f=>f.id)')){
 // A real manual slot saved on the last line can be replayed. Once awarded, the saved result is final.
 setup('state.fairTickets={"newYear-1886":{index:0}};state.plan=["study","study","study"];state.visit="none";state=normalizeSave(state)');
 assertOk('!reservedContest(state)&&openContests(state).length===0&&scheduledActivities(state).length===3&&settleFestival(state)===null');
-for(const [index,stat,low,high] of [[0,"기품",.20,.23],[1,"매력",.06,.08]]){
-  setup('tab="plan";state.month=state.planMonth=13;state.stats.기품=124;state.stats.매력=71;state.fairTickets={"newYear-1887":{index:'+index+'}};state.sequence={contest:"newYear-1887"};prepareContest(state)');
-  const chance=run('state.sequence.duel.judgment.chance');
-  assert.ok(chance>low&&chance<high);
-  assert.equal(run('state.sequence.duel.rivalScore'),225);
+for(const [statScore,label] of [[274,"패배"],[275,"공동 우승"],[276,"승리"]]){
+  const won=label!=="패배";
+  ctx.statScore=statScore;
+  // These multipliers give a fractional score just below the displayed integer.
+  setup('tab="plan";state.month=state.planMonth=13;state.stats.기품=statScore;state.motivation=69;state.fairTickets={"newYear-1887":{index:0}};state.sequence={contest:"newYear-1887"};prepareContest(state)');
+  assert.equal(run('state.sequence.duel.judgment.score'),statScore);
+  assert.equal(run('state.sequence.duel.rivalScore'),275);
   run('state.sequence.duel.page=2;handleAction("store:1",null,true)');
   const before=run('JSON.stringify([state.fund,state.renown,state.stats])');
-  for(const won of [false,true]){
+  for(const roll of [0,.999]){
+    ctx.roll=roll;
     run('handleAction("load:1",null,true)');
     assert.equal(run('JSON.stringify([state.fund,state.renown,state.stats])'),before);
-    ctx.roll=won?chance/2:(1+chance)/2;
     run('(()=>{const rng=Math.random;try{Math.random=()=>roll;settleFestival(state,state.sequence.duel);}finally{Math.random=rng;}})()');
     const entry=run('state.fairBook["newYear-1887"]');
     assert.equal(entry.rank,won?2:0);
@@ -87,31 +89,43 @@ for(const [index,stat,low,high] of [[0,"기품",.20,.23],[1,"매력",.06,.08]]){
     assert.equal(entry.prize,won?"은제 찻숟가락":"");
     assert.equal(entry.growth?.length||0,won?2:0);
     if(!won)assert.equal(run('JSON.stringify([state.fund,state.renown,state.stats])'),before);
-    const slip=run('contestResultSlip(contests[2],state.fairBook["newYear-1887"],"심사평")');
-    assert.match(slip,won?/<h3>승리/:/<h3>패배/);assert.doesNotMatch(slip,/금상|은상|동점/);
-    assert.equal(slip.includes("승리 보상"),won);
-    assert.doesNotMatch(slip,/승률|award-parts|컨디션 ×|의욕 ×|스트레스 ×/);
-    assert.match(slip,/환산 실력/);
+    const scene=run('contestScene(pendingEvent())');
+    assert.ok(scene.includes("<h3>"+label+"</h3>")&&scene.includes(statScore+"점"));
+    assert.equal(scene.includes("승리 보상"),won);
+    assert.doesNotMatch(scene,/승률|award-parts|컨디션 ×|의욕 ×|스트레스 ×/);
+    assert.ok(run('thisMonthFairReport()').includes(label));
     const paid=run('JSON.stringify([state.fairBook,state.fund,state.renown,state.stats])');
     run('handleAction("store:2",null,true);handleAction("load:2",null,true);settleFestival(state,state.sequence.duel)');
     assert.equal(run('JSON.stringify([state.fairBook,state.fund,state.renown,state.stats])'),paid);
   }
-  setup('state.stats.기품=124;state.stats.매력=71');
-  ctx.optionIndex=index; ctx.statKey=stat;
-  const odds=()=>run('judgeContest(state,contests[2],{index:optionIndex}).chance');
-  const baseline=odds();
-  run('state.stats[statKey]+=12');assert.ok(odds()>baseline);
-  run('state.stats[statKey]-=12;state.stress+=20');assert.ok(odds()<baseline);
 }
-// Even a fully prepared entry can lose the final competition.
-setup('state.month=33;state.quality="fine";state.qty=1;state.shop.design=state.shop.works=3;state.productNotes={toys:{material:"select",reworked:true}};state.productHistory={toys:{reputation:20,units:240,orders:12}}');
-assertOk('(()=>{const fair=contests.find(f=>f.id==="royalWarrant-1888");const j=judgeContest(state,fair,{product:"toys"});return contestRivalAbility(fair)===140&&j.chance>.50&&j.chance<.60;})()');
-run('state.productHistory.toys.units=17');
-assertOk('judgeContest(state,contests.find(f=>f.id==="royalWarrant-1888"),{product:"toys"}).chance===0');
-setup('state.month=13;state.stats.기품=124;state.fairTickets={"newYear-1887":{index:0}};state.sequence={contest:"newYear-1887"};prepareContest(state);state.sequence.duel.rivalScore=195;state.sequence.duel.judgment.chance=.32;persist();state=normalizeSave(saves.auto)');
-assertOk('contestScene(pendingEvent()).includes("195점")&&matchAssessment(state,contests[2],{index:0},state.sequence.duel).chance===.32');
+assert.deepEqual(Array.from(run('contests.map(contestRivalAbility)')),[112,112,275,365,132,490,515,148]);
+for(const [index,stat] of [[0,"기품"],[1,"매력"]]){
+  setup('state.stats.기품=124;state.stats.매력=71');
+  ctx.optionIndex=index;ctx.statKey=stat;
+  const score=()=>run('judgeContest(state,contests[2],{index:optionIndex}).score');
+  const baseline=score();
+  run('state.stats[statKey]+=12');assert.ok(score()>baseline);
+  run('state.stats[statKey]-=12;state.stress+=20');assert.ok(score()<baseline);
+}
+// A top-quality entry beats the final opponent. The warrant also requires 18 units sold.
+for(const [units,expected] of [[240,"승리"],[18,"승리"],[17,"인증 요건 미달"]]){
+  ctx.units=units;
+  setup('state.month=33;state.quality="fine";state.qty=1;state.shop.design=state.shop.works=3;state.productNotes={toys:{material:"select",reworked:true}};state.productHistory={toys:{reputation:20,units,orders:12}};state.fairTickets={"royalWarrant-1888":{product:"toys"}};state.sequence={contest:"royalWarrant-1888"};prepareContest(state);settleFestival(state,state.sequence.duel)');
+  const entry=run('state.fairBook["royalWarrant-1888"]');
+  assert.equal(entry.score,152);
+  assert.equal(entry.duel.rivalScore,148);
+  assert.equal(run('contestRank(state.fairBook["royalWarrant-1888"])'),expected);
+  assert.equal(run('state.royalWarrants?.toys===33'),units>=18);
+  if(units<18)assert.match(run('contestScene(pendingEvent())'),/누적 판매·납품 18개 미달/);
+}
+// An unfinished legacy match keeps both contestants' scores. A previously awarded upset stays final.
+setup('state.month=13;state.stats.기품=210;state.fairTickets={"newYear-1887":{index:0}};state.sequence={contest:"newYear-1887"};prepareContest(state);state.sequence.duel.rivalScore=195;state.sequence.duel.judgment.chance=0;state.stats.기품=50;persist();state=normalizeSave(saves.auto)');
+assertOk('contestScene(pendingEvent()).includes("195점")');
 run('settleFestival(state,state.sequence.duel)');
-assertOk('state.fairBook["newYear-1887"].duel.rivalScore===195&&state.fairBook["newYear-1887"].chance===.32');
+assertOk('state.fairBook["newYear-1887"].duel.rivalScore===195&&state.fairBook["newYear-1887"].rank===2');
+setup('state.month=13;state.fairTickets={"newYear-1887":{index:0}};state.fairBook={"newYear-1887":{match:true,index:0,score:250,chance:.65,rank:0,duel:{rivalScore:195},revealed:true}};persist();state=normalizeSave(saves.auto)');
+assertOk('settleFestival(state)===null&&fairReport(contests[2]).includes("패배")');
 // Poor condition raises the chance of a real failure, even with practice and an upgraded room.
 assertOk(`(()=>{
   const run=initial();run.month=20;run.counts.study=3;run.level.library=3;
@@ -743,9 +757,9 @@ for(const ending of ["title","business","defer"]){
   assertOk('state.duration===35 && state.phase==="result" && !state.ending && state.endingBeat===undefined');
   run('advance()');assertOk('state.month===7 && state.phase==="plan"');
 }
-for(const [quality,qty,roll,rank] of [["fine",1,0,2],["fine",1,.999,0],["standard",1,.999,0],["fine",0,0,0]]){
+for(const [quality,qty,rank] of [["fine",1,2],["standard",1,0],["fine",0,0]]){
   setup('tab="plan";state.month=4;state.fairTickets={kensington1886:{product:"toys"}};persist();state=normalizeSave(saves.auto);state.month=5;state.qty='+qty+';state.quality='+JSON.stringify(quality));
-  run('(()=>{const rng=Math.random;try{Math.random=()=>'+roll+';settleFestival(state,{fairId:"kensington1886"});}finally{Math.random=rng;}})()');
+  run('state.productHistory.toys={reputation:12,units:72,orders:2};settleFestival(state,{fairId:"kensington1886"})');
   assert.equal(run('state.fairBook.kensington1886.rank'),rank);
   const renown=run('state.renown');run('settleFestival(state)');assert.equal(run('state.renown'),renown);
   run('state.month=6');assert.equal(run('fairDemand(state,"toys")'),rank*2);

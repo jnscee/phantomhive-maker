@@ -205,6 +205,11 @@ async function check(browserType){
       await creditPage.close();
       const fairPage=await browser.newPage({viewport});
       await fairPage.goto(base+'?fair-preview=newYear-1887&entry=1');
+      await fairPage.evaluate(()=>{
+        state.stats.매력=300;
+        delete state.sequence.duel;
+        prepareContest(state);
+      });
       assert.equal(await fairPage.locator('.duel-plate b').first().textContent(),'에드워드 미드포드');
       await fairPage.locator('.duel-portrait').evaluate(img=>img.decode());
       assert.equal(await fairPage.locator('[data-action^="fair-play"]').count(),0);
@@ -213,11 +218,10 @@ async function check(browserType){
       assert.match(await fairPage.locator('.duel-screen .dialogue p').innerText(),/인정해 달랬어/);
       await fairPage.locator('.dialogue [data-action="fair-next:1"]').click();
       assert.match(await fairPage.locator('.duel-screen .dialogue p').innerText(),/그 잔은|우유를|첫 잔은/);
-      // Exercise the victory slip on every viewport. The loss and reroll are tested in story-commerce.
-      await fairPage.evaluate(()=>{Math.random=()=>0;});
       await fairPage.locator('.dialogue [data-action="fair-next:2"]').click();
       assert.ok(await fairPage.locator('[data-action="fair-close"]').isVisible());
       const award=fairPage.getByRole('article',{name:'경연 결과'});
+      assert.equal(await award.locator('h3').innerText(),'승리');
       assert.match(await award.locator('.award-total').innerText(),/\d+점/);
       assert.equal(await award.locator('.award-parts').count(),0);
       assert.doesNotMatch(await award.innerText(),/승률|[×]/);
