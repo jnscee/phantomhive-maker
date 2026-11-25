@@ -116,6 +116,7 @@ for(const [units,expected] of [[240,"승리"],[18,"승리"],[17,"인증 요건 �
   assert.equal(entry.score,152);
   assert.equal(entry.duel.rivalScore,148);
   assert.equal(run('contestRank(state.fairBook["royalWarrant-1888"])'),expected);
+  assert.equal(run('contestResultOutcome(contestArchive.find(f=>f.id==="royalWarrant-1888"),state.fairBook["royalWarrant-1888"])'),units>=18?'win_close':'qualification');
   assert.equal(run('state.royalWarrants?.toys===33'),units>=18);
   if(units<18)assert.match(run('contestScene(pendingEvent())'),/누적 판매·납품 18개 미달/);
 }
@@ -126,6 +127,140 @@ run('settleFestival(state,state.sequence.duel)');
 assertOk('state.fairBook["newYear-1887"].duel.rivalScore===195&&state.fairBook["newYear-1887"].rank===2');
 setup('state.month=13;state.fairTickets={"newYear-1887":{index:0}};state.fairBook={"newYear-1887":{match:true,index:0,score:250,chance:.65,rank:0,duel:{rivalScore:195},revealed:true}};persist();state=normalizeSave(saves.auto)');
 assertOk('settleFestival(state)===null&&fairReport(contests[2]).includes("패배")');
+// Result readings use the actual game modules loaded above, not the standalone preview engine.
+assert.equal(run('Object.values(contestResultDialogue.edward).reduce((n,s)=>n+Object.keys(s).length,0)+Object.values(contestResultDialogue.elizabeth).reduce((n,s)=>n+Object.keys(s).length,0)+Object.keys(contestResultDialogue.warrant.standard).length+Object.keys(contestResultDialogue.special).length'),34);
+const resultSubjects=[
+  ['newYear-1887',0,'edward','greeting'],['newYear-1887',1,'edward','tea'],
+  ['easter-1886',0,'elizabeth','music'],['easter-1886',1,'elizabeth','eggs'],
+  ['royalWarrant-1886',0,'warrant','standard']
+];
+const resultOutcomes=[
+  [0,80,'loss_under'],[0,95,'loss_close'],[2,102,'win_close'],
+  [2,110,'win_prepared'],[0,120,'loss_even'],[2,80,'win_even']
+];
+for(const [id,index,group,subject] of resultSubjects){
+  Object.assign(ctx,{resultFairId:id,resultIndex:index,resultGroup:group,resultSubject:subject});
+  for(const [rank,score,outcome] of resultOutcomes){
+    Object.assign(ctx,{resultRank:rank,resultScore:score,resultOutcome:outcome});
+    assertOk(`(()=>{
+      const fair=contestArchive.find(f=>f.id===resultFairId);
+      const entry={match:true,index:resultIndex,product:"toys",rank:resultRank,score:resultScore,duel:{rivalScore:100}};
+      const scene=contestResultScene(fair,entry),expected=contestResultDialogue[resultGroup][resultSubject][resultOutcome];
+      if(contestResultOutcome(fair,entry)!==resultOutcome||scene!==expected||contestResultLine(fair,entry)!==scene.narration)return false;
+      const html=duelScene(fair,entry,entry.duel,entry);
+      return html.includes(escapeHTML(scene.narration))&&html.includes(escapeHTML(scene.lines[0][0]))&&
+        html.includes(escapeHTML(scene.lines[0][1]))&&html.includes('aria-label="결과 대사"')&&
+        html.includes('data-action="fair-close"')&&!/undefined|NaN/.test(html);
+    })()`);
+  }
+}
+for(const [rank,score,outcome] of [[0,94,'loss_under'],[0,95,'loss_close'],[0,99,'loss_close'],[2,101,'win_close'],[2,109,'win_close'],[2,110,'win_prepared'],[0,100,'loss_even'],[2,100,'win_even']]){
+  Object.assign(ctx,{resultRank:rank,resultScore:score});
+  assert.equal(run('contestResultOutcome(contests[2],{match:true,rank:resultRank,score:resultScore,duel:{rivalScore:100}})'),outcome);
+}
+assert.equal(run('contestResultOutcome(contests[2],{match:true,rank:2,score:110,scoreParts:[["기품",110]],factors:[["컨디션",.999]],duel:{rivalScore:100}})'),'win_prepared');
+// Completed old upsets and incomplete scorecards retain their saved outcome and get neutral prose.
+for(const [entry,outcome] of [
+  [{match:true,rank:0,score:250,chance:.65,duel:{rivalScore:195}},'loss_even'],
+  [{match:true,rank:2,score:195,chance:.4,duel:{rivalScore:250}},'win_even'],
+  [{match:true,rank:0,score:100},'loss_even'],
+  [{match:true,rank:2,duel:{rivalScore:100}},'win_even'],
+  [{match:true,rank:0,score:100,duel:{rivalScore:0}},'loss_even'],
+  [{match:true,rank:0,score:NaN,duel:{rivalScore:100}},'loss_even'],
+  [{match:true,rank:1,score:100,duel:{rivalScore:100}},'unknown']
+]){
+  ctx.resultRecord={index:0,...entry};
+  const untouched=structuredClone(ctx.resultRecord);
+  assert.equal(run('contestResultOutcome(contests[2],resultRecord)'),outcome);
+  if(outcome==='unknown')assert.equal(run('contestResultScene(contests[2],resultRecord)'),null);
+  else assert.equal(run('contestResultScene(contests[2],resultRecord)===contestResultDialogue.edward.greeting[contestResultOutcome(contests[2],resultRecord)]'),true);
+  assert.deepEqual(ctx.resultRecord,untouched);
+}
+for(const rank of [0,1,2]){
+  ctx.resultRecord={rank,index:0,score:100,duel:{rivalScore:100}};
+  assert.equal(run('contestResultScene(contests[2],resultRecord)'),null);
+  assert.equal(run('contestResultDialogueMarkup(contests[2],resultRecord)'),'');
+}
+for(const id of ['spring-1886','harvest-1886','kensington1886','jubilee1887','earlsCourt1888']){
+  ctx.resultFairId=id;
+  assertOk(`(()=>{
+    const fair=contestArchive.find(f=>f.id===resultFairId);
+    const entry={match:true,rank:2,index:0,product:"toys",score:100,duel:{rivalScore:100},tied:true};
+    return contestResultScene(fair,entry)===null&&contestResultDialogueMarkup(fair,entry)===""&&
+      !contestResultLine(fair,entry).includes("납품 증서");
+  })()`);
+}
+assert.equal(run('contestResultScene(contests[2],{match:true,rank:2,index:99,score:400,duel:{rivalScore:275}})'),null);
+for(const [id,entry,key] of [
+  ['newYear-1887',{match:true,index:0,rank:2,score:275,duel:{rivalScore:275},tied:true},'tied_personal'],
+  ['royalWarrant-1886',{match:true,product:'toys',rank:2,score:112,duel:{rivalScore:112},tied:true},'tied_company'],
+  ['royalWarrant-1886',{match:true,product:'toys',rank:0,score:152,duel:{rivalScore:112},scoreCondition:'누적 판매·납품 18개 미달'},'qualification'],
+  ['newYear-1887',{match:true,index:0,rank:0,reason:'병중으로 불참'},'absent']
+]){
+  Object.assign(ctx,{resultFairId:id,resultRecord:entry,resultSpecial:key});
+  assertOk('contestResultScene(contestArchive.find(f=>f.id===resultFairId),resultRecord)===contestResultDialogue.special[resultSpecial]');
+}
+assert.equal(run('contestResultOutcome(contests[2],{reason:"불참",scoreCondition:"요건 미달",tied:true})'),'absent');
+assert.equal(run('contestResultOutcome(contests[1],{match:true,rank:0,scoreCondition:"요건 미달",tied:true})'),'qualification');
+// Non-duel result pages and the separate absence path must also contain the new readings.
+setup('tab="plan";state.month=state.planMonth=13;state.phase="event";state.pending="contest-newYear-1887";state.hp=10;state.ill=true;state.fairTickets={"newYear-1887":{index:0}};settleFestival(state)');
+let resultHtml=run('contestScene(pendingEvent())');
+assert.match(resultHtml,/병중으로 불참|참가하지 못합니다/);
+assert.match(resultHtml,/award-dialogue/);assert.doesNotMatch(resultHtml,/undefined점|NaN|award-total|award-purse/);
+const absenceState=run('structuredClone(state)');
+run('handleAction("fair-result-next:0");handleAction("fair-result-restart:1")');
+assert.deepEqual(run('structuredClone(state)'),absenceState);
+setup('tab="plan";state.month=state.planMonth=13;state.phase="event";state.pending="contest-newYear-1887";state.stats.기품=400;state.fairTickets={"newYear-1887":{index:0}};settleFestival(state);state.fairBook["newYear-1887"].revealed=true');
+resultHtml=run('contestScene(pendingEvent())');
+assert.match(resultHtml,/award-dialogue/);assert.match(resultHtml,/award-total/);
+// Pagination is UI-only: stale/repeated actions cannot settle, persist, or draw randomness.
+for(const id of ['newYear-1887','royalWarrant-1887']){
+  ctx.resultFairId=id;
+  setup('tab="plan";{const fair=contestArchive.find(f=>f.id===resultFairId);state.month=state.planMonth=fair.month;state.stats.기품=400;state.quality="fine";state.qty=1;state.shop.design=state.shop.works=3;state.productNotes={toys:{material:"select",reworked:true}};state.productHistory={toys:{reputation:20,units:240,orders:12}};state.fairTickets={[fair.id]:fair.company?{product:"toys"}:{index:0}};state.sequence={contest:fair.id};prepareContest(state);settleFestival(state,state.sequence.duel)}');
+  const paid=run('structuredClone(state)'),saved=Array.from(mem);
+  assertOk(`(()=>{
+    const event=pendingEvent(),entry=state.fairBook[event.contest.id],scene=contestResultScene(event.contest,entry);
+    const settle=settleFestival,monthly=settleMonth,save=persist,rng=Math.random;
+    const refuse=()=>{throw new Error("A result reading must not settle, save, or draw randomness");};
+    try{
+      settleFestival=settleMonth=persist=Math.random=refuse;
+      if(contestResultPage(entry,scene)!==0)return false;
+      handleAction("fair-result-prev:0");
+      if(contestResultPage(entry,scene)!==0)return false;
+      handleAction("fair-result-next:0");
+      if(contestResultPage(entry,scene)!==1)return false;
+      handleAction("fair-result-next:0");
+      if(contestResultPage(entry,scene)!==1)return false;
+      while(contestResultPage(entry,scene)<scene.lines.length-1)handleAction("fair-result-next:"+contestResultPage(entry,scene));
+      const last=scene.lines.length-1;
+      handleAction("fair-result-next:"+last);
+      if(contestResultPage(entry,scene)!==last)return false;
+      if(!contestResultDialogueMarkup(event.contest,entry).includes(escapeHTML(scene.lines[last][1])))return false;
+      handleAction("fair-result-prev:"+last);
+      if(contestResultPage(entry,scene)!==last-1)return false;
+      handleAction("fair-result-restart:"+(last-1));
+      if(contestResultPage(entry,scene)!==0)return false;
+      handleAction("fair-result-next:invalid");
+      return contestResultPage(entry,scene)===0;
+    }finally{settleFestival=settle;settleMonth=monthly;persist=save;Math.random=rng;}
+  })()`);
+  assert.deepEqual(run('structuredClone(state)'),paid);
+  assert.deepEqual(Array.from(mem),saved);
+  assert.equal(run('settleFestival(state,state.sequence.duel)'),null);
+  assert.deepEqual(run('structuredClone(state)'),paid);
+  run('handleAction("fair-result-next:0");state=structuredClone(state)');
+  assertOk('contestResultPage(state.fairBook[resultFairId],contestResultScene(pendingEvent().contest,state.fairBook[resultFairId]))===0');
+}
+// Authored dialogue stays text even when it contains markup-like characters.
+assertOk(`(()=>{
+  const lines=contestResultDialogue.edward.greeting.win_prepared.lines,original=lines[0];
+  try{
+    lines[0]=["<시엘>","<img src=x onerror=alert(1)> & 인사"];
+    const html=contestResultDialogueMarkup(contests[2],{match:true,index:0,rank:2,score:400,duel:{rivalScore:275}});
+    return html.includes("&lt;시엘&gt;")&&html.includes("&lt;img")&&html.includes("&amp; 인사")&&!html.includes("<img");
+  }finally{lines[0]=original;}
+})()`);
+console.log('PASS 34 result readings, score boundaries, historical fallbacks, absence, replay without settlement, and escaped dialogue');
 // Poor condition raises the chance of a real failure, even with practice and an upgraded room.
 assertOk(`(()=>{
   const run=initial();run.month=20;run.counts.study=3;run.level.library=3;

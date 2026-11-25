@@ -262,6 +262,52 @@ function thisMonthFairReport(){
 function contestEvent(fair){
   return {id:"contest-"+fair.id,title:fair.title,speaker:"세바스찬",track:fair.track,contest:fair,sees:()=>false,choices:[]};
 }
+// Reading a result never changes its saved score, outcome, or rewards.
+const contestResultPages=new WeakMap();
+function contestResultOutcome(fair,entry){
+  if(entry?.reason)return "absent";
+  if(entry?.scoreCondition)return "qualification";
+  if(entry?.tied)return fair.company?"tied_company":"tied_personal";
+  if(!entry?.match)return "legacy";
+  const won=entry.rank===2;
+  if(entry.rank!==0&&!won)return "unknown";
+  const score=entry.score,rival=entry.duel?.rivalScore;
+  if(!Number.isFinite(score)||score<0||!Number.isFinite(rival)||rival<=0)
+    return won?"win_even":"loss_even";
+  // A completed result from older rules remains final, including an upset or a tie.
+  if(won&&score<=rival)return "win_even";
+  if(!won&&score>=rival)return "loss_even";
+  // These thresholds select wording only; the original settlement determines victory.
+  return won?(score/rival>=1.1?"win_prepared":"win_close"):
+    (score>=rival*.95?"loss_close":"loss_under");
+}
+function contestResultScene(fair,entry){
+  const kind=fair.id.split("-")[0];
+  const group=fair.warrant?"warrant":kind==="newYear"?"edward":kind==="easter"?"elizabeth":null;
+  if(!group||!entry||(!entry.match&&!entry.reason))return null;
+  const key=group==="warrant"?"standard":
+    (group==="edward"?["greeting","tea"]:["music","eggs"])[entry.index];
+  const subject=contestResultDialogue[group][key];
+  if(!subject)return null;
+  const outcome=contestResultOutcome(fair,entry);
+  return contestResultDialogue.special[outcome]||subject[outcome]||null;
+}
+function contestResultPage(entry,scene){
+  const page=contestResultPages.get(entry);
+  return Math.max(0,Math.min(Number.isInteger(page)?page:0,scene.lines.length-1));
+}
+function contestResultDialogueMarkup(fair,entry){
+  const scene=contestResultScene(fair,entry);
+  if(!scene)return "";
+  const page=contestResultPage(entry,scene),[speaker,line]=scene.lines[page];
+  return '<section class="award-dialogue" aria-label="결과 대사">'+
+    '<div class="award-dialogue-line" aria-live="polite" aria-atomic="true">'+
+    '<div class="award-dialogue-heading"><h4>'+escapeHTML(speaker)+'</h4><span>'+(page+1)+' / '+scene.lines.length+'</span></div>'+
+    '<p>'+escapeHTML(line)+'</p></div><nav class="award-dialogue-controls" aria-label="결과 대사 넘기기">'+
+    btn("이전 대사","fair-result-prev:"+page,page===0)+
+    btn(page===scene.lines.length-1?"마지막 대사":"다음 대사","fair-result-next:"+page,page===scene.lines.length-1)+
+    btn("다시 보기","fair-result-restart:"+page,page===0)+'</nav></section>';
+}
 function contestResultSlip(fair,entry,line){
   const duel=entry.duel;
   const margin=duel&&!entry.match?entry.score-duel.rivalScore:null;
@@ -281,7 +327,7 @@ function contestResultSlip(fair,entry,line){
   return '<article class="contest-slip award-sheet" data-rank="'+entry.rank+'" aria-label="경연 결과" aria-live="polite">'+
     '<header class="award-head"><h3>'+escapeHTML(rank)+'</h3><strong>'+escapeHTML(verdict)+'</strong>'+
     (margin?'<span>'+Math.abs(margin)+'점 차</span>':'')+'</header>'+
-    '<div class="award-body"><p class="award-comment">'+escapeHTML(line)+'</p><dl class="award-ledger">'+
+    '<div class="award-body"><p class="award-comment">'+escapeHTML(line)+'</p>'+contestResultDialogueMarkup(fair,entry)+'<dl class="award-ledger">'+
     '<div><dt>심사 점수</dt><dd><strong class="award-total">'+entry.score+'점</strong>'+
     (entry.scoreCondition?'<small>'+escapeHTML(entry.scoreCondition)+'</small>':'')+'</dd></div>'+
     '<div><dt>능력 변화</dt><dd>'+(growth||'—')+'</dd></div>'+
@@ -296,6 +342,8 @@ function contestAppearance(fair){
   return fair.id.startsWith("newYear-")?Math.max(0,fair.year-1):fair.year;
 }
 function contestResultLine(fair,entry){
+  const scene=contestResultScene(fair,entry);
+  if(scene)return scene.narration;
   if(entry.match&&entry.scoreCondition)return "담당관이 납품 장부의 수량을 짚습니다. 시엘은 인증에 필요한 열여덟 개까지 몇 개가 남았는지 확인합니다.";
   if(entry.tied)return fair.company?"담당관이 같은 점수를 받은 두 상회의 이름을 나란히 적고 양쪽 견본 앞에 상장을 놓습니다.":"심사위원이 같은 점수를 받은 두 사람의 이름을 차례로 부릅니다. 시엘이 상대와 나란히 서서 인사합니다.";
   const option=fair.options?.[entry.index];
@@ -358,7 +406,7 @@ function contestScene(event){
   const o=fair.options?.[entry.index],label=contestEntryName(fair,entry);
   const revealed=entry.revealed||entry.reason;
   const heading=revealed?contestRank(entry):label;
-  const line=entry.reason?"세바스찬이 접수처에서 돌려받은 참가표를 수첩에 끼워 둡니다.":
+  const line=entry.reason?(contestResultScene(fair,entry)?.narration??"세바스찬이 접수처에서 돌려받은 참가표를 수첩에 끼워 둡니다."):
     revealed?contestResultLine(fair,entry):o?.line??"팬텀사의 상표를 단 견본을 흰 천 위에 올립니다. 심사위원이 견본을 들어 마감을 살피고 납품 기록을 펼칩니다.";
   const poses=o?.poses||["inspect","write"];
   const display=entry.reason?"":'<div class="contest-display'+(revealed?" is-revealed":"")+'">'+
@@ -370,13 +418,14 @@ function contestScene(event){
   }
   return '<section class="contest-screen" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+
     '<header><span>'+monthText(fair.month)+'</span><h2 id="contest-title">'+fair.title+'</h2></header>'+display+
-    '<div class="contest-slip"><h3>'+heading+'</h3><p>'+line+'</p>'+
+    '<div class="contest-slip"><h3>'+heading+'</h3><p>'+escapeHTML(line)+'</p>'+
+    (revealed?contestResultDialogueMarkup(fair,entry):'')+
     (revealed&&entry.purse?'<p class="contest-prize">상금 '+money(entry.purse)+' · '+entry.prize+'</p>':'')+
     (revealed&&fair.warrant&&entry.rank===2?'<p>인증 품목 수요 매달 +2개</p>':'')+
     btn(revealed?"행사 마치기":"심사 결과 보기",revealed?"fair-close":"fair-reveal",false,"primary")+'</div></section>';
 }
 function festivalAction(action,id){
-  if(!["fair-next","fair-reveal","fair-close"].includes(action))return false;
+  if(!["fair-next","fair-reveal","fair-close","fair-result-prev","fair-result-next","fair-result-restart"].includes(action))return false;
   if(tab!=="plan"||state.phase!=="event")return true;
   const event=pendingEvent(),fair=event?.contest;
   if(!fair)return true;
@@ -391,6 +440,23 @@ function festivalAction(action,id){
     return true;
   }
   if(!entry)return true;
+  if(action.startsWith("fair-result-")){
+    const scene=contestResultScene(fair,entry);
+    if(!scene||!(entry.duel||entry.revealed||entry.reason))return true;
+    const page=contestResultPage(entry,scene);
+    if(id!==String(page))return true;
+    const next=action==="fair-result-restart"?0:page+(action==="fair-result-next"?1:-1);
+    if(next<0||next>=scene.lines.length||next===page)return true;
+    const scroll=document.querySelector("#conversation .contest-screen")?.scrollTop||0;
+    contestResultPages.set(entry,next);
+    render();
+    const screen=document.querySelector("#conversation .contest-screen");
+    if(screen)screen.scrollTop=scroll;
+    const focus=action==="fair-result-prev"&&next>0?"fair-result-prev":
+      next===scene.lines.length-1?"fair-result-restart":"fair-result-next";
+    focusAction(focus+":"+next);
+    return true;
+  }
   if(action==="fair-reveal"&&!entry.revealed&&!entry.reason){
     entry.revealed=true;persist();render(true);
   }else if(action==="fair-close"&&(entry.revealed||entry.reason))finishEventChoice(event);

@@ -1735,7 +1735,7 @@ function handleAction(key,rect,confirmed=false){
   if(storyDemo&&!["choose","term-next","term-close","music"].includes(action))return;
   if(previewFair){
     if(action==="fair-close"){location.reload();return;}
-    if(action!=="fair-next" && action!=="music")return;
+    if(!["fair-next","fair-result-prev","fair-result-next","fair-result-restart","music"].includes(action))return;
   }
   if(action==="fair-notices"&&tab==="plan"&&state.phase==="plan"){openFairNotices();return;}
   if(action==="fair-entry"){selectFestival(id,value);return;}

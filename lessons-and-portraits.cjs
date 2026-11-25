@@ -238,6 +238,33 @@ async function check(browserType){
       assert.doesNotMatch(await award.innerText(),/승률|[×]/);
       assert.equal(await award.locator('.award-gain').count(),2);
       assert.match(await award.locator('.award-purse').innerText(),/상금 £/);
+      // The public fair-preview route must allow result pagination without settling again.
+      const reading=award.locator('.award-dialogue');
+      assert.ok(await reading.isVisible());
+      const resultLines=await fairPage.evaluate(()=>{
+        const fair=contests.find(f=>f.id==='newYear-1887');
+        return contestResultScene(fair,state.fairBook[fair.id]).lines;
+      });
+      const settledSnapshot=await fairPage.evaluate(()=>JSON.stringify({state,saved:localStorage.getItem(storageKey)}));
+      assert.equal(await reading.locator('h4').innerText(),resultLines[0][0]);
+      assert.equal(await reading.locator('p').innerText(),resultLines[0][1]);
+      await reading.locator('[data-action="fair-result-next:0"]').focus();
+      const readingScroll=await fairPage.locator('.duel-result').evaluate(screen=>screen.scrollTop);
+      await reading.locator('[data-action="fair-result-next:0"]').press('Enter');
+      assert.equal(await reading.locator('p').innerText(),resultLines[1][1]);
+      const restoredScroll=await fairPage.locator('.duel-result').evaluate(screen=>({top:screen.scrollTop,max:screen.scrollHeight-screen.clientHeight}));
+      assert.ok(Math.abs(restoredScroll.top-Math.min(readingScroll,restoredScroll.max))<=1,'Reading the next line preserves the result screen scroll');
+      await reading.locator('[data-action="fair-result-prev:1"]').click();
+      assert.equal(await reading.locator('p').innerText(),resultLines[0][1]);
+      for(let resultPage=0;resultPage<resultLines.length-1;resultPage++){
+        await reading.locator('[data-action="fair-result-next:'+resultPage+'"]').click();
+        assert.equal(await reading.locator('h4').innerText(),resultLines[resultPage+1][0]);
+        assert.equal(await reading.locator('p').innerText(),resultLines[resultPage+1][1]);
+      }
+      assert.ok(await reading.locator('[data-action="fair-result-next:'+(resultLines.length-1)+'"]').isDisabled());
+      await reading.locator('[data-action="fair-result-restart:'+(resultLines.length-1)+'"]').click();
+      assert.equal(await reading.locator('p').innerText(),resultLines[0][1]);
+      assert.equal(await fairPage.evaluate(()=>JSON.stringify({state,saved:localStorage.getItem(storageKey)})),settledSnapshot);
       const awardLayout=await fairPage.locator('.duel-result').evaluate(screen=>{
         const card=screen.querySelector('.award-sheet');
         const side=screen.querySelector('.duel-side:last-child');
