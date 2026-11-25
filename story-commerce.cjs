@@ -250,7 +250,7 @@ for(const weather of ['heat','cold']){
   setup('tab="plan";state.month=weatherKind==="heat"?6:12;state.weather=weatherKind;state.phase="weatherBriefing";persist();state=normalizeSave(saves.auto)');
   assertOk('faceDialogue() && $("conversation").innerHTML.includes(weatherFor(state).scene) && $("conversation").innerHTML.includes("weather-close")');
   run('handleAction("weather-close")');assertOk('state.phase==="plan" && saves.auto.phase==="plan"');
-  setup('state.month=weatherKind==="heat"?7:12;state.plan=["exercise","study","rest"];state.visit="none";');
+  setup('state.month=weatherKind==="heat"?6:12;state.plan=["exercise","study","rest"];state.visit="none";');
   const ordinary=run('overhead()');
   run('state.weather=weatherKind;state=normalizeSave(state)');
   assert.equal(run('overhead()'),ordinary+(weather==='heat'?22:30));
@@ -266,7 +266,8 @@ for(const weather of ['heat','cold']){
   }
   assertOk('plannerContents().includes(weatherFor(state).name) && scheduleNote("exercise").includes("↑")');
   run('state.plan=["study","study","study"];state.visit="town";state.qty=0;execute();var quote=overhead();state.sequence.index=2;settleMonth()');
-  assertOk('state.report.bills===quote && actualBudget().includes(weatherFor(state).charge)');
+  assertOk('state.report.bills===quote && actualBudget().includes("저택 유지")');
+  assert.doesNotMatch(run('actualBudget()'),/빙고 얼음값|난방 석탄값/);
 }
 
 for(const id of run('Object.keys(marketShifts)')){

@@ -42,9 +42,11 @@ const expected={
 };
 for(const id of activityIds){
   const field=placement(model,id),baseline=expected[id]??expected.study;
-  assert.deepEqual(field.value,baseline,id+" editor baseline");
+  const key=JSON.stringify(id);
+  const saved=original("choreography["+key+"][5] ?? null");
+  assert.deepEqual(field.value,saved??baseline,id+" editor shows the saved placement");
   assert.deepEqual(field.defaults,baseline,id+" reset baseline");
-  assert.deepEqual(original("lessonPlacement("+JSON.stringify(id)+")"),baseline,id+" runtime baseline");
+  assert.deepEqual(original("lessonPlacement("+key+")"),saved??baseline,id+" runtime uses the saved placement");
 }
 
 const changedPlacement={x:61.25,bottom:37.75,scale:.333};

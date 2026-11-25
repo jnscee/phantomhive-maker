@@ -177,16 +177,27 @@ async function check(browserType){
       assert.ok(coverFits,'The fan game notice must be visible when the cover opens');
       const weatherPage=await browser.newPage({viewport});
       await openGame(weatherPage);
-      await weatherPage.evaluate(()=>{
-        state=initial();state.month=state.planMonth=7;state.weather="heat";state.phase="plan";tab="plan";render();
-      });
-      await weatherPage.getByRole('button',{name:'폭염 소식'}).click();
-      const bulletin=weatherPage.locator('#season-bulletin');
-      assert.ok(await bulletin.isVisible());
-      assert.match(await bulletin.innerText(),/성장 기본량 ×1.5/);
-      assert.match(await bulletin.innerText(),/이달 저택 지출 \+£22/);
-      await bulletin.getByRole('button',{name:'닫기'}).click();
-      assert.ok(await bulletin.isHidden());
+      for(const [month,weather,label] of [[6,"heat","폭염"],[12,"cold","한파"]]){
+        await weatherPage.evaluate(({month,weather})=>{
+          state=initial();state.month=state.planMonth=month;state.weather=weather;
+          state.phase="weatherBriefing";tab="plan";render();
+        },{month,weather});
+        const dialogue=weatherPage.locator('#conversation .dialogue');
+        assert.equal(await dialogue.locator('small').innerText(),'세바스찬');
+        assert.equal(await dialogue.locator('h2').innerText(),label);
+        await dialogue.getByRole('button',{name:'다음 대사'}).click();
+        assert.equal(await weatherPage.evaluate(()=>state.phase),"plan");
+        await weatherPage.evaluate(()=>{tab="plan";render();});
+        await weatherPage.getByRole('button',{name:label+' 소식'}).click();
+        const bulletin=weatherPage.locator('#season-bulletin');
+        assert.ok(await bulletin.isVisible());
+        assert.equal(await bulletin.locator('small').innerText(),'세바스찬');
+        assert.match(await bulletin.locator('p').innerText(),/도련님/);
+        assert.equal(await bulletin.locator('dl').count(),0);
+        assert.doesNotMatch(await bulletin.innerText(),/×|£|스트레스/);
+        await bulletin.getByRole('button',{name:'닫기'}).click();
+        assert.ok(await bulletin.isHidden());
+      }
       await weatherPage.close();
       const creditPage=await browser.newPage({viewport});
       await openGame(creditPage);
