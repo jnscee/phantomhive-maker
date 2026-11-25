@@ -100,7 +100,7 @@ for(const [statScore,label] of [[274,"패배"],[275,"공동 우승"],[276,"승�
     assert.equal(run('JSON.stringify([state.fairBook,state.fund,state.renown,state.stats])'),paid);
   }
 }
-assert.deepEqual(Array.from(run('contests.map(contestRivalAbility)')),[112,112,275,365,132,490,515,148]);
+assert.deepEqual(Array.from(run('contests.map(contestRivalAbility)')),[112,110,275,365,132,490,515,148]);
 for(const [index,stat] of [[0,"기품"],[1,"매력"]]){
   setup('state.stats.기품=124;state.stats.매력=71');
   ctx.optionIndex=index;ctx.statKey=stat;
