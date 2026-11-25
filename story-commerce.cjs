@@ -27,7 +27,7 @@ for(const id of teaParties){
 for(const [rank,score,expected] of [[0,5,"입상권 밖"],[1,40,"은상"],[2,44,"공동 금상"],[2,49,"금상"]]){
   ctx.legacyEntry={rank,score,duel:{rivalScore:44},scoreNote:"매력 41 + 심사 대응 8"};
   const slip=run('contestResultSlip(contests[0],legacyEntry,"심사평")');
-  assert.ok(slip.includes("<h3>"+expected+"</h3>")&&slip.includes(ctx.legacyEntry.scoreNote));
+  assert.ok(slip.includes("<h3>"+expected+"</h3>")&&!slip.includes(ctx.legacyEntry.scoreNote));
   assert.doesNotMatch(slip,/undefined|NaN|입상 보상/);
 }
 assert.deepEqual(Array.from(run('contests.map(f=>f.month)')),[4,9,13,16,21,25,28,33]);
@@ -90,6 +90,8 @@ for(const [index,stat,low,high] of [[0,"기품",.20,.23],[1,"매력",.06,.08]]){
     const slip=run('contestResultSlip(contests[2],state.fairBook["newYear-1887"],"심사평")');
     assert.match(slip,won?/<h3>승리/:/<h3>패배/);assert.doesNotMatch(slip,/금상|은상|동점/);
     assert.equal(slip.includes("승리 보상"),won);
+    assert.doesNotMatch(slip,/승률|award-parts|컨디션 ×|의욕 ×|스트레스 ×/);
+    assert.match(slip,/환산 실력/);
     const paid=run('JSON.stringify([state.fairBook,state.fund,state.renown,state.stats])');
     run('handleAction("store:2",null,true);handleAction("load:2",null,true);settleFestival(state,state.sequence.duel)');
     assert.equal(run('JSON.stringify([state.fairBook,state.fund,state.renown,state.stats])'),paid);
