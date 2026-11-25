@@ -938,7 +938,6 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 .growth-year p,.growth-roll .growth-year p {margin:.15rem 0;color:var(--film-muted);font-size:.8rem}
 .growth-year .growth-entry {display:grid;grid-template-columns:2.75rem minmax(0,1fr);gap:.5rem;padding:.33rem 0;font-size:.8rem}
 .growth-year .growth-entry small {text-align:start;color:var(--film-accent)}
-.growth-roll .growth-year img {float:right;height:5rem;max-width:32%;margin:0 0 .35rem .5rem}
 .growth-year::after {content:"";display:block;clear:both}
 /* The scroll plays over a translucent white veil, with the ending art still visible. */
 .growth-credits {
@@ -961,7 +960,7 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 .growth-roll > header {
   padding:0 0 clamp(1.25rem,4cqw,2.65rem);border-bottom:0;
 }
-.growth-roll > header::after,.growth-roll .growth-timeline::before {
+.growth-roll > header::after {
   content:"";display:block;width:3rem;height:1px;margin:1.1rem auto 0;background:var(--film-accent);
 }
 .growth-roll > header h2 {
@@ -1003,11 +1002,16 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 }
 .growth-roll .growth-recap-row strong {color:var(--film-ink)}
 .growth-roll .growth-staff-row span {color:var(--film-muted)}
-.growth-roll .growth-timeline::before {margin:0 auto 1.45rem}
 .growth-roll .growth-timeline .growth-year {
-  margin:0 auto 1.4rem;padding:0;min-height:0;border:0;background:none;
+  margin:0 auto 2.5rem;padding:0;min-height:0;border:0;background:none;text-align:center;
+}
+.growth-roll .growth-standing {
+  display:block;width:100%;height:clamp(10rem,min(43svh,38cqw),24rem);
+  margin:0 auto .7rem;object-fit:contain;object-position:center bottom;
+  mask-image:linear-gradient(#000 84%,transparent);
 }
 .growth-roll .growth-year h3,.growth-roll .growth-year p {color:var(--film-ink)}
+.growth-roll .growth-year h3 {font-size:clamp(1.15rem,2.5cqw,1.6rem)}
 .growth-roll .growth-year h3 small,.growth-roll .growth-entry small {color:var(--film-muted)}
 .growth-roll .growth-year .growth-entry {border-color:var(--film-line)}
 .growth-roll .growth-fin {padding:1rem 0 10vh;color:var(--film-accent)}
@@ -1025,7 +1029,8 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 @container (max-width:650px) {
   .growth-credits {--film-width:100%}
   .growth-credits::before {background:linear-gradient(180deg,#fffdf8b5,#fffdf9eb 35%,#fffdf9e8 80%)}
-  .growth-roll {padding-top:clamp(2.1rem,10cqw,3.5rem)}
+  .growth-roll {padding-top:clamp(1rem,4cqw,1.8rem)}
+  .growth-roll .growth-standing {height:clamp(10rem,min(42svh,64cqw),23rem)}
 }
 @container (min-width:700px) {
   .ending-folio {display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:.85rem;align-items:start}
@@ -1109,4 +1114,40 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 @keyframes status-slide-up {from {transform:translateY(.9rem);opacity:0} to {transform:translateY(0);opacity:1}}
 @media (prefers-reduced-motion:no-preference) {
   html:not([data-game-motion=reduced]) #status-drawer:not([hidden]) {animation:status-slide-up .19s ease-out}
+}
+
+.growth-roll .butler-letter,.ending-summary-record .butler-letter {
+  --note-ink:#22374a;--note-red:#ad3443;
+  --seal-size:clamp(5.25rem,32%,8.25rem);
+  position:relative;isolation:isolate;display:grid;align-content:center;width:min(100%,26rem);
+  min-height:7.25rem;box-sizing:border-box;margin:2.15rem auto 1.45rem;
+  padding:1.3rem calc(var(--seal-size) - .15rem) 1.3rem clamp(.9rem,2.5cqw,1.5rem);
+  text-align:start;color:var(--note-ink);border:1px solid #a6b5c0;border-radius:.25rem;
+  background:linear-gradient(132deg,#fffefa,#faf8f3 70%,#eff2f2);
+  box-shadow:0 3px 9px #263a5115,inset 0 0 0 4px #fff8,inset 0 0 0 5px #afbbc145;
+}
+.butler-letter .staff-example-caption {margin:0 0 .32rem}
+.butler-letter .butler-message,.growth-roll .butler-letter .butler-message {
+  position:relative;z-index:1;margin:0;color:var(--note-ink);
+  font-size:clamp(.98rem,2.1cqw,1.2rem);font-weight:700;line-height:1.65;
+  word-break:keep-all;overflow-wrap:anywhere;
+}
+.butler-hanamaru {
+  position:absolute;right:-.3rem;bottom:-1.35rem;display:block;width:var(--seal-size);
+  color:var(--note-red);transform:rotate(-12deg);transform-origin:54% 64%;
+  pointer-events:none;
+}
+.butler-hanamaru svg {display:block;width:100%;height:auto;overflow:visible}
+@keyframes butler-ink {
+  from {stroke-dashoffset:1}
+  to {stroke-dashoffset:0}
+}
+@media (prefers-reduced-motion:no-preference) {
+  :root:not([data-game-motion="reduced"]) .butler-hanamaru[data-waiting] {opacity:0}
+  :root:not([data-game-motion="reduced"]) .butler-hanamaru.inked .ink-guide {
+    stroke-dasharray:1 1;animation:butler-ink .22s cubic-bezier(.35,.04,.61,1) both;
+  }
+  :root:not([data-game-motion="reduced"]) .butler-hanamaru.inked .ink-petals {
+    animation-delay:.23s;animation-duration:.31s;animation-timing-function:cubic-bezier(.32,.04,.65,1);
+  }
 }

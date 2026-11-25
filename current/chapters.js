@@ -1124,17 +1124,110 @@ function appendEndingRecap(parent,recap,farewells,fund){
     add(row,"span",fair.title);add(row,"strong",fair.won+"회 / "+fair.entered+"회 참가");
   }
 }
-function appendGrowthTimeline(parent,years,portraits=true){
+const butlerCourseNotes={
+  지성:["도련님, 원문을 덮고 방금 읽으신 대목을 옮겨 보시겠습니까?","이 단어는 지난겨울에 읽으신 편지에도 있었지요.","오늘 번역에는 제가 고칠 곳이 없군요."],
+  기품:["손님이 잔을 내려놓으신 뒤에 의자를 미셔야지요, 도련님.","다음 무도회에서는 먼저 춤을 청해 보시지요.","손님이 인사를 맺을 때까지 기다리셨군요, 도련님."],
+  매력:["상대에게도 입을 열 틈을 주셔야지요, 도련님.","다음에는 오늘처럼 먼저 이름을 불러 보시지요.","그 조용한 손님에게서 웃음을 끌어내셨군요."],
+  경영:["도련님, 차를 드시기 전에 이 영수증부터 장부에 옮기시지요.","이번 견본에는 도련님께서 직접 값을 매겨 보시지요.","제 몫의 품삯까지 넣어 두셨군요, 도련님."],
+  통찰:["도련님, 짐작을 증거로 쓰시기 전에 소인을 다시 보시지요.","어느 대목에서 의심이 드셨는지 한 줄만 짚어 주시겠습니까?","소인 하나로 두 증언의 순서를 바로잡으셨군요."],
+  의지:["이번에는 제 눈치를 살피지 않고 명령을 내려 보십시오, 도련님.","말씀만 하십시오, 도련님께서 고르신 길로 모시겠습니다.","끝까지 도련님의 뜻으로 내리신 명령이군요."],
+  체력:["도련님, 숨을 고르실 때까지는 이 벤치를 비워 두겠습니다.","오늘은 정원 문까지 한 걸음 더 가 보시겠습니까?","마지막 계단에서도 제가 도련님의 보폭을 맞춰야 했습니다."]
+};
+const butlerOtherEndings={
+  releaseTitle:"마지막 명령에는 도련님 자신의 이름을 쓰셨군요.",
+  releaseNoTitle:"이 장에는 도련님의 서명 하나면 족합니다.",
+  broke:"도련님, 다음 장부에는 시식회에 쓰실 돈부터 남겨 두시지요.",
+  ill:"도련님의 회중시계는 그날 새벽의 시각에 그대로 두었습니다."
+};
+// The guide reveals each filled pen stroke in writing order.
+const hanamaruStrokes=[
+  {
+    name:"spiral",
+    guide:"M63 61 C76 47 84 59 78 68 C70 81 49 73 48 59 C45 39 70 32 86 39 C107 48 102 73 88 82 C68 98 40 84 34 64 C25 42 43 24 61 22 C85 17 108 34 109 58",
+    outline:`M63 61 C69 51 78 50 81 56 C87 69 72 80 61 75
+      C45 71 42 56 48 46 C55 32 74 30 88 37 C108 47 106 70 90 83
+      C69 100 40 88 32 68 C20 43 38 23 60 20 C86 15 109 34 109 58
+      C104 42 95 27 78 24 C53 18 31 36 34 56 C37 81 65 95 85 81
+      C101 70 104 48 85 41 C68 34 48 42 49 58 C50 72 68 78 76 67
+      C83 58 76 49 63 61 Z`
+  },{
+    name:"petals",
+    guide:"M96 32 C98 14 80 8 67 19 C58 1 40 8 35 24 C17 17 8 35 19 48 C1 53 7 72 23 78 C17 97 37 105 50 95 C57 114 76 113 85 98 C104 108 117 94 112 79 C129 73 127 55 114 49 C125 37 115 21 101 26 C96 28 93 32 90 37",
+    outline:`M96 32 C97 19 88 10 78 13 Q72 15 67 21
+      C55 4 41 10 36 26 C20 20 9 34 21 49 C6 54 6 69 25 77
+      C20 95 35 103 51 93 C60 112 76 110 85 96 C103 105 115 94 110 78
+      C127 71 124 54 112 49 C124 34 112 23 102 27 Q96 29 90 37
+      Q94 28 100 25 C115 17 129 34 116 49 C131 57 130 74 114 81
+      C120 98 102 111 86 100 C77 118 55 116 49 97 C34 109 14 98 21 79
+      C2 73 1 53 17 47 C5 32 18 16 34 22 C39 4 58 0 68 17
+      C84 3 103 18 96 32 Z`
+  }
+];
+let hanamaruNumber=0;
+function hanamaruInk(){
+  const prefix="hanamaru-"+(++hanamaruNumber);
+  const strokes=hanamaruStrokes.map(({name,guide,outline})=>{
+    const mask=prefix+"-"+name;
+    return `<mask id="${mask}" maskUnits="userSpaceOnUse" x="0" y="0" width="132" height="118">
+      <path class="ink-guide ink-${name}" d="${guide}" pathLength="1" fill="none" stroke="white" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>
+    </mask><path d="${outline}" fill="currentColor" mask="url(#${mask})"/>`;
+  });
+  return `<svg viewBox="0 0 132 118" role="img" aria-label="만년필로 그린 붉은 하나마루">${strokes.join("")}</svg>`;
+}
+// Both the live credits and the serialized summary connect the mark when their page opens.
+if(window.customElements)customElements.define("butler-hanamaru",class extends HTMLElement {
+  connectedCallback(){
+    if(!window.IntersectionObserver||this.classList.contains("inked"))return;
+    this.dataset.waiting="";
+    this.observer=new IntersectionObserver(entries=>{
+      if(entries.some(entry=>entry.isIntersecting&&entry.intersectionRatio>=.8)){
+        delete this.dataset.waiting;
+        this.classList.add("inked");
+        this.observer.disconnect();
+      }
+    },{threshold:.8});
+    this.observer.observe(this);
+  }
+  disconnectedCallback(){this.observer?.disconnect();}
+});
+function appendButlerNote(parent,id,abilities){
+  const add=appendRecordElement;
+  const paper=add(parent,"section","");
+  paper.className="butler-letter";
+  paper.setAttribute("aria-label","세바스찬의 마지막 평");
+  const continues=id==="vowTitle"||id==="vowNoTitle";
+  let message=butlerOtherEndings[id]||"도련님, 다음 장을 넘겨 드릴까요?";
+  if(continues&&stats.every(key=>Number.isFinite(abilities?.[key]))){
+    const tier=sebastianRegard(abilities);
+    if(tier===3)message="아주 잘하셨습니다, 도련님!";
+    else {
+      const ordered=[...stats].sort((a,b)=>abilities[a]-abilities[b]);
+      const subject=tier===2?ordered.at(-1):ordered[0];
+      message=butlerCourseNotes[subject][tier];
+    }
+  }
+  add(paper,"p",message).className="butler-message";
+  const mark=add(paper,"butler-hanamaru","");
+  mark.className="butler-hanamaru";
+  mark.innerHTML=hanamaruInk();
+}
+function growthStanding(age){
+  const portrait=document.createElement("img");
+  portrait.className="growth-standing";
+  portrait.src=cielArt(age??10);
+  portrait.alt=age?age+"세의 시엘":"시엘";
+  return portrait;
+}
+function appendGrowthTimeline(parent,years,showStandings=false){
   const add=appendRecordElement;
   for(const {year,age,plans,entries} of years){
     const section=add(parent,"section","");
     section.className="growth-year";
-    if(portraits){
-      const portrait=document.createElement("img");
-      portrait.src=cielArt(age);portrait.alt="";section.append(portrait);
-    }
     const yearHeading=add(section,"h3",year+"년");
-    if(portraits) add(yearHeading,"small",age+"세");
+    if(showStandings){
+      add(yearHeading,"small",age+"세");
+      section.append(growthStanding(age));
+    }
     if(plans.length)add(section,"p","주요 편성　"+plans.map(statResultText).join(" · "));
     for(const entry of entries){
       const row=add(section,"div","");row.className="growth-entry";
@@ -1148,7 +1241,8 @@ function endingSummaryRecord(run){
   appendEndingRecap(host,years.at(-1).recap,null,run.fund);
   const details=appendRecordElement(host,"details","");
   appendRecordElement(details,"summary","연도별 성장 기록");
-  appendGrowthTimeline(details,years,false);
+  appendGrowthTimeline(details,years);
+  appendButlerNote(host,run.ending,years.at(-1).recap.finalStats);
   return host.outerHTML;
 }
 function showGrowthCredits(host,id,years,onFinish,route,farewells){
@@ -1159,14 +1253,16 @@ function showGrowthCredits(host,id,years,onFinish,route,farewells){
   host.innerHTML='<section class="growth-credits" aria-label="시엘의 성장 기록"><img class="growth-backdrop" src="'+picture+'" alt=""><div class="growth-window" tabindex="0"><div class="growth-roll"><header><h2>시엘의 성장 기록</h2></header></div></div><footer><div class="growth-progress" aria-hidden="true"><i></i></div><button type="button" class="growth-toggle"></button><button type="button" class="growth-end">마치기</button></footer></section>';
   const windowEl=host.querySelector(".growth-window"),roll=host.querySelector(".growth-roll");
   const add=appendRecordElement;
-  add(roll.querySelector("header"),"p",endingName(id,route));
-  if(!years.length)add(roll,"p","이 회차의 세부 장부는 남아 있지 않습니다.");
-  appendEndingRecap(roll,years.at(-1)?.recap,farewells);
-  if(years.length){
+  const cover=roll.querySelector("header");
+  add(cover,"p",endingName(id,route));
+  if(!years.length){
+    if(farewells?.age)roll.append(growthStanding(farewells.age));
+    add(roll,"p","이 회차의 세부 장부는 남아 있지 않습니다.");
+  }else{
     const timeline=add(roll,"div","");timeline.className="growth-timeline";
-    add(timeline,"h3","연도별 성장 기록");
-    appendGrowthTimeline(timeline,years);
+    appendGrowthTimeline(timeline,years,true);
   }
+  appendEndingRecap(roll,years.at(-1)?.recap,farewells);
   const lastMonth=years.at(-1)?.lastMonth;
   if(lastMonth)add(roll,"p",monthText(lastMonth)+" · 마지막 기록");
   if(years.at(-1)?.allMastered){
@@ -1178,10 +1274,11 @@ function showGrowthCredits(host,id,years,onFinish,route,farewells){
   }
   const references=add(roll,"section","");
   add(references,"h3","참고작품");
-  add(references,"p","「Princess Maker 3」, 「관을 가진 신의 손」, Kairosoft");
+  for(const work of ["「Princess Maker 3」","「관을 가진 신의 손」","「Kairosoft 사 스토리 시리즈」"])add(references,"p",work);
   const thanks=add(roll,"section","");
   add(thanks,"h3","SPECIAL THANKS").lang="en";
   for(const name of ["꼬","또쥐","Hato","우유"])add(thanks,"p",name);
+  appendButlerNote(roll,id,years.at(-1)?.recap?.finalStats);
   add(roll,"p","끝").className="growth-fin";
   const toggle=host.querySelector(".growth-toggle"),progress=host.querySelector(".growth-progress");
   let paused=document.documentElement.dataset.gameMotion==="reduced"||matchMedia("(prefers-reduced-motion: reduce)").matches,lastTime=0,fraction=0,finished=false;
