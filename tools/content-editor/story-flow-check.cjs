@@ -191,7 +191,7 @@ async function endingDirection({page,button,label,game}){
   assert.equal(await pathOf(),"assets/endings/london-broker.webp");
   await selectGroup("엔딩 · 문장 없는 마차");
   await lines.last().focus();
-  assert.equal(await pathOf(),"assets/endings/london-pursuit.webp");
+  assert.equal(await pathOf(),"assets/endings/vowNoTitle.webp");
   await selectGroup("마지막 명령 · 무관의 주인");
   await lines.last().focus();
   assert.equal(await pathOf(),"assets/endings/black.webp");
