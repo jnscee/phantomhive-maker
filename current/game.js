@@ -2160,7 +2160,7 @@ if(previewLesson){
   });
 }else if(storyDemo){
   tab="plan";state=normalizeSave(initial());
-  state.month=state.planMonth=previewSetback?.month??previewCompanyCase?.month??{"season-16":16,jubilee:18,birthday2:24}[previewStory];
+  state.month=state.planMonth=previewSetback?.month??previewCompanyCase?.previewMonth??{"season-16":16,jubilee:18,birthday2:24}[previewStory];
   if(previewSetback?.renown)state.renown=5;
   if(!previewSetback&&!previewCompanyCase){
     const directions=Object.keys(middleObservations[previewStory]),selected=previewQuery.get("stat");
