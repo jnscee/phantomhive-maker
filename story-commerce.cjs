@@ -149,7 +149,7 @@ for(const [id,index,group,subject] of resultSubjects){
       const scene=contestResultScene(fair,entry),expected=contestResultDialogue[resultGroup][resultSubject][resultOutcome];
       if(contestResultOutcome(fair,entry)!==resultOutcome||scene!==expected||contestResultLine(fair,entry)!==scene.narration)return false;
       const html=duelScene(fair,entry,entry.duel,entry);
-      if(entry.rank===2)return html.includes(escapeHTML(scene.narration))&&html.includes("결과창 닫기")&&!html.includes(escapeHTML(scene.lines[0][1]));
+      if(entry.rank===2)return html.includes(escapeHTML(scene.narration))&&html.includes('class="line-next award-advance"')&&!html.includes(escapeHTML(scene.lines[0][1]));
       return html.includes(escapeHTML(scene.narration))&&html.includes(escapeHTML(scene.lines[0][0]))&&
         html.includes(escapeHTML(scene.lines[0][1]))&&html.includes('aria-label="결과 대사"')&&
         html.includes('data-action="fair-close"')&&!/undefined|NaN/.test(html);
@@ -1185,3 +1185,13 @@ assert.match(run('familyFolio("","")'),/엘리자베스<\/b>[\s\S]*?호감도 3/
 setup('tab="plan";state.phase="event";state.pending="contest-easter-1886";state.fairBook={"easter-1886":{reason:"병중으로 불참"}}');
 assertOk('!recordElizabethMeeting(state)&&!state.pendingFairAffinity');
 console.log('PASS garden-party affinity, delayed result, absence and ledger');
+for(const year of [1886,1887,1888]){
+  ctx.warrantYear=year;
+  setup('tab="plan";{const fair=contests.find(f=>f.id==="royalWarrant-"+warrantYear);state.month=fair.month;state.fairTickets={[fair.id]:{product:"toys"}};state.sequence={contest:fair.id};prepareContest(state);}');
+  assert.match(run('contestScene(pendingEvent())'),/휘트컴 상회/);
+  run('handleAction("fair-next:0")');
+  assertOk('contestScene(pendingEvent()).includes(contestOpponent(pendingEvent().contest).replies[contestAppearance(pendingEvent().contest)])');
+  run('handleAction("fair-next:1")');
+  const stage=run('contestScene(pendingEvent())');
+  assert.ok(stage.includes('class="duel-vs"')&&stage.includes('fair-next:2')&&!stage.includes('class="duel-sample"'));
+}

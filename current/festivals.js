@@ -240,7 +240,11 @@ const contestOpponents={
   kensington1886:{name:"하트웰 완구점",quote:"세 바퀴째도 첫 바퀴처럼 달리는지 봐 주십시오.",role:"기계 완구 상인",actor:"maker",product:"toys"},
   jubilee1887:{name:"벨 & 손 제과점",quote:"리본을 푸는 순간까지가 저희 선물입니다.",role:"주빌리 기념품 출품사",actor:"clerk",product:"hamper"},
   earlsCourt1888:{name:"모레티 공방",quote:"손잡이를 한번 돌려 보시지요. 인사가 끝날 때까지요.",role:"기계 인형 제작소",actor:"designer",product:"plush"},
-  warrant:{name:"휘트컴 상회",quote:"지난 주문서까지 가져왔습니다. 어느 쪽이든 먼저 보시지요.",role:"왕실 납품 후보",actor:"clerk",product:"game"}
+  warrant:{name:"휘트컴 상회",quote:"지난 주문서까지 가져왔습니다. 어느 쪽이든 먼저 보시지요.",replies:[
+    "먼저 보시지요. 저희 견본은 제가 직접 보여 드리겠습니다.",
+    "날짜별로 정리하셨군요. 세바스찬, 우리 장부도 펴 둬.",
+    "그럼 저희도 같은 조건으로 보시지요. 오늘 납품할 상자를 가져왔습니다."
+  ],role:"왕실 납품 후보",actor:"clerk",product:"game"}
 };
 function contestOpponent(fair){
   const opponent=contestOpponents[fair.warrant?"warrant":fair.id.split("-")[0]];
