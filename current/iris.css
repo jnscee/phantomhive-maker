@@ -1151,9 +1151,9 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
   left:50%;bottom:calc(50% - var(--sprite-size) * .5);
   translate:-50% 0;transform-origin:50% 100%;animation-name:lesson-idle;
 }
-.lesson-plane[data-activity="negotiate"] .performer {left:43%}
+.lesson-plane[data-activity="negotiate"] .performer {left:43%;bottom:calc(48.5% - var(--sprite-size) * .5)}
 .lesson-plane[data-activity="inquiry"] .performer {left:36%}
-.lesson-plane[data-activity="walk"] .performer {--actor-ratio:.23;bottom:calc(48% - var(--sprite-size) * .5)}
+.lesson-plane[data-activity="walk"] .performer {--actor-ratio:.23;bottom:calc(46.5% - var(--sprite-size) * .5)}
 .lesson-plane .performer[data-illustrated] > img {translate:0 2.5%}
 .lesson-plane[data-room=gym] .performer.calisthenics {--actor-ratio:.42}
 .lesson-plane .performer.ride {animation-name:lesson-ride}
