@@ -1380,12 +1380,41 @@ function showEndingScene(host){
     art.className="ending-cg";art.dataset.ending=id;
   }
   if(!story)rememberCG("assets/endings/"+picture+".webp");
+  const ceremonyFade=cue?.fx==="fade" && (picture==="black" || picture==="royal-investiture");
+  let curtain=host.querySelector("[data-ending-curtain]");
   if(art.dataset.picture!==picture){
+    curtain=null;
+    if(ceremonyFade && !motionReduced() && art.animate){
+      if(picture==="black" && art===existing){
+        curtain=art.cloneNode(false);
+        curtain.alt="";
+      }else if(picture==="royal-investiture"){
+        curtain=document.createElement("div");
+        curtain.className="ending-cg";
+        curtain.style.background="#000";
+      }
+      if(curtain){
+        curtain.dataset.endingCurtain="";
+        curtain.setAttribute("aria-hidden","true");
+      }
+    }
     art.dataset.picture=picture;art.src=(story?"assets/":"assets/endings/")+picture+".webp";art.alt=story?"":careerCG?.alt||endingArtDescriptions[picture]||scene.alt;
   }
   host.replaceChildren(art);
   host.insertAdjacentHTML("beforeend",(novelCast(castCue,recruitArtwork(currentCielAge()))??"")+sceneLine(who,line,arrow,'data-book="ending-'+id+'" aria-live="polite" aria-atomic="true"')+readerControls(at,last,recruitAuto));
-  playNovelCue(host,"ending:"+id+":"+at,cue);
+  if(curtain){
+    art.after(curtain);
+    if(!curtain.dataset.started){
+      curtain.dataset.started="true";
+      const reveal=()=>{
+        if(!curtain.isConnected)return;
+        const fade=curtain.animate([{opacity:1},{opacity:0}],{duration:500,easing:"ease-in-out",fill:"forwards"});
+        fade.onfinish=()=>curtain.remove();
+      };
+      art.decode().then(reveal,reveal);
+    }
+  }
+  playNovelCue(host,"ending:"+id+":"+at,ceremonyFade?{...cue,fx:null}:cue);
   musicPlayer.sync(trackForView());
   bindSceneReader(host,at,end,line,to=>{
     if(replay)replay.at=to;else {state.endingBeat=to;persist();}
