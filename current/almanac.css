@@ -1161,3 +1161,59 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
     animation-delay:.23s;animation-duration:.31s;animation-timing-function:cubic-bezier(.32,.04,.65,1);
   }
 }
+
+/* Competitors share a compact nameplate below their sprites. */
+.duel-screen .duel-stage:not(.exhibition-stage) {
+  width:min(100%,31rem);
+}
+.duel-screen .duel-stage.exhibition-stage {
+  width:min(100%,39rem);
+}
+#conversation .duel-screen .duel-side .duel-plate {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-content:center;
+  align-items:center;
+  gap:.12rem .45rem;
+  width:min(100%,12rem);
+  padding:.38rem .55rem;
+  border:1px solid #ccdeed85;
+  border-radius:.4rem;
+  color:#f7fbff;
+  background:linear-gradient(145deg,#30465dea,#15263ee8);
+  box-shadow:inset 0 1px #ffffff24,0 2px 6px #07132140;
+  backdrop-filter:blur(6px);
+  text-align:start;
+}
+#conversation .duel-screen .duel-plate b,
+#conversation .duel-screen .duel-plate small {
+  grid-column:1;
+  min-width:0;
+  word-break:keep-all;
+  overflow-wrap:anywhere;
+}
+#conversation .duel-screen .duel-plate b {font-size:.9rem;line-height:1.25}
+#conversation .duel-screen .duel-plate small {margin:0;color:#d4e1ed;font-size:.74rem}
+#conversation .duel-screen .duel-plate strong {
+  grid-column:2;
+  grid-row:1 / 3;
+  padding:.17rem .34rem;
+  border-radius:.23rem;
+  color:#172e47;
+  background:#edf6ffed;
+  font-size:.92rem;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+#conversation .duel-screen .performing .duel-plate {border-color:#eff7ff}
+.duel-art :is(.contest-actor,.duel-portrait,.duel-sprite) {
+  filter:drop-shadow(0 0 1px #f5faffb3) drop-shadow(0 0 4px #e1eeff66);
+}
+@media (max-width:650px) {
+  #conversation .duel-screen .duel-side .duel-plate {
+    grid-template-columns:minmax(0,1fr);
+    justify-items:center;
+    text-align:center;
+  }
+  #conversation .duel-screen .duel-plate strong {grid-area:auto;margin-top:.1rem}
+}
