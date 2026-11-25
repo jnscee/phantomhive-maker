@@ -146,6 +146,16 @@ async function checkMonthlyScreens(page){
   await page.evaluate(()=>{
     state=initial();state.phase="plan";state.shop.works=2;tab="company";selectedDepartment="works";render();
   });
+  await page.locator('[data-action="station:design"]').click();
+  const plan=page.locator('.prototype-plan');
+  assert.equal(await plan.locator('fieldset').count(),3);
+  await plan.locator('[data-action="brief:gift"]').click();
+  assert.equal(await plan.locator('[data-action="brief:gift"]').getAttribute('aria-pressed'),'true');
+  await page.locator('[data-action="develop:sweets"]').click();
+  assert.equal(await plan.locator('.prototype-spec').count(),3);
+  assert.match(await plan.innerText(),/월말 검수 예정/);
+  assert.ok(await plan.evaluate(el=>el.scrollWidth<=el.clientWidth+1));
+  await page.locator('[data-action="station:works"]').click();
   const box=page.locator(".facility-actions");
   const sale=await box.locator('[data-action^="liquidate:"]').boundingBox(),row=await box.boundingBox();
   assert.ok(Math.abs(sale.x+sale.width-row.x-row.width)<2);

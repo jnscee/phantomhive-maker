@@ -655,27 +655,37 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 .estate-effect-heading > span {font:700 .8rem/1.4 system-ui,sans-serif;word-break:keep-all}
 .estate-effect-heading strong {white-space:nowrap}
 
-.design-options,.research-grid {
-  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px;
+.research-grid,.prototype-plan .design-options {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.38rem}
+.prototype-plan {
+  container-type:inline-size;min-width:0;margin:.55rem 0 1rem;border:1px solid #9babba;border-radius:.55rem;
+  background:linear-gradient(135deg,#f8fbfdf5,#e4edf3ed);color:#20384d;overflow:hidden;
 }
-#scene .property-desk .design-choice {
-  min-width:0; margin:0 0 8px; padding:0; border:0;
+.prototype-head {display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.55rem .7rem;
+  color:#f5f7fb;background:linear-gradient(110deg,#23384c,#314d64);border-top:2px solid #c4ac7e}
+#scene .property-desk .prototype-head h4 {margin:0;color:inherit;font-size:1.03rem;line-height:1.35}
+.prototype-head > span {font:600 .78rem/1.4 system-ui,sans-serif;color:#f3dfb8;white-space:nowrap}
+.prototype-body {padding:.5rem .65rem .65rem}
+#scene .property-desk .prototype-plan fieldset {min-width:0;margin:0;padding:0;border:0}
+.prototype-plan .design-choice + .design-choice {margin-top:.6rem!important}
+.prototype-plan legend,.prototype-spec dt {padding:0;margin:0 0 .22rem;color:#3d566a;font:700 .81rem/1.4 system-ui,sans-serif}
+#scene .property-desk .prototype-plan .design-options button {
+  position:relative;display:grid;align-content:start;align-items:start;gap:.17rem;min-width:0;min-height:3.1rem;margin:0;
+  padding:.42rem .48rem;text-align:start;word-break:keep-all;overflow-wrap:anywhere;border:1px solid #9cabb8;
+  border-radius:.35rem;background:#f9fcff;color:#23384b;box-shadow:inset 0 1px #fff;
 }
-.design-choice legend {
-  color:#405a71; padding:0; margin-bottom:4px; font-size:.76rem; font-weight:700;
-}
-#scene .property-desk .design-options button {
-  display:grid; align-content:start; justify-items:start; gap:3px;
-  min-width:0; min-height:42px; padding:6px 7px; text-align:start;
-  border:1px solid #7893a899; border-radius:7px; color:#294359; background:#dfeaf08c;
-  box-shadow:inset 0 1px #fff9; line-height:1.25; word-break:keep-all; overflow-wrap:anywhere;
-}
-#scene .property-desk .design-options button[aria-pressed=true] {
-  border-color:#45677d; background:#eaf5fb; box-shadow:inset 3px 0 #567c93;
-}
-.design-options strong { font-size:.79rem; }
-.design-options small { color:#435f76; font-size:.68rem; }
-.design-options small b { color:#294861; white-space:nowrap; }
+.prototype-plan .design-options strong {padding-right:.95rem;font-size:.9rem;line-height:1.25}
+.prototype-plan .design-options small,.prototype-spec small {font:500 .76rem/1.42 system-ui,sans-serif;color:#455f71}
+.prototype-plan small b {color:inherit;font-weight:750;white-space:nowrap}
+#scene .property-desk .prototype-plan button[aria-pressed=true] {background:#28465a;color:#fff;border-color:#294557;box-shadow:inset 3px 0 #d9bd89}
+.prototype-plan button[aria-pressed=true] small {color:#e4eef5}
+.prototype-plan button[aria-pressed=true]::after {content:"";position:absolute;top:.53rem;right:.55rem;width:.32rem;height:.55rem;
+  border:solid #f5d69b;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.prototype-plan button:focus-visible {outline:2px solid #885919;outline-offset:-3px}
+.prototype-item {margin:.15rem 0 .45rem;font-size:1rem;font-weight:700}
+.prototype-plan dl {margin:0}
+.prototype-spec {display:grid;grid-template-columns:4.8rem minmax(0,1fr);padding:.38rem 0;gap:.5rem;border-top:1px solid #91a6b659}
+.prototype-spec dt {margin:0}.prototype-spec dd {display:grid;margin:0;gap:.06rem}
+@container (max-width:14rem) {.prototype-plan .design-options {grid-template-columns:1fr}}
 .research-card {
   display:grid; align-content:space-between; gap:5px; min-width:0;
   padding:6px 8px; background:#dfeaf08c; border:1px solid #7893a877; border-radius:7px;

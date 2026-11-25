@@ -266,15 +266,28 @@ function houseDesk(){
    '<p class="care-note">관리 유예 시 월 £8 절약<br>두 달 이상 유예하면 교육 효율과 가문 명성이 낮아집니다.</p></section>';
 }
 
+const prototypeChoices=[
+  {key:"brief",title:"구매 목적",options:[["family","가정용","일상 수요"],["gift","선물용","연말 수요 증가"]]},
+  {key:"material",title:"재료",options:[["common","일반 재료","기본 원가"],["select","엄선 재료","원가 <b>+£2</b> · 높은 가격 수용"]]},
+  {key:"lead",title:"담당",options:[["maker","제작 담당","원가 최대 <b>£1</b> 절감"],["sales","판매 담당","수요 <b>+2개</b>"]]}
+];
 function productPlanning(){
- const project=state.prototype;
- if(project)return '<h4>시제품 기획</h4><p>'+products[project.product].name+' · '+(project.brief==="gift"?"선물용":"가정용")+' · '+(project.material==="select"?"엄선 재료":"일반 재료")+' · '+(project.lead==="sales"?"판매 담당":"제작 담당")+' · '+(project.approved?"출시 승인":"월말 검수 예정")+'</p>';
- const pick=(title,action,options,value)=>'<fieldset class="design-choice"><legend>'+title+'</legend><div class="design-options">'+options.map(([id,label,effect])=>
-   option('<strong>'+label+'</strong>'+(effect?'<small>'+effect+'</small>':""),action+":"+id,id===value,state.phase!=="plan")
- ).join("")+'</div></fieldset>';
- return '<h4>시제품 기획</h4>'+pick("구매 목적","brief",[["family","가정용"],["gift","선물용","연말 수요"]],state.brief||"family")+
-  pick("재료","material",[["common","일반 재료"],["select","엄선 재료","원가 <b>+£2</b> · 높은 가격 수용"]],state.material||"common")+
-  pick("담당","lead",[["maker","제작 담당","원가 최대 <b>£1 절감</b>"],["sales","판매 담당","수요 <b>+2개</b>"]],state.lead||"maker");
+  const project=state.prototype;
+  const status=project?(project.approved?"출시 승인":project.reworked?"재검수 예정":"월말 검수 예정"):"기획 중";
+  const header='<header class="prototype-head"><h4>시제품 기획</h4><span>'+status+'</span></header>';
+  const rows=prototypeChoices.map(({key,title,options})=>{
+    const value=(project||state)[key]||options[0][0];
+    if(project){
+      const [,label,effect]=options.find(([id])=>id===value)||options[0];
+      return '<div class="prototype-spec"><dt>'+title+'</dt><dd><strong>'+label+'</strong><small>'+effect+'</small></dd></div>';
+    }
+    const buttons=options.map(([id,label,effect])=>
+      option('<strong>'+label+'</strong><small>'+effect+'</small>',key+":"+id,id===value,state.phase!=="plan")
+    ).join("");
+    return '<fieldset class="design-choice"><legend>'+title+'</legend><div class="design-options">'+buttons+'</div></fieldset>';
+  }).join("");
+  const body=project?'<div class="prototype-item">'+productLabel(project.product)+'</div><dl>'+rows+'</dl>':rows;
+  return '<section class="prototype-plan" aria-label="시제품 기획">'+header+'<div class="prototype-body">'+body+'</div></section>';
 }
 function sampleReview(){
  const p=state.prototype;
