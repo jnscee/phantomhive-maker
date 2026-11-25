@@ -1252,3 +1252,92 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
   .duel-screen .duel-side {row-gap:.15rem}
   #conversation .duel-screen .duel-side .duel-plate {padding-block:.4rem}
 }
+
+/* Shared baselines for the portraits, nameplates and judges' scorecard. */
+.duel-screen .duel-stage:not(.exhibition-stage) {
+  --versus-size:clamp(2rem,5vw,2.8rem);
+  width:min(100%,28rem);
+  align-items:stretch;
+  grid-template-columns:minmax(0,1fr) var(--versus-size) minmax(0,1fr);
+}
+.duel-stage:not(.exhibition-stage) .duel-side {
+  grid-template-rows:auto 1fr;
+  justify-items:stretch;
+}
+#conversation .duel-stage:not(.exhibition-stage) .duel-side .duel-plate {
+  width:100%;
+  align-self:stretch;
+  align-content:center;
+}
+.duel-screen .duel-vs {
+  box-sizing:border-box;
+  display:grid;
+  place-items:center;
+  align-self:center;
+  position:relative;
+  isolation:isolate;
+  margin:0;
+  padding:0;
+  width:var(--versus-size);
+  aspect-ratio:1;
+  border:0;
+  color:#f6faff;
+  font:italic 800 clamp(.96rem,2.4vw,1.28rem)/1 Georgia,serif;
+  letter-spacing:-.06em;
+  text-transform:uppercase;
+  text-shadow:0 1px 2px #0b182c;
+}
+.duel-screen .duel-vs::before {
+  content:"";
+  position:absolute;
+  inset:10%;
+  z-index:-1;
+  transform:rotate(45deg);
+  border:1px solid #e5f4ff;
+  border-radius:18%;
+  background:linear-gradient(135deg,#526d8c,#162f4b 65%);
+  box-shadow:inset 0 0 0 2px #59718b,0 0 0 2px #25394ea6,0 2px 7px #07132666;
+}
+.duel-screen .duel-stage.exhibition-stage {width:min(100%,35rem)}
+.contest-screen.duel-result .award-sheet {
+  box-sizing:border-box;
+  width:min(100%,28rem);
+  padding:0;
+  background:linear-gradient(135deg,#ffffffef,#e4eef7e8);
+  color:#20364d;
+  border:1px solid #f7fbffcf;
+  border-radius:.55rem;
+  box-shadow:inset 0 1px #fff,0 4px 16px #09172940;
+  backdrop-filter:blur(8px);
+}
+.duel-result:has(.exhibition-stage) .award-sheet {width:min(100%,35rem)}
+.award-sheet .award-head {
+  padding:.55rem .75rem;
+  color:#f3f8fd;
+  background:linear-gradient(110deg,#344e69ef,#1c334bed);
+  border-radius:.5rem .5rem 0 0;
+  border-bottom:1px solid #718aa1;
+}
+.award-sheet .award-head h3 {color:#1d354e;background:#e3edf7;border-radius:.25rem;box-shadow:none}
+.award-sheet .award-head>span {color:#dce8f4}
+.award-sheet .award-body {padding:.28rem .68rem .52rem}
+.award-sheet .award-comment {padding:.38rem 0 .55rem;color:#263c55;line-height:1.5}
+.award-sheet .award-ledger {grid-template-columns:repeat(3,minmax(0,1fr));gap:.34rem}
+.award-sheet .award-ledger>div {
+  padding:.4rem .45rem;
+  gap:.25rem;
+  grid-template-columns:minmax(0,1fr);
+  background:#ffffffa6;
+  border:1px solid #96afc577;
+  border-radius:.32rem;
+}
+.award-sheet .award-ledger dt {color:#455e75;font-size:.79rem}
+.award-sheet .award-ledger dd {color:#203950;min-width:0;overflow-wrap:anywhere}
+.award-sheet :is(.award-total,.award-purse) {color:#173957;font-weight:800}
+.award-sheet .award-purse {white-space:normal}
+.award-sheet .award-gain {color:#274a66;background:#e4edf4;border-color:#afc3d3}
+@media(max-width:460px) {
+  .award-sheet .award-ledger {grid-template-columns:1fr}
+  .award-sheet .award-ledger>div {grid-template-columns:minmax(4.4rem,auto) minmax(0,1fr);align-items:center}
+  .award-sheet .award-ledger dd {flex-direction:row;gap:.18rem .45rem}
+}

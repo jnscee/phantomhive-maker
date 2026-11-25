@@ -1169,3 +1169,19 @@ assert.equal(run('savedGrowthRecord("vowNoTitle",endingReplay).at(-1).recap.fina
 assert.equal(run('savedGrowthRecord("vowNoTitle",{route:"merchant"}).at(-1).recap.finalStats.경영'),380);
 assert.equal(run('savedGrowthRecord("vowNoTitle",{route:"pursuit"}).at(-1).recap.finalStats.경영'),180);
 console.log('PASS three independently collectible London endings, legacy CG migration, replay, and separate growth records');
+
+// A garden-party meeting is counted once and announced after the final line.
+setup('tab="plan";state.month=4;state.phase="event";state.pending="contest-easter-1886";state.sequence={duel:{}}');
+assert.match(run('familyFolio("","")'),/엘리자베스<\/b>[\s\S]*?호감도 0/);
+assertOk('recordElizabethMeeting(state)');
+run('state.pendingFairAffinity=state.pending');
+assertOk('!recordElizabethMeeting(state)&&!state.choiceImpact&&elizabethAffinity(state)===3');
+run('finishEventChoice(pendingEvent())');
+assert.equal(run('state.choiceImpact.next'),'event');
+assert.match(run('impactMarkup(state.choiceImpact)'),/엘리자베스 호감도 ↑/);
+run('state=structuredClone(state);handleAction("impact-close")');
+assertOk('!state.choiceImpact&&!state.pendingFairAffinity&&elizabethAffinity(state)===3');
+assert.match(run('familyFolio("","")'),/엘리자베스<\/b>[\s\S]*?호감도 3/);
+setup('tab="plan";state.phase="event";state.pending="contest-easter-1886";state.fairBook={"easter-1886":{reason:"병중으로 불참"}}');
+assertOk('!recordElizabethMeeting(state)&&!state.pendingFairAffinity');
+console.log('PASS garden-party affinity, delayed result, absence and ledger');

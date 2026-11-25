@@ -391,7 +391,7 @@ function impactMarkup(impact){
   const lines=[...changes.values()].filter(row=>row.before!==row.value).map(({name,before,value})=>{
     const delta=value-before;
     if(delta>0 && name.endsWith("의 신뢰")){
-      const label=name.slice(0,-"의 신뢰".length)+"의 호감도 ↑";
+      const label=name==="엘리자베스의 신뢰"?"엘리자베스 호감도 ↑":name.slice(0,-"의 신뢰".length)+"의 호감도 ↑";
       return '<li class="affinity-rise"><span>'+escapeHTML(label)+'</span></li>';
     }
     const cash=name==="가문 자금"||name==="채무";
@@ -440,6 +440,14 @@ function choose(index){
 }
 function finishEventChoice(event){
   if(storyDemo){location.reload();return;}
+  if(event.contest && state.pendingFairAffinity===event.id){
+    delete state.pendingFairAffinity;
+    const value=elizabethAffinity(state);
+    if(state.choiceImpact?.owner!=="plan"||state.choiceImpact.month!==state.month)
+      state.choiceImpact={owner:"plan",month:state.month,items:[]};
+    state.choiceImpact.items.push({label:event.title,rows:[{name:"엘리자베스의 신뢰",before:value-3,value}],notes:[]});
+    openChoiceImpact("event");return;
+  }
   delete state.termPage;delete state.termOutcome;
   state.pending=null;
   if(state.sequence?.readingVisitOutcome){
@@ -817,7 +825,7 @@ function updateMoney(){
   $("money").innerHTML='<div class="nameplate"><small>CIEL</small><b>PHANTOMHIVE</b></div><div class="id-details"><span>'+currentCielAge()+'세</span><span>'+(cielCondition(state)||"12.14")+'</span><span class="sign-mark" aria-label="사수자리"></span></div><strong class="wealth">'+money(state.fund)+'</strong>';
 }
 function relationBook(){
-  return '<h3>인물 관계</h3>'+peopleInHouse().map(id=>{const r=state.people[id];return '<div class="work-ledger"><b>'+servants[id].name+'</b><span>상대 → 시엘 신뢰　'+rank(r.toward)+'</span></div>';}).join("");
+  return '<h3>인물 관계</h3>'+peopleInHouse().map(id=>{const r=state.people[id];return '<div class="work-ledger"><b>'+servants[id].name+'</b><span>상대 → 시엘 신뢰　'+rank(r.toward)+'</span></div>';}).join("")+'<div class="work-ledger"><b>엘리자베스</b><span>호감도 '+elizabethAffinity(state)+'</span></div>';
 }
 function londonCareer(run,managementMinimum=350,fundMinimum=2000){
   if(run.londonCareer)return run.londonCareer;
@@ -1516,11 +1524,13 @@ function render(focus=false,playbackOffset=0){
   const vn=faceDialogue();
   $("scene").dataset.endingSummary=String(tab==="plan"&&state.phase==="ending"&&!vn);
   if(vn&&tab==="plan"&&!tourSession&&!previewFair&&!storyDemo&&recordElizabethMeeting(state)){
+    if(pendingEvent()?.contest)state.pendingFairAffinity=state.pending;
+    else $("conversation").insertAdjacentHTML("beforeend",'<p class="meeting-notice" role="status">엘리자베스 호감도 +3</p>');
     persist();
-    $("conversation").insertAdjacentHTML("beforeend",'<p class="meeting-notice" role="status">엘리자베스 호감도 +3</p>');
   }
   if(vn&&state.choiceImpact?.owner===tab&&state.choiceImpact.next){
     const con=$("conversation");
+    if(state.choiceImpact.next==="event"&&pendingEvent()?.contest)con.querySelector(".award-sheet")?.remove();
     con.querySelectorAll(".dialogue,.answers,.review-slip").forEach(el=>el.remove());
     con.insertAdjacentHTML("beforeend",impactMarkup(state.choiceImpact));
   }

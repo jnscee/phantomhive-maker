@@ -401,7 +401,7 @@ function duelScene(fair,ticket,duel,entry){
     '<header><span>'+monthText(fair.month)+' · '+(fair.company?'출품 심사':option.label)+'</span><h2 id="contest-title">'+fair.title+'</h2></header>'+
     '<div class="duel-stage'+(fair.exhibitors?" exhibition-stage":"")+(done?' is-revealed':'')+'">'+
     side(rival.name,fair.company?products[rival.product].name:rival.role,rivalArtwork(rival)+(fair.company?sample(rival.product):''),(duel.rivalScore??contestRivalAbility(fair))+"점",!turn&&!done)+
-    (fair.exhibitors?exhibition:'<b class="duel-vs" lang="en">vs.</b>')+
+    (fair.exhibitors?exhibition:'<b class="duel-vs" lang="en">VS</b>')+
     side(fair.entrant||"시엘 팬텀하이브",fair.company?products[ticket.product].name:"팬텀하이브의 당주",actor+(fair.company?sample(ticket.product):''),done?entry.score+"점":"심사 중",turn&&!done)+'</div>'+
     slip+'</section>';
 }
@@ -521,10 +521,10 @@ function familyFolio(history,album,extra=""){
   const allies=peopleInHouse();
   const relations=allies.map(id=>({name:servants[id].name,trust:state.people[id].toward,icon:"assets/staff/"+id+".png"}));
   const affinity=elizabethAffinity(state);
-  if(affinity)relations.push({name:"엘리자베스",trust:affinity,icon:elizabethPortrait(),affinity:true});
+  relations.push({name:"엘리자베스",trust:affinity,icon:elizabethPortrait(),affinity:true});
   const relationshipRows=relations.map(({name,trust,icon,affinity})=>{
     const tier=trustTier(trust);
-    const marks=[0,1,2,3].map(n=>'<i class="'+(n<=tier?'filled':'')+'"></i>').join("");
+    const marks=[0,1,2,3].map(n=>'<i class="'+(n<=tier&&(!affinity||trust>0)?'filled':'')+'"></i>').join("");
     return '<div class="trust-entry" data-tier="'+tier+'"><img src="'+icon+'" alt=""><b>'+name+'</b><span class="trust-stage">'+
       '<span aria-hidden="true">'+marks+'</span>'+(affinity?"호감도 "+trust:rank(trust))+'</span></div>';
   }).join("")||"아직 기록된 인물이 없습니다.";
