@@ -234,7 +234,7 @@ const contestArchive=[...contests,...retiredContests].sort((a,b)=>a.month-b.mont
 // Each contestant addresses Ciel before his own demonstration.
 const contestOpponents={
   newYear:{name:"에드워드 미드포드",quote:"시엘, 난 아직 널 내 매제로 인정하지 않았다. ……뭐? 다과회랑 무슨 상관이냐고? 아무튼, 내가 먼저다!",laterQuotes:["해가 바뀌었다고 내가 마음을 바꾼 줄은 아니겠지, 시엘? 리지의 옆자리는 더더욱 양보 못 해!","시엘, 잘해라. 리지가 보고 있다. ……응원한 게 아니다! 내 매제가 되려면 그 정도는 해야지."],replies:["내가 언제 인정해 달랬어? ……먼저 해, 에드워드. 손님들 차가 식겠어.","리지가 가운데에 앉으면 아무 문제도 안 생기는 일이잖아….","그래, 응원 고마워. ……그렇게 노려보지 마. 리지한테는 비밀로 할 테니까."],role:"미드포드가 장남",poses:["assets/portraits/edward-greeting.png","assets/portraits/edward-tea.png"]},
-  easter:{name:"엘리자베스 미드포드",quote:"시엘, 저 금색 달걀 보이지? 오늘은 나도 봐주지 않을 거야!",laterQuotes:["작년 생각나? 이번에는 내가 먼저 심사대에 갈 거야, 시엘!","올해도 같이 나올 줄 알았어. 자, 종이 울린다!"],role:"미드포드가 영애",get portrait(){return portraits.엘리자베스;}},
+  easter:{name:"엘리자베스 미드포드",quote:"시엘, 저 금색 달걀 보이지? 오늘은 나도 봐주지 않을 거야!",laterQuotes:["작년 생각나? 이번에는 내가 먼저 심사대에 갈 거야, 시엘!","올해도 같이 나올 줄 알았어. 자, 종이 울린다!"],role:"미드포드가 영애",portrait:"assets/portraits/elizabeth-garden-party.png"},
   spring:{name:"클라라 벨",quote:"정원에서는 바람도 심사에 끼어들지요.",role:"교구 원예회",actor:"designer"},
   harvest:{name:"토머스 리드",quote:"도련님, 장터에 내놓을 물건을 고른다고 생각해 보십시오.",role:"영지 소작농 대표",actor:"maker"},
   kensington1886:{name:"하트웰 완구점",quote:"세 바퀴째도 첫 바퀴처럼 달리는지 봐 주십시오.",role:"기계 완구 상인",actor:"maker",product:"toys"},
