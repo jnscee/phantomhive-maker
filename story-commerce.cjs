@@ -914,7 +914,7 @@ assertOk('state.fund===525&&state.stock.toys===12&&state.accounts.lauSales===3&&
 run('handleAction("buy:birds",null,true);handleAction("buy:birds",null,true)');
 assertOk('state.fund===481&&state.stats.매력===14&&state.lauPurchases===1');
 run('state.plan=["walk","walk","walk"];state.visit="none";state.qty=0;execute();settleMonth()');
-assertOk('actualBudget().includes("라우 상점 재고 매각")&&actualBudget().includes("라우 상점 중고 교본 매각")&&!actualBudget().includes("내역 외 잔액 변동")');
+assertOk('actualBudget().includes("도원향 재고 매각")&&actualBudget().includes("도원향 중고 교본 매각")&&!actualBudget().includes("내역 외 잔액 변동")');
 
 // Charge excess freight exactly once, including wholesale shipments, and honor a pre-update signed quote.
 setup('state.month=26;state.qty=21;state.price=10;state.visit="town";state.plan=["walk","walk","walk"];state.order={id:"toys",qty:5,rate:14,due:26}');

@@ -1,7 +1,7 @@
 "use strict";
 
 const commands = [
-  ["tab:plan","일정표"],["run","실행"],["tab:estate","관리 · 경영"],["tab:market","상점"],["tab:chat","대화"],["tab:status","상태"]
+  ["tab:plan","일정표"],["run","실행"],["tab:estate","관리 · 경영"],["tab:market","도원향"],["tab:chat","대화"],["tab:status","상태"]
 ];
 const cap=(value,max=100)=>Math.min(max,Math.max(0,value));
 const money=value=>"£"+value.toLocaleString("en-GB");
@@ -304,8 +304,8 @@ function settleMonth(){
   state.log.push(products[product].name+" "+sold+"개 소매 · 매출 "+money(sold*receipt)+" / 생산비 "+money(cost)+" / 재고 "+state.stock[product]+"개");
   state.log.push("저택 유지·채무 상환 "+money(bills));
   if(trade?.contribution)state.log.push("수익 분담금 "+money(trade.contribution));
-  if(state.accounts.lauSales)state.log.push("라우 상점 재고 매각 "+money(state.accounts.lauSales));
-  if(state.accounts.lauBookSales)state.log.push("라우 상점 중고 교본 매각 "+money(state.accounts.lauBookSales));
+  if(state.accounts.lauSales)state.log.push("도원향 재고 매각 "+money(state.accounts.lauSales));
+  if(state.accounts.lauBookSales)state.log.push("도원향 중고 교본 매각 "+money(state.accounts.lauBookSales));
   if(trade?.order)state.log.push(tradeBuyer(trade.order)+" 납품 "+trade.shipped+"/"+trade.order.qty+"개 · "+money(trade.wholesale)+(trade.short?" · 미납 부담금 "+money(trade.penalty):""));
   if(state.flags.market&&state.marketMonth!==state.month){state.flags.market=false;state.renown+=1;}
   scheduleSnakeVisit(state);
@@ -1440,7 +1440,7 @@ function sheetTitle(){
     if(state.phase==="ending")return endingName(state.ending,endingSceneRoute(state.ending));
     return "월간 일정";
   }
-  return {market:"라우의 상점",title:"Earl Phantomhive Maker",status:"상태",estate:"저택 관리",townhouse:"런던 타운하우스",staffing:"사용인 배치",company:"팬텀 사 경영",record:"가문 장부",save:"저장 · 설정"}[tab];
+  return {market:"도원향",title:"Earl Phantomhive Maker",status:"상태",estate:"저택 관리",townhouse:"런던 타운하우스",staffing:"사용인 배치",company:"팬텀 사 경영",record:"가문 장부",save:"저장 · 설정"}[tab];
 }
 const povertyRemarks=["이번 달 석탄값은 얼마지? 지난달 영수증도 가져와.","새 장갑은 됐어. 단추만 다시 달면 쓸 수 있어.","그 찻잎, 아직 한 번은 더 우릴 수 있어."];
 const homeRemarks=["무슨 일이지?","차가 식기 전에 마저 마시겠어.","오늘 일정은 확인했나?","잠깐이라면 들어주지."];
