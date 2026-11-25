@@ -1773,8 +1773,8 @@ function handleAction(key,rect,confirmed=false){
   if(tab==="chat"&&["back","system-back"].includes(action)&&openChoiceImpact("back"))return;
   if(storyDemo&&!["choose","term-next","term-close","music"].includes(action))return;
   if(previewFair){
-    if(action==="fair-close"){location.reload();return;}
-    if(!["fair-next","fair-result-prev","fair-result-next","fair-result-restart","music"].includes(action))return;
+    if(action==="fair-close"&&!victoryLines(previewFair,state.fairBook?.[previewFair.id])){location.reload();return;}
+    if(!["fair-next","fair-close","fair-victory-next","fair-result-prev","fair-result-next","fair-result-restart","music"].includes(action))return;
   }
   if(action==="fair-notices"&&tab==="plan"&&state.phase==="plan"){openFairNotices();return;}
   if(action==="fair-entry"){selectFestival(id,value);return;}

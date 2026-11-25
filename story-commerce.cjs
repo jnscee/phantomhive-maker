@@ -149,6 +149,7 @@ for(const [id,index,group,subject] of resultSubjects){
       const scene=contestResultScene(fair,entry),expected=contestResultDialogue[resultGroup][resultSubject][resultOutcome];
       if(contestResultOutcome(fair,entry)!==resultOutcome||scene!==expected||contestResultLine(fair,entry)!==scene.narration)return false;
       const html=duelScene(fair,entry,entry.duel,entry);
+      if(entry.rank===2)return html.includes(escapeHTML(scene.narration))&&html.includes("결과창 닫기")&&!html.includes(escapeHTML(scene.lines[0][1]));
       return html.includes(escapeHTML(scene.narration))&&html.includes(escapeHTML(scene.lines[0][0]))&&
         html.includes(escapeHTML(scene.lines[0][1]))&&html.includes('aria-label="결과 대사"')&&
         html.includes('data-action="fair-close"')&&!/undefined|NaN/.test(html);
@@ -213,12 +214,25 @@ run('handleAction("fair-result-next:0");handleAction("fair-result-restart:1")');
 assert.deepEqual(run('structuredClone(state)'),absenceState);
 setup('tab="plan";state.month=state.planMonth=13;state.phase="event";state.pending="contest-newYear-1887";state.stats.기품=400;state.fairTickets={"newYear-1887":{index:0}};settleFestival(state);state.fairBook["newYear-1887"].revealed=true');
 resultHtml=run('contestScene(pendingEvent())');
-assert.match(resultHtml,/award-dialogue/);assert.match(resultHtml,/award-total/);
+assert.doesNotMatch(resultHtml,/award-dialogue/);assert.match(resultHtml,/award-total/);
 // Pagination is UI-only: stale/repeated actions cannot settle, persist, or draw randomness.
 for(const id of ['newYear-1887','royalWarrant-1887']){
   ctx.resultFairId=id;
   setup('tab="plan";{const fair=contestArchive.find(f=>f.id===resultFairId);state.month=state.planMonth=fair.month;state.stats.기품=400;state.quality="fine";state.qty=1;state.shop.design=state.shop.works=3;state.productNotes={toys:{material:"select",reworked:true}};state.productHistory={toys:{reputation:20,units:240,orders:12}};state.fairTickets={[fair.id]:fair.company?{product:"toys"}:{index:0}};state.sequence={contest:fair.id};prepareContest(state);settleFestival(state,state.sequence.duel)}');
   const paid=run('structuredClone(state)'),saved=Array.from(mem);
+  if(run('!!victoryLines(pendingEvent().contest,state.fairBook[resultFairId])')){
+    run('handleAction("fair-close")');
+    const lines=run('victoryLines(pendingEvent().contest,state.fairBook[resultFairId])');
+    for(const [page,[,line]] of lines.entries()){
+      const view=run('contestScene(pendingEvent())');
+      assert.match(view,/class="dialogue"/);assert.doesNotMatch(view,/award-sheet/);
+      assert.ok(view.includes(run('escapeHTML('+JSON.stringify(line)+')')));
+      assert.deepEqual(run('structuredClone(state)'),paid);
+      run('handleAction("fair-victory-next:'+page+'")');
+    }
+    assert.notEqual(run('state.pending'),"contest-"+id);
+    continue;
+  }
   assertOk(`(()=>{
     const event=pendingEvent(),entry=state.fairBook[event.contest.id],scene=contestResultScene(event.contest,entry);
     const settle=settleFestival,monthly=settleMonth,save=persist,rng=Math.random;
