@@ -263,19 +263,15 @@ function contestResultSlip(fair,entry,line){
   const rank=margin===0&&entry.rank===2?"공동 금상":contestRank(entry);
   const entrant=fair.entrant||"시엘 팬텀하이브";
   const verdict=entry.match?(entry.rank===2?entrant:contestOpponent(fair).name)+" 승리":margin===null?"심사 결과":margin===0?"동점":(margin>0?(fair.entrant||"시엘"):contestOpponent(fair).name)+" 승리";
-  const parts=entry.scoreParts?.map(([label,n])=>'<span>'+escapeHTML(label)+' <b>'+n+'</b></span>').join('<i aria-hidden="true">+</i>');
   const growth=(entry.growth||[]).map(change=>{
     const match=/^(.*) ([+-]\d+)$/.exec(change);
     return '<span class="award-gain">'+(match?escapeHTML(match[1])+' <b>'+escapeHTML(match[2])+'</b>':escapeHTML(change))+'</span>';
   }).join("");
   return '<article class="contest-slip award-sheet" data-rank="'+entry.rank+'" aria-label="경연 결과" aria-live="polite">'+
     '<header class="award-head"><h3>'+escapeHTML(rank)+'</h3><strong>'+escapeHTML(verdict)+'</strong>'+
-    (entry.match?'<span>'+(fair.entrant||"시엘")+' 승률 '+Math.round(entry.chance*100)+'%</span>':'')+
     (margin?'<span>'+Math.abs(margin)+'점 차</span>':'')+'</header>'+
     '<div class="award-body"><p class="award-comment">'+escapeHTML(line)+'</p><dl class="award-ledger">'+
     '<div><dt>'+(entry.match?'환산 실력':'심사 점수')+'</dt><dd><strong class="award-total">'+entry.score+'점</strong>'+
-    (parts?'<span class="award-parts">'+parts+'</span>':entry.scoreNote?'<span>'+escapeHTML(entry.scoreNote)+'</span>':'')+
-    (entry.factors?'<small>'+entry.factors.map(([label,n])=>escapeHTML(label)+' ×'+n.toFixed(2)).join(' · ')+'</small>':'')+
     (entry.scoreCondition?'<small>'+escapeHTML(entry.scoreCondition)+'</small>':'')+'</dd></div>'+
     '<div><dt>능력 변화</dt><dd>'+(growth||'—')+'</dd></div>'+
     (entry.purse||entry.prize||fair.exhibitors?'<div><dt>'+(entry.match?'승리 보상':'입상 보상')+'</dt><dd>'+
