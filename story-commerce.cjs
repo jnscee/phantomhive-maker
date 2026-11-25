@@ -353,12 +353,162 @@ for(const id of caseIds){
     assertOk('state.termOutcome.response===pendingEvent().choices[answer].response');
   }
 }
-setup('state.month=14;state.renown=8;state.productHistory.toys={units:89,reputation:5,orders:1}');
-assertOk('!companyCaseEligible(state,companyCases.find(item=>item.gate==="fame"))');
-run('state.productHistory.toys.units=90');
-assertOk('dueCompanyCase(state).gate==="fame"');
-run('state.events.push({id:"merchantAlphabet",month:13,index:0})');assertOk('!dueCompanyCase(state)');
-run('state.month++;state.flags.merchantBorrowedCrest=true');assertOk('dueCompanyCase(state)?.gate!=="fame"');
+// Exercise the real selector across a population of campaigns, without fixing any seed's answer.
+run(`function businessTestRun(seed=1,month=2){
+  const r=initial();
+  Object.assign(r,{owlSeed:seed,month,planMonth:month,phase:"plan",renown:8});
+  r.productHistory=Object.fromEntries(Object.keys(products).map(id=>[id,{units:100,reputation:10,orders:1}]));
+  r.stock=Object.fromEntries(Object.keys(products).map(id=>[id,3]));
+  return r;
+}`);
+assertOk('companyCases.every(item=>!companyCaseEligible(businessTestRun(1,1),item)&&companyCaseEligible(businessTestRun(1,2),item))');
+assert.equal(run('dueCompanyCase(businessTestRun(1,1))'),null);
+// Product, stock, order, sales and variety thresholds remain requirements at the common start month.
+const businessGateChecks=[
+  ...Array.from(run('[...new Set(companyCases.filter(item=>Object.hasOwn(products,item.gate)).map(item=>item.gate))]'))
+    .map(id=>[id,`state.productHistory.${id}={units:3,reputation:0,orders:0}`,`state.productHistory.${id}.units=4`]),
+  ['stock','for(const id of Object.keys(state.stock))state.stock[id]=2','state.stock.toys=3'],
+  ['orders','state.productHistory.toys={units:0,reputation:0,orders:0}','state.productHistory.toys.orders=1'],
+  ['sales','state.productHistory.toys={units:11,reputation:0,orders:0}','state.productHistory.toys.units=12'],
+  ['variety','state.productHistory={toys:{units:8},sweets:{units:3}}','state.productHistory.sweets.units=4']
+];
+for(const [gate,before,after] of businessGateChecks){
+  ctx.businessGate=gate;
+  setup('state.month=state.planMonth=2;'+before);
+  assertOk('companyCases.filter(item=>item.gate===businessGate).every(item=>!companyCaseEligible(state,item))');
+  run(after);
+  assertOk('companyCases.filter(item=>item.gate===businessGate).every(item=>companyCaseEligible(state,item))');
+}
+// Fame needs all three requirements, and any of the existing toy lines may satisfy its sales test.
+for(const product of ['toys','plush','game']){
+  ctx.businessProduct=product;
+  setup('state.month=state.planMonth=2;state.renown=8;state.productHistory={[businessProduct]:{units:30,reputation:5,orders:0},sweets:{units:60,reputation:0,orders:0}}');
+  assertOk('companyCaseEligible(state,companyCases.find(item=>item.gate==="fame"))');
+  const eligible=run('structuredClone(state)');
+  for(const change of ['state.renown=7','state.productHistory[businessProduct].reputation=4','state.productHistory[businessProduct].units=29;state.productHistory.sweets.units=61','state.productHistory.sweets.units=59']){
+    ctx.businessCheckpoint=eligible;run('state=structuredClone(businessCheckpoint);'+change);
+    assertOk('!companyCaseEligible(state,companyCases.find(item=>item.gate==="fame"))');
+  }
+}
+// With only one product sold, unrelated cases cannot leak into the draw.
+for(const product of run('Object.keys(products)')){
+  ctx.businessProduct=product;
+  assertOk(`(()=>{
+    const r=initial();r.month=2;r.productHistory={[businessProduct]:{units:4,reputation:0,orders:0}};
+    const seen=new Set();
+    for(let seed=1;seed<=256;seed++){
+      r.owlSeed=seed;const item=dueCompanyCase(r);
+      if(item){if(item.gate!==businessProduct)return false;seen.add(item.id);}
+    }
+    return companyCases.filter(item=>item.gate===businessProduct).every(item=>seen.has(item.id));
+  })()`);
+}
+for(const month of [2,8,20,35]){
+  ctx.businessMonth=month;
+  const sample=run(`(()=>{
+    const r=businessTestRun(1,businessMonth),counts=Object.fromEntries(companyCases.map(item=>[item.id,0]));
+    let absent=0;
+    for(let seed=1;seed<=4096;seed++){
+      r.owlSeed=seed;const item=dueCompanyCase(r);
+      if(item)counts[item.id]++;else absent++;
+    }
+    return {counts,absent};
+  })()`);
+  assert.ok(sample.absent>4096*.45&&sample.absent<4096*.55,`month ${month}: approximately half of eligible months have no case`);
+  const expected=(4096-sample.absent)/caseIds.length;
+  for(const [id,count] of Object.entries(sample.counts))
+    assert.ok(count>expected*.6&&count<expected*1.4,`month ${month}: ${id} remains reachable without a preferred case (${count})`);
+}
+const businessCampaigns=run(`(()=>{
+  const result=[];
+  for(let seed=1;seed<=128;seed++){
+    const r=businessTestRun(seed),selected=[];
+    for(r.month=2;r.month<=35;r.month++){
+      const item=dueCompanyCase(r);if(!item)continue;
+      selected.push({id:item.id,month:r.month});
+      r.flags[item.id]=true;r.events.push({id:item.id,month:r.month,index:item.correct});
+    }
+    result.push(selected);
+  }
+  return result;
+})()`);
+for(const campaign of businessCampaigns){
+  assert.equal(new Set(campaign.map(item=>item.id)).size,campaign.length,'a completed case cannot recur');
+  assert.ok(campaign.every((item,index)=>!index||item.month-campaign[index-1].month>=2),'leave at least two months between cases');
+}
+assert.ok(new Set(businessCampaigns.map(items=>items.map(item=>item.id).join(','))).size>1,'case order varies across campaigns');
+assert.ok(new Set(businessCampaigns.map(items=>items.map(item=>item.month).join(','))).size>1,'occurrence months vary across campaigns');
+assert.ok(businessCampaigns.some(items=>items.some((item,index)=>index&&item.month-items[index-1].month>2)),'eligible months may be skipped after the cooldown');
+// Both current flags and older history-only records exclude completed cases, even without a month.
+for(const id of caseIds){
+  ctx.caseId=id;
+  assertOk(`(()=>{
+    const r=businessTestRun(1,20);
+    r.flags=Object.fromEntries(companyCases.filter(item=>item.id!==caseId).map(item=>[item.id,true]));
+    const appears=()=>{
+      for(let seed=1;seed<=128;seed++){r.owlSeed=seed;if(dueCompanyCase(r)?.id===caseId)return true;}
+      return false;
+    };
+    if(!appears())return false;
+    r.flags[caseId]=true;if(appears())return false;
+    delete r.flags[caseId];r.events=[{id:caseId,month:2,index:0}];if(appears())return false;
+    r.events=[{id:caseId,index:null}];return !appears();
+  })()`);
+}
+assertOk(`(()=>{
+  const r=businessTestRun(),rng=Math.random;
+  try{
+    Math.random=()=>{throw new Error("Business selection must use the saved campaign seed");};
+    for(const duration of [12,24])for(let seed=1;seed<=64;seed++){
+      r.duration=duration;r.owlSeed=seed;if(dueCompanyCase(r)!==null)return false;
+    }
+    r.duration=35;
+    for(let seed=1;seed<=64;seed++){
+      r.owlSeed=seed;const before=JSON.stringify(r),first=dueCompanyCase(r)?.id;
+      if(dueCompanyCase(r)?.id!==first||JSON.stringify(r)!==before)return false;
+    }
+    return true;
+  }finally{Math.random=rng;}
+})()`);
+// Loading an unreserved month keeps its draw, including legacy saves with no campaign seed.
+assertOk(`(()=>{
+  for(let seed=1;seed<=64;seed++){
+    const r=businessTestRun(seed,8),saved=JSON.parse(JSON.stringify(r));
+    if(dueCompanyCase(r)?.id!==dueCompanyCase(normalizeSave(saved))?.id)return false;
+  }
+  const old=businessTestRun(1,8);delete old.owlSeed;
+  const first=normalizeSave(old),second=normalizeSave(old);
+  return first.owlSeed===second.owlSeed&&dueCompanyCase(first)?.id===dueCompanyCase(second)?.id;
+})()`);
+// An active or already queued case blocks new reservations; unrelated scenes do not.
+assertOk(`(()=>{
+  const r=businessTestRun(1,12),id=companyCases[0].id;
+  for(const [pending,queue] of [[id,["birthday"]],["birthday",["supplierReply",id,"setbackGlass"]]]){
+    r.pending=pending;r.eventQueue=queue;const before=JSON.stringify(r);
+    for(let seed=1;seed<=64;seed++){r.owlSeed=seed;if(dueCompanyCase(r)!==null)return false;}
+    r.owlSeed=1;if(JSON.stringify(r)!==before)return false;
+  }
+  r.pending="birthday";r.eventQueue=["supplierReply"];
+  for(let seed=1;seed<=128;seed++){r.owlSeed=seed;if(dueCompanyCase(r))return true;}
+  return false;
+})()`);
+// Manual slots preserve an introduction page and its queue without invoking the selector again.
+for(const queued of [false,true]){
+  ctx.businessQueued=queued;
+  setup('state=businessTestRun(1,12);tab="plan";state.phase="event";state.pending=businessQueued?"birthday":companyCases[0].id;state.eventQueue=businessQueued?[companyCases[1].id,"supplierReply","setbackGlass"]:["supplierReply","setbackGlass"];state.termPage=2');
+  const checkpoint=run('JSON.stringify([state.owlSeed,state.pending,state.eventQueue,state.termPage,state.termOutcome])');
+  assertOk(`(()=>{
+    const selector=dueCompanyCase;
+    try{
+      dueCompanyCase=()=>{throw new Error("Loading or reading a reserved event must not redraw it");};
+      handleAction("store:3",null,true);state.termPage=0;state.eventQueue=[];
+      handleAction("load:3",null,true);state=normalizeSave(state);
+      return Boolean(termDialogue(pendingEvent(),""));
+    }finally{dueCompanyCase=selector;}
+  })()`);
+  assert.equal(run('JSON.stringify([state.owlSeed,state.pending,state.eventQueue,state.termPage,state.termOutcome])'),checkpoint);
+}
+console.log('PASS business-case timing and selection, all gates, common start, cooldown, saved draws, reserved queues, and legacy completion records');
 // Month-end incidents cannot be declined or resolved twice, including after reloading.
 for(const id of run('monthlySetbacks.map(item=>item.id)')){
   ctx.incident=id;
@@ -661,7 +811,15 @@ function playCampaign(invest){
   ctx.invest=invest;
   return vm.runInContext(`(()=>{
   let january;
-  const originalRandom=Math.random;
+  const originalRandom=Math.random,originalWeather=rollSeasonWeather,originalSetback=drawMonthlySetback;
+  // Loading each dialogue calls initial() for defaults. Keep weather and incidents
+  // independent of how many optional business scenes the campaign happens to read.
+  const monthlyRandom=(month,salt)=>{
+    let seed=(5371^Math.imul(month,2654435761)^salt)>>>0;
+    return ()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/0x100000000);
+  };
+  rollSeasonWeather=month=>originalWeather(month,monthlyRandom(month,0x57454154));
+  drawMonthlySetback=(run,ride)=>originalSetback(run,ride,monthlyRandom(run.month,0x53455442));
   let trialSeed=5371;
   Math.random=()=>((trialSeed=(Math.imul(trialSeed,1664525)+1013904223)>>>0)/0x100000000);
   state=initial();state.owlSeed=0;state.phase="plan";tab="plan";
@@ -700,7 +858,7 @@ function playCampaign(invest){
       else break;
     }
   }
-  Math.random=originalRandom;
+  Math.random=originalRandom;rollSeasonWeather=originalWeather;drawMonthlySetback=originalSetback;
   return {january,finished:state.phase==="ending"||state.phase==="investiture",ending:state.ending,
     stats:Object.values(state.stats),fund:state.fund,decisions:state.events.filter(e=>["winterAxles","carrierPlace","estateRoof"].includes(e.id)).map(e=>e.month),
     birthdays:state.events.filter(e=>birthdayDialogue[e.id]).map(e=>e.month),exams:state.events.filter(e=>e.id.startsWith("portfolio-")).length};

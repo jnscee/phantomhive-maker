@@ -200,9 +200,10 @@ function initialEvents(){
 ];
 }
 
+// Preview dates only set the scene; gameplay draws from the eligible business cases.
 const companyCases = [
   {
-    id:"merchantBlueReceipt", title:"두 번째로 돌아온 영수증", month:2, gate:"toys", award:1, correct:0,
+    id:"merchantBlueReceipt", title:"두 번째로 돌아온 영수증", previewMonth:2, gate:"toys", award:1, correct:0,
     lines:[
       ["","문을 닫기 직전이었다. 손님은 반으로 접은 영수증을 계산대에 펴 놓고, 완구 하나를 돌려주는 데 대체 몇 번을 와야 하느냐고 물었다. 길 건너에서도 대답할 수 있을 만한 목소리였다."],
       ["세바스찬","목제 완구는 어제 돌려주셨고, 돈은 한 푼도 못 받으셨답니다."],
@@ -224,7 +225,7 @@ const companyCases = [
     ]
   },
   {
-    id:"merchantAlphabet", title:"B가 둘인 알파벳", month:3, gate:"toys", award:1, correct:1,
+    id:"merchantAlphabet", title:"B가 둘인 알파벳", previewMonth:3, gate:"toys", award:1, correct:1,
     lines:[
       ["","아이는 계산대에 O, R, A를 나란히 놓고 맨 앞을 한 칸 비워 뒀다. 도라는 제 이름을 보여 주고 싶었는데, 상자에 D가 없다고 했다. 점원은 집에 가서 잘 찾아보라고 했다."],
       ["시엘","좋아. 이 아이가 집에서 D를 잃어버렸다고 치자. 그럼 남는 B는 어느 집에서 왔지?"]
@@ -245,7 +246,7 @@ const companyCases = [
     ]
   },
   {
-    id:"merchantWindowStock", title:"창고에서 사라진 세 벌", month:4, gate:"stock", award:1, correct:2,
+    id:"merchantWindowStock", title:"창고에서 사라진 세 벌", previewMonth:4, gate:"stock", award:1, correct:2,
     lines:[
       ["세바스찬","창고에 있는 물건이 장부에 적힌 수량보다 세 벌 모자랍니다. 창고지기는 제 품삯에서 그 값을 빼 달라더군요."],
       ["","시엘은 임금 봉투를 서랍에 밀어 넣었다. 그 돈이면 세 벌의 값을 치를 수야 있겠지. 그러고도 물건이 어디로 갔는지는 모를 테고. 오늘 아침에 처음 열쇠를 받아 간 사람부터 부르게 했다."]
@@ -266,7 +267,7 @@ const companyCases = [
     ]
   },
   {
-    id:"merchantBiscuitTin", title:"벽난로 옆 자리", month:5, gate:"sweets", award:1, correct:0,
+    id:"merchantBiscuitTin", title:"벽난로 옆 자리", previewMonth:5, gate:"sweets", award:1, correct:0,
     lines:[
       ["","첫 번째 비스킷은 똑, 소리를 내며 부러졌다. 두 번째 것은 시엘의 엄지가 닿은 자리만 움푹 들어갔다. 다실 주인의 말로는 두 통을 다 어제 처음 열었다고 한다."],
       ["시엘","어느 손님의 입맛이 더 까다로운지는 됐어. 어제 이 두 통을 각각 어디에 뒀지?"]
@@ -287,7 +288,7 @@ const companyCases = [
     ]
   },
   {
-    id:"merchantDeliveryBell", title:"종이 울리기 전의 납품", month:6, gate:"orders", award:1, correct:1,
+    id:"merchantDeliveryBell", title:"종이 울리기 전의 납품", previewMonth:6, gate:"orders", award:1, correct:1,
     lines:[
       ["","거래처 주인은 어제 온 짐이 없다고 썼다. 마부는 자기가 직접 짐을 내려놓았다고 했다. 빈 마차를 끌고 모퉁이를 도는데 그제야 학교 종이 울리더란다."],
       ["세바스찬","골목 이름에 번지까지 여쭤봤습니다. 두 분이 같은 집을 짚으시더군요."]
@@ -308,7 +309,7 @@ const companyCases = [
     ]
   },
   {
-    id:"merchantRedDeck", title:"열리지 않는 성문", month:7, gate:"game", award:1, correct:2,
+    id:"merchantRedDeck", title:"열리지 않는 성문", previewMonth:7, gate:"game", award:1, correct:2,
     lines:[
       ["","체스 클럽에서 한 상자를 붙들고 일곱 판을 뒀다. 일곱 판이 모두 성문 앞에서 끝났다. 여덟 번째 판을 권하자 시엘은 말부터 치우고 상자를 뒤집었다."],
       ["시엘","성문에서 열쇠를 내라. 읽었어. 그런데 자네들은 그 열쇠를 어디서 받았지?"]
@@ -329,7 +330,7 @@ const companyCases = [
     ]
   },
   {
-    id:"merchantRabbitEar", title:"토끼가 기우는 쪽", month:8, gate:"plush", award:1, correct:1,
+    id:"merchantRabbitEar", title:"토끼가 기우는 쪽", previewMonth:8, gate:"plush", award:1, correct:1,
     lines:[
       ["","백화점에서 봉제 토끼를 한 줄 통째로 돌려보냈다. 나란히 앉혀 놓으니 모조리 왼쪽 귀를 늘어뜨리고 있었다. ‘진열대가 낮잠 시간의 보육원 같습니다.’ 담당자가 동봉한 쪽지였다."],
       ["세바스찬","누워 있으면 어느 쪽이 저희 견본인지 저도 모르겠군요. 두 마리를 다 세워 보시겠습니까?"]
@@ -350,7 +351,7 @@ const companyCases = [
     ]
   },
   {
-    id:"merchantBlackcurrant", title:"검은 사탕을 찾는 손님", month:9, gate:"candy", award:1, correct:0,
+    id:"merchantBlackcurrant", title:"검은 사탕을 찾는 손님", previewMonth:9, gate:"candy", award:1, correct:0,
     lines:[
       ["","저녁 기차를 타는 손님은 역 앞 매점에서 매번 검은까치밥 사탕을 찾았고, 매번 빈손으로 갔다. 매점 주인의 걱정은 조금 달랐다. 장부를 펼 때마다 그 맛만 고스란히 남아 있다는 것이다."],
       ["시엘","맛을 보고 싫다는 손님이 있었어? 방금 저 사람은 한 알도 못 먹었는데."]
@@ -371,7 +372,7 @@ const companyCases = [
     ]
   },
   {
-    id:"merchantTwelfthParcel", title:"열두 번째 선물", month:11, gate:"hamper", award:1, correct:2,
+    id:"merchantTwelfthParcel", title:"열두 번째 선물", previewMonth:11, gate:"hamper", award:1, correct:2,
     lines:[
       ["","호텔 주인이 손가락으로 짚어 가며 선물을 세었다. 열하나. 검수인은 상자를 받을 때도 그렇게 하나씩 짚었으며, 자기 손가락으로 센 건 틀림없이 열둘이었다고 했다. 귀까지 벌겋게 달아올라 있었다."],
       ["시엘","주문이 열두 개였다는 건 알아. 그런데 이 식탁에 앉을 사람은 몇이지?"]
@@ -392,7 +393,7 @@ const companyCases = [
     ]
   },
   {
-    id:"merchantCatalogue", title:"도안 번호 열일곱", month:12, gate:"variety", award:1, correct:1,
+    id:"merchantCatalogue", title:"도안 번호 열일곱", previewMonth:12, gate:"variety", award:1, correct:1,
     lines:[
       ["세바스찬","주문과 다른 물건이 왔다는 편지가 세 통입니다. 재미있는 건 세 분이 모두 열일곱 번을 주문하셨다는 겁니다."],
       ["","시엘은 반송 주소를 쓰다 말았다. 봉투 세 장은 모두 새하얀데, 거기에 오려 붙인 주문표는 세 장이 다 누렇게 바랬다."]
@@ -413,7 +414,7 @@ const companyCases = [
     ]
   },
   {
-    id:"merchantBorrowedCrest", title:"상표를 빌린 자들", month:14, gate:"fame", award:3, correct:0,
+    id:"merchantBorrowedCrest", title:"상표를 빌린 자들", previewMonth:14, gate:"fame", award:3, correct:0,
     lines:[
       ["","경찰이 두 완구점에서 같은 상회의 장난감을 거둬 갔다. 속에 마약이 들어 있었다. 다행히 아이에게 팔린 것은 아직 없었다. 두 가게에서 그 완구가 놓였던 자리는 팬텀사 제품 바로 옆이었다."],
       ["세바스찬","상회 대표의 말로는 저희와 함께 납품했다는군요. 내일 자선 시연회에는 친절하게도 도련님의 자리까지 마련해 두었답니다."],
@@ -435,7 +436,7 @@ const companyCases = [
     ]
   },
   {
-    id:"merchantBenefitShow", title:"흰 표 쉰 장", month:18, gate:"sales", award:1, correct:2,
+    id:"merchantBenefitShow", title:"흰 표 쉰 장", previewMonth:18, gate:"sales", award:1, correct:2,
     lines:[
       ["","팬텀사가 완구를 빌려준 자선 공연에는 빈자리가 하나도 없었다. 막이 내리고 돈을 세어 본 극장주는 출입구 직원을 불러 세웠다. 표 값이 반밖에 없으니 누군가 동전함에 손을 댄 게 틀림없다고 했다."],
       ["시엘","그 사람은 잠깐 놔둬. 돈은 자네가 셌으니 나는 표를 세어 볼게."]
@@ -457,8 +458,10 @@ const companyCases = [
   }
 ];
 
+const companyCaseFirstMonth=2;
+const companyCaseMonthlyChance=0.5;
 function companyCaseEligible(run,item){
-  if(run.month<item.month || run.flags[item.id])return false;
+  if(run.month<companyCaseFirstMonth || run.flags[item.id] || run.events.some(record=>record.id===item.id))return false;
   const lines=Object.values(run.productHistory||{});
   if(item.gate==="sales")return lines.some(line=>line.units>=12);
   if(item.gate==="orders")return lines.some(line=>line.orders>=1);
@@ -473,11 +476,14 @@ function companyCaseEligible(run,item){
 }
 function dueCompanyCase(run){
   if(run.duration!==35)return null;
+  if(companyCases.some(item=>run.pending===item.id||(run.eventQueue||[]).includes(item.id)))return null;
   const last=run.events.findLast(record=>companyCases.some(item=>item.id===record.id));
   if(last&&run.month-last.month<2)return null;
   const eligible=companyCases.filter(item=>companyCaseEligible(run,item));
-  return eligible.find(item=>item.gate==="fame")||
-    eligible[Math.floor(monthlyDraw(run,0x43415345)*eligible.length)]||null;
+  // Separate seeded draws keep both timing and selection stable after loading,
+  // without biasing the selected case toward the occurrence draw's passing range.
+  if(!eligible.length || monthlyDraw(run,0x4348414e)>=companyCaseMonthlyChance)return null;
+  return eligible[Math.floor(monthlyDraw(run,0x43415345)*eligible.length)];
 }
 function companyCaseEvents(){
   return companyCases.map(item=>({

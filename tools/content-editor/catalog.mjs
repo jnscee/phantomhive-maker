@@ -288,7 +288,7 @@ export function catalog(files, publishedAssets = [], version = "") {
     for (const [key,label] of [["title","제목"],["speaker","화자"],["text","이벤트 본문"],["source","출처"]]) add(g,file,prop(node,key),label);
     add(g,file,prop(node,"lines"),"대사 순서","lines",undefined,{cues:true});
     if(prop(node,"evidence")&&prop(node,"answers")){
-      g.detail="팬텀사 경영 추리 · "+value(prop(node,"month"))+"개월차부터";
+      g.detail="팬텀사 경영 추리 · "+value(variable("story.js","companyCaseFirstMonth"))+"개월차부터 실적 조건을 충족하면 무작위 발생";
       add(g,file,prop(node,"question"),"추리 질문");
       for(const [i,row] of rows(prop(node,"evidence")).entries()){
         const [label,clue]=rows(row);
