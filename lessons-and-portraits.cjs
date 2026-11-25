@@ -67,7 +67,18 @@ async function checkNotebook(page){
 async function checkClosingCredits(page){
   const roll=page.locator('.growth-roll');
   const references=roll.locator('section').filter({has:page.getByRole('heading',{name:'참고작품',exact:true})});
-  assert.equal(await references.locator('p').textContent(),'「Princess Maker 3」, 「관을 가진 신의 손」, Kairosoft');
+  assert.deepEqual(await references.locator('p').allTextContents(),['「Princess Maker 3」','「관을 가진 신의 손」','「Kairosoft 사 스토리 시리즈」']);
+  assert.equal(await roll.locator('header img').count(),0);
+  for(const year of await roll.locator('.growth-year').all()){
+    const age=await year.locator('h3 small').textContent();
+    assert.equal(await year.locator('h3 + img').getAttribute('alt'),age+'의 시엘');
+  }
+  const seal=roll.getByRole('img',{name:'만년필로 그린 붉은 하나마루'});
+  assert.equal(await seal.locator('mask .ink-guide').count(),2);
+  assert.ok(await seal.evaluate(svg=>Array.from(svg.querySelectorAll('path[mask]')).every(path=>{
+    const reference=path.getAttribute('mask').slice(5,-1);
+    return svg.querySelector('mask[id="'+reference+'"]')!==null;
+  })));
   const thanks=roll.locator('section').filter({has:page.getByRole('heading',{name:'SPECIAL THANKS',exact:true})});
   assert.deepEqual(await thanks.locator('p').allTextContents(),['꼬','또쥐','Hato','우유']);
   assert.equal(await roll.locator(':scope > :last-child').textContent(),'끝');
