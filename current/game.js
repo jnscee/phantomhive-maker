@@ -1329,21 +1329,21 @@ function managementPanel(){
 
 const marketGoods={
   cocoa:{name:"핫초콜릿",cost:22,stat:"motivation",amount:12,label:"의욕",line:"카카오를 진하게 풀었어. 숟가락을 세워 볼 생각이라면 조금 더 식혀야겠지만."},
-  broth:{name:"따뜻한 콘소메",cost:24,stat:"hp",amount:13,label:"컨디션",line:"기름은 걷어 냈어. 입맛이 없는 날에는 한 컵만 마셔도 괜찮지."},
+  broth:{name:"따뜻한 콘소메",cost:24,stat:"hp",amount:13,label:"컨디션",line:"입맛이 없는 날에 추천해."},
   lavender:{name:"라벤더 향주머니",cost:20,stat:"stress",amount:-12,label:"스트레스",line:"서랍에 넣어 두면 장부를 펼칠 때마다 향이 날 거야."},
-  tart:{name:"체리 타르트",cost:14,stat:"motivation",amount:6,label:"의욕",line:"가장자리가 조금 깨진 건 내가 먹었어. 이건 마차로 가져가도 멀쩡할걸."},
-  ginger:{name:"생강 당과",cost:10,stat:"hp",amount:4,label:"컨디션",line:"설탕을 두 번 입혔지. 그래도 마지막엔 생강 맛이 남아."},
+  tart:{name:"체리 타르트",cost:14,stat:"motivation",amount:6,label:"의욕",line:"가장자리가 조금 깨진 건 내가 먹어 뒀다고."},
+  ginger:{name:"생강 당과",cost:10,stat:"hp",amount:4,label:"컨디션",line:"마지막엔 생강 맛이 남아."},
   biscuit:{name:"버터 비스킷 한 봉",cost:8,stat:"stress",amount:-3,label:"스트레스",line:"깨지기 전에 하나 집어. 봉투는 책갈피로 써도 돼."},
-  novel:{name:"주머니판 모험소설",icon:"reading",cost:17,stat:"motivation",amount:8,label:"의욕",line:"책갈피가 붙어 있네. 집사가 부르면 거기까지만 읽으면 되겠지."},
+  novel:{name:"주머니판 모험소설",icon:"reading",cost:17,stat:"motivation",amount:8,label:"의욕",line:"책갈피가 붙어 있네. 집사 군이 부르면 거기까지만 읽으면 되겠다."},
   tea:{name:"홍차 한 잔",cost:12,stat:"stress",amount:-5,label:"스트레스",line:"마침 차가 잘 우러났어. 한 잔 하겠어?"},
   scone:{name:"버터 스콘",cost:15,stat:"hp",amount:6,label:"컨디션",line:"스콘은 따뜻할 때 반으로 갈라야 버터가 스며들지."},
-  birds:{name:"새소리 악보집",cost:44,icon:"music",raise:"매력",lower:"의지",line:"이 곡은 끝까지 밀어붙이면 새가 날아가 버려. 한 소절쯤은 쉬어도 좋아, 백작."},
-  puzzles:{name:"상아색 칠교판",cost:44,icon:"study",raise:"의지",lower:"매력",line:"일곱 조각이면 학 한 마리가 돼. 손님이 와도 자리를 뜨기 싫어질걸."},
-  samples:{name:"비단 견본장",cost:44,icon:"supplier",raise:"경영",lower:"기품",line:"소매를 걷고 천 끝을 비벼 봐. 장갑 낀 손으로는 올이 풀리는지 모르거든."},
+  birds:{name:"새소리 악보집",cost:44,icon:"music",raise:"매력",lower:"의지",line:"이 곡은 끝까지 밀어붙이면 새가 날아가 버려. 한 소절쯤은 쉬어도 좋아."},
+  puzzles:{name:"상아색 칠교판",cost:44,icon:"study",raise:"의지",lower:"매력",line:"일곱 조각이면 학 한 마리가 돼. 동양의 미, 어때?"},
+  samples:{name:"비단 견본장",cost:44,icon:"supplier",raise:"경영",lower:"기품",line:"소매를 걷고 천 끝을 비벼야 할 걸. 장갑 낀 손으로는 올이 풀리는지 모르거든."},
   letters:{name:"외교 서한집",cost:44,icon:"letters",raise:"기품",lower:"통찰",line:"마음에 들지 않는 선물에도 답례는 써야지. 첫 장에 아주 좋은 문안이 있어."},
-  maps:{name:"항로 측량 노트",cost:44,icon:"inquiry",raise:"지성",lower:"체력",line:"이 배가 언제 항구에 닿을까? 내 계산으론 저녁 산책을 한 번 걸러야 풀릴걸."},
+  maps:{name:"항로 측량 노트",cost:44,icon:"inquiry",raise:"지성",lower:"체력",line:"이 배가 언제 항구에 닿을까? 네 성정으론, 푸느라 저녁 산책도 거를 것 같네."},
   trails:{name:"발자국 수첩",cost:44,icon:"walk",raise:"통찰",lower:"지성",line:"정원에 가져가 봐. 책에 그린 여우 발자국과 진짜가 얼마나 닮았는지."},
-  rope:{name:"선원의 매듭줄",cost:44,icon:"exercise",raise:"체력",lower:"경영",line:"짐꾼이 묶은 매듭을 직접 풀어 보겠어? 오늘 장부는 내가 봐 줄까?"}
+  rope:{name:"선원의 매듭줄",cost:44,icon:"exercise",raise:"체력",lower:"경영",line:"짐꾼이 묶은 매듭을 직접 풀어 보겠어?"}
 };
 let selectedGood="tea";
 function redrawShop(){

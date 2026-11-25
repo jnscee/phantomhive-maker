@@ -172,7 +172,7 @@ function monthlyResults(){
     '<div class="report-end">'+btn(state.month===state.duration?"작위 심의 확인":"다음 달로","advance",Boolean(sampleReview()),"primary")+'</div></div>';
 }
 const reviewLines={
-  study:"풀이의 세 번째 줄을 보십시오. 이제 제가 여백에 힌트를 남길 필요가 없겠군요.",
+  study:"풀이의 세 번째 줄을 보십시오. 이제 제가 여백에 힌트를 남길 필요가 없겠습니다.",
   etiquette:"오른손의 장갑을 벗는 동안에도 손님을 기다리게 하지 않으셨습니다.",
   accounts:"원장의 합계와 금고의 잔돈이 맞습니다. 이대로 서명하시겠습니까?",
   inquiry:"잉크가 다른 줄에만 표식을 남기셨군요. 원본은 제가 따로 보관하겠습니다.",
