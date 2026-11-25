@@ -376,3 +376,14 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
   .lau-counter .shop-purse {white-space:nowrap}
   .lau-counter .shop-details,.lau-counter .shop-purchase {width:100%}
 }
+@media (orientation:portrait) and (650px < width <= 960px) {
+  #scene[data-mode=market] .lau-counter {
+    --shop-row-gap:.6rem;
+    row-gap:var(--shop-row-gap);
+  }
+  #scene[data-mode=market] .lau-standing {
+    grid-area:1/2/3/3;
+    bottom:calc(-1 * var(--shop-row-gap) - 2px);
+  }
+  #scene[data-mode=market] .lau-standing > img {top:auto;bottom:0}
+}
