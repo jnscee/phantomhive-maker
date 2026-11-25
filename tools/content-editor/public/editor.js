@@ -273,7 +273,12 @@ function lineStage(group,field) {
   audio.controls=true;audio.preload="none";
   background.alt="장면 배경 또는 CG";left.alt="왼쪽 스탠딩";right.alt="오른쪽 스탠딩";
   box.append(who,text);frame.append(background,left,right,box);
-  panel.append(heading,frame,sound,audio);
+  const direction=node("p",undefined,"stage-sound"),effectSound=node("audio");
+  effectSound.controls=true;effectSound.preload="none";
+  effectSound.setAttribute("aria-label","이 컷의 효과음");
+  audio.setAttribute("aria-label","이 컷의 배경 음악");
+  const actions=node("div",undefined,"stage-actions");
+  panel.append(heading,frame,direction,actions,sound,audio,effectSound);
   function source(element,path){
     const cached=path||"";
     if(element.dataset.path===cached)return;
@@ -293,27 +298,66 @@ function lineStage(group,field) {
   const scene=group.preview;
   const recruitCue=scene?.kind==="recruit"&&data.groups.find(g=>g.key==="recruit-"+scene.id)?.fields.find(f=>f.assignment);
   const fallbackTrack=scene?.kind==="opening"?"prologue":scene?.kind==="recruit"?(scene.id==="maid"?"gloomy":"daily"):null;
+  const endingMusic=scene?.career&&data.groups.find(g=>g.key==="ending-"+scene.id)?.fields.find(f=>f.media==="track");
+  let selectedCut=0,lastPlayback,animation;
+  function playEffect(fx){
+    animation?.cancel();
+    const frames=field.cues?.animations?.[fx];
+    if(frames&&!matchMedia("(prefers-reduced-motion: reduce)").matches)
+      animation=frame.animate(frames,{duration:fx==="shake"?320:500,easing:"ease-out"});
+  }
+  if(["opening","ending","recruit"].includes(scene?.kind)){
+    actions.append(button("이 컷부터 게임에서 재생",()=>openGamePreview(selectedCut)));
+  }
+  const replay=button("연출 다시 재생",()=>{
+    playEffect(lastPlayback?.fx);
+    if(lastPlayback?.se){effectSound.currentTime=0;void effectSound.play().catch(error=>status(error.message,true));}
+  });
+  actions.append(replay);
   function draw(row,index,total){
     const [name,line,legacy,cue={}]=row;
     heading.textContent="현재 컷 · "+(index+1)+" / "+total;
-    who.textContent=name;who.hidden=!name||name==="장면";text.textContent=line||"대사를 입력하세요.";
-    const cg=cue.cg||(field.metadata==="illustration"&&(legacy||field.defaultArt));
-    const bg=(cg&&data.inventory.ending[cg])||(art&&value(art)&&getAsset(art,value(art)))||(room&&getAsset(room,value(room)));
-    source(background,bg);
+    who.textContent=name;who.hidden=!name||name==="장면"||(scene?.kind==="opening"&&name==="독백");text.textContent=line||"대사를 입력하세요.";
+    const last=index===total-1;
+    const storyRoom=!cue.cg&&!last&&field.careerRoom;
+    const cg=cue.cg||(field.metadata==="illustration"&&!storyRoom&&((last&&field.finalArt)||legacy||field.defaultArt));
+    const openingArt=art?.type==="prologue"?value(art):null;
+    let bg=(cg&&data.inventory.ending[cg])||(storyRoom&&"assets/room-"+storyRoom+".webp")
+      ||(art&&value(art)&&getAsset(art,value(art)))||(room&&getAsset(room,value(room)));
+    if(!cue.cg&&openingArt==="cell")bg=data.inventory.ending.black;
+    if(!cue.cg&&openingArt==="ring"&&index>=5)bg="assets/prologue/hillside.webp";
     const base=cast?value(cast):single?[value(single)].filter(Boolean):[];
     let actors=[cue.left||cue.standing,cue.right];
+    if(scene?.handoff)actors=[cue.left||"tanaka",cue.right||"seb"];
+    if(storyRoom&&!cue.left&&!cue.right)actors=[name==="세바스찬"?"seb":null,name==="시엘"?"ciel":null];
     if(!actors.some(Boolean)&&base.length){
       actors=[];
       base.forEach((id,i)=>actors[id==="ciel"?1:base.includes("ciel")||i===0?0:1]=id);
     }
+    const voiceOnly=openingArt==="cell"&&name==="악마"&&!cue.cg&&(cue.hideCast||!actors.some(Boolean));
+    frame.dataset.voiceOnly=String(voiceOnly);
+    if(voiceOnly)who.hidden=true;
+    source(background,voiceOnly?null:bg);
     [left,right].forEach((el,i)=>{
       const expr=field.cues?.expressions?.[cue[(i===0?"left":"right")+"Expression"]];
       const path=expr&&expr.actor===actors[i]?expr.file:data.inventory.standing[actors[i]];
       source(el,cue.hideCast?null:path);
     });
-    const track=cue.bgm||(recruitCue&&value(recruitCue))||(music&&(value(music)||music.defaultTrack))||fallbackTrack;
+    const track=cue.bgm||(recruitCue&&value(recruitCue))||(music&&(value(music)||music.defaultTrack))||(endingMusic&&value(endingMusic))||fallbackTrack;
     sound.textContent="BGM · "+(data.trackOptions.find(([id])=>id===track)?.[1]||"게임 기본 음악");
     source(audio,track&&getAsset({media:"track"},track));
+    source(effectSound,cue.se);
+    const fxName=field.cues?.fx?.find(([id])=>id===cue.fx)?.[1];
+    direction.textContent=[fxName,cue.wait&&"자동 재생 대기 "+cue.wait/1000+"초",
+      cue.se&&"효과음 · "+cue.se.split("/").at(-1)].filter(Boolean).join(" · ");
+    direction.hidden=!direction.textContent;
+    replay.hidden=!cue.fx&&!cue.se;
+    selectedCut=index;
+    if(!lastPlayback||lastPlayback.index!==index||lastPlayback.fx!==cue.fx||lastPlayback.se!==cue.se){
+      effectSound.pause();
+      playEffect(cue.fx);
+      lastPlayback={index,fx:cue.fx,se:cue.se};
+    }
   }
   return {panel,draw};
 }
@@ -419,7 +463,7 @@ function linesEditor(parent,initial,onChange,field={}) {
       before.setAttribute("aria-label",(index+1)+"번 대사 앞에 삽입");
       before.disabled=add.disabled;
       row.append(before,head,line);
-      if(field.metadata==="illustration") {
+      if(field.metadata==="illustration"&&!(field.careerRoom||(field.finalArt&&index===list.length-1))) {
         const image=select([["","대표 CG"],...field.artOptions],metadata??"");
         image.setAttribute("aria-label",(index+1)+"번 대사의 CG");
         image.addEventListener("input",()=>{
@@ -433,8 +477,8 @@ function linesEditor(parent,initial,onChange,field={}) {
         image.addEventListener("input",drawCG);
         // Load the CG only when its controls are opened.
         const details=node("details",undefined,"line-options");
-        details.append(node("summary","CG · "+(field.artOptions.find(([id])=>id===metadata)?.[1]??"대표 CG")),image,media);
-        image.addEventListener("input",()=>{details.firstChild.textContent="CG · "+image.selectedOptions[0].textContent;});
+        details.append(node("summary","기본 CG · "+(field.artOptions.find(([id])=>id===metadata)?.[1]??"대표 CG")),image,media);
+        image.addEventListener("input",()=>{details.firstChild.textContent="기본 CG · "+image.selectedOptions[0].textContent;});
         details.addEventListener("toggle",()=>{if(details.open&&!media.childElementCount)drawCG();});
         row.append(details);
       }
@@ -507,7 +551,6 @@ function cueEditor(index,initial,field,onChange){
     for(const [key,label,empty] of [
       ["fx","화면 전환","기본"],["cg","CG 교체","장면 기본"],["bgm","배경 음악","장면 기본"],["se","효과음","없음"]
     ]){
-      if(key==="cg"&&field.metadata==="illustration")continue;
       const control=labeled(form,label,select([["",empty],...field.cues[key]],cue[key]??""));
       control.addEventListener("input",()=>set(key,control.value));
     }
@@ -992,11 +1035,13 @@ function openNewEvent(link){
   $("new-title").focus();
 }
 $("new-event").addEventListener("click",openNewEvent);
-$("preview").addEventListener("click",async()=>{
+$("preview").addEventListener("click",()=>openGamePreview());
+async function openGamePreview(cut){
+  if(busy||deleteEvent)return;
   busy=true;updateToolbar();status("게임 미리보기를 준비하고 있습니다.");
   try {
     const spec=newEvent?{kind:"event",id:"custom-"+newEvent.id}:currentGroup()?.preview??null;
-    const result=await api("/api/preview",{...payload(),preview:spec});
+    const result=await api("/api/preview",{...payload(),preview:spec,cut});
     const dialog=$("game-dialog");
     dialog.querySelector("iframe").src=result.url;
     dialog.showModal();
@@ -1004,7 +1049,7 @@ $("preview").addEventListener("click",async()=>{
     status("게임 미리보기를 열었습니다.");
   } catch(error){status(error.message,true);}
   finally{busy=false;updateToolbar();}
-});
+}
 $("game-dialog").addEventListener("close",()=>{
   $("game-dialog").querySelector("iframe").removeAttribute("src");
   if(web)void web.then(adapter=>adapter.closePreview()).catch(()=>{});

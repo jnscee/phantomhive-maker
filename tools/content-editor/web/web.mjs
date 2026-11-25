@@ -100,6 +100,7 @@ async function preview(current,body){
   const update=edits(current,body);
   if(body.preview && !current.groups.some(group=>JSON.stringify(group.preview)===JSON.stringify(body.preview))
     && body.preview.id!=="custom-"+body.newEvent?.id)throw new Error("테스트할 장면을 찾지 못했습니다.");
+  const spec=body.preview?{...body.preview,cut:Number.isInteger(body.cut)?body.cut:0}:null;
   if(!navigator.serviceWorker)throw new Error("이 브라우저에서는 게임 미리보기를 열 수 없습니다.");
   registration??=navigator.serviceWorker.register(new URL("service-worker.js",scope));
   await registration;
@@ -113,7 +114,7 @@ async function preview(current,body){
     ...update.media,
     ...Object.fromEntries(Object.entries({...original,...update.sources}).map(([name,source])=>["js/"+name,scriptBlob(source)])),
     "editor-storage.js":scriptBlob(memoryStorage),
-    "editor-preview.js":scriptBlob("const editorPreview="+JSON.stringify(body.preview??null)+";\n"+previewScript),
+    "editor-preview.js":scriptBlob("const editorPreview="+JSON.stringify(spec)+";\n"+previewScript),
     "index.html":htmlBlob(gameHTML
       .replace("<head>",'<head><script src="editor-storage.js"></script>')
       .replace("</body>",'<script src="editor-preview.js"></script></body>'))

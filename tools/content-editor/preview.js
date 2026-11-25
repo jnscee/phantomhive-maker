@@ -1,22 +1,24 @@
 "use strict";
 
-// Served only by the local editor. The iframe has a separate storage origin.
+// This game instance is isolated from player saves in both editors.
 persist=()=>{};
 storageOk=false;
 saves={};
 state=initial();
 tab="plan";
 
+const previewCut=length=>Math.min(Math.max(0,length-1),Math.max(0,editorPreview?.cut||0));
 if(editorPreview?.kind==="opening"){
   openingSession=true;
   openingAuto=false;
   state.contractFiled=Boolean(editorPreview.handoff);
-  state.openingLine=openingLines.findIndex(line=>line.sceneIndex===editorPreview.scene);
+  state.openingLine=openingLines.findIndex(line=>line.sceneIndex===editorPreview.scene)+previewCut(openingPlayback[editorPreview.scene].lines.length);
 }else if(editorPreview?.kind==="ending"){
-  endingReplay={id:editorPreview.id,at:0,origin:"record"};
+  endingReplay={id:editorPreview.id,at:previewCut(endingScenes[editorPreview.id].lines.length),origin:"record"};
   if(editorPreview.career){
     saves.londonCareer=editorPreview.career;
-    endingReplay.at=endingScenes.vowNoTitle.lines.length-londonEndingScenes[editorPreview.career].length;
+    const act=londonEndingScenes[editorPreview.career];
+    endingReplay.at=endingScenes.vowNoTitle.lines.length-act.length+previewCut(act.length);
   }
   if(editorPreview.person){
     saves.farewellGallery={[editorPreview.id]:{age:12,cast:[[editorPreview.person,editorPreview.tier]]}};
@@ -33,7 +35,8 @@ if(editorPreview?.kind==="opening"){
     state.eventQueue=[];
     if(Object.hasOwn(recruitScenes,event.id)){
       const book=recruitScenes[event.id];
-      const at=book.lines.findIndex(line=>line.i===(editorPreview.scene??0));
+      const pages=book.lines.filter(line=>line.i===(editorPreview.scene??0));
+      const at=book.lines.indexOf(pages[previewCut(pages.length)]);
       state.recruitPage={id:event.id,at:Math.max(0,at),version:3};
       if(event.id==="visitPrince")state.people.tanaka={toward:2};
     }

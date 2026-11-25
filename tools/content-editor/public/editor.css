@@ -262,12 +262,16 @@ dialog iframe { display: block; width: 100%; height: min(77dvh, 790px); border: 
 .line-stage h3 {display:flex;align-items:center;margin:0 0 .65rem;color:var(--gold);font-size:.96rem}
 .stage-frame {position:relative;isolation:isolate;overflow:hidden;aspect-ratio:16/10;background:radial-gradient(ellipse at top,#35313f,#16151d);border:1px solid #504752;border-radius:6px}
 .stage-frame img {position:absolute;bottom:0;height:100%;pointer-events:none}
+.stage-frame[data-voice-only="true"] {display:grid;place-items:center;background:#000}
+.stage-frame[data-voice-only="true"] .stage-dialogue {position:static;background:none;border:none;text-align:center}
 .stage-bg {width:100%;object-fit:cover}
 .stage-left,.stage-right {width:53%;height:92%!important;object-fit:contain;object-position:bottom}
 .stage-left{left:0}.stage-right{right:0}
 .stage-dialogue {position:absolute;inset:auto .38rem .38rem;padding:.55rem .63rem;background:#15131de8;border:1px solid #a78f6b77;border-radius:5px;max-height:55%;overflow:auto}
 .stage-dialogue p {line-height:1.52;font-size:.93rem;overflow-wrap:anywhere;white-space:pre-wrap}
 .stage-dialogue strong {display:block;color:var(--gold);font-size:.83rem}
+.stage-actions {display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.55rem}
+.stage-actions:empty {display:none}
 .stage-sound {margin:.65rem 0 0;font-size:.84rem;color:var(--muted)}
 .line-stage audio {margin-top:.45rem;width:100%;height:2.1rem}
 .flow-row-tools {display:flex;gap:.4rem;margin:.22rem 0 .3rem}

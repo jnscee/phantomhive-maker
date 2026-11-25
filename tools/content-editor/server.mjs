@@ -273,7 +273,8 @@ const server=http.createServer(async (req,res)=>{
           return json(res,{files:save(changes)});
         }
         const token=randomUUID();
-        previews.set(token,{...changes,spec:validPreview(body.preview,changes.model,body.newEvent)});
+        const spec=validPreview(body.preview,changes.model,body.newEvent);
+        previews.set(token,{...changes,spec:spec?{...spec,cut:Number.isInteger(body.cut)?body.cut:0}:null});
         if(previews.size>8) previews.delete(previews.keys().next().value);
         return json(res,{url:"/game/"+token+"/index.html"});
       }

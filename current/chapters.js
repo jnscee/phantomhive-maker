@@ -1191,6 +1191,15 @@ function showGrowthCredits(host,id,years,onFinish){
   host.querySelector(".growth-end").onclick=finish;
   label();requestAnimationFrame(frame);
 }
+function endingLineAt(id,at,replay){
+  const lines=endingScenes[id]?.lines||[];
+  const route=id==="vowNoTitle"?(replay&&!(state.phase==="ending"&&state.ending===id)
+    ?saves.londonCareer:londonCareer(state)):null;
+  const act=londonEndingScenes[route];
+  const offset=act?lines.length-act.length:0;
+  const routeAct=Boolean(act&&at>=offset);
+  return {route,routeAct,row:routeAct?act[at-offset]:lines[at]};
+}
 function showEndingScene(host){
   const replay=tab==="endingMemory"?endingReplay:null;
   const live=tab==="plan"&&state.phase==="ending"&&Number.isInteger(state.endingBeat);
@@ -1220,14 +1229,9 @@ function showEndingScene(host){
     showGrowthCredits(host,id,savedGrowthRecord(id,replay)||[],finishScene);return true;
   }
   const end=scene.lines.length-1,at=Math.min(end,Math.max(0,replay?replay.at:state.endingBeat));
-  // The last act of this ending follows the career earned in the finished run.
-  const route=id==="vowNoTitle"?(replay&&!(state.phase==="ending"&&state.ending===id)
-    ?saves.londonCareer:londonCareer(state)):null;
-  const act=londonEndingScenes[route];
-  const [who,line,legacyPicture,cue]=act&&at>=scene.lines.length-act.length
-    ?act[at-(scene.lines.length-act.length)]:scene.lines[at];
+  const {route,routeAct,row}=endingLineAt(id,at,replay);
+  const [who,line,legacyPicture,cue]=row;
   const last=at===end;
-  const routeAct=Boolean(act && at>=scene.lines.length-act.length);
   const story=routeAct && !cue?.cg && !last;
   const careerCG=last&&id==="vowNoTitle"?londonEndingCGs[route]||londonEndingCGs.pursuit:null;
   const endingPicture=careerCG?.id||legacyPicture||id;
