@@ -315,7 +315,7 @@ function chatDialogue(){
 }
 function speak(id){
   if(state.phase!=="plan"||state.spoken?.turn===state.month)return;
-  const lines={health:["몸 상태","“좋은 타이밍에 물었네. 오늘 회의는 삼십 분 늦춰 줘.”"],business:["","“장식은 나중으로. 고객이 혼자서도 상자를 열 수 있는지부터 볼래.”"],tea:["오후의 홍차","“……그래. 한 잔만 더. 그동안은 서류도 그대로 두자고.”"]};
+  const lines={health:["몸 상태","좋은 타이밍에 물었네. 오늘 회의는 삼십 분 늦춰 줘."],business:["","장식은 나중으로. 고객이 혼자서도 상자를 열 수 있는지부터 볼래."],tea:["오후의 홍차","……그래. 한 잔만 더. 그동안은 서류도 그대로 두자고."]};
   if(!Object.hasOwn(lines,id))return;
   if(id==="tea"||id==="health")state.flags.attention=(state.flags.attention||0)+1;
   const snapshot=choiceSnapshot();
