@@ -32,7 +32,7 @@ function plannedTuition(){
 }
 function careActivity(run,planned){return run.ill && planned!=="rest" && planned!=="recovery"?"recovery":planned;}
 function initial(){
-  return startAccounts({owlSeed:Math.floor(Math.random()*0x100000000),v:1,unifiedAbilityCaps:true,abilityScale:abilityMax,duration:35,people:{},jobs:{},annex:{bedroom:1,garden:1,guard:1,quarters:1},month:1,phase:"contract",openingLine:0,openingEdition:3,storyPageEdition:3,fund:500,hp:76,stress:20,motivation:70,
+  return startAccounts({owlSeed:Math.floor(Math.random()*0x100000000),v:1,unifiedAbilityCaps:true,abilityScale:abilityMax,duration:35,people:{},jobs:{},annex:{bedroom:1,garden:1,guard:1,quarters:1},month:1,phase:"contract",openingLine:0,openingEdition:3,storyPageEdition:4,fund:500,hp:76,stress:20,motivation:70,
     stats:{지성:18,기품:14,매력:8,경영:5,통찰:30,의지:125,체력:50},
     planMonth:1,plan:emptyPlan(),visit:null,level:{library:1,parlor:1,kitchen:1},staff:null,
     shop:{design:1,works:1,store:1},salesBook:[],productHistory:{},fineStock:{},order:null,
@@ -1013,13 +1013,13 @@ function normalizeSave(run){
     }
     copy.storyPageEdition=2;
   }
-  if(copy.storyPageEdition===2){
-    if(Number.isInteger(copy.endingBeat)){
-      if(copy.ending==="vowTitle"&&copy.endingBeat>=27)copy.endingBeat--;
-      if(copy.ending==="broke"&&copy.endingBeat>=6)
-        copy.endingBeat=Math.min(copy.endingBeat+1,endingScenes.broke.lines.length-1);
+  if(copy.storyPageEdition<4){
+    // Edition 4 restores the dialogue order from edition 2.
+    if(copy.storyPageEdition===3&&Number.isInteger(copy.endingBeat)){
+      if(copy.ending==="vowTitle"&&copy.endingBeat>=27)copy.endingBeat++;
+      if(copy.ending==="broke"&&copy.endingBeat>=6)copy.endingBeat--;
     }
-    copy.storyPageEdition=3;
+    copy.storyPageEdition=4;
   }
   if(["result","vow"].includes(copy.phase)&&!copy.pending){
     const arrival=overdueArrival(copy)||(tanakaReturns(copy)?"homecoming":null)||(townhouseGuestsDue(copy)?"visitPrince":null);
