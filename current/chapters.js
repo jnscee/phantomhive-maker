@@ -615,7 +615,7 @@ const endingScenes={
 const londonEndingCGs={
   merchant:{id:"london-merchant",title:"런던의 사업가",alt:"안개 낀 템스강 하역장에서 운송장을 확인하는 시엘과 세바스찬."},
   broker:{id:"london-broker",title:"정보상의 연락망",alt:"이스트엔드 전당포에서 정보상에게 금화 한 닢을 내미는 시엘."},
-  pursuit:{id:"london-pursuit",title:"문장 없는 마차",alt:"비에 젖은 마차 창가에서 반쪽짜리 기차표를 쥔 시엘."}
+  pursuit:{id:"london-pursuit",title:"문장 없는 마차",alt:"한밤중 화물역에서 찢긴 기차표를 들어 보이는 시엘과 세바스찬."}
 };
 
 const londonEndingScenes={
