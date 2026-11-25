@@ -185,7 +185,7 @@ async function check(browserType){
         const dialogue=weatherPage.locator('#conversation .dialogue');
         assert.equal(await dialogue.locator('small').innerText(),'세바스찬');
         assert.equal(await dialogue.locator('h2').innerText(),label);
-        await dialogue.getByRole('button',{name:'다음 대사'}).click();
+        await dialogue.getByRole('button',{name:'다음 대사'}).press('Enter');
         assert.equal(await weatherPage.evaluate(()=>state.phase),"plan");
         await weatherPage.evaluate(()=>{tab="plan";render();});
         await weatherPage.getByRole('button',{name:label+' 소식'}).click();
@@ -512,7 +512,7 @@ async function check(browserType){
       const owl=page.getByRole('img',{name:'올빼미',exact:true});
       assert.equal(await owl.getAttribute('src'),'assets/portraits/mey-owl.webp');
       await owl.evaluate(im=>im.decode());
-      await page.getByRole('button',{name:'다음 대사'}).click();
+      await page.getByRole('button',{name:'다음 대사'}).press('Enter');
       assert.equal(await owl.count(),0);
       await page.getByRole('button',{name:'건너뛰기'}).click();
       const speakerPortrait=page.locator('#conversation .standing-window img[alt="세바스찬"]');
