@@ -462,15 +462,23 @@ function festivalAction(action,id){
   }else if(action==="fair-close"&&(entry.revealed||entry.reason))finishEventChoice(event);
   return true;
 }
-function filedSection(title,body,count){
-  return '<details class="file-section"><summary><span>'+title+'</span><small>'+count+'</small></summary><div>'+body+'</div></details>';
+function filedSection(title,body,count,icon){
+  return '<details class="file-section"><summary><img src="assets/planner-icons/'+icon+'.png" alt=""><span>'+title+'</span><small>'+count+'</small></summary><div>'+body+'</div></details>';
 }
 function courtFolio(){
-  const approved=isApprovedEnding(state.ending);
-  const held=["vowNoTitle","releaseNoTitle"].includes(state.ending);
-  const title=approved?"작위 회복":held?"이번 심의 유보":"왕실의 동향";
-  return '<section class="court-folio"><div class="court-ruling"><header><span>왕실 작위 심의</span><small>'+monthText(state.month)+'</small></header>'+
-    '<h3>'+title+'</h3><p>'+courtImpression()+'</p><dl class="court-standing"><dt>현재 가문 명성</dt><dd>'+state.renown+'점</dd></dl></div></section>';
+  const criteria=courtRows();
+  const metAll=criteria.every(([,met])=>met);
+  const renownScale=40;
+  const renown=Math.min(renownScale,Math.max(0,Number(state.renown)||0));
+  const recorded=isApprovedEnding(state.ending)?"작위 회복":
+    ["vowNoTitle","releaseNoTitle"].includes(state.ending)?"이번 심의 유보":"";
+  const checks=criteria.filter(([label])=>label!=="가문 명성").map(([label,met])=>
+    '<div><dt>'+label+'</dt><dd><span class="court-check-status" data-met="'+met+'">'+(met?"충족":"미충족")+'</span></dd></div>'
+  ).join("");
+  return '<section class="court-folio"><div class="court-ruling"><header><div><small>'+monthText(state.month)+'</small><h3>왕실 작위 심의</h3></div>'+
+    '<strong class="court-verdict">'+(recorded||(metAll?"충족":"미충족"))+'</strong></header>'+
+    '<div class="court-renown-row"><span>가문 명성</span><meter class="court-renown" aria-label="가문 명성" min="0" max="'+renownScale+'" value="'+renown+'"></meter></div>'+
+    '<dl class="court-checks" aria-label="작위 심의 기준">'+checks+'</dl></div></section>';
 }
 function familyFolio(history,album,extra=""){
   const allies=peopleInHouse();
@@ -486,10 +494,10 @@ function familyFolio(history,album,extra=""){
   const fairHistory=[...contestArchive].reverse().map(fairReport).filter(Boolean);
   const warrants=Object.keys(state.royalWarrants||{}).map(id=>products[id].name).join(" · ");
   return '<div class="family-folio">'+courtFolio()+'<aside class="folio-files"><dl class="folio-finance"><div><dt>가문 자금</dt><dd>'+money(state.fund)+'</dd></div><div><dt>남은 채무</dt><dd>'+money(state.debt)+'</dd></div></dl>'+
-    filedSection("인물 관계",'<p>각 인물이 시엘에게 보내는 신뢰와 호감도입니다.</p>'+relationshipRows,relations.length+"명")+
-    filedSection("사건 기록",history||"첫 사건을 마치면 선택이 기록됩니다.",state.events.length+"건")+
-    filedSection("계절 경연 · 박람회",(warrants?'<p><b>왕실 납품 인증</b> '+warrants+'</p>':"")+(fairHistory.join("")||"참가한 행사의 결과가 기록됩니다."),fairHistory.length+"건")+
-    filedSection("엔딩 도감",album,endingGalleryEntries().length+"개 기록")+extra+'</aside></div>';
+    filedSection("인물 관계",'<p>각 인물이 시엘에게 보내는 신뢰와 호감도입니다.</p>'+relationshipRows,relations.length+"명","social")+
+    filedSection("사건 기록",history||"첫 사건을 마치면 선택이 기록됩니다.",state.events.length+"건","casework")+
+    filedSection("계절 경연 · 박람회",(warrants?'<p><b>왕실 납품 인증</b> '+warrants+'</p>':"")+(fairHistory.join("")||"참가한 행사의 결과가 기록됩니다."),fairHistory.length+"건","reception")+
+    filedSection("엔딩 도감",album,endingGalleryEntries().length+"개 기록","reading")+extra+'</aside></div>';
 }
 function relapseNotice(run){
   if(!run.relapseStage)return "";

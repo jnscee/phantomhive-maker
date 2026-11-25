@@ -2,6 +2,7 @@
 
 function recruit(id){
   state.people[id]??={toward:2};
+  scheduleTownhouseGuests(state);
   if(servants[id].job)
     state.jobs[id]=servants[id].job;
 }
@@ -94,7 +95,7 @@ function scriptedEvents(){
     choices:[effectChoice(["메이린 영입",recruitScenes.maid.result,{recruit:"mey",flag:"lookout"}])]});
   fixed.push({id:"cook",household:true,chapter:true,speaker:"시엘",title:recruitScenes.cook.title,
     text:"서재에서 시엘은 세바스찬에게 미군 출신을 셰프로 고용하려는 이유를 묻는다.",
-    sees:s=>s.month>=19&&s.people.finny&&s.people.mey&&!s.people.bard,
+    sees:s=>bardNeededForEarlyGuests(s)||(s.month>=19&&s.people.finny&&s.people.mey&&!s.people.bard),
     choices:[effectChoice(["바르도 영입",recruitScenes.cook.result,{recruit:"bard"}])]});
   fixed.push({id:"circus",household:true,chapter:true,speaker:"스네이크",title:recruitScenes.circus.title,
     text:"단원들이 남긴 편지에서 백작의 이름을 읽은 스네이크가 런던의 타운하우스 문을 두드린다.",

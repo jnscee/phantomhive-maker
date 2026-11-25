@@ -246,6 +246,7 @@ function dueSnakeVisit(run){
 }
 // Also serves unfinished older saves that have already passed a deadline.
 function overdueArrival(run){
+  if(bardNeededForEarlyGuests(run))return "cook";
   if(run.duration!==35)return null;
   if(run.month>=13&&finnyMissing(run))return "gardener";
   if(run.month>=22&&owlAppears(run))return "maid";
@@ -447,7 +448,7 @@ function finishEventChoice(event){
   if(event.id==="visitPrince"&&state.recruitReturn==="estate"){
     delete state.recruitReturn;state.phase="plan";tab="estate";persist();render(true);return;
   }
-  if(event.id==="gardener"&&state.recruitReturn==="plan"){
+  if((event.id==="gardener"||event.id==="cook")&&state.recruitReturn==="plan"){
     delete state.recruitReturn;state.phase="plan";tab="home";persist();render(true);return;
   }
   if(state.phase==="slotEvent"){
@@ -502,7 +503,7 @@ function advance(){
   if(state.phase!=="result")return;
   const late=overdueArrival(state);
   if(late){state.pending=late;state.phase="event";tab="plan";persist();render(true);return;}
-  if(startTownhouseGuests(state)){tab="plan";persist();render(true);return;}
+  if(startHouseholdVisit(state)){tab="plan";persist();render(true);return;}
   if(sampleReview())return;
   state.unwell=criticalHealth(state)?state.unwell+1:0;
   state.poverty=povertyAfterClosing(state);
@@ -517,7 +518,7 @@ function advance(){
   state.month++;state.marketShift=rollMarketShift(state);state.weather=rollSeasonWeather(state.month);state.planMonth=state.month;state.plan=emptyPlan();editingVisit=false;lessonPage=0;startAccounts(state);state.phase="plan";state.visit=null;selectedSlot=0;
   if(state.weather)state.phase="weatherBriefing";
   startFinnyAtTurn(state);
-  startTownhouseGuests(state);
+  startHouseholdVisit(state);
   tab=state.phase==="plan"?"home":"plan";persist();render(true);
 }
 function fatigueThreshold(stamina){
@@ -830,10 +831,12 @@ function epilogue(){
   return route+(allies.length&&!["releaseTitle","releaseNoTitle","ill","broke"].includes(state.ending)?allies.join("·")+"은 다음 겨울에도 도련님의 지시를 따르겠다고 전했습니다. ":"")+"가장 단련된 능력은 "+statLabel(top)+"이었습니다. 팬텀사의 개발품은 "+state.unlocked.length+"종, 저택에 합류한 고용인은 "+peopleInHouse().filter(id=>servants[id].job).length+"명입니다.";
 }
 function canBuyTownhouse(){return state.phase==="plan" && !state.flags.townhouse && state.fund>=250;}
-function startTownhouseGuests(run){
-  if(run.pending||!["plan","result"].includes(run.phase)||!townhouseGuestsDue(run))return false;
-  if(run.phase==="plan")run.recruitReturn="estate";
-  run.pending="visitPrince";run.phase="event";return true;
+function startHouseholdVisit(run){
+  if(run.pending||!["plan","result"].includes(run.phase))return false;
+  const event=bardNeededForEarlyGuests(run)?"cook":townhouseGuestsDue(run)?"visitPrince":null;
+  if(!event)return false;
+  if(run.phase==="plan")run.recruitReturn=event==="cook"?"plan":"estate";
+  run.pending=event;run.phase="event";return true;
 }
 function annexDesk(){
   const locked=state.phase!=="plan";
@@ -964,21 +967,34 @@ function normalizeSave(run){
     }
   }
   // Older releases could queue a staff event before the new prerequisites.
+  // Old saves have no invitation date. Respect a recruitment recorded this month.
+  if(awaitingTownhouseGuests(copy)&&!Number.isInteger(copy.townhouseGuestMonth)){
+    const newlyReady=copy.events.some(e=>e.month===copy.month&&["gardener","maid","cook"].includes(e.id));
+    scheduleTownhouseGuests(copy,copy.month+(newlyReady?1:0));
+  }
   scheduleSnakeVisit(copy);
   const allowed=id=>{
     if(typeof id==="string"&&id.startsWith("custom-"))return events.some(event=>event.id===id);
     if(id==="circus"||id==="snakeReturn")return id===dueSnakeVisit(copy);
     if(id==="homecoming"&&copy.phase==="event"&&copy.pending===id)return canTanakaReturn(copy);
     if(id==="visitPrince")return townhouseGuestsDue(copy);
+    if(id==="cook"&&bardNeededForEarlyGuests(copy))return true;
     if(id==="maid")return copy.people.finny&&!copy.people.mey&&!copy.flags.maid;
     const arrival=events.find(e=>e.id===id&&e.household);
     return !arrival||(!copy.flags[id]&&arrival.sees(copy));
   };
   if(copy.eventQueue)copy.eventQueue=copy.eventQueue.filter(id=>allowed(id)&&!(id==="visitPrince"&&copy.pending===id));
-  if(copy.phase==="event"&&copy.pending&&!allowed(copy.pending)){
+  // A recorded choice may still be showing its result when the player saves.
+  const showingRecruitResult=copy.choiceImpact?.next==="event"&&["cook","visitPrince"].includes(copy.pending)&&
+    copy.events.at(-1)?.id===copy.pending&&copy.events.at(-1)?.month===copy.month;
+  if(copy.phase==="event"&&copy.pending&&!showingRecruitResult&&!allowed(copy.pending)){
     delete copy.recruitPage;delete copy.termPage;delete copy.termOutcome;
     copy.pending=copy.eventQueue?.shift()||null;copy.phase=copy.pending?"event":copy.recruitReturn==="vow"?"vow":copy.recruitReturn==="estate"?"plan":"result";
     if(!copy.pending)delete copy.recruitReturn;
+  }
+  if(copy.phase==="event"&&copy.pending&&bardNeededForEarlyGuests(copy)){
+    const rest=(copy.eventQueue||[]).filter(id=>id!=="cook");
+    copy.eventQueue=copy.pending==="cook"?rest:["cook",...rest];
   }
   if(copy.recruitPage?.id==="circus"&&copy.recruitPage.version===3){
     // Readers past the old promise of a visit resume at the revised conversation.
@@ -1027,7 +1043,7 @@ function normalizeSave(run){
     }
   }
   startFinnyAtTurn(copy);
-  startTownhouseGuests(copy);
+  startHouseholdVisit(copy);
   for(const [slot] of exams){
     const id="exam-"+slot;
     if(copy.flags[id] && copy.events?.findLast(e=>e.id===id)?.index===1) delete copy.flags[id];
@@ -1132,6 +1148,19 @@ function statusPanel(){
       return '<div class="attribute"><span>'+statLabel(name)+'</span><span class="gauge"><i style="width:'+(state.stats[name]/statMax(name)*100)+'%"></i></span><b>'+state.stats[name]+'</b><em>'+formatChange(delta)+'</em></div>';
     }).join("")+'</div></div>');
 }
+function setStatusDrawer(open,focus=false){
+  const drawer=$("status-drawer"),button=$("system-status");
+  if(drawer.hidden===!open)return;
+  $("drawer-stats").innerHTML=open?statusPanel():"";
+  drawer.hidden=!open;
+  button.setAttribute("aria-expanded",String(open));
+  $("system-back").disabled=!open&&(tab==="home"||tab==="title");
+  if(open)drawer.scrollTop=0;
+  if(focus)(open?drawer.querySelector(".drawer-close"):button).focus({preventScroll:true});
+}
+document.addEventListener("pointerdown",event=>{
+  if(!$("status-drawer").hidden&&!event.target.closest("#status-drawer,#system-status,#system-back"))setStatusDrawer(false);
+});
 const businessArt={"estate": "assets/map-estate.png", "design2": "assets/map-design2.png", "library2": "assets/map-library2.png", "parlor2": "assets/map-parlor2.png", "designer": "assets/map-designer.png", "cart-candy": "assets/map-cart-candy.png", "kitchen3": "assets/map-kitchen3.png", "store2": "assets/map-store2.png", "maker": "assets/map-maker.png", "cart-sweets": "assets/map-cart-sweets.png", "cart-hamper": "assets/map-cart-hamper.png", "parlor3": "assets/map-parlor3.png", "cart-toys": "assets/map-cart-toys.png", "clerk": "assets/map-clerk.png", "works2": "assets/map-works2.png", "store3": "assets/map-store3.png", "kitchen2": "assets/map-kitchen2.png", "library3": "assets/map-library3.png", "cart-plush": "assets/map-cart-plush.png", "design3": "assets/map-design3.png", "works3": "assets/map-works3.png", "company": "assets/map-company.png", "steward": "assets/map-steward.png", "cart-game": "assets/map-cart-game.png"};
 const departments = {
   design:{name:"개발실",cost:65,benefit:"단계마다 도안 수익 +£1 · 개발비 할인"},
@@ -1243,7 +1272,8 @@ function companyDetail(){
       (active?stepper("qty","생산량 (개)",0):'<p>생산량 '+state.qty+'개</p>')+
       '<div class="work-cost" id="work-cost">'+productionCost(forecast().unit)+'</div>';
   }else{
-    controls='<h4 class="shop-product-title">'+productLabel(state.product)+'</h4><p>주요 고객 · '+businessTailwind(state.product).audience+'　이달의 수요 · '+businessTailwind(state.product).trend+'</p>'+
+    const market=businessTailwind(state.product);
+    controls='<h4 class="shop-product-title">'+productLabel(state.product)+'</h4><dl class="shop-market-brief"><div><dt>주요 고객</dt><dd>'+market.audience+'</dd></div><div><dt>이달의 수요</dt><dd>'+market.trend+'</dd></div></dl>'+
       (active?stepper("price","판매가 (£)",4):'<p>판매가 '+money(state.price)+'</p>')+
       (active?'<div class="work-ledger"><span>이 가격의 예상 수요</span><b id="shop-demand">'+forecast().demand+'개</b></div>':'')+
       '<h4>상품 장부</h4><div class="stock-grid">'+inventoryRows()+'</div>'+orderDesk();
@@ -1459,7 +1489,7 @@ function render(focus=false,playbackOffset=0){
   musicPlayer.sync(trackForView());
   stopPlayback();
   $("system-back").disabled=tab==="home"||tab==="title";
-  $("system-status").setAttribute("aria-pressed",String(tab==="status"));
+  setStatusDrawer(false);
   $("system-book").setAttribute("aria-pressed",String(tab==="record"));
   $("system-save").setAttribute("aria-pressed",String(tab==="save"));
   const opening=inOpening();
@@ -1655,6 +1685,7 @@ document.addEventListener("change",event=>{
   setNumber(field.id,Number.isFinite(field.valueAsNumber)?field.valueAsNumber:state[field.id]);
 });
 function goBack(rect){
+  if(!$("status-drawer").hidden){setStatusDrawer(false,true);return true;}
   if($("picker").open){
     handleAction("close",rect);
     return true;
@@ -1708,8 +1739,16 @@ function askConfirmation(key,title,description,label,rect,extra=""){
 function handleAction(key,rect,confirmed=false){
   if(previewLesson)return;
   const [action,id,value]=key.split(":");
+  if(action==="toggle-status"||action==="close-status"){
+    setStatusDrawer(action==="toggle-status"&&$("status-drawer").hidden,true);
+    return;
+  }
+  if(!$("status-drawer").hidden){
+    setStatusDrawer(false,action==="system-back");
+    if(action==="system-back")return;
+  }
   if(action==="receive-guests"&&tab==="townhouse"){
-    if(startTownhouseGuests(state)||(state.phase==="event"&&state.pending==="visitPrince")){
+    if(startHouseholdVisit(state)||(state.phase==="event"&&state.pending==="visitPrince")){
       tab="plan";persist();render(true);
     }
     return;
@@ -1717,7 +1756,7 @@ function handleAction(key,rect,confirmed=false){
   if(action==="weather-close"&&state.phase==="weatherBriefing"){
     state.phase="plan";
     startFinnyAtTurn(state);
-    startTownhouseGuests(state);
+    startHouseholdVisit(state);
     tab=state.phase==="plan"?"home":"plan";
     persist();render(true);return;
   }
@@ -1871,14 +1910,12 @@ function handleAction(key,rect,confirmed=false){
     if(action==="townhouse"){
       if(!canBuyTownhouse())return;
       state.fund-=250;state.flags.townhouse=true;
+      scheduleTownhouseGuests(state);
     }else{
       const cost=annex[id].cost*state.annex[id];if(state.annex[id]>=3||state.fund<cost)return;
       state.fund-=cost;state.annex[id]++;
     }
     postPurchase(action,fund);
-    if(action==="townhouse"&&startTownhouseGuests(state)){
-      tab="plan";persist();render(true);return;
-    }
     const panelScroll=$("panel").scrollTop;
     persist();render();
     $("panel").scrollTop=panelScroll;

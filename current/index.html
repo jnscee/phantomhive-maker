@@ -3,7 +3,7 @@
 .home-standing,.cast img[alt="시엘"],.performer img { filter:url(#ciel-tailoring) drop-shadow(1px 3px 2px #17264344); }
 .review-room,.stage-room { filter:url(#estate-ink); }
 
-</style><link rel="stylesheet" href="css/almanac.css?v=56b691699306"></head>
+</style><link rel="stylesheet" href="css/almanac.css?v=b8725a6f0112"></head>
 <body>
 <svg class="ink-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
   <defs>
@@ -64,8 +64,12 @@
 <div class="sheet-scroll" id="panel"></div>
 </section>
 </div>
+<aside id="status-drawer" aria-label="시엘의 상태" hidden>
+<button type="button" class="drawer-close" data-action="close-status" aria-label="상태창 닫기">닫기</button>
+<div id="drawer-stats"></div>
+</aside>
 </div><nav id="system-menu" class="system-rail" aria-label="가문 수첩">
-<button hidden type="button" id="mobile-menu" data-action="open-menu">메뉴</button><span class="imprint" lang="en"><span>EARL</span> <span>PHANTOMHIVE</span> <span>MAKER</span></span><button type="button" id="rail-music" data-action="music" aria-label="배경음악">BGM</button><button type="button" id="system-status" data-action="tab:status" aria-controls="sheet">상태</button><button id="system-book" data-action="tab:record"><i></i>가문 장부</button><button id="system-save" data-action="tab:save"><i></i>저장 · 설정</button><button id="system-back" class="return-control" data-action="system-back" aria-keyshortcuts="Escape"><i aria-hidden="true"></i><span>뒤로</span> <kbd>Esc</kbd></button>
+<button hidden type="button" id="mobile-menu" data-action="open-menu">메뉴</button><span class="imprint" lang="en"><span>EARL</span> <span>PHANTOMHIVE</span> <span>MAKER</span></span><button type="button" id="rail-music" data-action="music" aria-label="배경음악">BGM</button><button type="button" id="system-status" data-action="toggle-status" aria-expanded="false" aria-controls="status-drawer">상태</button><button id="system-book" data-action="tab:record"><i></i>가문 장부</button><button id="system-save" data-action="tab:save"><i></i>저장 · 설정</button><button id="system-back" class="return-control" data-action="system-back" aria-keyshortcuts="Escape"><i aria-hidden="true"></i><span>뒤로</span> <kbd>Esc</kbd></button>
 </nav></main>
 </div>
 <div id="tour-ring" aria-hidden="true" hidden></div>
@@ -84,8 +88,8 @@
 <script src="js/tour.js?v=7ceb5bb89dbb"></script>
 <script src="js/content.js?v=00cb592756d5"></script>
 <link rel="stylesheet" href="css/recruit.css?v=ebca8f910383">
-<script src="js/prince.js?v=9bcfe5638274"></script><script src="js/recruit.js?v=9ae266147fd2"></script>
-<script src="js/story.js?v=947e2b0a079a"></script>
+<script src="js/prince.js?v=9ed25262886f"></script><script src="js/recruit.js?v=9ae266147fd2"></script>
+<script src="js/story.js?v=771c2dbd6511"></script>
 <script src="js/scenes.js?v=565aadb24e21"></script>
 <script src="js/audio.js?v=a4b4d735ae08"></script>
 <script src="js/reports.js?v=1eba00aa2771"></script>
@@ -95,5 +99,5 @@
 <script src="js/term-events.js?v=a3133d4861bf"></script>
 <script src="js/visitors.js?v=309bb70b4c44"></script>
 <script src="js/festivals.js?v=0ff47d582d4f"></script>
-<script src="js/almanac.js?v=819bc5cfefc7"></script>
-<script src="js/game.js?v=777981fd633c"></script></body></html>
+<script src="js/almanac.js?v=18cdddd21081"></script>
+<script src="js/game.js?v=6ae9cc0682cd"></script></body></html>

@@ -1,7 +1,20 @@
 "use strict";
 
+function awaitingTownhouseGuests(run){
+  const {finny,mey,bard,soma,agni}=run.people;
+  return Boolean(run.flags.townhouse&&finny&&mey&&bard&&!(soma&&agni));
+}
+function scheduleTownhouseGuests(run,arrivalMonth=run.month+1){
+  if(awaitingTownhouseGuests(run)&&!Number.isInteger(run.townhouseGuestMonth)){
+    run.townhouseGuestMonth=arrivalMonth;
+  }
+}
 function townhouseGuestsDue(run){
-  return Boolean(run.flags.townhouse && !(run.people.soma && run.people.agni));
+  return awaitingTownhouseGuests(run)&&Number.isInteger(run.townhouseGuestMonth)&&run.month>=run.townhouseGuestMonth;
+}
+function bardNeededForEarlyGuests(run){
+  const {finny,mey,bard,soma,agni}=run.people;
+  return Boolean(run.flags.townhouse&&finny&&mey&&soma&&agni&&!bard);
 }
 
 const princeChapter={

@@ -10,6 +10,7 @@ for(const name of ['locale','cover','content','prince','recruit','story','scenes
 const run=s=>vm.runInContext(s,ctx,{timeout:1800});run('let tourSession=false;render=function(){};');
 run('render=()=>{};respond=()=>{};announce=()=>{};focusAction=()=>{};popMoney=()=>{};document.querySelector=()=>null;');
 const assertOk=source=>assert.ok(run(source),source);
+run('$("status-drawer").hidden=true;');
 const setup=(code="")=>run('state=initial();state.owlSeed=1;state.phase="plan";tab="company";'+code);
 // Both tea-party events in each of the three years use Edward, including on a restored scorecard.
 const teaParties=run('contests.filter(f=>f.id.startsWith("newYear-")).map(f=>f.id)');
@@ -589,14 +590,14 @@ for(const omit of ["townhouse","finny","mey","bard","soma","agni"]){
   setup('state.month=35;state.snakeArrivalMonth=34;state.phase="event";state.pending="circus";state.recruitPage={id:"circus",at:7,version:2};state.eventQueue=["snakeReturn"];for(const p of ["finny","mey","bard","tanaka","soma","agni"])recruit(p);state.flags.townhouse=omit!=="townhouse";delete state.people[omit];state=normalizeSave(state)');
   assertOk('!state.people.snake && !state.recruitPage && !["circus","snakeReturn"].includes(state.pending) && !state.snakeArrivalMonth');
 }
-for(const missing of ["townhouse"]){
+for(const missing of ["townhouse","finny","mey","bard"]){
   ctx.missing=missing;
   setup('state.flags.townhouse=missing!=="townhouse";for(const id of ["finny","mey","bard"])if(id!==missing)recruit(id);state.pending="visitPrince";state.phase="event";state.recruitReturn="estate";state.eventQueue=["visitPrince"];state=normalizeSave(state)');
   assertOk('state.phase==="plan"&&!state.pending&&!townhouseGuestsDue(state)&&!state.flags.visitPrince');
 }
 for(const present of [null,"soma","agni"]){
   ctx.present=present;
-  setup('state.flags.townhouse=true;state.flags.visitPrince=true;state.flags.agni=true;if(present)state.people[present]={toward:7};state=normalizeSave(state)');
+  setup('for(const id of ["finny","mey","bard"])recruit(id);state.flags.townhouse=true;state.flags.visitPrince=true;state.flags.agni=true;if(present)state.people[present]={toward:7};state=normalizeSave(state)');
   assert.equal(run('state.pending'),"visitPrince");
   run('state.recruitPage={id:"visitPrince",at:6,version:3};state=normalizeSave(state)');
   assert.equal(run('recruitPage("visitPrince")'),6);
@@ -604,12 +605,35 @@ for(const present of [null,"soma","agni"]){
   assertOk('state.people.soma&&state.people.agni&&(!present||state.people[present].toward===7)&&!normalizeSave(state).pending');
 }
 setup('state.month=19;state.flags.townhouse=true;recruit("finny");recruit("mey");state.phase="event";state.pending="cook";state.eventQueue=[]');
-pick();assert.equal(run('state.pending'),"visitPrince");
-assertOk('!state.people.soma && !state.people.agni');
+pick();
+assertOk('state.people.bard&&!state.people.soma&&!state.people.agni&&state.townhouseGuestMonth===20&&!townhouseGuestsDue(state)');
+run('state=normalizeSave(state);advance();if(state.phase==="weatherBriefing")handleAction("weather-close")');
+assertOk('state.month===20&&state.phase==="event"&&state.pending==="visitPrince"');
 run('state.recruitPage={id:"visitPrince",at:6,version:3};state=normalizeSave(state)');assert.equal(run('recruitPage("visitPrince")'),6);
 pick();assertOk('state.people.soma && state.people.agni && !townhouseGuestsDue(state)');
 setup('state.flags.townhouse=true;recruit("soma");recruit("agni");state.flags.visitPrince=true;state=normalizeSave(state)');
 assertOk('state.people.soma && state.people.agni && !state.pending');
+// Loading cannot advance or postpone a known invitation, including an old same-month cook entry.
+setup('state.month=state.planMonth=9;state.flags.townhouse=true;for(const id of ["finny","mey","bard"])recruit(id);delete state.townhouseGuestMonth;state.events=[{id:"cook",month:9,index:0}];state.phase="event";state.pending="visitPrince";state.recruitReturn="estate";state=normalizeSave(state)');
+assertOk('state.phase==="plan"&&!state.pending&&state.townhouseGuestMonth===10&&normalizeSave(state).townhouseGuestMonth===10');
+// A legacy roster with the London guests out of order repairs Bard at the first free event.
+for(const phase of ["plan","result","vow","event"]){
+  ctx.repairPhase=phase;
+  setup('state.month=state.planMonth=6;state.flags.townhouse=true;for(const id of ["finny","mey","soma","agni"])recruit(id);state.people.soma.toward=9;state.phase=repairPhase;state.plan=["rest","study","reading"];if(repairPhase==="event"){state.pending="ink";state.eventQueue=["cook","cook"]}state=normalizeSave(state)');
+  if(phase==="event"){
+    assertOk('state.pending==="ink"&&JSON.stringify(state.eventQueue)===JSON.stringify(["cook"])');
+    pick();
+  }
+  assertOk('state.pending==="cook"&&normalizeSave(state).pending==="cook"');
+  pick();
+  assertOk('state.people.bard&&state.people.soma.toward===9&&state.people.agni&&state.events.filter(e=>e.id==="cook").length===1&&!townhouseGuestsDue(state)&&normalizeSave(state).pending!=="cook"');
+  if(phase==="plan")assertOk('JSON.stringify(state.plan)===JSON.stringify(["rest","study","reading"])');
+  if(phase==="plan"||phase==="vow")assert.equal(run('state.phase'),phase);
+}
+setup('state.month=6;state.flags.townhouse=true;recruit("finny");recruit("mey");state=normalizeSave(state)');
+assertOk('!state.pending&&!townhouseGuestsDue(state)&&!overdueArrival(state)');
+setup('state.month=state.planMonth=35;state.flags.townhouse=true;for(const id of ["finny","mey","bard"])recruit(id);state.phase="vow";state=normalizeSave(state)');
+assertOk('state.townhouseGuestMonth===36&&!townhouseGuestsDue(state)&&state.pending!=="visitPrince"');
 for(const [book,version,oldPage,newPage] of [['gardener',null,11,10],['maid',3,4,6],['circus',4,37,41],['visitPrince',3,33,46]]){
   Object.assign(ctx,{book,version,oldPage});
   setup('delete state.storyPageEdition;state.recruitPage={id:book,version,at:oldPage};state=normalizeSave(state)');
@@ -632,8 +656,10 @@ if(welcome>=0){
   assertOk('!recruitMarkup("visitPrince",welcome).includes("타나카") && recruitMarkup("visitPrince",welcome,x=>x,true,false,"",true).includes("타나카")');
 }
 setup('for(const p of ["bard","finny","mey"])recruit(p);state.month=5;state.phase="plan";state.fund=500;handleAction("townhouse",null,true)');
-assert.equal(run('state.pending'),'visitPrince');pick();
-assertOk('state.people.soma && state.people.agni && !state.people.tanaka && state.snakeArrivalMonth>=5 && state.snakeArrivalMonth<=7');
+assertOk('!state.pending&&state.townhouseGuestMonth===6&&!townhouseGuestsDue(normalizeSave(state))');
+run('state.phase="result";advance();if(state.phase==="weatherBriefing")handleAction("weather-close")');
+assertOk('state.month===6&&state.pending==="visitPrince"');pick();
+assertOk('state.people.soma && state.people.agni && !state.people.tanaka && state.snakeArrivalMonth>=6 && state.snakeArrivalMonth<=8');
 run('state.month=state.snakeArrivalMonth;state.phase="result";advance();state=normalizeSave(state)');
 assert.equal(run('state.pending'),'circus');
 assertOk('["스네이크","소마","아그니","시엘","세바스찬"].every(name=>recruitScenes.circus.lines.some(page=>page.speaker===name))');
@@ -649,10 +675,10 @@ for(const [person,place,month] of [["tanaka","library",1],["finny","garden",1],[
     assertOk('visitScene().includes(trustedGreetings[person][tier]) && relationBook().includes("상대 → 시엘 신뢰　"+rank(trust))');
   }
 }
-setup('tab="estate"');
+setup('state.month=state.planMonth=3;tab="estate"');
 assertOk('!managementPanel().includes("tab:townhouse")');
 run('handleAction("tab:townhouse")');assert.equal(run('tab'),"estate");
-run('for(const p of ["bard","finny","mey"])recruit(p);handleAction("townhouse",null,true)');pick();
+run('for(const p of ["bard","finny","mey"])recruit(p);handleAction("townhouse",null,true);state.phase="result";advance();if(state.phase==="weatherBriefing")handleAction("weather-close")');pick();
 assertOk('managementPanel().includes("tab:townhouse")');
 run('handleAction("tab:townhouse")');
 assertOk('tab==="townhouse" && managementPanel().includes("이번 달 배치")');
@@ -664,9 +690,9 @@ run('placeEmployee("soma","salon");state.london.skill={soma:9,agni:9};state.hp=9
 run('placeEmployee("agni","post");settleLondon(state);settleLondon(state);state=normalizeSave(state)');
 assertOk('state.london.book.length===1 && state.london.jobs.agni==="kitchen" && state.london.skill.agni===10 && state.hp===100 && state.renown===1');
 assertOk('londonPlan(state).power.salon===4 && state.london.book[0].summary.includes("컨디션 +1")');
-run('state.month=2;state.phase="plan";placeEmployee("agni","post");state.stats.통찰=499;settleLondon(state)');
+run('state.month=5;state.phase="plan";placeEmployee("agni","post");state.stats.통찰=499;settleLondon(state)');
 assertOk('state.stats.통찰===500 && state.renown===2 && state.london.book.length===2');
-run('state.month=3;placeEmployee("agni","off");placeEmployee("soma","off");settleLondon(state)');
+run('state.month=6;placeEmployee("agni","off");placeEmployee("soma","off");settleLondon(state)');
 assertOk('state.london.book.length===2 && londonPlan(state).power.salon===0');
 setup('state.flags.townhouse=true;recruit("soma");recruit("agni");tab="townhouse";placeEmployee("soma","post");placeEmployee("agni","post")');
 assertOk('londonPlan(state).power.post===4 && !londonPlan(state).ready');
