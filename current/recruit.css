@@ -40,6 +40,7 @@
 
 /* The open record takes input above both the schedule and the date plaque. */
 #scene[data-mode="record"] #sheet {z-index:8}
+#scene[data-ending-summary=true] #sheet {z-index:8}
 #scene[data-mode="record"] #date {pointer-events:none}
 
 #dialogue-visibility {display:none}
