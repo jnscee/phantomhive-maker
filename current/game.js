@@ -472,7 +472,7 @@ function finish(id){
   rememberCG("assets/endings/"+id+".webp");
   saves.farewellGallery??={};
   saves.farewellGallery[id]=endingFarewellRecord(state);
-  if(id==="vowNoTitle")saves.londonCareer=londonCareer(state);
+  if(id==="vowNoTitle")saves.londonCareer=state.londonCareer=londonCareer(state);
   saves.growthGallery??={};
   saves.growthGallery[id]=growthRecord(state);
   persist();render(true);
@@ -820,8 +820,9 @@ function updateMoney(){
 function relationBook(){
   return '<h3>인물 관계</h3>'+peopleInHouse().map(id=>{const r=state.people[id];return '<div class="work-ledger"><b>'+servants[id].name+'</b><span>상대 → 시엘 신뢰　'+rank(r.toward)+'</span></div>';}).join("");
 }
-function londonCareer(run){
-  if(run.stats.경영>=140&&run.fund>=260)return "merchant";
+function londonCareer(run,managementMinimum=350,fundMinimum=2000){
+  if(run.londonCareer)return run.londonCareer;
+  if(run.stats.경영>=managementMinimum&&run.fund>=fundMinimum)return "merchant";
   if(run.stats.통찰>=140)return "broker";
   return "pursuit";
 }
@@ -1053,6 +1054,10 @@ function normalizeSave(run){
       const after=copy.past.filter(row=>row.month>exam.month).flatMap(row=>row.plan||[]).filter(key=>key===id).length;
       copy.advancedStudy[id]=Math.min(2,after,Math.max(0,(copy.counts[id]||0)-2));
     }
+  }
+  if(copy.phase==="ending"&&copy.ending==="vowNoTitle"&&!copy.londonCareer){
+    // Finished saves keep the route they earned under the original thresholds.
+    copy.londonCareer=londonCareer(copy,140,260);
   }
   if(copy.phase==="plan"){updateIllness(copy);clearUnavailableRecovery(copy);}
   return copy;
