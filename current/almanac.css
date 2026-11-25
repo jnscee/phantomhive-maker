@@ -445,8 +445,45 @@ html[data-fair-preview] #conversation .contest-screen {padding-block-start:.6rem
 #scene[data-mode=company] .work-actions.production-grid {
   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:1fr;gap:6px;
 }
-#scene[data-mode=company] .production-grid button {
-  box-sizing:border-box;display:grid;place-items:center;margin:0;min-width:0;width:100%;height:auto;min-height:2.2rem;padding:5px 4px;text-align:center;line-height:1.25;word-break:keep-all;
+#scene[data-mode=company] .production-grid > button {
+  box-sizing:border-box;display:grid;align-items:center;justify-items:stretch;
+  margin:0;min-width:0;width:100%;min-height:44px;padding:5px clamp(5px,1cqw,10px);
+  line-height:1.25;word-break:keep-all;
+}
+#scene[data-mode=company] .production-grid > button .stock-name {
+  display:grid;grid-template-columns:16px minmax(0,1fr);gap:.3rem;
+}
+
+#scene[data-mode=company] .work-actions:has(>button[data-action^="quality:"]) {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;
+}
+#scene[data-mode=company] .work-actions > button[data-action^="quality:"] {
+  display:flex;align-items:center;justify-content:center;gap:.48rem;
+  min-width:0;min-height:44px;padding:5px 6px;word-break:keep-all;
+  color:var(--grade-ink);border:1px solid var(--grade-border);
+  background:linear-gradient(155deg,var(--grade-top),var(--grade-base));
+  box-shadow:inset 0 1px #ffffff24;
+}
+#scene[data-mode=company] .work-actions > button[data-action="quality:standard"] {
+  --grade-ink:#e8f3ff;--grade-top:#334f68;--grade-base:#23384b;--grade-border:#8daac5;
+}
+#scene[data-mode=company] .work-actions > button[data-action="quality:fine"] {
+  --grade-ink:#fff1c8;--grade-top:#664b2f;--grade-base:#3f2b1d;--grade-border:#caa567;
+}
+#scene[data-mode=company] .work-actions > button[data-action^="quality:"]::before {
+  content:"";width:.65em;height:.65em;flex:none;border:1px solid currentColor;border-radius:2px;
+}
+#scene[data-mode=company] .work-actions > button[data-action="quality:fine"]::before {
+  border-radius:1px;rotate:45deg;
+}
+#scene[data-mode=company] .work-actions > button[data-action^="quality:"][aria-pressed="true"] {
+  border-color:var(--grade-ink);box-shadow:inset 0 0 0 1px var(--grade-border);
+}
+#scene[data-mode=company] .work-actions > button[data-action^="quality:"][aria-pressed="true"]::before {
+  background:currentColor;
+}
+#scene[data-mode=company] .work-actions > button[data-action^="quality:"]:hover:not(:disabled) {
+  filter:brightness(1.16);
 }
 @media (max-width:600px) {
   #scene[data-mode=company] .work-actions.production-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
