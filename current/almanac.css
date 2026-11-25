@@ -308,6 +308,9 @@ html:is([data-fair-preview],[data-story-preview]) :is(#system-menu,#mobile-menu)
 #picker .fair-dialog h2::before {content:"✉";margin-inline-end:.55em;color:#843e42}
 #picker .rule-table dd {color:#332d29;font-size:.88rem;line-height:1.5;word-break:keep-all;overflow-wrap:anywhere}
 #calendar .calendar-summary {column-gap:.35rem;align-items:center}
+#calendar .calendar-note.visit-note {
+  min-inline-size:0;max-inline-size:100%;word-break:keep-all;overflow-wrap:anywhere;
+}
 #calendar .plan-effects {display:inline-flex;max-width:100%;flex-wrap:wrap;gap:.1rem .35rem;vertical-align:baseline}
 #calendar .plan-effect {display:inline-block;white-space:nowrap}
 #calendar .plan-effect b {font-size:.88em;letter-spacing:.03em}

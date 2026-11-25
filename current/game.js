@@ -774,7 +774,7 @@ function plannerContents() {
       '<div class="card-bank">'+cards.slice(0,half).join('')+'</div>'+
       '<div class="card-bank">'+cards.slice(half).join('')+'</div></div>'+
     '<div class="calendar-foot"><div class="calendar-summary">'+(invitations.length?'<div class="invite-date"><strong>'+date+'</strong>'+btn('<i aria-hidden="true"></i>이달의 초대장',"fair-notices",false,"fair-invite")+'</div>':'<strong>'+date+'</strong>')+
-      '<span class="calendar-note">'+note+'</span></div>'+
+      '<span class="calendar-note'+(editingVisit?' visit-note':'')+'">'+note+'</span></div>'+
       '<div class="calendar-periods" role="group" aria-label="편집할 기간">'+periods.join('')+'</div>'+
       '<div class="calendar-settle">'+plannerCosts(estimate)+
       '<div class="plan-balance"><span>예상 월말 자금</span><strong>'+money(estimate.balance)+'</strong></div>'+
