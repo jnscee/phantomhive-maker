@@ -125,7 +125,7 @@ function trackForView(){
   if((tab==="plan"&&state.phase==="ending")||(tab==="endingMemory"&&endingReplay)){
     const id=tab==="endingMemory"?endingReplay.id:state.ending;
     const at=tab==="endingMemory"?endingReplay.at:state.endingBeat;
-    return endingScenes[id]?.lines[at]?.[3]?.bgm||endingTracks[id]||"manor";
+    return endingLineAt(id,at,tab==="endingMemory"?endingReplay:null).row?.[3]?.bgm||endingTracks[id]||"manor";
   }
   if(tab==="plan"&&state.phase==="event"&&pendingEvent()?.contest){
     const event=pendingEvent();

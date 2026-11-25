@@ -149,7 +149,56 @@ async function musicAssignment({page,button,label,saved,search,game}){
   await button("수정 취소").click();
 }
 
+async function endingDirection({page,button,label,game}){
+  const stage=page.locator(".line-stage");
+  const entries=page.locator("#list button");
+  const pathOf=()=>stage.locator(".stage-bg").getAttribute("data-path");
+  async function selectGroup(title){
+    await entries.filter({hasText:title}).click();
+    await page.locator('#entry-nav [data-pane="dialogue"]').click();
+  }
+  await selectGroup("문장 없는 마차 · 사업가");
+  assert.equal(await pathOf(),"assets/room-library.webp");
+  const lines=page.locator(".dialogue-card > textarea");
+  const last=await lines.count();
+  await lines.last().focus();
+  assert.equal(await pathOf(),"assets/endings/london-merchant.webp");
+  const text=await lines.last().inputValue();
+  await page.getByText(new RegExp("^"+last+"번 대사 연출")).click();
+  await page.emulateMedia({reducedMotion:"no-preference"});
+  await stage.locator(".stage-frame").evaluate(frame=>{
+    const animate=frame.animate.bind(frame);
+    frame.animate=(frames,options)=>{
+      frame.dataset.testEffect=JSON.stringify(frames);
+      return animate(frames,options);
+    };
+  });
+  await label("화면 전환").selectOption("shake");
+  assert.match(await stage.locator(".stage-frame").getAttribute("data-test-effect"),/translateX\(-5px\)/);
+  await label("배경 음악").selectOption("romantic");
+  await button("이 컷부터 게임에서 재생").click();
+  await game.locator(".ending-cg").waitFor();
+  assert.equal(await game.locator(".ending-cg").getAttribute("src"),await pathOf());
+  await game.getByText(text,{exact:false}).last().waitFor();
+  const frame=await (await page.locator("#game-dialog iframe").elementHandle()).contentFrame();
+  await frame.waitForFunction(()=>musicPlayer.backgroundTrack==="romantic");
+  await button("닫기").click();
+  await label("CG 교체").selectOption("black");
+  assert.equal(await pathOf(),"assets/endings/black.webp");
+  await selectGroup("문장 없는 마차 · 정보상");
+  assert.equal(await pathOf(),"assets/room-street.webp");
+  await lines.last().focus();
+  assert.equal(await pathOf(),"assets/endings/london-broker.webp");
+  await selectGroup("엔딩 · 문장 없는 마차");
+  await lines.last().focus();
+  assert.equal(await pathOf(),"assets/endings/london-pursuit.webp");
+  await selectGroup("마지막 명령 · 무관의 주인");
+  await lines.last().focus();
+  assert.equal(await pathOf(),"assets/endings/black.webp");
+}
+
 module.exports=async function checkStoryFlow(browser,base){
+  await runEditorScenario(browser,base,endingDirection);
   await runEditorScenario(browser,base,storyEditing);
   await runEditorScenario(browser,base,musicAssignment);
 };

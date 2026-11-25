@@ -66,6 +66,10 @@ export function catalog(files, publishedAssets = [], version = "") {
 
   const cueFields={
     fx:[["fade","검게 페이드"],["dissolve","부드럽게 나타남"],["slide","옆으로 밀기"],["shake","화면 흔들림"]],
+    animations:Object.fromEntries(properties(variable("recruit.js","novelEffects")).map(effect=>[
+      propertyName(effect),rows(effect.value).map(frame=>Object.fromEntries(
+        properties(frame).map(entry=>[propertyName(entry),value(entry.value)])))
+    ])),
     cg:[],
     standing:[],
     bgm:trackOptions,
@@ -149,18 +153,20 @@ export function catalog(files, publishedAssets = [], version = "") {
     add(g,"prologue.js",prop(handoff,"lines"),"대사 순서","lines",undefined,{cues:true});
   }
 
+  const careerArt=variable("chapters.js","londonEndingCGs");
+  const finalArt=career=>value(prop(prop(careerArt,career),"id"));
   for (const p of properties(variable("chapters.js","endingScenes"))) {
     const id=propertyName(p);
     const title=value(rows(endingLabels.find(label=>propertyName(label)===id)?.value)[0])??id;
     const g=group("story","ending-"+id,"엔딩 · "+title,id,{kind:"ending",id});
     add(g,"audio.js",prop(variable("audio.js","endingTracks"),id),"엔딩 BGM","select",trackOptions,{media:"track"});
     add(g,"chapters.js",prop(p.value,"alt"),"대표 CG 대체 설명");
-    add(g,"chapters.js",prop(p.value,"lines"),"대사 순서","lines",undefined,{metadata:"illustration",artOptions,defaultArt:id,cues:true});
+    add(g,"chapters.js",prop(p.value,"lines"),"대사 순서","lines",undefined,{metadata:"illustration",artOptions,defaultArt:id,finalArt:id==="vowNoTitle"?finalArt("pursuit"):undefined,cues:true});
   }
   for (const route of properties(variable("chapters.js","londonEndingScenes"))) {
     const career=propertyName(route);
     const g=group("story","career-"+career,"문장 없는 마차 · "+(career==="merchant"?"사업가":"정보상"),"런던 진로",{kind:"ending",id:"vowNoTitle",career});
-    add(g,"chapters.js",route.value,"대사 순서","lines",undefined,{metadata:"illustration",artOptions,defaultArt:"vowNoTitle",cues:true});
+    add(g,"chapters.js",route.value,"대사 순서","lines",undefined,{metadata:"illustration",artOptions,defaultArt:"vowNoTitle",finalArt:finalArt(career),careerRoom:career==="broker"?"street":"library",cues:true});
   }
   for (const entry of properties(variable("chapters.js","endingFarewells"))) {
     const person=propertyName(entry), name=value(prop(variable("recruit.js","recruitNames"),person))??person;
