@@ -92,7 +92,8 @@ function londonBoard(){
   const roster=ids.map(id=>{
     const host=londonHosts[id];
     const skill=state.london?.skill?.[id]||0;
-    return staffCard(id,host.name,host.role+" · "+(londonRooms[jobs[id]]?.name||"대기")+" · 숙련도 "+skill+"/30","특기 "+londonRooms[host.specialty].name+" +1 · 숙련 보너스 +"+Math.floor(skill/10),locked);
+    const assignment=host.role+" "+(londonRooms[jobs[id]]?.name||"대기");
+    return staffCard(id,host.name,assignment+"<br>숙련도 "+skill+"/30","숙련 보너스 +"+Math.floor(skill/10),locked);
   }).join("");
   const records=(state.london?.book||[]).slice().reverse().map(entry=>
     '<article class="london-month"><h4>'+monthText(entry.month)+'</h4><p>'+statResultText(escapeHTML(entry.summary))+'</p>'+
