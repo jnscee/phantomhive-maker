@@ -385,5 +385,8 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
     grid-area:1/2/3/3;
     bottom:calc(-1 * var(--shop-row-gap) - 2px);
   }
-  #scene[data-mode=market] .lau-standing > img {top:auto;bottom:0}
+  #scene[data-mode=market] .lau-standing > img {
+    top:auto;bottom:0;
+    height:min(100%,calc(var(--cast-unit) * var(--figure-scale) * 1.22));
+  }
 }
