@@ -661,8 +661,19 @@ function hasEndingRecord(id){
   return Object.hasOwn(endingScenes,id)&&(Object.hasOwn(saves.gallery||{},id)||
     [state,saves.auto,saves[1],saves[2],saves[3]].some(run=>run?.phase==="ending"&&run.ending===id));
 }
+function endingCareerFor(id,replay=false){
+  if(id!=="vowNoTitle")return null;
+  if(state.phase==="ending"&&state.ending===id)return londonCareer(state);
+  if(replay&&Object.hasOwn(londonEndingCGs,saves.londonCareer))return saves.londonCareer;
+  const run=[saves.auto,saves[1],saves[2],saves[3]].find(entry=>entry?.phase==="ending"&&entry.ending===id);
+  return run?londonCareer(run):saves.londonCareer;
+}
+function endingCareerArt(id,route){
+  return id==="vowNoTitle"&&Object.hasOwn(londonEndingCGs,route)?londonEndingCGs[route]:null;
+}
 function endingThumb(id){
-  return '<button type="button" class="ending-thumb" data-action="ending-art:'+id+'"><img loading="lazy" src="assets/endings/'+id+'.webp" alt=""><span>'+endingLabels[id][0]+'</span></button>';
+  const art=endingCareerArt(id,endingCareerFor(id,true));
+  return '<button type="button" class="ending-thumb" data-action="ending-art:'+id+'"><img loading="lazy" src="assets/endings/'+(art?.id||id)+'.webp" alt=""><span>'+endingLabels[id][0]+'</span></button>';
 }
 const endingFarewells={
   tanaka:{
@@ -910,6 +921,15 @@ function showEndingFarewells(host,id,record,start,onPage,onFinish){
   label();
   requestAnimationFrame(frame);
 }
+function creditsStaff(cast){
+  return cast.filter(([id])=>servants[id]?.job||id==="agni");
+}
+const staffFeelings=[
+  "아직 어떤 주인인지 살피고 있습니다.",
+  "이제 시엘 곁을 편하게 여깁니다.",
+  "어려울 때 시엘을 믿고 의지합니다.",
+  "시엘에게 속마음을 털어놓을 만큼 깊이 믿습니다."
+];
 function campaignRecap(run){
   const counts=new Map();
   for(const {plan,contest} of run.past||[]){
@@ -933,9 +953,10 @@ function campaignRecap(run){
     total.delivered+=row.delivery?.shipped||0;
     return total;
   },{revenue:0,retail:0,delivered:0});
+  const staffRelations=creditsStaff(endingFarewellRecord(run).cast);
   return {top,fairs:[...fairs.values()],sales,months:new Set((run.past||[]).map(entry=>entry.month)).size,
     scheduled:[...counts.values()].reduce((sum,count)=>sum+count,0),events:(run.events||[]).filter(entry=>entry.id).length,
-    staff:Object.keys(servants).filter(id=>run.people?.[id]).length,meetings:elizabethMeetings(run).length,purchases:run.lauPurchases??null};
+    staff:staffRelations.length,staffRelations,purchases:run.lauPurchases??null};
 }
 function growthRecord(run){
   const years=new Map();
@@ -977,9 +998,12 @@ function savedGrowthRecord(id,replay){
   const run=[saves.auto,saves[1],saves[2],saves[3]].find(r=>r?.phase==="ending"&&r.ending===id);
   return run?growthRecord(run):saved||null;
 }
-function showGrowthCredits(host,id,years,onFinish){
+function showGrowthCredits(host,id,years,onFinish,route,farewells){
+  const art=endingCareerArt(id,route);
+  const picture="assets/endings/"+(art?.id||id)+".webp";
+  if(art)rememberCG(picture);
   host.hidden=false;host.dataset.review="false";
-  host.innerHTML='<section class="growth-credits" aria-label="시엘의 성장 기록"><img class="growth-backdrop" src="assets/endings/'+id+'.webp" alt=""><div class="growth-window" tabindex="0"><div class="growth-roll"><header><h2>시엘의 성장 기록</h2></header></div></div><footer><button type="button" class="growth-toggle"></button><button type="button" class="growth-end">마치기</button></footer></section>';
+  host.innerHTML='<section class="growth-credits" aria-label="시엘의 성장 기록"><img class="growth-backdrop" src="'+picture+'" alt=""><div class="growth-window" tabindex="0"><div class="growth-roll"><header><h2>시엘의 성장 기록</h2></header></div></div><footer><button type="button" class="growth-toggle"></button><button type="button" class="growth-end">마치기</button></footer></section>';
   const windowEl=host.querySelector(".growth-window"),roll=host.querySelector(".growth-roll");
   function add(parent,tag,value){
     const el=document.createElement(tag);el.textContent=value;parent.append(el);return el;
@@ -994,6 +1018,7 @@ function showGrowthCredits(host,id,years,onFinish){
     const tiles=add(section,"dl","");
     tiles.className="growth-metrics";
     const wins=recap.fairs.reduce((sum,fair)=>sum+fair.won,0);
+    const staff=recap.staffRelations??(farewells?creditsStaff(farewells.cast):null);
     const metrics=[
       ["팬텀사 누적 매출",money(recap.sales.revenue)],
       ["경연 우승",wins+"회"],
@@ -1001,13 +1026,21 @@ function showGrowthCredits(host,id,years,onFinish){
       ["편성한 일정",recap.scheduled+"회"],
       ["판매·납품",recap.sales.retail+recap.sales.delivered+"개"],
       ["기록한 사건",recap.events+"건"],
-      ["함께한 사용인",recap.staff+"명"],
-      ["엘리자베스와 만남",recap.meetings+"회"]
+      ["함께한 사용인",(staff?.length??recap.staff)+"명"]
     ];
     if(recap.purchases!==null)metrics.push(["라우 상점 구매",recap.purchases+"회"]);
     for(const [label,value] of metrics){
       const tile=add(tiles,"div","");
       add(tile,"dt",label);add(tile,"dd",value);
+    }
+    add(section,"h4","사용인이 시엘을 대하는 마음");
+    if(!staff) add(section,"p","이 회차의 사용인 관계 기록은 남아 있지 않습니다.");
+    else if(!staff.length) add(section,"p","합류한 사용인이 없습니다.");
+    else for(const [person,tier] of staff){
+      const row=add(section,"div","");
+      row.className="growth-recap-row growth-staff-row";
+      add(row,"strong",servants[person].name);
+      add(row,"span",staffFeelings[tier]??staffFeelings[0]);
     }
     add(section,"h4","가장 많이 편성한 일정");
     if(!recap.top.length)add(section,"p","편성 기록이 없습니다.");
@@ -1069,9 +1102,8 @@ function showGrowthCredits(host,id,years,onFinish){
   label();requestAnimationFrame(frame);
 }
 function endingLineAt(id,at,replay){
+  const route=endingCareerFor(id,Boolean(replay));
   const lines=endingScenes[id]?.lines||[];
-  const route=id==="vowNoTitle"?(replay&&!(state.phase==="ending"&&state.ending===id)
-    ?saves.londonCareer:londonCareer(state)):null;
   const act=londonEndingScenes[route];
   const offset=act?lines.length-act.length:0;
   const routeAct=Boolean(act&&at>=offset);
@@ -1102,18 +1134,19 @@ function showEndingScene(host){
     },afterFarewells);
     return true;
   }
+  const route=endingCareerFor(id,Boolean(replay));
   if(replay?replay.credits:state.growthCredits){
-    showGrowthCredits(host,id,savedGrowthRecord(id,replay)||[],finishScene);return true;
+    showGrowthCredits(host,id,savedGrowthRecord(id,replay)||[],finishScene,route,savedEndingFarewells(id,replay));return true;
   }
   const end=scene.lines.length-1,at=Math.min(end,Math.max(0,replay?replay.at:state.endingBeat));
-  const {route,routeAct,row}=endingLineAt(id,at,replay);
+  const {routeAct,row}=endingLineAt(id,at,replay);
   const [who,line,legacyPicture,cue]=row;
   const last=at===end;
   const story=routeAct && !cue?.cg && !last;
-  const careerCG=last&&id==="vowNoTitle"?londonEndingCGs[route]||londonEndingCGs.pursuit:null;
+  const careerCG=last?endingCareerArt(id,route):null;
   const endingPicture=careerCG?.id||legacyPicture||id;
   const room=route==="broker"?"street":"library";
-  const picture=cue?.cg || (story?"room-"+room:endingPicture);
+  const picture=careerCG?.id || cue?.cg || (story?"room-"+room:endingPicture);
   const castCue=story&&!cue?.hideCast&&!cue?.left&&!cue?.right
     ? {...cue,left:who==="세바스찬"?"seb":undefined,right:who==="시엘"?"ciel":undefined}:cue;
   clearTimeout(recruitTimer);if(last)stopRecruitAuto();

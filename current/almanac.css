@@ -839,6 +839,8 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 .growth-metrics dd {margin:0;color:#fae8c3;font-size:1.16rem;font-weight:700;font-variant-numeric:tabular-nums}
 .growth-recap-row {display:flex;justify-content:space-between;gap:.5rem;margin-top:4px;text-align:start;font-size:.85rem}
 .growth-recap-row strong {color:#fae8c3;white-space:nowrap;font-variant-numeric:tabular-nums}
+.growth-staff-row {display:grid;grid-template-columns:minmax(4.5rem,max-content) minmax(0,1fr);align-items:baseline}
+.growth-staff-row span {white-space:normal;line-height:1.4}
 
 #conversation .duel-screen:not(.duel-result) {padding-block-end:clamp(1.25rem,3.6cqw,3rem)}
 .duel-screen .exhibition-stage {
