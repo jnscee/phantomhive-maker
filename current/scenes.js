@@ -255,7 +255,7 @@ function faceDialogue(){
   }
   playNovelCue(con,null);
   const c=chatDialogue();
-  con.innerHTML=dialogueCast("세바스찬")+'<article class="dialogue"><small>'+c.caption+'</small><p>'+c.line+'</p>'+(c.effects?'<small>'+escapeHTML(c.effects)+'</small>':'')+'<div class="answers">'+c.buttons+'</div></article>';
+  con.innerHTML=dialogueCast("세바스찬")+'<article class="dialogue"><small>'+c.caption+'</small><p>'+escapeHTML(c.line).replaceAll("\n","<br>")+'</p>'+(c.effects?'<small>'+escapeHTML(c.effects)+'</small>':'')+'<div class="answers">'+c.buttons+'</div></article>';
   return true;
 }
 function sebastianRegard(abilities){
@@ -268,6 +268,17 @@ const butlerGreetings=[
   "봉투는 그대로 두었습니다. 제 짐작을 미리 말씀드리면 주제 넘는 짓이겠지요. 어디까지나 전 집사니까요.",
   "오늘 답신을 기다릴 분께는 차를 한 잔 더 내드렸습니다. ……저도 이제 제법 능숙해졌지요?"
 ];
+const homeChatGreetings={
+  unwell:"차는 침실로 올리겠습니다. 오늘은 어느 서류를 물릴까요?",
+  stressed:"오늘은 찻잔이 식을 때까지 한 장도 넘기지 않으셨군요."
+};
+const homeChatTopics={
+  health:{title:"몸 상태",line:"좋은 타이밍에 물었네. 오늘 회의는 삼십 분 늦춰 줘.",memoryFlag:"morningGloves",
+    memoryLine:"눈치가 좋은 줄 알았는데, 의외의 것을 묻네.\n시엘이 반대쪽 손도 내민다."},
+  business:{title:"",line:"장식은 나중으로. 고객이 혼자서도 상자를 열 수 있는지부터 볼래."},
+  tea:{title:"오후의 홍차",line:"……그래. 한 잔만 더. 그동안은 서류도 그대로 두자고.",memoryFlag:"teaBlend",
+    memoryLine:"설탕은 하나. 그래, 오늘도 그걸로.\n시엘이 서류에서 눈을 떼지 않고 잔을 받는다."}
+};
 const butlerReplies={
  health:["삼십 분 늦추겠습니다. 그동안만큼은 장부를 제게 주시지요.","그 정도면 차가 식기 전에 눈을 좀 붙이실 수 있겠군요. 깨워 드리겠습니다.","삼십 분이면 충분하시겠습니까? 그럼 그 시각에 맞춰 손님을 들이겠습니다.","예. 삼십 분 뒤에 깨워 드리지요. 다시 부르실 때까지 여기 있겠습니다."],
  business:["그럼 이 매듭을 한 손으로 풀어 보십시오. 다른 손엔 장난감을 들고 있다고 생각하시고요.","리본부터 보셨군요. 어느 끝을 당겨야 하는지 고객도 알아볼까요?","알겠습니다. 매듭만 바꾼 견본을 하나 더 가져오지요. 두 상자 중 어느 것을 먼저 집는지 보시겠습니까?","저도 뚜껑을 고쳐야겠다 싶었습니다만, 리본 하나를 빼면 그만이군요. 이번엔 도련님 안이 한 수 위였습니다."],
@@ -279,7 +290,7 @@ const chatFollowups={
     ["깨울 시각을 확인한다","큰 바늘이 여섯에 닿으면 깨워. 안 일어난다는 이유로 재워 놓지 말고."]
   ],
   business:[
-    ["견본에 가격표를 달아 본다","가격표는 뒤집어 둬. 값이 보이면 부모의 손이 먼저 움직이는 법이지. '고객님'이 먼저 고르는지 보려던 거잖아? "],
+    ["견본에 가격표를 달아 본다","가격표는 뒤집어 둬. 값이 보이면 부모의 손이 먼저 움직이는 법이지. 고객님이 먼저 고르는지 보려던 거잖아?"],
     ["판매원의 의견을 받아 적는다","마지막 손님 말고, 아무것도 안 사고 나간 손님 이야기를 좀 들어야겠어. 우리가 모르는 건 그쪽이니까."]
   ],
   tea:[
@@ -308,15 +319,18 @@ function chatDialogue(){
     const follow=chatFollowups[spoken.topic]||[];
     if(spoken.followIndex!=null&&follow[spoken.followIndex])return {caption:"시엘 팬텀하이브",line:follow[spoken.followIndex][1],buttons:end};
     if(spoken.replyRead&&spoken.reply)return {caption:"세바스찬 미카엘리스",line:spoken.reply,buttons:follow.map(([label],i)=>btn(label,"chat-follow:"+i)).join("")+end};
-    return {caption:"시엘 팬텀하이브",line:spoken.line,buttons:spoken.reply?btn("세바스찬의 대답을 듣는다","chat-reply")+end:end};
+    // Earlier saves stored the quoted speech and its direction in one line.
+    const memory=homeChatTopics[spoken.topic]?.memoryLine;
+    const oldText=memory?.split("\n");
+    const legacy=oldText?.length===2&&spoken.line==="“"+oldText[0]+"” "+oldText[1];
+    return {caption:"시엘 팬텀하이브",line:legacy?memory:spoken.line,buttons:spoken.reply?btn("세바스찬의 대답을 듣는다","chat-reply")+end:end};
   }
-  return {caption:"세바스찬 미카엘리스",line:state.ill||state.hp<35?"차는 침실로 올리겠습니다. 오늘은 어느 서류를 물릴까요?":state.stress>60?"오늘은 찻잔이 식을 때까지 한 장도 넘기지 않으셨군요.":butlerGreetings[sebastianRegard(state.stats)],
+  return {caption:"세바스찬 미카엘리스",line:state.ill||state.hp<35?homeChatGreetings.unwell:state.stress>60?homeChatGreetings.stressed:butlerGreetings[sebastianRegard(state.stats)],
     buttons:btn("몸 상태를 묻는다","chatline:health")+btn("팬텀사 이야기를 꺼낸다","chatline:business")+btn("차를 한 잔 더 따른다","chatline:tea")+btn("다음에","back")};
 }
 function speak(id){
   if(state.phase!=="plan"||state.spoken?.turn===state.month)return;
-  const lines={health:["몸 상태","좋은 타이밍에 물었네. 오늘 회의는 삼십 분 늦춰 줘."],business:["","장식은 나중으로. 고객이 혼자서도 상자를 열 수 있는지부터 볼래."],tea:["오후의 홍차","……그래. 한 잔만 더. 그동안은 서류도 그대로 두자고."]};
-  if(!Object.hasOwn(lines,id))return;
+  if(!Object.hasOwn(homeChatTopics,id))return;
   if(id==="tea"||id==="health")state.flags.attention=(state.flags.attention||0)+1;
   const snapshot=choiceSnapshot();
   let reply=butlerReplies[id][sebastianRegard(state.stats)];
@@ -335,10 +349,8 @@ function speak(id){
   const after=snapStats(state);
   const effects=Object.keys(after).filter(k=>before[k]!==after[k])
     .map(k=>statLabel(k)+" "+signed(after[k]-before[k])).join(" · ")||"수치 변동 없음";
-  const [title,usual]=lines[id];
-  let line=usual;
-  if(id==="tea"&&state.flags.teaBlend)line="“설탕은 하나. 그래, 오늘도 그걸로.” 시엘이 서류에서 눈을 떼지 않고 잔을 받는다.";
-  if(id==="health"&&state.flags.morningGloves)line="“눈치가 좋은 줄 알았는데, 의외의 것을 묻네.” 시엘이 반대쪽 손도 내민다.";
+  const {title,line:usual,memoryFlag,memoryLine}=homeChatTopics[id];
+  let line=memoryFlag&&state.flags[memoryFlag]?memoryLine:usual;
   const count=state.chatCounts?.[id]||0;
   if(count%3 || (id==="health" && (state.ill||state.hp<35))){
     const variation=chatVariations[id][id==="health"&&(state.ill||state.hp<35)?0:(count-1)%2];

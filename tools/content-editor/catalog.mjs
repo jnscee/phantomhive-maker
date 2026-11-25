@@ -558,16 +558,49 @@ export function catalog(files, publishedAssets = [], version = "") {
       add(g,"term-events.js",line,stat+" · 응답");
     });
   }
+  const homeLines=group("dialogue","homeRemarks","저택 메인 · 시엘의 스탠딩 대사","시엘을 눌렀을 때");
+  for(const [key,label] of [["homeRemarks","평소"],["povertyRemarks","가난할 때"]]){
+    rows(variable("game.js",key)).forEach((line,i)=>add(homeLines,"game.js",line,"시엘 · "+label+" "+(i+1)));
+  }
+
+  const chatFile="scenes.js";
+  const chatSource=key=>variable(chatFile,key);
+  const greeting=group("dialogue","butlerGreetings","저택 대화 · 세바스찬의 인사","저택 메인 → 대화");
+  rows(chatSource("butlerGreetings")).forEach((line,i)=>add(greeting,chatFile,line,"세바스찬 · 평소 인사 "+(i+1)));
+  add(greeting,chatFile,prop(chatSource("homeChatGreetings"),"unwell"),"세바스찬 · 병중이거나 컨디션이 낮을 때");
+  add(greeting,chatFile,prop(chatSource("homeChatGreetings"),"stressed"),"세바스찬 · 스트레스가 높을 때");
+  const chatTopics={health:"몸 상태",business:"팬텀사",tea:"홍차"};
+  for(const [id,title] of Object.entries(chatTopics)){
+    const g=group("dialogue","home-chat-"+id,"저택 대화 · "+title,"저택 메인 → 대화 · 시엘과 세바스찬");
+    const topic=prop(chatSource("homeChatTopics"),id);
+    const [oldTitle,oldLine]=rows(prop(chatSource("lines"),id));
+    const recordTitle=prop(topic,"title")??oldTitle;
+    if(value(recordTitle))add(g,chatFile,recordTitle,"대화 기록 제목");
+    add(g,chatFile,prop(topic,"line")??oldLine,"시엘 · 기본 대사");
+    const flag=value(prop(topic,"memoryFlag"));
+    if(flag)add(g,chatFile,prop(topic,"memoryLine"),"시엘 · "+({morningGloves:"아침 장갑 기록",teaBlend:"차 배합 기록"}[flag]??"조건부 대사"));
+    rows(prop(chatSource("butlerReplies"),id)).forEach((line,i)=>add(g,chatFile,line,"세바스찬 · 기본 답변 "+(i+1)));
+    rows(prop(chatSource("chatVariations"),id)).forEach((pair,i)=>{
+      const [ciel,sebastian]=rows(pair);
+      add(g,chatFile,ciel,"시엘 · 반복 대화 "+(i+1));
+      add(g,chatFile,sebastian,"세바스찬 · 반복 대화 "+(i+1));
+    });
+    rows(prop(chatSource("chatFollowups"),id)).forEach((pair,i)=>{
+      const [choice,reply]=rows(pair);
+      add(g,chatFile,choice,"후속 선택지 "+(i+1));
+      add(g,chatFile,reply,"시엘 · 후속 답변 "+(i+1));
+    });
+  }
   const extraDialogue = {
     "chapters.js":["visitsVN","examEvents","guide","trustedGreetings"], "story.js":["visitRecollections"], "term-events.js":["examDialogue","portfolios"],
-    "scenes.js":["lines","butlerGreetings","butlerReplies"], "game.js":["homeRemarks","marketGoods"],
+    "game.js":["marketGoods"],
     "content.js":["visiting"], "reports.js":["reviewLines"]
   };
   for (const [file,names] of Object.entries(extraDialogue)) {
     for (const name of names) {
       const root = variable(file,name) ?? roots[file].body.find(node=>node.type==="FunctionDeclaration"&&node.id.name===name);
       if (!root) continue;
-      const labels={trustedGreetings:"인물별 신뢰도 대사",visitRecollections:"방문 회상",examDialogue:"실기 장면 대사",portfolios:"응용·최종 실기",butlerGreetings:"세바스찬의 인사",butlerReplies:"세바스찬의 답변",guide:"첫 조작 안내",visitsVN:"자유행동 대화",examEvents:"세바스찬 시험 대사",courseFeedback:"수업 성과 대사",masteryPaths:"응용 실기",snakeRounds:"스네이크 순찰 대사",lines:"시엘과의 대화",homeRemarks:"시엘의 메인 화면 대사",marketGoods:"상점 대사",visiting:"방문 장소 안내",reviewLines:"일정 총평"};
+      const labels={trustedGreetings:"인물별 신뢰도 대사",visitRecollections:"방문 회상",examDialogue:"실기 장면 대사",portfolios:"응용·최종 실기",guide:"첫 조작 안내",visitsVN:"자유행동 대화",examEvents:"세바스찬 시험 대사",courseFeedback:"수업 성과 대사",masteryPaths:"응용 실기",snakeRounds:"스네이크 순찰 대사",marketGoods:"상점 대사",visiting:"방문 장소 안내",reviewLines:"일정 총평"};
       const g=group("dialogue",name,labels[name],file);
       walk(root,[],(node,parents)=>{
         if(!strings(node)||!hangul.test(node.value)||node.value.length<4||/[<>]/.test(node.value)||covered.has(file+":"+node.start)) return;
