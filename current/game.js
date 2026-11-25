@@ -1485,6 +1485,7 @@ function render(focus=false,playbackOffset=0){
   $("playback").hidden=!stage;
   $("playback").innerHTML=stage?playMarkup():"";
   const vn=faceDialogue();
+  $("scene").dataset.endingSummary=String(tab==="plan"&&state.phase==="ending"&&!vn);
   if(vn&&tab==="plan"&&!tourSession&&!previewFair&&!storyDemo&&recordElizabethMeeting(state)){
     persist();
     $("conversation").insertAdjacentHTML("beforeend",'<p class="meeting-notice" role="status">엘리자베스 호감도 +3</p>');

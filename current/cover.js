@@ -47,12 +47,14 @@ const cgTitles={
 };
 let albumPicture=null,albumScroll=0;
 function rememberCG(source){
-  if(previewFair||storyDemo||tourSession||!/^assets\/(prologue|endings)\/[\w-]+\.webp$/.test(source)||source.endsWith("/black.webp"))return;
-  if(saves.cgSeen?.[source])return;
-  saves.cgSeen??={};
-  saves.cgSeen[source]=true;
-  // A replay from the cover must never replace the player's automatic save.
-  try{localStorage.setItem(storageKey,JSON.stringify(saves));}catch{storageOk=false;}
+  if(previewLesson||previewFair||storyDemo||typeof editorPreview!=="undefined"||
+    !/^assets\/(prologue|endings)\/[\w-]+\.webp$/.test(source)||source.endsWith("/black.webp"))return;
+  // The guided practice state is temporary, but viewed CGs belong to the player's album.
+  const book=tourSession?.saves??saves;
+  if(book.cgSeen?.[source])return;
+  book.cgSeen??={};
+  book.cgSeen[source]=true;
+  writeSaveBook(book);
 }
 function cgAlbumEntries(){
   const entries=new Map();
