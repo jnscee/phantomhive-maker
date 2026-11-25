@@ -609,9 +609,9 @@ const endingScenes={
 };
 
 const londonEndingCGs={
-  merchant:{id:"london-merchant",title:"런던의 사업가",alt:"안개 낀 템스강 하역장에서 운송장을 확인하는 시엘과 세바스찬."},
-  broker:{id:"london-broker",title:"정보상의 연락망",alt:"이스트엔드 전당포에서 정보상에게 금화 한 닢을 내미는 시엘."},
-  pursuit:{id:"london-pursuit",title:"문장 없는 마차",alt:"한밤중 화물역에서 찢긴 기차표를 들어 보이는 시엘과 세바스찬."}
+  merchant:{id:"london-merchant",title:"문장 없는 마차 · 사업가",alt:"안개 낀 템스강 하역장에서 운송장을 확인하는 시엘과 세바스찬."},
+  broker:{id:"london-broker",title:"문장 없는 마차 · 정보상",alt:"이스트엔드 전당포에서 정보상에게 금화 한 닢을 내미는 시엘."},
+  pursuit:{id:"vowNoTitle",title:"문장 없는 마차 · 추적",alt:"비에 젖은 골목에서 시엘이 문장 없는 마차에 발을 올린다."}
 };
 
 const londonEndingScenes={
@@ -657,23 +657,65 @@ const londonEndingScenes={
 
 
 let endingReplay=null;
-function hasEndingRecord(id){
-  return Object.hasOwn(endingScenes,id)&&(Object.hasOwn(saves.gallery||{},id)||
-    [state,saves.auto,saves[1],saves[2],saves[3]].some(run=>run?.phase==="ending"&&run.ending===id));
+const londonEndingRoutes=["pursuit","broker","merchant"];
+const londonEndingNames={pursuit:"추적",broker:"정보상",merchant:"사업가"};
+function endingRecordKey(id,route){
+  return id==="vowNoTitle"&&route?id+"-"+route:id;
 }
-function endingCareerFor(id,replay=false){
-  if(id!=="vowNoTitle")return null;
-  if(state.phase==="ending"&&state.ending===id)return londonCareer(state);
-  if(replay&&Object.hasOwn(londonEndingCGs,saves.londonCareer))return saves.londonCareer;
-  const run=[saves.auto,saves[1],saves[2],saves[3]].find(entry=>entry?.phase==="ending"&&entry.ending===id);
-  return run?londonCareer(run):saves.londonCareer;
+function recordedLondonCareer(run){
+  return londonCareer(run,140,260);
+}
+function endingRuns(id,route,runs=[state,saves.auto,saves[1],saves[2],saves[3]]){
+  return runs.filter(run=>run?.phase==="ending"&&run.ending===id&&(!route||recordedLondonCareer(run)===route));
+}
+function legacyLondonCareer(){
+  if(londonEndingRoutes.includes(saves.londonCareer))return saves.londonCareer;
+  const [run]=endingRuns("vowNoTitle",null,[saves.auto,saves[1],saves[2],saves[3],state]);
+  return run?recordedLondonCareer(run):"pursuit";
+}
+function hasEndingRecord(id,route){
+  if(!Object.hasOwn(endingScenes,id))return false;
+  const gallery=saves.gallery||{};
+  const legacyCG=route&&endingCareerArt(id,route)
+    ? "assets/endings/"+(route==="pursuit"?"london-pursuit":londonEndingCGs[route].id)+".webp" : null;
+  return Object.hasOwn(gallery,endingRecordKey(id,route))||
+    Boolean(legacyCG&&saves.cgSeen?.[legacyCG])||
+    Boolean(route&&route===legacyLondonCareer()&&Object.hasOwn(gallery,id))||
+    endingRuns(id,route).length>0;
+}
+function endingGalleryEntries(){
+  return Object.keys(endingScenes).flatMap(id=>(id==="vowNoTitle"?londonEndingRoutes:[null])
+    .filter(route=>hasEndingRecord(id,route)).map(route=>[id,route]));
+}
+function endingSceneRoute(id,replay){
+  return id==="vowNoTitle"?(replay?(replay.route??legacyLondonCareer()):londonCareer(state)):null;
 }
 function endingCareerArt(id,route){
-  return id==="vowNoTitle"&&Object.hasOwn(londonEndingCGs,route)?londonEndingCGs[route]:null;
+  return id==="vowNoTitle"&&londonEndingRoutes.includes(route)?londonEndingCGs[route]:null;
 }
-function endingThumb(id){
-  const art=endingCareerArt(id,endingCareerFor(id,true));
-  return '<button type="button" class="ending-thumb" data-action="ending-art:'+id+'"><img loading="lazy" src="assets/endings/'+(art?.id||id)+'.webp" alt=""><span>'+endingLabels[id][0]+'</span></button>';
+function endingName(id,route){
+  return endingLabels[id][0]+(endingCareerArt(id,route)?" · "+londonEndingNames[route]:"");
+}
+function endingThumb(id,route){
+  const art=endingCareerArt(id,route);
+  const action="ending-art:"+id+(art?":"+route:"");
+  return '<button type="button" class="ending-thumb" data-action="'+action+'"><img loading="lazy" src="assets/endings/'+(art?.id||id)+'.webp" alt=""><span>'+endingName(id,route)+'</span></button>';
+}
+function endingGalleryRecord(records,id,route){
+  return records?.[endingRecordKey(id,route)]??(route===legacyLondonCareer()?records?.[id]:undefined);
+}
+function recordEnding(run,replace=false){
+  const id=run.ending,route=id==="vowNoTitle"?recordedLondonCareer(run):null;
+  const key=endingRecordKey(id,route);
+  saves.gallery??={};
+  saves.farewellGallery??={};
+  saves.growthGallery??={};
+  saves.gallery[key]=endingName(id,route);
+  if(replace||!saves.farewellGallery[key]?.guestsTracked){
+    saves.farewellGallery[key]=endingFarewellRecord(run);
+  }
+  const finalStats=saves.growthGallery[key]?.at(-1)?.recap?.finalStats;
+  if(replace||!finalStats)saves.growthGallery[key]=growthRecord(run);
 }
 const endingFarewells={
   tanaka:{
@@ -841,13 +883,13 @@ function endingFarewellRecord(run){
   return {age:campaignAge(run),cast,guestsTracked:true};
 }
 function savedEndingFarewells(id,replay){
-  if(!replay||state.phase==="ending"&&state.ending===id)return endingFarewellRecord(state);
-  const recorded=saves.farewellGallery?.[id];
+  if(!replay)return endingFarewellRecord(state);
+  const recorded=endingGalleryRecord(saves.farewellGallery,id,replay.route);
   if(recorded?.guestsTracked)return recorded;
-  const run=[saves.auto,saves[1],saves[2],saves[3]].find(r=>r?.phase==="ending"&&r.ending===id);
+  const [run]=endingRuns(id,replay.route);
   if(run)return endingFarewellRecord(run);
   if(recorded)return recorded;
-  const year=saves.growthGallery?.[id]?.at(-1);
+  const year=endingGalleryRecord(saves.growthGallery,id,replay.route)?.at(-1);
   return year?{age:year.age,cast:(year.cast||[]).filter(id=>Object.hasOwn(endingFarewells,id)).map(id=>[id,0])}:null;
 }
 function showEndingFarewells(host,id,record,start,onPage,onFinish){
@@ -993,16 +1035,104 @@ function growthRecord(run){
   return record;
 }
 function savedGrowthRecord(id,replay){
-  if(!replay||state.phase==="ending"&&state.ending===id)return growthRecord(state);
-  const saved=saves.growthGallery?.[id];
+  if(!replay)return growthRecord(state);
+  const saved=endingGalleryRecord(saves.growthGallery,id,replay.route);
   const recap=saved?.at(-1)?.recap;
   if(recap?.finalStats)return saved;
-  const run=[saves.auto,saves[1],saves[2],saves[3]].find(r=>r?.phase==="ending"&&r.ending===id);
+  const [run]=endingRuns(id,replay.route);
   if(!run)return saved||null;
   const record=growthRecord(run);
   if(!recap)return record;
   const ending={...saved.at(-1),recap:{...recap,finalStats:record.at(-1).recap.finalStats}};
   return [...saved.slice(0,-1),ending];
+}
+function appendRecordElement(parent,tag,value){
+  const element=document.createElement(tag);
+  element.textContent=value;
+  parent.append(element);
+  return element;
+}
+function appendEndingRecap(parent,recap,farewells,fund){
+  if(!recap)return;
+  const add=appendRecordElement;
+  const section=add(parent,"section","");
+  section.className="growth-recap";
+  add(section,"h3","이번 회차의 발자취");
+  const tiles=add(section,"dl","");
+  tiles.className="growth-metrics";
+  const wins=recap.fairs.reduce((sum,fair)=>sum+fair.won,0);
+  const staff=recap.staffRelations??(farewells?creditsStaff(farewells.cast):null);
+  const metrics=[
+    ["팬텀사 누적 매출",money(recap.sales.revenue)],
+    ["경연 우승",wins+"회"],
+    ["진행한 달",recap.months+"개월"],
+    ["편성한 일정",recap.scheduled+"회"],
+    ["판매·납품",recap.sales.retail+recap.sales.delivered+"개"],
+    ["기록한 사건",recap.events+"건"],
+    ["함께한 사용인",(staff?.length??recap.staff)+"명"]
+  ];
+  if(Number.isFinite(fund))metrics.unshift(["최종 보유 자금",money(fund)]);
+  if(recap.purchases!==null)metrics.push(["라우 상점 구매",recap.purchases+"회"]);
+  for(const [label,value] of metrics){
+    const tile=add(tiles,"div","");
+    add(tile,"dt",label);add(tile,"dd",value);
+  }
+  add(section,"h4","시엘의 최종 능력치");
+  if(stats.some(key=>Number.isFinite(recap.finalStats?.[key]))){
+    const abilities=add(section,"dl","");
+    abilities.className="growth-metrics growth-final-stats";
+    for(const key of stats){
+      const tile=add(abilities,"div","");
+      add(tile,"dt",statLabel(key));
+      add(tile,"dd",Number.isFinite(recap.finalStats[key])?recap.finalStats[key]:"–");
+    }
+  }else add(section,"p","이 회차의 최종 능력치 기록은 남아 있지 않습니다.");
+  add(section,"h4","사용인이 시엘을 대하는 마음");
+  if(!staff) add(section,"p","이 회차의 사용인 관계 기록은 남아 있지 않습니다.");
+  else if(!staff.length) add(section,"p","합류한 사용인이 없습니다.");
+  else for(const [person,tier] of staff){
+    const row=add(section,"div","");
+    row.className="growth-recap-row growth-staff-row";
+    add(row,"strong",servants[person].name);
+    add(row,"span",staffFeelings[tier]??staffFeelings[0]);
+  }
+  add(section,"h4","가장 많이 편성한 일정");
+  if(!recap.top.length)add(section,"p","편성 기록이 없습니다.");
+  for(const [name,count] of recap.top){
+    const row=add(section,"div","");row.className="growth-recap-row";
+    add(row,"span",statResultText(name));add(row,"strong",count+"회");
+  }
+  add(section,"h4","참가 경연별 우승");
+  if(!recap.fairs.length)add(section,"p","참가한 경연이 없습니다.");
+  for(const fair of recap.fairs){
+    const row=add(section,"div","");row.className="growth-recap-row";
+    add(row,"span",fair.title);add(row,"strong",fair.won+"회 / "+fair.entered+"회 참가");
+  }
+}
+function appendGrowthTimeline(parent,years,portraits=true){
+  const add=appendRecordElement;
+  for(const {year,age,plans,entries} of years){
+    const section=add(parent,"section","");
+    if(portraits){
+      const portrait=document.createElement("img");
+      portrait.src=cielArt(age);portrait.alt="";section.append(portrait);
+    }
+    add(section,"h3",year+"년");
+    if(plans.length)add(section,"p","주요 편성　"+plans.map(statResultText).join(" · "));
+    for(const entry of entries){
+      const row=add(section,"div","");row.className="growth-entry";
+      add(row,"small",(calendarDate(entry.month).getUTCMonth()+1)+"월");add(row,"span",entry.title);
+    }
+  }
+}
+function endingSummaryRecord(run){
+  const years=growthRecord(run),host=document.createElement("div");
+  host.className="ending-summary-record";
+  appendEndingRecap(host,years.at(-1).recap,null,run.fund);
+  const details=appendRecordElement(host,"details","");
+  appendRecordElement(details,"summary","연도별 성장 기록");
+  appendGrowthTimeline(details,years,false);
+  return host.outerHTML;
 }
 function showGrowthCredits(host,id,years,onFinish,route,farewells){
   const art=endingCareerArt(id,route);
@@ -1011,77 +1141,11 @@ function showGrowthCredits(host,id,years,onFinish,route,farewells){
   host.hidden=false;host.dataset.review="false";
   host.innerHTML='<section class="growth-credits" aria-label="시엘의 성장 기록"><img class="growth-backdrop" src="'+picture+'" alt=""><div class="growth-window" tabindex="0"><div class="growth-roll"><header><h2>시엘의 성장 기록</h2></header></div></div><footer><button type="button" class="growth-toggle"></button><button type="button" class="growth-end">마치기</button></footer></section>';
   const windowEl=host.querySelector(".growth-window"),roll=host.querySelector(".growth-roll");
-  function add(parent,tag,value){
-    const el=document.createElement(tag);el.textContent=value;parent.append(el);return el;
-  }
-  add(roll.querySelector("header"),"p",endingLabels[id][0]);
+  const add=appendRecordElement;
+  add(roll.querySelector("header"),"p",endingName(id,route));
   if(!years.length)add(roll,"p","이 회차의 세부 장부는 남아 있지 않습니다.");
-  const recap=years.at(-1)?.recap;
-  if(recap){
-    const section=add(roll,"section","");
-    section.className="growth-recap";
-    add(section,"h3","이번 회차의 발자취");
-    const tiles=add(section,"dl","");
-    tiles.className="growth-metrics";
-    const wins=recap.fairs.reduce((sum,fair)=>sum+fair.won,0);
-    const staff=recap.staffRelations??(farewells?creditsStaff(farewells.cast):null);
-    const metrics=[
-      ["팬텀사 누적 매출",money(recap.sales.revenue)],
-      ["경연 우승",wins+"회"],
-      ["진행한 달",recap.months+"개월"],
-      ["편성한 일정",recap.scheduled+"회"],
-      ["판매·납품",recap.sales.retail+recap.sales.delivered+"개"],
-      ["기록한 사건",recap.events+"건"],
-      ["함께한 사용인",(staff?.length??recap.staff)+"명"]
-    ];
-    if(recap.purchases!==null)metrics.push(["라우 상점 구매",recap.purchases+"회"]);
-    for(const [label,value] of metrics){
-      const tile=add(tiles,"div","");
-      add(tile,"dt",label);add(tile,"dd",value);
-    }
-    add(section,"h4","시엘의 최종 능력치");
-    if(stats.some(key=>Number.isFinite(recap.finalStats?.[key]))){
-      const abilities=add(section,"dl","");
-      abilities.className="growth-metrics growth-final-stats";
-      for(const key of stats){
-        const tile=add(abilities,"div","");
-        add(tile,"dt",statLabel(key));
-        add(tile,"dd",Number.isFinite(recap.finalStats[key])?recap.finalStats[key]:"–");
-      }
-    }else add(section,"p","이 회차의 최종 능력치 기록은 남아 있지 않습니다.");
-    add(section,"h4","사용인이 시엘을 대하는 마음");
-    if(!staff) add(section,"p","이 회차의 사용인 관계 기록은 남아 있지 않습니다.");
-    else if(!staff.length) add(section,"p","합류한 사용인이 없습니다.");
-    else for(const [person,tier] of staff){
-      const row=add(section,"div","");
-      row.className="growth-recap-row growth-staff-row";
-      add(row,"strong",servants[person].name);
-      add(row,"span",staffFeelings[tier]??staffFeelings[0]);
-    }
-    add(section,"h4","가장 많이 편성한 일정");
-    if(!recap.top.length)add(section,"p","편성 기록이 없습니다.");
-    for(const [name,count] of recap.top){
-      const row=add(section,"div","");row.className="growth-recap-row";
-      add(row,"span",statResultText(name));add(row,"strong",count+"회");
-    }
-    add(section,"h4","참가 경연별 우승");
-    if(!recap.fairs.length)add(section,"p","참가한 경연이 없습니다.");
-    for(const fair of recap.fairs){
-      const row=add(section,"div","");row.className="growth-recap-row";
-      add(row,"span",fair.title);add(row,"strong",fair.won+"회 / "+fair.entered+"회 참가");
-    }
-  }
-  for(const {year,age,plans,entries} of years){
-    const section=add(roll,"section","");
-    const portrait=document.createElement("img");
-    portrait.src=cielArt(age);portrait.alt="";section.append(portrait);
-    add(section,"h3",year+"년");
-    if(plans.length)add(section,"p","주요 편성　"+plans.map(statResultText).join(" · "));
-    for(const entry of entries){
-      const row=add(section,"div","");row.className="growth-entry";
-      add(row,"small",(calendarDate(entry.month).getUTCMonth()+1)+"월");add(row,"span",entry.title);
-    }
-  }
+  appendEndingRecap(roll,years.at(-1)?.recap,farewells);
+  appendGrowthTimeline(roll,years);
   const lastMonth=years.at(-1)?.lastMonth;
   if(lastMonth)add(roll,"p",monthText(lastMonth)+" · 마지막 기록");
   if(years.at(-1)?.allMastered){
@@ -1118,7 +1182,7 @@ function showGrowthCredits(host,id,years,onFinish,route,farewells){
   label();requestAnimationFrame(frame);
 }
 function endingLineAt(id,at,replay){
-  const route=endingCareerFor(id,Boolean(replay));
+  const route=endingSceneRoute(id,replay);
   const lines=endingScenes[id]?.lines||[];
   const act=londonEndingScenes[route];
   const offset=act?lines.length-act.length:0;
@@ -1150,7 +1214,7 @@ function showEndingScene(host){
     },afterFarewells);
     return true;
   }
-  const route=endingCareerFor(id,Boolean(replay));
+  const route=endingSceneRoute(id,replay);
   if(replay?replay.credits:state.growthCredits){
     showGrowthCredits(host,id,savedGrowthRecord(id,replay)||[],finishScene,route,savedEndingFarewells(id,replay));return true;
   }
@@ -1159,7 +1223,7 @@ function showEndingScene(host){
   const [who,line,legacyPicture,cue]=row;
   const last=at===end;
   const story=routeAct && !cue?.cg && !last;
-  const careerCG=last&&route!=="pursuit"?endingCareerArt(id,route):null;
+  const careerCG=last?endingCareerArt(id,route):null;
   const endingPicture=careerCG?.id||legacyPicture||id;
   const room=route==="broker"?"street":"library";
   const picture=careerCG?.id || cue?.cg || (story?"room-"+room:endingPicture);

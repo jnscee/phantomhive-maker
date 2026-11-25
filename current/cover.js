@@ -88,19 +88,22 @@ function cgAlbumEntries(){
   return [...entries].map(([src,title])=>({src,title,seen:!!saves.cgSeen?.[src]}));
 }
 function restoreCGRecords(){
-  if(previewFair||storyDemo||saves.cgSeen)return;
-  for(const id of Object.keys(endingScenes)){
-    if(!hasEndingRecord(id))continue;
-    rememberCG("assets/endings/"+id+".webp");
-    const runs=coverSaveSlots.map(slot=>saves[slot]).filter(r=>r?.phase==="ending"&&r.ending===id);
+  if(previewFair||storyDemo)return;
+  const endings=endingGalleryEntries();
+  const hadCGRecords=Boolean(saves.cgSeen);
+  for(const [id,route] of endings){
+    const art=endingCareerArt(id,route);
+    if(art||!hadCGRecords)rememberCG("assets/endings/"+(art?.id||id)+".webp");
+    if(hadCGRecords)continue;
+    const runs=endingRuns(id,route,coverSaveSlots.map(slot=>saves[slot]));
     const scene=endingScenes[id];
     const last=runs.length?Math.max(...runs.map(r=>r.endingBeat??(scene.lines.length-1))):0;
     scene.lines.slice(0,last+1).forEach((line,i)=>{
-      const route=saves.londonCareer;
       if(id==="vowNoTitle"&&londonEndingScenes[route]&&i>=scene.lines.length-londonEndingScenes[route].length)return;
       rememberCG("assets/endings/"+(line[3]?.cg||line[2]||id)+".webp");
     });
   }
+  if(hadCGRecords)return;
   for(const slot of coverSaveSlots){
     const r=saves[slot];
     if(!r?.v)continue;
@@ -121,7 +124,7 @@ function cgAlbum(){
   const cells=entries.map((e,i)=>e.seen?
     btn('<img loading="lazy" src="'+e.src+'" alt=""><span>'+escapeHTML(e.title)+'</span>',"cg:"+i,false,"cg-print"):
     '<div class="cg-print cg-blank"><i aria-hidden="true">◇</i><span>미수집</span></div>').join("");
-  const endings=Object.keys(endingScenes).filter(hasEndingRecord);
+  const endings=endingGalleryEntries();
   return '<article class="cover-leaf cg-album"><header><h2 tabindex="-1">CG 앨범</h2>'+btn("표지로 돌아가기","back")+'</header><p class="cover-count">수집한 CG <b>'+seen+' / '+entries.length+'</b></p><div class="cg-grid">'+cells+'</div>'+
-    (endings.length?'<details><summary>엔딩 다시 보기</summary><div class="cover-gallery">'+endings.map(endingThumb).join("")+'</div></details>':'')+'</article>';
+    (endings.length?'<details><summary>엔딩 다시 보기</summary><div class="cover-gallery">'+endings.map(([id,route])=>endingThumb(id,route)).join("")+'</div></details>':'')+'</article>';
 }

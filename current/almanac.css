@@ -870,3 +870,13 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 @media(orientation:landscape) and (max-height:550px) {
   #conversation .duel-screen:not(.duel-result) {padding-block-end:.7rem}
 }
+
+
+.ending-summary-record {margin:1rem 0;text-align:start}
+.ending-summary-record h3 {margin:0 0 .6rem;color:#f0dfba}
+.ending-summary-record .growth-metrics {grid-template-columns:repeat(2,minmax(0,1fr))}
+.ending-summary-record details {margin-top:1rem;border:1px solid #a9c1d850;border-radius:5px;padding:.65rem}
+.ending-summary-record summary {cursor:pointer;font-weight:700}
+.ending-summary-record details section {margin:.65rem 0}
+.ending-summary-record .growth-entry {display:flex;gap:.5rem;padding:.25rem 0}
+.ending-summary-record .growth-entry small {flex:0 0 2.6em}

@@ -467,14 +467,10 @@ function qualifies(){
 }
 function finish(id){
   state.ending=id;state.endingBeat=0;state.phase="ending";
-  saves.gallery??={};
-  saves.gallery[id]=endingLabels[id][0];
-  rememberCG("assets/endings/"+id+".webp");
-  saves.farewellGallery??={};
-  saves.farewellGallery[id]=endingFarewellRecord(state);
-  if(id==="vowNoTitle")saves.londonCareer=state.londonCareer=londonCareer(state);
-  saves.growthGallery??={};
-  saves.growthGallery[id]=growthRecord(state);
+  if(id==="vowNoTitle")state.londonCareer=londonCareer(state);
+  recordEnding(state,true);
+  const art=endingCareerArt(id,state.londonCareer);
+  rememberCG("assets/endings/"+(art?.id||id)+".webp");
   persist();render(true);
 }
 function isApprovedEnding(id){return id==="vowTitle"||id==="releaseTitle";}
@@ -795,11 +791,11 @@ function planPanel(){
   }
   if(state.phase==="result")return monthlyResults();
   if(state.phase==="ending"){
-    const [title,description]=endingLabels[state.ending];
-    const recap=state.ending==="releaseNoTitle"?"":'<div class="summary-grid">'+tile("보유 자금",money(state.fund))+
-      tile("경영",state.stats.경영)+tile("완료 사건",state.events.length)+'</div>'+
-      (state.ending==="vowTitle"?'':'<p>'+epilogue()+'</p>');
-    return frame(title,endingThumb(state.ending)+(description?'<p class="muted">'+description+'</p>':'')+recap+'<div class="inline">'+btn("장부 보기","tab:record")+btn("새 회차","reset",false,"primary")+'</div>','회차 종료');
+    const id=state.ending,route=id==="vowNoTitle"?londonCareer(state):null;
+    const description=endingLabels[id][1];
+    const flavor=id!=="vowTitle"&&id!=="releaseNoTitle"?'<p>'+epilogue()+'</p>':"";
+    const summary=endingThumb(id,route)+(description?'<p class="muted">'+description+'</p>':'')+flavor+endingSummaryRecord(state);
+    return frame(endingName(id,route),summary+'<div class="inline">'+btn("장부 보기","tab:record")+btn("새 회차","reset",false,"primary")+'</div>','회차 종료');
   }
   return "";
 }
@@ -1078,7 +1074,7 @@ function recordPanel(){
     const choice=event.choices[record.index];
     return '<details><summary>'+(record.month?monthText(record.month)+' · ':'')+escapeHTML(event.title)+'</summary>'+(sourceNote(event)?'<small>'+sourceNote(event)+'</small>':'')+'<p>'+storyLine(event)+'</p><p class="small muted">'+(choice?choice.label+" · "+statResultText(record.examNote||choice.result):"처리 완료")+'</p></details>';
   }).join("");
-  const album='<div class="ending-album">'+(Object.keys(endingScenes).filter(hasEndingRecord).map(endingThumb).join("")||"아직 기록된 엔딩이 없습니다.")+'</div>';
+  const album='<div class="ending-album">'+(endingGalleryEntries().map(([id,route])=>endingThumb(id,route)).join("")||"아직 기록된 엔딩이 없습니다.")+'</div>';
   return frame("가문 장부",familyFolio(courtRows(),history,album));
 }
 const motionLabels={auto:"기기 설정 따르기",full:"항상 재생",reduced:"동작 줄이기"};
@@ -1399,10 +1395,7 @@ state=normalizeSave(state);
 // Preserve recoverable ending data before a saved campaign is replaced.
 for(const run of [saves.auto,saves[1],saves[2],saves[3]]){
   if(run?.phase!=="ending"||!Object.hasOwn(endingScenes,run.ending))continue;
-  saves.farewellGallery??={};
-  if(!saves.farewellGallery[run.ending]?.guestsTracked)saves.farewellGallery[run.ending]=endingFarewellRecord(run);
-  saves.growthGallery??={};
-  if(!saves.growthGallery[run.ending]?.at(-1)?.recap)saves.growthGallery[run.ending]=growthRecord(run);
+  recordEnding(run);
 }
 
 restoreCGRecords();
@@ -1413,7 +1406,7 @@ function sheetTitle(){
     if(state.phase==="vow")return "마지막 명령";
     if(state.phase==="event")return castName(pendingEvent());
     if(state.phase==="result")return "월간 결산";
-    if(state.phase==="ending")return endingLabels[state.ending][0];
+    if(state.phase==="ending")return endingName(state.ending,endingSceneRoute(state.ending));
     return "월간 일정";
   }
   return {market:"라우의 상점",title:"Earl Phantomhive Maker",status:"상태",estate:"저택 관리",townhouse:"런던 타운하우스",staffing:"사용인 배치",company:"팬텀 사 경영",record:"가문 장부",save:"저장 · 설정"}[tab];
@@ -1765,8 +1758,12 @@ function handleAction(key,rect,confirmed=false){
     }
     return;
   }
-  if(action==="ending-art"&&(tab==="record"||tab==="album"||(tab==="plan"&&state.phase==="ending"))&&hasEndingRecord(id)){
-    stopRecruitAuto();endingReplay={id,at:0,origin:tab};tab="endingMemory";render(true);return;
+  if(action==="ending-art"&&(tab==="record"||tab==="album"||(tab==="plan"&&state.phase==="ending"))){
+    const route=londonEndingRoutes.includes(value)&&id==="vowNoTitle"?value:null;
+    if(!hasEndingRecord(id,route))return;
+    stopRecruitAuto();
+    endingReplay={id,route,at:0,origin:tab};
+    tab="endingMemory";render(true);return;
   }
   if(tab==="endingMemory"&&["back","system-back"].includes(action)){
     stopRecruitAuto();tab=endingReplay?.origin||"record";endingReplay=null;render(true);return;

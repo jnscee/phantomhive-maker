@@ -791,3 +791,27 @@ for(const [ending,edition,beat,expected] of [
   assertOk('(()=>{const saved=normalizeSave({...initial(),storyPageEdition:edition,phase:"ending",ending,endingBeat:beat});return saved.storyPageEdition===4&&saved.endingBeat===expected&&normalizeSave(saved).endingBeat===expected;})()');
 }
 console.log('PASS illness, reserved tuition during sick leave, recovery, optional fair outcomes and demand, both library follow-ups after loading, one-way trust, and all six ending scripts.');
+
+// Each London career remains independently collectible across later playthroughs.
+run('saves={};state=initial();saves.gallery={vowNoTitle:"문장 없는 마차"};saves.londonCareer="broker";');
+assert.deepEqual(Array.from(run('endingGalleryEntries().map(([,route])=>route)')),["broker"]);
+run('saves.cgSeen={"assets/endings/london-pursuit.webp":true};restoreCGRecords();');
+assert.deepEqual(Array.from(run('endingGalleryEntries().map(([,route])=>route)')),["pursuit","broker"]);
+assertOk('saves.cgSeen["assets/endings/vowNoTitle.webp"]&&saves.cgSeen["assets/endings/london-broker.webp"]');
+run('saves={};tab="plan";');
+for(const [worth,management,insight,route,art] of [
+  [500,180,100,"pursuit","vowNoTitle"],
+  [500,190,160,"broker","london-broker"],
+  [2500,380,180,"merchant","london-merchant"]
+]){
+  Object.assign(ctx,{worth,management,insight,route,art});
+  run('state=initial();state.fund=worth;state.stats.경영=management;state.stats.통찰=insight;finish("vowNoTitle");');
+  assertOk('state.londonCareer===route&&saves.cgSeen["assets/endings/"+art+".webp"]');
+}
+assert.deepEqual(Array.from(run('endingGalleryEntries().map(([,route])=>route)')),["pursuit","broker","merchant"]);
+run('saves=JSON.parse(localStorage.getItem(storageKey));tab="album";handleAction("ending-art:vowNoTitle:broker");');
+assertOk('endingReplay.route==="broker"&&endingSceneRoute("vowNoTitle",endingReplay)==="broker"');
+assert.equal(run('savedGrowthRecord("vowNoTitle",endingReplay).at(-1).recap.finalStats.경영'),190);
+assert.equal(run('savedGrowthRecord("vowNoTitle",{route:"merchant"}).at(-1).recap.finalStats.경영'),380);
+assert.equal(run('savedGrowthRecord("vowNoTitle",{route:"pursuit"}).at(-1).recap.finalStats.경영'),180);
+console.log('PASS three independently collectible London endings, legacy CG migration, replay, and separate growth records');

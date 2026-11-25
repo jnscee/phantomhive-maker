@@ -454,10 +454,12 @@ async function check(browserType){
         await page.locator('.growth-end').click();
         assert.ok(await page.locator('#sheet').isVisible());
         assert.equal(await page.locator('#sheet .ending-thumb img').getAttribute('src'),'assets/endings/'+endingImage+'.webp');
+        assert.equal(await page.locator('#sheet .growth-final-stats dt').count(),7);
+        assert.equal(await page.locator('#sheet .ending-summary-record summary').innerText(),'연도별 성장 기록');
       }
       await page.evaluate(()=>{
         state=initial();state.phase='plan';tab='record';saves.gallery={ill:'건강 악화로 종료'};
-        delete saves.growthGallery.ill;
+        delete saves.growthGallery.ill;delete saves.cgSeen;
         saves[1]={...initial(),month:4,phase:'ending',ending:'broke',past:[{month:4,plan:['accounts','walk','rest']}]};delete saves.auto;delete saves[2];delete saves[3];render();
       });
       assert.equal(await page.locator('.ending-thumb').count(),2);
