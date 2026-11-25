@@ -41,14 +41,18 @@ function coverPanel() {
 
 const cgTitles={
   seal:"계약의 인장",fire:"불타는 저택",ring:"가문의 반지",hillside:"동트기 전",manor:"겨울 아침",lesson:"첫 수업",
-  "royal-letter":"여왕의 봉서","royal-dress":"알현복","royal-gates":"버킹엄궁 정문","royal-investiture":"서훈식",
+  "royal-letter":"여왕의 봉서","royal-dress":"알현복","royal-investiture":"서훈식",
   "royal-doorway":"식장의 문턱","royal-gallery":"햇살이 드는 회랑","royal-reply":"창가의 대답",
   "royal-monologue":"집사의 독백","royal-oath":"마지막 명령"
 };
 let albumPicture=null,albumScroll=0;
+function isAlbumCG(source){
+  return /^assets\/(prologue|endings)\/[\w-]+\.webp$/.test(source)&&
+    !source.endsWith("/black.webp")&&source!=="assets/endings/royal-gates.webp";
+}
 function rememberCG(source){
   if(previewLesson||previewFair||storyDemo||typeof editorPreview!=="undefined"||
-    !/^assets\/(prologue|endings)\/[\w-]+\.webp$/.test(source)||source.endsWith("/black.webp"))return;
+    !isAlbumCG(source))return;
   // The guided practice state is temporary, but viewed CGs belong to the player's album.
   const book=tourSession?.saves??saves;
   if(book.cgSeen?.[source])return;
@@ -59,9 +63,9 @@ function rememberCG(source){
 function cgAlbumEntries(){
   const entries=new Map();
   function add(group,id){
-    if(!id||id==="black")return;
+    if(!id)return;
     const path="assets/"+group+"/"+id+".webp";
-    if(!entries.has(path))entries.set(path,cgTitles[id]||endingLabels[id]?.[0]||id);
+    if(isAlbumCG(path)&&!entries.has(path))entries.set(path,cgTitles[id]||endingLabels[id]?.[0]||id);
   }
   for(const id of ["seal","fire","ring","hillside","manor","lesson"])add("prologue",id);
   for(const [id,scene] of Object.entries(endingScenes)){
