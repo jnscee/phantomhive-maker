@@ -794,8 +794,10 @@ function planPanel(){
     const id=state.ending,route=id==="vowNoTitle"?londonCareer(state):null;
     const description=endingLabels[id][1];
     const flavor=id!=="vowTitle"&&id!=="releaseNoTitle"?'<p>'+epilogue()+'</p>':"";
-    const summary=endingThumb(id,route)+(description?'<p class="muted">'+description+'</p>':'')+flavor+endingSummaryRecord(state);
-    return frame(endingName(id,route),summary+'<div class="inline">'+btn("장부 보기","tab:record")+btn("새 회차","reset",false,"primary")+'</div>','회차 종료');
+    const intro='<div class="ending-folio-intro"><div class="ending-folio-caption"><time>'+monthText(state.month)+'</time><h3>'+endingName(id,route)+'</h3></div>'+
+      endingThumb(id,route,true)+((description||flavor)?'<div class="ending-folio-note">'+(description?'<p>'+description+'</p>':'')+flavor+'</div>':'')+'</div>';
+    const actions='<div class="ending-folio-actions">'+btn("장부 보기","tab:record")+btn("새 회차","reset",false,"primary")+'</div>';
+    return frame(endingName(id,route),'<div class="ending-folio">'+intro+endingSummaryRecord(state)+actions+'</div>','회차 종료');
   }
   return "";
 }

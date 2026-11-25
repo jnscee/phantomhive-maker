@@ -696,10 +696,11 @@ function endingCareerArt(id,route){
 function endingName(id,route){
   return endingLabels[id][0]+(endingCareerArt(id,route)?" · "+londonEndingNames[route]:"");
 }
-function endingThumb(id,route){
+function endingThumb(id,route,featured=false){
   const art=endingCareerArt(id,route);
   const action="ending-art:"+id+(art?":"+route:"");
-  return '<button type="button" class="ending-thumb" data-action="'+action+'"><img loading="lazy" src="assets/endings/'+(art?.id||id)+'.webp" alt=""><span>'+endingName(id,route)+'</span></button>';
+  const label=featured?"엔딩 다시 보기":endingName(id,route);
+  return '<button type="button" class="ending-thumb'+(featured?' ending-feature-art':'')+'" data-action="'+action+'"><img loading="lazy" src="assets/endings/'+(art?.id||id)+'.webp" alt=""><span>'+label+'</span></button>';
 }
 function endingGalleryRecord(records,id,route){
   return records?.[endingRecordKey(id,route)]??(route===legacyLondonCareer()?records?.[id]:undefined);
@@ -998,7 +999,7 @@ function campaignRecap(run){
   const staffRelations=creditsStaff(endingFarewellRecord(run).cast);
   return {top,fairs:[...fairs.values()],sales,months:new Set((run.past||[]).map(entry=>entry.month)).size,
     scheduled:[...counts.values()].reduce((sum,count)=>sum+count,0),events:(run.events||[]).filter(entry=>entry.id).length,
-    staff:staffRelations.length,staffRelations,purchases:run.lauPurchases??null,
+    staff:staffRelations.length,staffRelations,purchases:run.lauPurchases??null,finalFunds:run.fund,
     finalStats:Object.fromEntries(stats.filter(key=>Number.isFinite(run.stats?.[key])).map(key=>[key,run.stats[key]]))};
 }
 function growthRecord(run){
@@ -1071,10 +1072,12 @@ function appendEndingRecap(parent,recap,farewells,fund){
     ["기록한 사건",recap.events+"건"],
     ["함께한 사용인",(staff?.length??recap.staff)+"명"]
   ];
-  if(Number.isFinite(fund))metrics.unshift(["최종 보유 자금",money(fund)]);
+  const balance=fund??recap.finalFunds;
+  if(Number.isFinite(balance))metrics.unshift(["최종 보유 자금",money(balance)]);
   if(recap.purchases!==null)metrics.push(["라우 상점 구매",recap.purchases+"회"]);
-  for(const [label,value] of metrics){
+  for(const [index,[label,value]] of metrics.entries()){
     const tile=add(tiles,"div","");
+    if(index<2)tile.className="growth-metric-lead";
     add(tile,"dt",label);add(tile,"dd",value);
   }
   add(section,"h4","시엘의 최종 능력치");
@@ -1083,29 +1086,42 @@ function appendEndingRecap(parent,recap,farewells,fund){
     abilities.className="growth-metrics growth-final-stats";
     for(const key of stats){
       const tile=add(abilities,"div","");
-      add(tile,"dt",statLabel(key));
-      add(tile,"dd",Number.isFinite(recap.finalStats[key])?recap.finalStats[key]:"–");
+      const value=recap.finalStats[key];
+      const label=statLabel(key);
+      add(tile,"dt",label);
+      add(tile,"dd",Number.isFinite(value)?value:"–");
+      if(Number.isFinite(value)){
+        const bar=add(tile,"dd","");bar.className="growth-stat-meter";
+        const meter=add(bar,"meter","");
+        meter.min=0;meter.max=statMax(key);meter.value=value;
+        meter.setAttribute("aria-label",label);
+        if(value>=meter.max)tile.classList.add("growth-stat-mastered");
+      }
     }
   }else add(section,"p","이 회차의 최종 능력치 기록은 남아 있지 않습니다.");
-  add(section,"h4","사용인이 시엘을 대하는 마음");
-  if(!staff) add(section,"p","이 회차의 사용인 관계 기록은 남아 있지 않습니다.");
-  else if(!staff.length) add(section,"p","합류한 사용인이 없습니다.");
+  const details=add(section,"div","");details.className="growth-record-details";
+  const staffNotes=add(details,"section","");
+  add(staffNotes,"h4","사용인이 시엘을 대하는 마음");
+  if(!staff) add(staffNotes,"p","이 회차의 사용인 관계 기록은 남아 있지 않습니다.");
+  else if(!staff.length) add(staffNotes,"p","합류한 사용인이 없습니다.");
   else for(const [person,tier] of staff){
-    const row=add(section,"div","");
+    const row=add(staffNotes,"div","");
     row.className="growth-recap-row growth-staff-row";
     add(row,"strong",servants[person].name);
     add(row,"span",staffFeelings[tier]??staffFeelings[0]);
   }
-  add(section,"h4","가장 많이 편성한 일정");
-  if(!recap.top.length)add(section,"p","편성 기록이 없습니다.");
+  const schedules=add(details,"section","");
+  add(schedules,"h4","가장 많이 편성한 일정");
+  if(!recap.top.length)add(schedules,"p","편성 기록이 없습니다.");
   for(const [name,count] of recap.top){
-    const row=add(section,"div","");row.className="growth-recap-row";
+    const row=add(schedules,"div","");row.className="growth-recap-row";
     add(row,"span",statResultText(name));add(row,"strong",count+"회");
   }
-  add(section,"h4","참가 경연별 우승");
-  if(!recap.fairs.length)add(section,"p","참가한 경연이 없습니다.");
+  const competitions=add(details,"section","");
+  add(competitions,"h4","참가 경연별 우승");
+  if(!recap.fairs.length)add(competitions,"p","참가한 경연이 없습니다.");
   for(const fair of recap.fairs){
-    const row=add(section,"div","");row.className="growth-recap-row";
+    const row=add(competitions,"div","");row.className="growth-recap-row";
     add(row,"span",fair.title);add(row,"strong",fair.won+"회 / "+fair.entered+"회 참가");
   }
 }
@@ -1113,11 +1129,13 @@ function appendGrowthTimeline(parent,years,portraits=true){
   const add=appendRecordElement;
   for(const {year,age,plans,entries} of years){
     const section=add(parent,"section","");
+    section.className="growth-year";
     if(portraits){
       const portrait=document.createElement("img");
       portrait.src=cielArt(age);portrait.alt="";section.append(portrait);
     }
-    add(section,"h3",year+"년");
+    const yearHeading=add(section,"h3",year+"년");
+    if(portraits) add(yearHeading,"small",age+"세");
     if(plans.length)add(section,"p","주요 편성　"+plans.map(statResultText).join(" · "));
     for(const entry of entries){
       const row=add(section,"div","");row.className="growth-entry";
@@ -1139,13 +1157,17 @@ function showGrowthCredits(host,id,years,onFinish,route,farewells){
   const picture="assets/endings/"+(art?.id||id)+".webp";
   if(art)rememberCG(picture);
   host.hidden=false;host.dataset.review="false";
-  host.innerHTML='<section class="growth-credits" aria-label="시엘의 성장 기록"><img class="growth-backdrop" src="'+picture+'" alt=""><div class="growth-window" tabindex="0"><div class="growth-roll"><header><h2>시엘의 성장 기록</h2></header></div></div><footer><button type="button" class="growth-toggle"></button><button type="button" class="growth-end">마치기</button></footer></section>';
+  host.innerHTML='<section class="growth-credits" aria-label="시엘의 성장 기록"><img class="growth-backdrop" src="'+picture+'" alt=""><div class="growth-window" tabindex="0"><div class="growth-roll"><header><h2>시엘의 성장 기록</h2></header></div></div><footer><div class="growth-progress" aria-hidden="true"><i></i></div><button type="button" class="growth-toggle"></button><button type="button" class="growth-end">마치기</button></footer></section>';
   const windowEl=host.querySelector(".growth-window"),roll=host.querySelector(".growth-roll");
   const add=appendRecordElement;
   add(roll.querySelector("header"),"p",endingName(id,route));
   if(!years.length)add(roll,"p","이 회차의 세부 장부는 남아 있지 않습니다.");
   appendEndingRecap(roll,years.at(-1)?.recap,farewells);
-  appendGrowthTimeline(roll,years);
+  if(years.length){
+    const timeline=add(roll,"div","");timeline.className="growth-timeline";
+    add(timeline,"h3","연도별 성장 기록");
+    appendGrowthTimeline(timeline,years);
+  }
   const lastMonth=years.at(-1)?.lastMonth;
   if(lastMonth)add(roll,"p",monthText(lastMonth)+" · 마지막 기록");
   if(years.at(-1)?.allMastered){
@@ -1162,24 +1184,35 @@ function showGrowthCredits(host,id,years,onFinish,route,farewells){
   add(thanks,"h3","SPECIAL THANKS").lang="en";
   for(const name of ["꼬","또쥐","Hato","우유"])add(thanks,"p",name);
   add(roll,"p","끝").className="growth-fin";
-  const toggle=host.querySelector(".growth-toggle");
+  const toggle=host.querySelector(".growth-toggle"),progress=host.querySelector(".growth-progress");
   let paused=document.documentElement.dataset.gameMotion==="reduced"||matchMedia("(prefers-reduced-motion: reduce)").matches,lastTime=0,fraction=0,finished=false;
-  function label(){toggle.textContent=paused?"자동 재생":"일시정지";}
+  function atEnd(){return windowEl.scrollTop+windowEl.clientHeight>=windowEl.scrollHeight-1;}
+  function label(){
+    toggle.textContent=atEnd()?"처음부터":paused?"자동 재생":"일시정지";
+    toggle.setAttribute("aria-pressed",String(!paused&&!atEnd()));
+  }
+  function syncScroll(){
+    const distance=windowEl.scrollHeight-windowEl.clientHeight;
+    progress.style.setProperty("--growth-progress",(distance>0?Math.min(1,windowEl.scrollTop/distance):1)*100+"%");
+    if(atEnd())paused=true;
+    label();
+  }
   function finish(){if(finished||!roll.isConnected)return;finished=true;onFinish();}
   function frame(now){
     if(finished||!roll.isConnected)return;
     if(!paused&&!document.hidden&&lastTime){
       fraction+=Math.min(100,now-lastTime)*0.027;
       const pixels=Math.floor(fraction);fraction-=pixels;windowEl.scrollTop+=pixels;
-      if(windowEl.scrollTop+windowEl.clientHeight>=windowEl.scrollHeight-1){finish();return;}
+      if(atEnd())paused=true;
     }
     lastTime=now;requestAnimationFrame(frame);
   }
-  toggle.onclick=()=>{paused=!paused;label();};
+  toggle.onclick=()=>{if(atEnd()){windowEl.scrollTop=0;paused=false;}else paused=!paused;syncScroll();};
+  windowEl.addEventListener("scroll",syncScroll,{passive:true});
   windowEl.addEventListener("wheel",()=>{paused=true;label();},{passive:true});
   windowEl.addEventListener("touchstart",()=>{paused=true;label();},{passive:true});
   host.querySelector(".growth-end").onclick=finish;
-  label();requestAnimationFrame(frame);
+  syncScroll();requestAnimationFrame(frame);
 }
 function endingLineAt(id,at,replay){
   const route=endingSceneRoute(id,replay);
