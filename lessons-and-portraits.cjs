@@ -440,11 +440,16 @@ async function check(browserType){
         await farewell.locator('.farewell-person').evaluate(im=>im.decode());
         await farewell.locator('[data-farewell="skip"]').click();
         const backdrop=page.locator('.growth-backdrop');
-        assert.equal(await backdrop.getAttribute('src'),'assets/endings/'+id+'.webp');
+        const endingImage=id==='vowNoTitle'?'london-merchant':id;
+        assert.equal(await backdrop.getAttribute('src'),'assets/endings/'+endingImage+'.webp');
         await backdrop.evaluate(im=>im.decode());
+        assert.equal(await page.locator('.growth-staff-row').count(),5);
+        assert.match(await page.locator('.growth-staff-row').filter({hasText:'메이린'}).innerText(),/시엘/);
+        assert.equal(await page.getByText('엘리자베스와 만남',{exact:true}).count(),0);
         await checkClosingCredits(page);
         await page.locator('.growth-end').click();
         assert.ok(await page.locator('#sheet').isVisible());
+        assert.equal(await page.locator('#sheet .ending-thumb img').getAttribute('src'),'assets/endings/'+endingImage+'.webp');
       }
       await page.evaluate(()=>{
         state=initial();state.phase='plan';tab='record';saves.gallery={ill:'건강 악화로 종료'};
