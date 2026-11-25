@@ -271,11 +271,15 @@ async function check(browserType){
       assert.ok(awardLayout,'Result card and character nameplates must remain unobstructed');
       assert.equal(await award.locator('.award-dialogue').count(),0);
       const lines=await fairPage.evaluate(()=>victoryLines(pendingEvent().contest,state.fairBook[pendingEvent().contest.id]));
-      await award.locator('[data-action="fair-close"]').click();
+      const narration=await fairPage.evaluate(()=>contestResultLine(pendingEvent().contest,state.fairBook[pendingEvent().contest.id]));
+      assert.deepEqual(lines[0],["",narration]);
+      assert.ok(!(await award.innerText()).includes(narration));
+      await award.getByRole('button',{name:'결과창 닫기',exact:true}).click();
       const reading=fairPage.locator('#conversation .dialogue');
       for(const [page,[speaker,line]] of lines.entries()){
         assert.equal(await award.count(),0);
-        assert.equal(await reading.locator('small').innerText(),speaker);
+        if(speaker)assert.equal(await reading.locator('small').innerText(),speaker);
+        else assert.equal(await reading.locator('small').count(),0);
         assert.ok((await reading.locator('p').innerText()).includes(line));
         await reading.locator('[data-action="fair-victory-next:'+page+'"]').click();
       }

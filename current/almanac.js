@@ -312,9 +312,10 @@ const openVictoryDialogues=new WeakSet();
 function victoryLines(fair,entry){
   if(!entry || entry.reason || entry.scoreCondition || entry.tied || entry.rank!==2)return null;
   if(!entry.match && entry.duel && entry.score<=entry.duel.rivalScore)return null;
-  return contestResultScene(fair,entry)?.lines || (fair.company
+  const dialogue=contestResultScene(fair,entry)?.lines || (fair.company
     ? [["세바스찬","팬텀사의 이름이 불렸습니다, 도련님."],["시엘","상장은 제작실에 걸어 둬. 견본을 만든 직원들도 봐야지."]]
     : [["세바스찬","축하드립니다, 도련님."],["시엘","상장을 잘 챙겨 둬, 세바스찬."]]);
+  return [["",contestResultLine(fair,entry)],...dialogue];
 }
 function contestResultSlip(fair,entry,line){
   const victory=victoryLines(fair,entry);
@@ -339,10 +340,14 @@ function contestResultSlip(fair,entry,line){
     const match=/^(.*) ([+-]\d+)$/.exec(change);
     return '<span class="award-gain">'+(match?escapeHTML(match[1])+' <b>'+escapeHTML(match[2])+'</b>':escapeHTML(change))+'</span>';
   }).join("");
+  const commentary=victory?"":'<p class="award-comment">'+escapeHTML(line)+
+    ' <button type="button" class="line-next award-advance" data-action="fair-close" aria-label="행사 마치기"><span aria-hidden="true">▼</span></button></p>'+
+    contestResultDialogueMarkup(fair,entry);
   return '<article class="contest-slip award-sheet" data-rank="'+entry.rank+'" aria-label="경연 결과" aria-live="polite">'+
     '<header class="award-head"><h3>'+escapeHTML(rank)+'</h3><strong>'+escapeHTML(verdict)+'</strong>'+
-    (margin?'<span>'+Math.abs(margin)+'점 차</span>':'')+'</header>'+
-    '<div class="award-body"><p class="award-comment">'+escapeHTML(line)+' <button type="button" class="line-next award-advance" data-action="fair-close" aria-label="'+(victory?'승리 대화로':'행사 마치기')+'"><span aria-hidden="true">▼</span></button></p>'+(victory?'':contestResultDialogueMarkup(fair,entry))+'<dl class="award-ledger">'+
+    (margin?'<span>'+Math.abs(margin)+'점 차</span>':'')+
+    (victory?btn("결과창 닫기","fair-close",false,"award-dismiss"):'')+'</header>'+
+    '<div class="award-body">'+commentary+'<dl class="award-ledger">'+
     '<div><dt>심사 점수</dt><dd><strong class="award-total">'+entry.score+'점</strong>'+
     (entry.scoreCondition?'<small>'+escapeHTML(entry.scoreCondition)+'</small>':'')+'</dd></div>'+
     '<div><dt>능력 변화</dt><dd>'+(growth||'—')+'</dd></div>'+
@@ -429,7 +434,7 @@ function contestScene(event){
     (entry.product?'<img class="contest-sample" src="assets/map-cart-'+entry.product+'.png" alt="'+label+' 견본">':'')+
     '<div class="contest-actor" role="img" aria-label="경연에 참가한 시엘"><img src="'+actors[poses[0]]+'" alt=""><img src="'+actors[poses[1]]+'" alt=""></div></div>';
   if(revealed&&!entry.reason&&entry.score!=null){
-    return '<section class="contest-screen duel-result" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+
+    return '<section class="contest-screen'+(openVictoryDialogues.has(entry)?'':' duel-result')+'" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+
       '<header><span>'+monthText(fair.month)+'</span><h2 id="contest-title">'+fair.title+'</h2></header>'+display+contestResultSlip(fair,entry,line)+'</section>';
   }
   return '<section class="contest-screen" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+

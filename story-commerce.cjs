@@ -149,7 +149,15 @@ for(const [id,index,group,subject] of resultSubjects){
       const scene=contestResultScene(fair,entry),expected=contestResultDialogue[resultGroup][resultSubject][resultOutcome];
       if(contestResultOutcome(fair,entry)!==resultOutcome||scene!==expected||contestResultLine(fair,entry)!==scene.narration)return false;
       const html=duelScene(fair,entry,entry.duel,entry);
-      if(entry.rank===2)return html.includes(escapeHTML(scene.narration))&&html.includes('class="line-next award-advance"')&&!html.includes(escapeHTML(scene.lines[0][1]));
+      if(entry.rank===2){
+        if(html.includes(escapeHTML(scene.narration))||html.includes(escapeHTML(scene.lines[0][1]))||!html.includes('결과창 닫기'))return false;
+        openVictoryDialogues.add(entry);
+        const first=duelScene(fair,entry,entry.duel,entry);
+        if(!first.includes('<p>'+escapeHTML(scene.narration)+' ')||first.includes('award-sheet')||first.includes('<small></small>'))return false;
+        contestResultPages.set(entry,1);
+        const next=duelScene(fair,entry,entry.duel,entry);
+        return next.includes(escapeHTML(scene.lines[0][1]))&&!next.includes(escapeHTML(scene.narration));
+      }
       return html.includes(escapeHTML(scene.narration))&&html.includes(escapeHTML(scene.lines[0][0]))&&
         html.includes(escapeHTML(scene.lines[0][1]))&&html.includes('aria-label="결과 대사"')&&
         html.includes('data-action="fair-close"')&&!/undefined|NaN/.test(html);
