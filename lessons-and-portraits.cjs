@@ -218,7 +218,9 @@ async function check(browserType){
       await fairPage.locator('.dialogue [data-action="fair-next:2"]').click();
       assert.ok(await fairPage.locator('[data-action="fair-close"]').isVisible());
       const award=fairPage.getByRole('article',{name:'경연 결과'});
-      assert.match(await award.locator('.award-parts').innerText(),/매력/);
+      assert.match(await award.locator('.award-total').innerText(),/\d+점/);
+      assert.equal(await award.locator('.award-parts').count(),0);
+      assert.doesNotMatch(await award.innerText(),/승률|[×]/);
       assert.equal(await award.locator('.award-gain').count(),2);
       assert.match(await award.locator('.award-purse').innerText(),/상금 £/);
       const awardLayout=await fairPage.locator('.duel-result').evaluate(screen=>{
