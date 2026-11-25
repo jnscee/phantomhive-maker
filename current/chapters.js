@@ -956,7 +956,8 @@ function campaignRecap(run){
   const staffRelations=creditsStaff(endingFarewellRecord(run).cast);
   return {top,fairs:[...fairs.values()],sales,months:new Set((run.past||[]).map(entry=>entry.month)).size,
     scheduled:[...counts.values()].reduce((sum,count)=>sum+count,0),events:(run.events||[]).filter(entry=>entry.id).length,
-    staff:staffRelations.length,staffRelations,purchases:run.lauPurchases??null};
+    staff:staffRelations.length,staffRelations,purchases:run.lauPurchases??null,
+    finalStats:Object.fromEntries(stats.filter(key=>Number.isFinite(run.stats?.[key])).map(key=>[key,run.stats[key]]))};
 }
 function growthRecord(run){
   const years=new Map();
@@ -994,9 +995,14 @@ function growthRecord(run){
 function savedGrowthRecord(id,replay){
   if(!replay||state.phase==="ending"&&state.ending===id)return growthRecord(state);
   const saved=saves.growthGallery?.[id];
-  if(saved?.at(-1)?.recap)return saved;
+  const recap=saved?.at(-1)?.recap;
+  if(recap?.finalStats)return saved;
   const run=[saves.auto,saves[1],saves[2],saves[3]].find(r=>r?.phase==="ending"&&r.ending===id);
-  return run?growthRecord(run):saved||null;
+  if(!run)return saved||null;
+  const record=growthRecord(run);
+  if(!recap)return record;
+  const ending={...saved.at(-1),recap:{...recap,finalStats:record.at(-1).recap.finalStats}};
+  return [...saved.slice(0,-1),ending];
 }
 function showGrowthCredits(host,id,years,onFinish,route,farewells){
   const art=endingCareerArt(id,route);
@@ -1033,6 +1039,16 @@ function showGrowthCredits(host,id,years,onFinish,route,farewells){
       const tile=add(tiles,"div","");
       add(tile,"dt",label);add(tile,"dd",value);
     }
+    add(section,"h4","시엘의 최종 능력치");
+    if(stats.some(key=>Number.isFinite(recap.finalStats?.[key]))){
+      const abilities=add(section,"dl","");
+      abilities.className="growth-metrics growth-final-stats";
+      for(const key of stats){
+        const tile=add(abilities,"div","");
+        add(tile,"dt",statLabel(key));
+        add(tile,"dd",Number.isFinite(recap.finalStats[key])?recap.finalStats[key]:"–");
+      }
+    }else add(section,"p","이 회차의 최종 능력치 기록은 남아 있지 않습니다.");
     add(section,"h4","사용인이 시엘을 대하는 마음");
     if(!staff) add(section,"p","이 회차의 사용인 관계 기록은 남아 있지 않습니다.");
     else if(!staff.length) add(section,"p","합류한 사용인이 없습니다.");

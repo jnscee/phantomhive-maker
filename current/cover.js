@@ -61,7 +61,7 @@ function cgAlbumEntries(){
   function add(group,id){
     if(!id||id==="black")return;
     const path="assets/"+group+"/"+id+".webp";
-    entries.set(path,cgTitles[id]||endingLabels[id]?.[0]||id);
+    if(!entries.has(path))entries.set(path,cgTitles[id]||endingLabels[id]?.[0]||id);
   }
   for(const id of ["seal","fire","ring","hillside","manor","lesson"])add("prologue",id);
   for(const [id,scene] of Object.entries(endingScenes)){
@@ -71,8 +71,19 @@ function cgAlbumEntries(){
   for(const cg of Object.values(londonEndingCGs)){
     entries.set("assets/endings/"+cg.id+".webp",cg.title);
   }
-  for(const path of Object.keys(saves.cgSeen||{})){
-    if(!entries.has(path)&&/^assets\/(prologue|endings)\/[\w-]+\.webp$/.test(path))entries.set(path,path.split("/").pop().slice(0,-5));
+  for(const {cue} of openingLines)add("endings",cue?.cg);
+  for(const lines of Object.values(londonEndingScenes)){
+    for(const line of lines)add("endings",line[3]?.cg||line[2]);
+  }
+  for(const book of Object.values(recruitScenes)){
+    for(const {scene,cue} of book.lines)add("endings",cue?.cg||scene.picture);
+  }
+  for(const event of events){
+    add("endings",event.picture);
+    for(const line of event.lines||[])add("endings",line[3]?.cg);
+    for(const choice of event.choices||[]){
+      for(const line of choice.responseLines||[])add("endings",line[3]?.cg);
+    }
   }
   return [...entries].map(([src,title])=>({src,title,seen:!!saves.cgSeen?.[src]}));
 }
