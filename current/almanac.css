@@ -946,23 +946,91 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 .growth-year .growth-entry small {text-align:start;color:#f1cf95}
 .growth-roll .growth-year img {float:right;height:5rem;max-width:32%;margin:0 0 .35rem .5rem}
 .growth-year::after {content:"";display:block;clear:both}
-/* Keep the art visible while the record column moves independently. */
-.growth-credits::before {background:linear-gradient(90deg,#09152222 10%,#0b16285c 38%,#0b1527f5 58%)}
-.growth-window {width:min(57%,51rem);mask-image:none;scrollbar-color:#ae8960 #132035}
-.growth-roll {padding:clamp(1rem,7cqw,4.25rem) clamp(.75rem,3cqw,1.65rem) 0;max-width:37rem;text-shadow:none}
-.growth-roll > header {padding:.65rem .4rem 1rem;border-bottom:1px solid #d5b17d91}
-.growth-roll > header h2 {font-size:clamp(1.3rem,3cqw,2rem);margin:0;color:#fff0d4;letter-spacing:.06em}
-.growth-roll > header p {margin:.28rem 0 0;color:#edd4a7;font-size:.81rem}
-.growth-roll > section {margin:1.4rem auto 2rem}
-.growth-roll .growth-fin {padding:1rem 0 5vh}
-.growth-credits footer {
-  width:min(57%,51rem);position:relative;padding:.48rem .75rem .65rem;
-  border-top:1px solid #a5b9d046;background:#101d31e8;
+/* The scroll plays over a translucent white veil, with the ending art still visible. */
+.growth-credits {
+  --film-ink:#17283e;--film-muted:#46576d;--film-accent:#795a32;--film-line:#967b554d;
+  color:var(--film-ink);background:#d4dae1;
 }
-.growth-progress {position:absolute;inset:0 0 auto;height:2px;background:#293e55;pointer-events:none}
-.growth-progress i {display:block;width:var(--growth-progress,0%);height:100%;background:#edc282}
-.growth-credits footer button {min-height:2.15rem;border-radius:999px;padding:.26rem .75rem;font-size:.82rem}
-.growth-credits .growth-end {background:#e9c691;color:#253047;border-color:#f0d5b2;font-weight:700}
+.growth-credits::before {
+  background:linear-gradient(90deg,#faf8f29e,#fffdf9e8 22%,#fffdf9eb 50%,#fffdf9e8 78%,#faf8f29e);
+}
+.growth-window {
+  width:100%;min-width:0;justify-self:stretch;scrollbar-color:#8f826c5c transparent;
+  mask-image:linear-gradient(transparent,#000 7%,#000 92%,transparent);
+}
+.growth-roll {
+  width:min(100%,38rem);max-width:none;
+  padding:clamp(2.5rem,7cqw,5rem) clamp(1.3rem,6cqw,3.5rem) 0;
+  color:var(--film-ink);text-shadow:none;
+}
+.growth-roll > header {
+  padding:0 0 clamp(1.25rem,4cqw,2.65rem);border-bottom:0;
+}
+.growth-roll > header::after,.growth-roll .growth-timeline::before {
+  content:"";display:block;width:3rem;height:1px;margin:1.1rem auto 0;background:var(--film-accent);
+}
+.growth-roll > header h2 {
+  font-size:clamp(1.65rem,4.3cqw,3.25rem);margin:0;
+  color:var(--film-ink);font-weight:700;line-height:1.24;letter-spacing:.065em;
+}
+.growth-roll > header p {margin:.42rem 0 0;color:var(--film-muted);font-size:clamp(.8rem,2cqw,1rem)}
+.growth-roll h3,.growth-roll h4 {color:var(--film-ink);letter-spacing:0}
+.growth-roll > section {margin:1.75rem auto 2.7rem}
+.growth-roll .growth-recap {
+  margin:0 0 2rem;padding:0;border:0;background:none;
+  color:var(--film-ink);box-shadow:none;text-align:center;
+}
+.growth-roll .growth-recap > h3,.growth-roll .growth-timeline > h3 {
+  margin:0 0 .8rem;font-size:clamp(1.1rem,2.65cqw,1.55rem);
+}
+.growth-roll .growth-recap h4 {margin:1.45rem 0 .65rem;color:var(--film-accent);font-size:.92rem}
+.growth-roll .growth-recap > p,.growth-roll .growth-record-details p {color:var(--film-muted);text-align:center}
+.growth-roll .growth-metrics {gap:.7rem .9rem;max-width:30rem;margin:auto;text-align:center}
+.growth-roll .growth-metrics > div {
+  display:block;min-width:0;padding:.2rem 0 .48rem;border:0;
+  border-radius:0;background:transparent;
+}
+.growth-roll .growth-metrics dt {color:var(--film-muted);font-size:.82rem}
+.growth-roll .growth-metrics dd {margin:.2rem 0 0;color:var(--film-ink);font-size:1.13rem;line-height:1.05}
+.growth-roll .growth-metric-lead dd {font-size:clamp(1.3rem,3.8cqw,2.32rem);color:var(--film-ink)}
+.growth-roll .growth-final-stats {gap:.3rem .9rem;max-width:23rem}
+.growth-roll .growth-final-stats > div {
+  display:flex;justify-content:space-between;align-items:baseline;
+  gap:.35rem;border-bottom:1px solid var(--film-line);text-align:start;
+}
+.growth-roll .growth-final-stats dd {margin:0;font-size:.98rem}
+.growth-roll .growth-final-stats .growth-stat-meter {display:none}
+.growth-roll .growth-final-stats .growth-stat-mastered dd {color:#694a23}
+.growth-roll .growth-record-details section {margin:1rem 0 0}
+.growth-roll .growth-recap-row {
+  max-width:26rem;margin:auto;padding:.32rem 0;
+  color:var(--film-ink);border-color:var(--film-line);font-size:.83rem;
+}
+.growth-roll .growth-recap-row strong {color:var(--film-ink)}
+.growth-roll .growth-staff-row span {color:var(--film-muted)}
+.growth-roll .growth-timeline::before {margin:0 auto 1.45rem}
+.growth-roll .growth-timeline .growth-year {
+  margin:0 auto 1.4rem;padding:0;min-height:0;border:0;background:none;
+}
+.growth-roll .growth-year h3,.growth-roll .growth-year p {color:var(--film-ink)}
+.growth-roll .growth-year h3 small,.growth-roll .growth-entry small {color:var(--film-muted)}
+.growth-roll .growth-year .growth-entry {border-color:var(--film-line)}
+.growth-roll .growth-fin {padding:1rem 0 10vh;color:var(--film-accent)}
+.growth-credits footer {
+  width:100%;justify-self:stretch;position:relative;padding:.45rem .75rem .65rem;
+  border-top:1px solid var(--film-line);background:#fffcf6d9;
+}
+.growth-progress {position:absolute;inset:0 0 auto;height:2px;background:#795a3222;pointer-events:none}
+.growth-progress i {display:block;width:var(--growth-progress,0%);height:100%;background:#8c6b43}
+.growth-credits footer button {
+  min-height:2.15rem;border:1px solid #7d6c5580;border-radius:999px;
+  padding:.26rem .75rem;background:#fffef9bd;color:var(--film-ink);font-size:.82rem;font-weight:700;
+}
+.growth-credits .growth-end {background:#233752;color:#fff9ec;border-color:#233752}
+@media(max-width:650px) {
+  .growth-credits::before {background:linear-gradient(180deg,#fffdf8b5,#fffdf9eb 35%,#fffdf9e8 80%)}
+  .growth-roll {padding-top:clamp(2.1rem,10cqw,3.5rem)}
+}
 @container (min-width:700px) {
   .ending-folio {display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:.85rem;align-items:start}
   .ending-folio-intro {position:sticky;top:0}
@@ -971,8 +1039,5 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
   .ending-folio .ending-feature-art img {aspect-ratio:16/10}
 }
 @media(max-width:650px) {
-  .growth-window,.growth-credits footer {width:100%}
-  .growth-roll {max-width:34rem;padding-top:clamp(1rem,12cqw,5rem)}
-  .growth-credits::before {background:linear-gradient(180deg,#0a132946,#0b1629d6 35%,#0b1629f2 85%)}
   #scene[data-ending-summary=true] #sheet {width:94%;top:4%;bottom:3%}
 }
