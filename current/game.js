@@ -403,7 +403,8 @@ function impactMarkup(impact){
   }).join("");
   const milestones=notes.size?'<div class="impact-notes">'+[...notes].map(n=>'<span>'+escapeHTML(n)+'</span>').join("")+'</div>':"";
   const blocks='<ul>'+lines+'</ul>'+milestones+(!lines&&!notes.size?'<p>능력치 변화 없음</p>':'');
-  const heading=impact.setback?"사건 결과":"선택 결과";
+  const visitResult=impact.next==="visit" || (impact.next==="term-close" && state.sequence?.readingVisitOutcome);
+  const heading=visitResult?"자유행동 결과":impact.setback?"사건 결과":"선택 결과";
   return '<article id="impact-summary" class="dialogue" aria-label="'+heading+'"><header>'+heading+'</header><div class="impact-scroll">'+blocks+'</div>'+btn("확인","impact-close",false,"primary")+'</article>';
 }
 function choose(index){

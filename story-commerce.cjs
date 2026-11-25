@@ -1103,14 +1103,34 @@ setup('tab="plan";state.month=4;state.fairTickets={kensington1886:{product:"toys
 assertOk('!state.fairBook?.kensington1886');
 for(const index of [0,1]){
   ctx.replyIndex=index;
-  setup('recruit("tanaka");state.people.tanaka.from=9;state.counts.inquiry=1;state.visit="library";state.flags.proof=true;state.phase="visit";state.sequence={index:2};visitDone(true)');
+  setup('tab="plan";recruit("tanaka");state.people.tanaka.from=9;state.counts.inquiry=1;state.visit="library";state.flags.proof=true;state.phase="visit";state.sequence={index:2};visitDone(true)');
   assertOk('state.sequence.visitEvent==="visitLibrarySeal"');
   run('handleAction("encounter-next:0");state=normalizeSave(saves.auto)');
   assertOk('state.sequence.encounterPage===1 && !Object.hasOwn(state.people.tanaka,"from")');
   run('chooseVisitEvent(replyIndex)');assertOk('!state.flags.visitLibrarySeal');
   run('handleAction("encounter-next:1");handleAction("encounter-next:2");chooseVisitEvent(replyIndex);chooseVisitEvent(replyIndex)');
   assertOk('state.events.filter(e=>e.id==="visitLibrarySeal").length===1 && state.sequence.encounterReply');
-  run('state.month++;state.sequence={index:2};visitDone(true)');
+  assert.match(run('visitScene()'),/자유행동 결과 보기/);
+  run('handleAction("visit-finish")');
+  assert.equal(run('state.choiceImpact.next'),'visit');
+  const summary=run('impactMarkup(state.choiceImpact)');
+  assert.match(summary,/자유행동 결과/);
+  assert.match(summary,/타나카의 호감도 ↑/);
+  assert.ok(summary.includes('<strong>+'+(index===0?6:4)+'</strong>'));
+  const finalStats=run('structuredClone(state.stats)'),finalTrust=run('state.people.tanaka.toward');
+  assertOk(`(()=>{
+    state=normalizeSave(saves.auto);
+    const settle=settleMonth;let continued=0;
+    try{
+      settleMonth=()=>continued++;
+      handleAction("impact-close");
+      return continued===1;
+    }finally{settleMonth=settle;}
+  })()`);
+  assert.deepEqual(run('state.stats'),finalStats);
+  assert.equal(run('state.people.tanaka.toward'),finalTrust);
+  assert.ok(!run('state.choiceImpact'));
+  run('state.phase="visit";state.month++;state.sequence={index:2};visitDone(true)');
   assertOk('state.sequence.visitEvent===(replyIndex===0?"visitLibraryWax":"visitLibraryCarbon")');
 }
 assert.deepEqual(Array.from(run('Object.keys(endingScenes).sort()')),['broke','ill','releaseNoTitle','releaseTitle','vowNoTitle','vowTitle']);

@@ -102,12 +102,16 @@ function visitScene(){
    return staged(castName(event),"",storyLine(event),buttons,"",room);
  }
  if(seq.visitBefore){
+   const impact=state.choiceImpact;
+   const hasResults=impact?.owner===tab && impact.month===state.month && impact.items.length>0;
+   const destination=seq.index===0?"상순으로":seq.contest?"하순 경연으로":"월말 결산으로";
+   const finish=btn(hasResults?"자유행동 결과 보기":destination,"visit-finish");
    if(seq.encounterReply){
      const [speaker,line]=seq.encounterReply;
-     return staged(speaker,"",line,btn(seq.index===0?"상순으로":seq.contest?"하순 경연으로":"월말 결산으로","visit-finish"),"",room,seq.encounterPartner);
+     return staged(speaker,"",line,finish,"",room,seq.encounterPartner);
    }
    return staged(seq.visitReply?seq.replySpeaker:visitName(visitPerson(id)),"",seq.visitReply || "방문을 마치고 마차로 돌아왔다.",
-     btn(seq.index===0?"상순으로":seq.contest?"하순 경연으로":"월말 결산으로","visit-finish"),"",room);
+     finish,"",room);
  }
  const person=visitPerson(id);
  const memory=visitMemory(id,person);
