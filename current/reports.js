@@ -103,7 +103,7 @@ function actualBudget(){
     '<div class="ledger-detail-grid"><details class="ledger-fold"><summary>입출금 내역</summary>'+
     ledgerRows("입금",incomeRows,"income")+ledgerRows("지출",expenseRows,"expense")+
     (!income&&!expense?'<p>이번 달 입출금이 없습니다.</p>':'')+'</details>'+
-    '<details class="ledger-fold"><summary>시설 효과'+
+    '<details class="ledger-fold"'+(effect?' open':'')+'><summary>시설 효과'+
     (effect?' <b>'+signedMoney((r.investment?.total||0)+(a.researchSaved||0))+'</b>':'')+'</summary>'+
     (effect||'<p>이번 달에 집계된 시설 효과가 없습니다.</p>')+'</details></div>'+
     (a.partial?'<p>기록 시작 시점부터 집계했습니다.</p>':'')+'</section>';
