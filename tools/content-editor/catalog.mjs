@@ -481,14 +481,19 @@ export function catalog(files, publishedAssets = [], version = "") {
     });
     addChoices(g,id);
   }
+  const contestResults=variable("festivals.js","contestResultDialogue");
+  const fairDefinitions=new Map();
   for(const entry of [...rows(variable("festivals.js","annualContests")),...rows(variable("festivals.js","historicalContests")),variable("festivals.js","easterFair"),variable("festivals.js","harvestWarrant")].filter(Boolean)){
     const id=value(prop(entry,"id"));
+    fairDefinitions.set(id,entry);
     const g=group("events","fair-"+id,value(prop(entry,"title")),"런던 행사",{kind:"fair",month:id==="newYear"?13:value(prop(entry,"month"))});
     for(const [key,label] of [["title","행사 제목"],["date","날짜 표기"],["historical","역사 소개"],["invitation","참여 안내"]])
       add(g,"festivals.js",prop(entry,key),label);
     rows(prop(entry,"options")).forEach((option,i)=>{
-      for(const [key,label] of [["label","종목"],["line","참여 지문"],["placed","입상 결과"],["missed","참가 결과"]])
-        add(g,"festivals.js",prop(option,key),label+" "+(i+1));
+      for(const [key,label] of [["label","종목"],["line","참여 지문"],["placed","입상 결과"],["missed","참가 결과"]]){
+        const previous=contestResults&&["newYear","easter","royalWarrant"].includes(id)&&["placed","missed"].includes(key);
+        add(g,"festivals.js",prop(option,key),(previous?"이전 기록 · ":"")+label+" "+(i+1));
+      }
     });
   }
   for(const property of properties(variable("content.js","seasonalWeather"))){
@@ -499,6 +504,16 @@ export function catalog(files, publishedAssets = [], version = "") {
   }
   const opponents=variable("festivals.js","contestOpponents");
   const speeches=variable("festivals.js","contestSpeeches");
+  const resultFamilies={newYear:["edward",["greeting","tea"]],easter:["elizabeth",["music","eggs"]],royalWarrant:["warrant",["standard"]]};
+  const resultLabels={
+    loss_under:"실력 부족에 따른 패배",loss_close:"근소한 차이로 패배",win_close:"접전 끝의 승리",win_prepared:"충분한 준비에 따른 승리",
+    loss_even:"이전 기록 · 패배 (중립)",win_even:"이전 기록 · 승리 (중립)"
+  };
+  function addContestResult(g,node,label){
+    add(g,"festivals.js",prop(node,"title"),label+" · 장면 제목");
+    add(g,"festivals.js",prop(node,"narration"),label+" · 결과 지문");
+    add(g,"festivals.js",prop(node,"lines"),label+" · 대사 순서","lines");
+  }
   for(const [id,rival] of [["newYear","newYear"],["easter","easter"],["royalWarrant","warrant"]]){
     const g=groups.find(item=>item.key==="fair-"+id);
     if(!g)continue;
@@ -510,6 +525,21 @@ export function catalog(files, publishedAssets = [], version = "") {
     }
     rows(prop(speeches,rival)).forEach((entry,i)=>rows(entry).forEach((line,tier)=>
       add(g,"festivals.js",line,"시엘 · 종목 "+(i+1)+" · "+["열세","접전","우세"][tier])));
+    const [person,disciplines]=resultFamilies[id];
+    const options=rows(prop(fairDefinitions.get(id),"options"));
+    disciplines.forEach((discipline,i)=>{
+      const title=value(prop(options[i],"label"))??"출품 심사";
+      const results=prop(prop(contestResults,person),discipline);
+      for(const [key,label] of Object.entries(resultLabels))
+        addContestResult(g,prop(results,key),title+" · "+label);
+    });
+  }
+  const sharedResults=prop(contestResults,"special");
+  if(sharedResults){
+    const g=group("events","fair-shared-results","경연 · 공통 결과","공동 우승 · 인증 요건 미달 · 불참");
+    for(const [key,label] of [["tied_personal","개인 경연 · 공동 우승"],["tied_company","로열 워런트 · 공동 우승"],
+      ["qualification","로열 워런트 · 인증 요건 미달"],["absent","경연 불참"]])
+      addContestResult(g,prop(sharedResults,key),label);
   }
   for(const item of properties(variable("term-events.js","middleObservations"))){
     const id=propertyName(item),g=eventGroups.get(id);
