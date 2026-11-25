@@ -1174,16 +1174,35 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
   grid-template-columns:minmax(0,1fr) auto;
   align-content:center;
   align-items:center;
-  gap:.12rem .45rem;
+  gap:.2rem .55rem;
+  position:relative;
   width:min(100%,12rem);
-  padding:.38rem .55rem;
+  padding:clamp(.55rem,1.05vh,.8rem) .68rem;
   border:1px solid #ccdeed85;
   border-radius:.4rem;
   color:#f7fbff;
-  background:linear-gradient(145deg,#30465dea,#15263ee8);
+  background:linear-gradient(115deg,#425b73e8,#21354ce8 48%,#172b40f0);
   box-shadow:inset 0 1px #ffffff24,0 2px 6px #07132140;
   backdrop-filter:blur(6px);
   text-align:start;
+}
+.duel-screen .duel-side {row-gap:clamp(.22rem,.65vh,.48rem)}
+.duel-screen .duel-vs {
+  align-self:end;
+  margin-bottom:1.05rem;
+  padding:.22rem .4rem;
+  color:#e6f2ff;
+  border-block:1px solid #ccdeed8c;
+  font:italic 700 .9rem Georgia,serif;
+}
+#conversation .duel-screen .duel-plate::before {
+  content:"";
+  position:absolute;
+  top:0;
+  left:.65rem;
+  width:1.6rem;
+  height:2px;
+  background:#c6d9ea;
 }
 #conversation .duel-screen .duel-plate b,
 #conversation .duel-screen .duel-plate small {
@@ -1206,14 +1225,30 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
   white-space:nowrap;
 }
 #conversation .duel-screen .performing .duel-plate {border-color:#eff7ff}
+#conversation .duel-stage.is-revealed .duel-plate strong {
+  padding:.24rem .46rem .32rem;
+  border-bottom:2px solid #9cbad3;
+  font-size:1.03rem;
+  font-weight:800;
+}
+#conversation .duel-screen .performing .duel-plate::before {
+  width:2.6rem;
+  background:#fff;
+  box-shadow:0 0 .4rem #dbedff99;
+}
 .duel-art :is(.contest-actor,.duel-portrait,.duel-sprite) {
-  filter:drop-shadow(0 0 1px #f5faffb3) drop-shadow(0 0 4px #e1eeff66);
+  filter:drop-shadow(0 0 2px #f4faffba) drop-shadow(0 0 6px #c5dfff85) drop-shadow(0 0 12px #b6d5ff55);
 }
 @media (max-width:650px) {
   #conversation .duel-screen .duel-side .duel-plate {
     grid-template-columns:minmax(0,1fr);
     justify-items:center;
+    padding-block:.48rem;
     text-align:center;
   }
   #conversation .duel-screen .duel-plate strong {grid-area:auto;margin-top:.1rem}
+}
+@media (orientation:landscape) and (max-height:450px) {
+  .duel-screen .duel-side {row-gap:.15rem}
+  #conversation .duel-screen .duel-side .duel-plate {padding-block:.3rem}
 }
