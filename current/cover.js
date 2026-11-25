@@ -71,8 +71,19 @@ function cgAlbumEntries(){
   for(const cg of Object.values(londonEndingCGs)){
     entries.set("assets/endings/"+cg.id+".webp",cg.title);
   }
-  for(const path of Object.keys(saves.cgSeen||{})){
-    if(!entries.has(path)&&/^assets\/(prologue|endings)\/[\w-]+\.webp$/.test(path))entries.set(path,path.split("/").pop().slice(0,-5));
+  for(const {cue} of openingLines)add("endings",cue?.cg);
+  for(const lines of Object.values(londonEndingScenes)){
+    for(const line of lines)add("endings",line[3]?.cg||line[2]);
+  }
+  for(const book of Object.values(recruitScenes)){
+    for(const {scene,cue} of book.lines)add("endings",cue?.cg||scene.picture);
+  }
+  for(const event of events){
+    add("endings",event.picture);
+    for(const line of event.lines||[])add("endings",line[3]?.cg);
+    for(const choice of event.choices||[]){
+      for(const line of choice.responseLines||[])add("endings",line[3]?.cg);
+    }
   }
   return [...entries].map(([src,title])=>({src,title,seen:!!saves.cgSeen?.[src]}));
 }
