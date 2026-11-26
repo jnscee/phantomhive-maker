@@ -8,6 +8,18 @@ async function openGame(page){
   await page.goto(base,{waitUntil:"domcontentloaded"});
 }
 
+async function dialogueAppearance(card){
+  return card.evaluate(el=>{
+    const properties=(node,keys)=>keys.map(key=>getComputedStyle(node)[key]);
+    const typography=['fontFamily','fontSize','fontWeight','lineHeight','color'];
+    return {
+      surface:properties(el,['backgroundImage','borderTopColor','borderRadius','boxShadow','backdropFilter','paddingTop','paddingInlineStart']),
+      speaker:properties(el.querySelector('small'),typography),
+      body:properties(el.querySelector('p'),[...typography,'marginTop']),
+      next:properties(el.querySelector('.line-next'),['fontSize','color','backgroundColor','borderWidth','minWidth','minHeight','padding'])
+    };
+  });
+}
 async function checkNotebook(page){
   await page.locator('#system-save').click();
   assert.equal(await page.locator('#sheet-title').innerText(),'저장 · 설정');
@@ -209,6 +221,7 @@ async function check(browserType){
       assert.equal(await page.getByRole('button',{name:'다크',exact:true}).getAttribute('aria-pressed'),'true');
       await page.getByRole('button',{name:'화이트',exact:true}).click();
       await page.locator('.cover-leaf [data-action="back"]').click();
+      const storyAppearance={};
       const weatherPage=await browser.newPage({viewport});
       await openGame(weatherPage);
       for(const [month,weather,label] of [[6,"heat","폭염"],[12,"cold","한파"]]){
@@ -219,6 +232,12 @@ async function check(browserType){
         const dialogue=weatherPage.locator('#conversation .dialogue');
         assert.equal(await dialogue.locator('small').innerText(),'세바스찬');
         assert.equal(await dialogue.locator('h2').innerText(),label);
+        if(weather==='heat'){
+          for(const theme of ['dark','light']){
+            await weatherPage.evaluate(theme=>document.documentElement.dataset.dialogueTheme=theme,theme);
+            storyAppearance[theme]=await dialogueAppearance(dialogue);
+          }
+        }
         await dialogue.getByRole('button',{name:'다음 대사'}).press('Enter');
         assert.equal(await weatherPage.evaluate(()=>state.phase),"plan");
         await weatherPage.evaluate(()=>{tab="plan";render();});
@@ -256,12 +275,39 @@ async function check(browserType){
         prepareContest(state);
       });
       assert.equal(await fairPage.locator('.duel-plate b').first().textContent(),'에드워드 미드포드');
+      for(const theme of ['dark','light']){
+        await fairPage.evaluate(theme=>document.documentElement.dataset.dialogueTheme=theme,theme);
+        assert.deepEqual(await dialogueAppearance(fairPage.locator('.duel-screen .dialogue')),storyAppearance[theme],
+          'Contest and story dialogue must share their reading styles in '+theme+' at '+viewport.width+'px');
+      }
       await fairPage.locator('.duel-portrait').evaluate(img=>img.decode());
       assert.equal(await fairPage.locator('[data-action^="fair-play"]').count(),0);
       await fairPage.locator('.dialogue [data-action="fair-next:0"]').click();
       assert.equal(await fairPage.locator('.duel-screen .dialogue small').textContent(),'시엘');
       assert.match(await fairPage.locator('.duel-screen .dialogue p').innerText(),/인정해 달랬어/);
       await fairPage.locator('.dialogue [data-action="fair-next:1"]').click();
+      const cue=fairPage.locator('.duel-screen .dialogue');
+      assert.match(await cue.innerText(),/사회자가 다음 차례인 시엘을 부릅니다/);
+      assert.equal(await cue.locator('small').count(),0);
+      assert.equal(await fairPage.locator('.duel-side:last-child .duel-plate strong').innerText(),'차례 대기');
+      const checkReadingInset=async()=>{
+        const inset=await cue.evaluate(card=>{
+          const stage=document.getElementById('scene');
+          const actual=stage.getBoundingClientRect().bottom-card.getBoundingClientRect().bottom;
+          const expected=matchMedia('(max-width:960px) and (orientation:portrait),(max-width:540px)').matches?16:stage.clientHeight*.065;
+          return {actual,expected};
+        });
+        assert.ok(Math.abs(inset.actual-inset.expected)<=3,'Contest dialogue frame inset: '+JSON.stringify(inset));
+      };
+      await checkReadingInset();
+      if(viewport.width===1280){
+        await fairPage.setViewportSize({width:940,height:644});
+        await fairPage.waitForFunction(()=>Math.abs(parseFloat(document.getElementById('scene').style.getPropertyValue('--portrait-scene-width'))-document.getElementById('scene').clientWidth)<2);
+        await checkReadingInset();
+        await fairPage.setViewportSize(viewport);
+      }
+      await cue.locator('[data-action="fair-next:handoff"]').click();
+      assert.equal(await fairPage.locator('.duel-side:last-child .duel-plate strong').innerText(),'심사 중');
       assert.match(await fairPage.locator('.duel-screen .dialogue p').innerText(),/그 잔은|우유를|첫 잔은/);
       await fairPage.locator('.dialogue [data-action="fair-next:2"]').click();
       assert.ok(await fairPage.locator('[data-action="fair-close"]').isVisible());

@@ -175,7 +175,8 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
   #scene #overture:not([data-voice-only=true]) #opening-cast > .cast {
     bottom:calc(var(--opening-inset) + var(--line-height-mobile) - 5px);
   }
-  #scene #conversation:not([data-review=true]) > article.dialogue {
+  #scene #conversation:not([data-review=true]) > article.dialogue,
+  #scene #conversation .contest-screen > article.dialogue {
     height:var(--line-height-mobile); min-height:0; max-height:var(--line-height-mobile); overflow-y:auto;
   }
   /* Both actors share the edge of the dialogue row, even when reading choices. */

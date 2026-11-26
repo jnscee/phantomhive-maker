@@ -37,7 +37,7 @@ body { background:radial-gradient(ellipse at 50% 42%,#263247,#0c1421 78%); }
 }
 #date,#money,.command-dock,.stage-top,.calendar-foot,.sheet-head {background-size:100% 100%;}
 .command-dock { z-index:4; padding:6px; bottom:7%; }
-.dialogue { background:linear-gradient(112deg,#172942fa,#1b2c47fa 76%,#273b5bf7); bottom:6.5%; }
+.dialogue { background:linear-gradient(112deg,#172942fa,#1b2c47fa 76%,#273b5bf7); bottom:var(--reading-bottom,6.5%); }
 .dialogue small,.stage-top span,.work-figures .tile span { color:#bfcee4; }
 .dialogue h2 { color:#f5f7ff; }
 .dialogue h2::after,.work-title h3::after {
@@ -123,7 +123,7 @@ body { background:radial-gradient(ellipse at 50% 42%,#263247,#0c1421 78%); }
     --rail:2%; --inner:5%; --frame-pad:4%; --frame-y:clamp(35px,8vw,63px); --frame-x:clamp(31px,8vw,67px);
   }
   .scene #conversation:not([hidden]):not([data-review=true]) {
-    display:grid; grid-template-rows:minmax(0,1fr) auto; inset:0; padding:26px 5% 16px; isolation:isolate;
+    display:grid; grid-template-rows:minmax(0,1fr) auto; inset:0; padding:26px 5% var(--reading-bottom); isolation:isolate;
   }
   #conversation:not([data-review=true]) .review-room { z-index:-1; }
   #conversation:not([data-review=true]) img.butler {
@@ -274,6 +274,7 @@ body { background:radial-gradient(ellipse at 50% 42%,#263247,#0c1421 78%); }
 #conversation .cast { max-width:43%; }
 #conversation .cast-left[alt="세바스찬"] { left:max(22%,calc(var(--inner) + clamp(107px,12%,165px) * 1.19 + 6px)); }
 :is(#conversation,.opening-mat) .dialogue {
+  color:var(--text);
   background:linear-gradient(114deg,#e8f7ff28,transparent 25%,transparent 68%,#d1edff1d 73%,transparent 79%),linear-gradient(170deg,#7997ae20,#10294377);
   backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
   box-shadow:inset 0 1px 0 #effaffb0,inset 0 -1px 0 #cedfff48,0 3px 10px #101d322b;
@@ -285,6 +286,13 @@ body { background:radial-gradient(ellipse at 50% 42%,#263247,#0c1421 78%); }
   animation:float-next 1.45s ease-in-out infinite;
 }
 @keyframes float-next { 50% { transform:translateY(3px); } }
+/* The glyph can move without moving its click target. */
+:is(#conversation,.opening-mat) .dialogue .line-next:has(> span) {animation:none}
+@media(prefers-reduced-motion:no-preference) {
+  :root:not([data-game-motion="reduced"]):not([data-game-motion="gentle"]) :is(#conversation,.opening-mat) .dialogue .line-next > span {
+    display:inline-block;pointer-events:none;animation:float-next 1.45s ease-in-out infinite;
+  }
+}
 @media(prefers-reduced-motion:reduce) { :is(#conversation,.opening-mat) .dialogue .line-next { animation:none; } }
 .system-rail { gap:3px; }
 #date {
@@ -809,7 +817,7 @@ body { background:radial-gradient(ellipse at 50% 42%,#263247,#0c1421 78%); }
 .notebook-slots .opts button:is(:hover,:focus-visible):enabled { outline:2px solid #e4c997; outline-offset:1px; }
 
 /* Contest results occupy the same reading area as the dialogue that follows. */
-#scene {--reading-width:min(68%,38rem); --reading-min-height:min(9.25rem,34%)}
+#scene {--reading-bottom:calc(var(--portrait-scene-height,100vh) * .065); --reading-width:min(68%,38rem); --reading-min-height:min(9.25rem,34%)}
 #scene #conversation .contest-screen > :is(article.dialogue,.award-sheet),
 #scene :is(#conversation,.opening-mat):not([data-review=true]) > .dialogue {
   box-sizing:border-box; width:var(--reading-width); min-height:var(--reading-min-height); margin-inline:auto;
@@ -825,7 +833,7 @@ body { background:radial-gradient(ellipse at 50% 42%,#263247,#0c1421 78%); }
 }
 :is(#conversation,.opening-mat) .dialogue h2 { margin:4px 0 9px; }
 @media(max-width:960px) and (orientation:portrait),(max-width:540px) {
-  #scene {--reading-width:min(100%,35rem); --reading-min-height:min(9.5rem,32svh)}
+  #scene {--reading-bottom:16px; --reading-width:min(100%,35rem); --reading-min-height:min(9.5rem,32svh)}
   #scene :is(#conversation,.opening-mat):not([data-review=true]) > .dialogue,
   #scene #conversation .contest-screen > article.dialogue {
     justify-self:center; max-height:42svh;

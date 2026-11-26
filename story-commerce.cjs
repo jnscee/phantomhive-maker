@@ -23,6 +23,15 @@ for(const id of teaParties){
     assert.match(intro,/에드워드 미드포드/);assert.doesNotMatch(intro,/엘리자베스/);
     assert.ok(intro.includes(index?"edward-tea.png":"edward-greeting.png"));
     assert.match(intro,/팬텀하이브의 당주/);
+    setup('tab="plan";{const fair=contests.find(f=>f.id===teaId);state.month=state.planMonth=fair.month;state.fairTickets={[teaId]:{index:teaIndex}};state.sequence={contest:teaId};prepareContest(state)}');
+    run('handleAction("fair-next:0");handleAction("fair-next:1");state=normalizeSave(structuredClone(state))');
+    const narration=run('contestScene(pendingEvent())');
+    assert.ok(narration.includes(index?'찻주전자':'원고')&&narration.includes('fair-next:handoff'));
+    run('handleAction("fair-next:1");handleAction("fair-next:2")');
+    assertOk('state.sequence.duel.announcing&&!state.fairBook?.[teaId]');
+    run('handleAction("fair-next:handoff");handleAction("fair-next:handoff")');
+    assertOk('!state.sequence.duel.announcing&&state.sequence.duel.page===2&&!state.fairBook?.[teaId]');
+    assert.match(run('contestScene(pendingEvent())'),/심사 중/);
   }
 }
 for(const [rank,score,expected] of [[0,5,"입상권 밖"],[1,40,"은상"],[2,44,"공동 금상"],[2,49,"금상"]]){

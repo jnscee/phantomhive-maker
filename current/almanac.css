@@ -373,12 +373,19 @@ html:is([data-fair-preview],[data-story-preview]) :is(#system-menu,#mobile-menu)
   position:relative;inset:auto;transform:none;align-self:center;flex:none;box-sizing:border-box;
   height:auto;margin:0 auto;text-align:left;cursor:pointer;
 }
-#conversation .contest-screen .dialogue p {margin:.35em 0 0}
+/* Centre the reading window on the same rails as a story scene. */
+#conversation .contest-screen:has(> :is(article.dialogue,.award-sheet)) {
+  padding-inline:0;
+  padding-block-end:max(0px,calc(var(--reading-bottom) - 1px));
+}
+@media(max-width:960px) and (orientation:portrait),(max-width:700px) and (orientation:landscape) {
+  #conversation .contest-screen:has(> :is(article.dialogue,.award-sheet)) {padding-inline:2%}
+  #scene #conversation .contest-screen > :is(article.dialogue,.award-sheet) {width:100%}
+}
 html[data-fair-preview] .preview-fairs {padding-block-start:clamp(1.6rem,3.3cqw,3rem)}
 html[data-fair-preview] #conversation .contest-screen {padding-block-start:.6rem}
 @media(max-width:540px){
   .duel-screen .duel-plate {padding:.45rem .34rem}
-  #conversation .contest-screen .dialogue {width:100%;padding:.65rem .85rem}
 }
 
 @media(orientation:landscape) and (max-height:550px){
@@ -388,14 +395,8 @@ html[data-fair-preview] #conversation .contest-screen {padding-block-start:.6rem
   #conversation .duel-screen:not(.duel-result) .duel-plate {display:grid;grid-template-columns:1fr auto;align-items:center;padding:.23rem .5rem}
   #conversation .duel-screen:not(.duel-result) .duel-plate strong {grid-column:2;grid-row:1 / 3}
   #conversation .duel-screen:not(.duel-result) .duel-plate small {grid-column:1}
-  #conversation .duel-screen .dialogue {padding:.42rem .75rem}
 }
 
-/* Keep the advance control still while its cue moves. */
-#conversation .duel-screen .dialogue .line-next {animation:none; min-inline-size:2em; min-block-size:1.6em}
-@media (prefers-reduced-motion:no-preference) {
-  :root:not([data-game-motion="reduced"]):not([data-game-motion="gentle"]) .duel-screen .line-next span {display:inline-block;pointer-events:none;animation:float-next 1.45s ease-in-out infinite}
-}
 
 .plan-effect b > [role="img"],
 .hud-group em > [role="img"] {
@@ -1360,11 +1361,10 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 #conversation .duel-screen .duel-plate strong {font-size:.87rem}
 #conversation .duel-stage.is-revealed .duel-plate strong {font-size:.96rem}
 @media (max-height:680px) {
-  #conversation .contest-screen {gap:.25rem;padding-block:clamp(1.4rem,3.5cqw,2.6rem) .55rem}
+  #conversation .contest-screen {gap:.25rem;padding-block-start:clamp(1.4rem,3.5cqw,2.6rem)}
   #conversation .duel-screen .duel-stage {margin-block:auto 0}
   #conversation .duel-screen .duel-art {height:clamp(2.1rem,7vh,3rem)}
   #conversation .duel-screen .duel-side .duel-plate {padding-block:.38rem}
-  #conversation .contest-screen .dialogue {padding-block:.44rem}
   .award-sheet .award-head {padding-block:.35rem}
   .award-sheet .award-comment {padding-block:.25rem .35rem;font-size:.88rem}
   .award-sheet .award-ledger>div {padding-block:.25rem}

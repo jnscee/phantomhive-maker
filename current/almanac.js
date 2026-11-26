@@ -322,7 +322,7 @@ function contestResultSlip(fair,entry,line){
   if(victory && openVictoryDialogues.has(entry)){
     const page=contestResultPage(entry,{lines:victory}),last=page===victory.length-1;
     const [speaker,text]=victory[page];
-    const next='<button type="button" class="line-next" data-action="fair-victory-next:'+page+'" aria-label="'+(last?'행사 마치기':'다음 대사')+'">▼</button>';
+    const next='<button type="button" class="line-next" data-action="fair-victory-next:'+page+'" aria-label="'+(last?'행사 마치기':'다음 대사')+'"><span aria-hidden="true">▼</span></button>';
     return sceneLine(escapeHTML(speaker),escapeHTML(text),next,'aria-live="polite"');
   }
   const duel=entry.duel;
@@ -377,6 +377,9 @@ function contestResultLine(fair,entry){
 function duelScene(fair,ticket,duel,entry){
   const rival=contestOpponent(fair),option=fair.options?.[ticket.index];
   const turn=duel.page??(Number.isInteger(duel.choice)?1:0),done=Boolean(entry);
+  const appearance=contestAppearance(fair),reply=rival.replies?.[appearance];
+  const handoff=duel.announcing&&option?.handoff;
+  const waiting=option?.handoff&&(handoff||turn<(reply?2:1));
   const poses=option?.poses||["inspect","write"];
   const showSamples=fair.company&&!fair.warrant;
   const sample=id=>'<img class="duel-sample" src="assets/map-cart-'+id+'.png" alt="'+products[id].name+'">';
@@ -395,12 +398,10 @@ function duelScene(fair,ticket,duel,entry){
   if(done){
     slip=contestResultSlip(fair,entry,contestResultLine(fair,entry));
   }else{
-    const speaker=turn?(fair.entrant||"시엘"):rival.name;
-    const appearance=contestAppearance(fair);
-    const reply=rival.replies?.[appearance];
-    const line=turn===0?(rival.laterQuotes?.[appearance-1]??rival.quote):
-      turn===1&&reply?reply:contestSpeech(fair,ticket,matchAssessment(state,fair,ticket,duel).speechTier);
-    const next='<button type="button" class="line-next" aria-label="다음 대사" data-action="fair-next:'+turn+'"><span aria-hidden="true">▼</span></button>';
+    const speaker=handoff?"":turn?(fair.entrant||"시엘"):rival.name;
+    const line=handoff||(turn===0?(rival.laterQuotes?.[appearance-1]??rival.quote):
+      turn===1&&reply?reply:contestSpeech(fair,ticket,matchAssessment(state,fair,ticket,duel).speechTier));
+    const next='<button type="button" class="line-next" aria-label="다음 대사" data-action="fair-next:'+(handoff?'handoff':turn)+'"><span aria-hidden="true">▼</span></button>';
     slip=sceneLine(escapeHTML(speaker),escapeHTML(line),next,'aria-live="polite"');
   }
   return '<section class="contest-screen duel-screen'+(done&&!openVictoryDialogues.has(entry)?' duel-result':'')+'" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+
@@ -408,7 +409,7 @@ function duelScene(fair,ticket,duel,entry){
     '<div class="duel-stage'+(fair.exhibitors?" exhibition-stage":"")+(done?' is-revealed':'')+'">'+
     side(rival.name,fair.company?products[rival.product].name:rival.role,rivalArtwork(rival)+(showSamples?sample(rival.product):''),(duel.rivalScore??contestRivalAbility(fair))+"점",!turn&&!done)+
     (fair.exhibitors?exhibition:'<b class="duel-vs" lang="en">VS</b>')+
-    side(fair.entrant||(fair.warrant?"팬텀사":"시엘 팬텀하이브"),fair.company?products[ticket.product].name:"팬텀하이브의 당주",actor+(showSamples?sample(ticket.product):''),done?entry.score+"점":"심사 중",turn&&!done)+'</div>'+
+    side(fair.entrant||(fair.warrant?"팬텀사":"시엘 팬텀하이브"),fair.company?products[ticket.product].name:"팬텀하이브의 당주",actor+(showSamples?sample(ticket.product):''),done?entry.score+"점":waiting?"차례 대기":"심사 중",turn&&!done&&!waiting)+'</div>'+
     slip+'</section>';
 }
 
@@ -453,9 +454,18 @@ function festivalAction(action,id){
   const entry=state.fairBook?.[fair.id],duel=state.sequence?.duel;
   if(!entry&&duel){
     const page=duel.page??(Number.isInteger(duel.choice)?1:0);
-    if(action!=="fair-next"||id!==String(page))return true;
+    const handoff=fair.options?.[contestTicket(state,fair)?.index]?.handoff;
+    const announcing=duel.announcing&&handoff;
+    if(action!=="fair-next"||id!==(announcing?"handoff":String(page)))return true;
     const finalPage=contestOpponent(fair).replies?.[contestAppearance(fair)]?2:1;
-    if(page<finalPage){duel.page=page+1;persist();render(true);}
+    if(announcing||page<finalPage){
+      if(announcing)delete duel.announcing;
+      else{
+        duel.page=page+1;
+        if(duel.page===finalPage&&handoff)duel.announcing=true;
+      }
+      persist();render(true);
+    }
     else if(previewFair){settleFestival(state,duel);render(true);}
     else settleMonth();
     return true;
