@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>팬텀하이브 백작 메이커 · 엔딩 미리보기</title>
+<style>
+:root{color-scheme:dark;background:#101c29;color:#e6eef6;font:16px/1.5 system-ui,sans-serif}
+body{display:grid;grid-template-rows:auto minmax(32rem,1fr);min-height:100svh;margin:0}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1.25rem;padding:.75rem clamp(1rem,4vw,3rem);background:#1a2c42;border-bottom:1px solid #657891}
+h1{font:600 1rem/1.5 Georgia,serif;margin:0;color:#ead6ad}
+label{display:flex;align-items:center;gap:.5rem;font-size:.875rem}
+select{max-width:100%;min-height:2.5rem;padding:.35rem .6rem;border:1px solid #7894ad;border-radius:.35rem;background:#152a40;color:inherit;font:inherit}
+iframe{display:block;width:100%;height:100%;border:0}
+@media(max-width:560px){h1{flex-basis:100%}header{gap:.35rem .8rem}}
+</style>
+</head>
+<body>
+<header>
+<h1>엔딩 미리보기</h1>
+<label>분기
+<select id="ending">
+<optgroup label="작위 유보 · 복수 계속">
+<option value="vowNoTitle:merchant">런던의 사업가</option>
+<option value="vowNoTitle:broker">정보상의 연락망</option>
+<option value="vowNoTitle:pursuit">문장 없는 마차 · 추적</option>
+</optgroup>
+<optgroup label="다른 엔딩">
+<option value="releaseNoTitle">마지막 명령 · 무관의 주인</option>
+<option value="vowTitle">여왕의 번견</option>
+<option value="releaseTitle">마지막 명령 · 백작</option>
+<option value="ill">건강 악화로 종료</option>
+<option value="broke">자금 부족으로 종료</option>
+</optgroup>
+</select></label>
+<label>장면
+<select id="view">
+<option value="summary">회차 종료 문구</option>
+<option value="last">마지막 대사와 CG</option>
+<option value="first">대본 처음부터</option>
+</select></label>
+</header>
+<iframe id="game-preview" title="실제 게임 엔딩 화면" src="index.html?ending-preview=vowNoTitle&amp;route=merchant&amp;view=summary"></iframe>
+<script>
+const ending = document.getElementById("ending");
+const view = document.getElementById("view");
+const frame = document.getElementById("game-preview");
+function openPreview(){
+  const [id, route] = ending.value.split(":");
+  const query = new URLSearchParams({"ending-preview":id,view:view.value});
+  if(route)query.set("route",route);
+  frame.src = "index.html?" + query;
+}
+ending.addEventListener("change", openPreview);
+view.addEventListener("change", openPreview);
+</script>
+</body>
+</html>

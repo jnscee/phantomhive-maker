@@ -1117,14 +1117,16 @@ function appendEndingRecap(parent,recap,farewells,fund){
   }else add(section,"p","이 회차의 최종 능력치 기록은 남아 있지 않습니다.");
   const details=add(section,"div","");details.className="growth-record-details";
   const staffNotes=add(details,"section","");
+  staffNotes.className="growth-staff";
   add(staffNotes,"h4","사용인이 시엘을 대하는 마음");
   if(!staff) add(staffNotes,"p","이 회차의 사용인 관계 기록은 남아 있지 않습니다.");
-  else if(!staff.length) add(staffNotes,"p","합류한 사용인이 없습니다.");
-  else for(const [person,tier] of staff){
-    const row=add(staffNotes,"div","");
-    row.className="growth-recap-row growth-staff-row";
-    add(row,"strong",servants[person].name);
-    add(row,"span",staffFeelings[tier]??staffFeelings[0]);
+  else if(staff.length) appendStaffFeelings(staffNotes,staff);
+  else {
+    add(staffNotes,"p","합류한 사용인이 없습니다.");
+    if(endingPresentation.staffExample){
+      add(staffNotes,"small","미리보기 예시").className="staff-example-caption";
+      appendStaffFeelings(staffNotes,endingPresentation.staffExample);
+    }
   }
   const schedules=add(details,"section","");
   add(schedules,"h4","가장 많이 편성한 일정");
@@ -1141,6 +1143,25 @@ function appendEndingRecap(parent,recap,farewells,fund){
     add(row,"span",fair.title);add(row,"strong",fair.won+"회 / "+fair.entered+"회 참가");
   }
 }
+// Only the standalone developer preview supplies examples. Neither value belongs to a run.
+const endingPresentation={staffExample:null,exampleNote:false};
+
+function appendStaffFeelings(parent,staff){
+  for(const [person,tier] of staff){
+    if(!Object.hasOwn(servants,person))continue;
+    const row=appendRecordElement(parent,"div","");
+    row.className="growth-recap-row growth-staff-row";
+    const frame=appendRecordElement(row,"span","");
+    frame.className="staff-headshot";
+    const portrait=appendRecordElement(frame,"img","");
+    portrait.src=portraits[servants[person].name];
+    portrait.alt="";
+    const copy=appendRecordElement(row,"div","");
+    appendRecordElement(copy,"strong",servants[person].name);
+    appendRecordElement(copy,"span",staffFeelings[tier]??staffFeelings[0]);
+  }
+}
+
 const butlerCourseNotes={
   지성:["도련님, 원문을 덮고 방금 읽으신 대목을 옮겨 보시겠습니까?","이 단어는 지난겨울에 읽으신 편지에도 있었지요.","오늘 번역에는 제가 고칠 곳이 없군요."],
   기품:["손님이 잔을 내려놓으신 뒤에 의자를 미셔야지요, 도련님.","다음 무도회에서는 먼저 춤을 청해 보시지요.","손님이 인사를 맺을 때까지 기다리셨군요, 도련님."],
@@ -1213,6 +1234,10 @@ function appendButlerNote(parent,id,abilities){
   paper.className="butler-letter";
   paper.setAttribute("aria-label","세바스찬의 마지막 평");
   const continues=id==="vowTitle"||id==="vowNoTitle";
+  if(continues&&endingPresentation.exampleNote){
+    add(paper,"small","미리보기 예시").className="staff-example-caption";
+    abilities=Object.fromEntries(stats.map(key=>[key,abilityMax]));
+  }
   let message=butlerOtherEndings[id]||"도련님, 다음 장을 넘겨 드릴까요?";
   if(continues&&stats.every(key=>Number.isFinite(abilities?.[key]))){
     const tier=sebastianRegard(abilities);

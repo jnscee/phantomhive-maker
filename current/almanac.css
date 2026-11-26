@@ -1105,6 +1105,23 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
   html:not([data-game-motion=reduced]) #status-drawer:not([hidden]) {animation:status-slide-up .19s ease-out}
 }
 
+/* Crop the existing standing art from the crown to the shoulders. */
+.growth-staff .growth-staff-row {
+  display:grid;grid-template-columns:clamp(3.7rem,8cqw,5rem) minmax(0,1fr);
+  align-items:center;gap:.8rem;padding:.45rem 0;text-align:start;
+}
+.growth-staff-row .staff-headshot {
+  position:relative;display:block;width:100%;aspect-ratio:1;overflow:hidden;
+  mask-image:linear-gradient(#000 67%,transparent 100%);
+}
+.growth-staff-row .staff-headshot img {
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  display:block;width:165%;height:auto;max-width:none;margin:0;mask-image:none;
+}
+.growth-staff-row strong,.growth-staff-row span {display:block}
+.growth-staff-row strong {margin:0 0 .14rem;font-size:.9rem}
+.growth-staff-row span {line-height:1.5;word-break:keep-all;overflow-wrap:anywhere}
+.staff-example-caption {display:block;margin:.55rem 0 .2rem;color:#52677a;font-size:.75rem;letter-spacing:.04em}
 .growth-roll .butler-letter,.ending-summary-record .butler-letter {
   --note-ink:#22374a;--note-red:#ad3443;
   --seal-size:clamp(5.25rem,32%,8.25rem);

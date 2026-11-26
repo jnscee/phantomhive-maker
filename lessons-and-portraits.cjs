@@ -637,6 +637,7 @@ async function check(browserType){
         assert.equal(await backdrop.getAttribute('src'),'assets/endings/'+endingImage+'.webp');
         await backdrop.evaluate(im=>im.decode());
         assert.equal(await page.locator('.growth-staff-row').count(),5);
+        assert.equal(await page.locator('.growth-staff-row .staff-headshot img').count(),5);
         assert.match(await page.locator('.growth-staff-row').filter({hasText:'메이린'}).innerText(),/시엘/);
         assert.equal(await page.getByText('엘리자베스와 만남',{exact:true}).count(),0);
         await checkClosingCredits(page);

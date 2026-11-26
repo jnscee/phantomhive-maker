@@ -113,10 +113,14 @@
  #overture:not([data-voice-only=true]) .opening-mat {display:grid;grid-template-rows:minmax(0,1fr) auto;padding:26px 5% 16px}
 }
 
+/* Keep playback controls above the full-stage click target. */
+#overture > .opening-top {z-index:3}
+#overture[data-pause=true] > .opening-top {visibility:hidden}
+
 /* Prologue playback controls */
 :is(#overture,#conversation) .opening-top {
   display:grid;
-  grid-template-columns:repeat(3,1fr);
+  grid-template-columns:repeat(3,auto) auto;
   gap:3px;
   padding:3px;
   border:1px solid #9aaec478;
