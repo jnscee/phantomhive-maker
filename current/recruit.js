@@ -263,11 +263,12 @@ function observePortraitStage(stage){
     const bar=!opening.hidden && opening.dataset.signing!=="true" && opening.dataset.voiceOnly!=="true"
       ? opening.querySelector(".opening-top")
       : !conversation.hidden && conversation.querySelector(":scope > .recruit-controls");
-    const parent=bar||stage;
+    const parent=stage.dataset.artOnly==="true"?stage:(bar||stage);
     if(toggle.parentElement!==parent)parent.append(toggle);
   }
   // Each new conversation line may replace the entire playback toolbar.
   const controlsObserver=new MutationObserver(placeToggle);
+  controlsObserver.observe(stage,{attributes:true,attributeFilter:["data-art-only"]});
   controlsObserver.observe(opening,{attributes:true,attributeFilter:["hidden","data-signing","data-voice-only"]});
   controlsObserver.observe(conversation,{childList:true,attributes:true,attributeFilter:["hidden"]});
   placeToggle();
