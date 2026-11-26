@@ -290,6 +290,17 @@ async function check(browserType){
         await bulletin.getByRole('button',{name:'닫기'}).click();
         assert.ok(await bulletin.isHidden());
       }
+      await weatherPage.evaluate(()=>{
+        state=initial();state.month=state.planMonth=26;state.phase="plan";tab="plan";editingVisit=true;
+        state.visit="parlor";state.flags.audience=true;state.plan=["rest","dance","rest"];render();
+      });
+      const visitNote=weatherPage.locator("#calendar .visit-note");
+      assert.equal(await visitNote.innerText(),"세바스찬 / 교류 시 가능 · 엘리자베스 「반주자가 없는 왈츠」");
+      assert.ok(await visitNote.evaluate(note=>{
+        const frame=note.closest("#calendar").getBoundingClientRect();
+        const text=document.createRange();text.selectNodeContents(note);
+        return [...text.getClientRects()].every(r=>r.left>=frame.left-1 && r.right<=frame.right+1 && r.top>=frame.top-1 && r.bottom<=frame.bottom+1);
+      }),"The visit forecast must fit the calendar at "+viewport.width+"px");
       await weatherPage.close();
       const creditPage=await browser.newPage({viewport});
       await openGame(creditPage);

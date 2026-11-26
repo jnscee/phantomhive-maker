@@ -69,28 +69,44 @@ const trustedGreetings={
  soma:["시엘! 여기 앉아! 오늘은 내가 차 골라 줄게!","시엘, 네 자리를 비워 뒀어. 저번에는 햇빛 때문에 눈 찡그렸잖아. 여긴 어때?","한 모금 마셔 봐! 난 이게 좋은데 넌 어때? 다음엔 네가 고른 걸로 마시자!","오늘은 여기 좀 더 있다 가지 그래? 말하지 않아도 네 마음쯤은 다 안다구."],
  agni:["어서 오십시오, 시엘 님. 왕자님께서 곧 내려오십니다.","오늘도 창가에 두 잔씩 놓았습니다. 시엘 님 몫에는 우유를 따로 드렸습니다.","왕자님께 드릴 말씀인데 제가 꺼내면 먼저 걱정하실 겁니다. 시엘 님이라면 어떻게 운을 떼시겠습니까?","처음 이 집에서 아침상을 차리던 날엔 손이 떨렸습니다. 왕자님께는 비밀로 해 주시겠습니까? 오늘이라면 웃으며 말씀드릴 수 있겠군요."]
 };
-function visitPerson(id){
+function visitPerson(id,run=state){
  let person=visiting[id][1];
- if(id==="quarters"&&state.people.snake&&(!state.people.mey||state.month%2===0))person="snake";
- if(id==="townhouse"&&state.people.agni&&state.month%2===0)return "agni";
- return state.people[person]?person:null;
+ if(id==="quarters"&&run.people.snake&&(!run.people.mey||run.month%2===0))person="snake";
+ if(id==="townhouse"&&run.people.agni&&run.month%2===0)return "agni";
+ return run.people[person]?person:null;
 }
 function visitName(person){return servants[person]?.name||"세바스찬";}
+const visitGrowth={library:"통찰",garden:"체력",kitchen:"지성",quarters:"통찰",parlor:"기품",company:"경영",town:"매력",townhouse:"매력"};
+function applyVisitInteraction(run,person){
+ const id=run.visit;
+ if(person==="agni")run.flags.agniTea=true;
+ if(person)talkTrust(person,1,1,run);
+ if(id==="library"&&run.people.tanaka)run.trust++;
+ changeStat(visitGrowth[id],4,run);
+ if(id==="garden")run.stress=cap(run.stress-3);
+ if(id==="kitchen")run.hp=cap(run.hp+2);
+}
+function nextVisitEvent(run){
+ return events.find(e=>e.visitPlace===run.visit&&!run.flags[e.id]&&e.sees(run));
+}
 function visitPreview(id){
  if(!id)return "방문지를 선택하세요.";
  if(id==="none")return "방문 생략";
- const person=visitPerson(id);
- const forecast={...state,visit:id};
- if(person&&state.people[person]){
-   const relation=state.people[person];
-   forecast.people={...state.people,[person]:{...relation,toward:Math.min(20,relation.toward+1)}};
- }
- const possible=events.filter(e=>e.visitPlace===id&&!state.flags[e.id]&&e.sees(forecast));
- const people=[...new Set([visitName(person),...possible.map(castName)])].join(", ");
- const event=possible[0];
- return event?people+" / "+castName(event)+" · "+event.title:people;
+ // Visits follow the booked lessons and precede the estate's month-end bonuses.
+ const forecast=projectTraining(scheduledActivities(state).length);
+ if(forecast.ill)return "병환 시 방문 취소";
+ // A first investigation can change the garden host before the visit.
+ if(id==="garden"&&finnyMissing(state)&&(forecast.counts.casework||0)>(state.counts.casework||0))return "만남은 방문 때 확인";
+ forecast.visit=id;
+ forecast.flags={...forecast.flags};
+ const person=visitPerson(id,forecast);
+ if(person)forecast.people={...forecast.people,[person]:{...forecast.people[person]}};
+ applyVisitInteraction(forecast,person);
+ const host=visitName(person),event=nextVisitEvent(forecast);
+ if(!event)return host;
+ const guest=castName(event);
+ return host+" / 교류 시 가능 · "+(guest===host?"":guest+" ")+"「"+event.title+"」";
 }
-const visitGrowth={library:"통찰",garden:"체력",kitchen:"지성",quarters:"통찰",parlor:"기품",company:"경영",town:"매력",townhouse:"매력"};
 function visitScene(){
  const id=state.visit,[room,plain,label]=visitsVN[id];
  const seq=state.sequence;
@@ -127,14 +143,8 @@ function visitDone(engage){
  seq.visitBefore=snapStats(state);
  state.visitTurn=state.month;
  if(engage){
-   const who=visitPerson(id);
-   if(who==="agni")state.flags.agniTea=true;
-   if(who)talkTrust(who);
-   if(id==="library"&&state.people.tanaka)state.trust++;
-   changeStat(visitGrowth[id],4);
-   if(id==="garden")shift("stress",-3);
-   if(id==="kitchen")shift("hp",2);
-   seq.visitEvent=events.find(e=>e.visitPlace===id&&!state.flags[e.id]&&e.sees(state))?.id;
+   applyVisitInteraction(state,visitPerson(id));
+   seq.visitEvent=nextVisitEvent(state)?.id;
  }else{
    shift("stress",-4);
    shift("motivation",2);
