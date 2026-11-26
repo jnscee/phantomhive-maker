@@ -257,18 +257,20 @@ function observePortraitStage(stage){
   });
   observer.observe(stage);
   const toggle=document.getElementById("dialogue-visibility");
-  const rail=document.getElementById("system-menu");
-  if(rail&&typeof matchMedia==="function"){
-    const mobile=matchMedia("(max-width:960px) and (orientation:portrait),(max-width:700px) and (orientation:landscape)");
-    function placeToggle(){
-      if(mobile.matches&&stage.dataset.story==="true"){
-        if(toggle.parentElement!==rail)rail.prepend(toggle);
-      }else if(toggle.parentElement!==stage)stage.append(toggle);
-    }
-    new MutationObserver(placeToggle).observe(stage,{attributes:true,attributeFilter:["data-story"]});
-    mobile.addEventListener("change",placeToggle);
-    placeToggle();
+  const opening=stage.querySelector("#overture");
+  const conversation=stage.querySelector("#conversation");
+  function placeToggle(){
+    const bar=!opening.hidden && opening.dataset.signing!=="true" && opening.dataset.voiceOnly!=="true"
+      ? opening.querySelector(".opening-top")
+      : !conversation.hidden && conversation.querySelector(":scope > .recruit-controls");
+    const parent=bar||stage;
+    if(toggle.parentElement!==parent)parent.append(toggle);
   }
+  // Each new conversation line may replace the entire playback toolbar.
+  const controlsObserver=new MutationObserver(placeToggle);
+  controlsObserver.observe(opening,{attributes:true,attributeFilter:["hidden","data-signing","data-voice-only"]});
+  controlsObserver.observe(conversation,{childList:true,attributes:true,attributeFilter:["hidden"]});
+  placeToggle();
   toggle.addEventListener("click",event=>{
     event.stopPropagation();
     setArtOnly(stage,stage.dataset.artOnly!=="true");
@@ -276,7 +278,7 @@ function observePortraitStage(stage){
   document.addEventListener("keydown",event=>{
     if(event.repeat||event.altKey||event.ctrlKey||event.metaKey||event.isComposing||
        event.target?.closest?.("input,textarea,select,[contenteditable=true]")||
-       !toggle.getClientRects().length||document.querySelector("dialog[open]"))return;
+       !toggle.getClientRects().length||getComputedStyle(toggle).visibility!=="visible"||document.querySelector("dialog[open]"))return;
     const hidden=stage.dataset.artOnly==="true";
     if(event.code==="KeyH"||(hidden&&event.key==="Escape")){
       event.preventDefault();event.stopImmediatePropagation();
@@ -285,7 +287,6 @@ function observePortraitStage(stage){
   },true);
 }
 function setArtOnly(stage,hidden){
-  const toggle=document.getElementById("dialogue-visibility");
   if(hidden){
     stopRecruitAuto();
     if(typeof stopOpeningAuto==="function"){
@@ -314,12 +315,15 @@ function setArtOnly(stage,hidden){
   stage.dataset.artOnly=String(hidden);
   const openingMat=stage.querySelector(".opening-mat");
   if(openingMat)openingMat.hidden=hidden;
-  for(const overlay of stage.querySelectorAll("#conversation .dialogue,#conversation .answers,#conversation .opening-top,#conversation .review-bubble,#conversation .review-slip")){
+  for(const overlay of stage.querySelectorAll("#conversation .dialogue,#conversation .answers,#conversation .review-bubble,#conversation .review-slip")){
     overlay.style.visibility=hidden?"hidden":"";
     overlay.inert=hidden;
   }
-  toggle.setAttribute("aria-pressed",String(hidden));
-  toggle.textContent=hidden?"대화창 표시":"대화창 숨기기";
+  const toggle=stage.querySelector("#dialogue-visibility");
+  if(toggle){
+    toggle.setAttribute("aria-pressed",String(!hidden));
+    toggle.title=hidden?"대화창 다시 표시 (H)":"대화창 숨기기 (H)";
+  }
 }
 function cielPortraitScale(age){return String(Math.min(152,140+6*(age-10))/186);}
 // Eye positions and eye-to-chin lengths were measured on each illustration at 400 px high.
@@ -465,6 +469,7 @@ function bindSceneReader(host,at,end,text,onPage,onFinish,wait=0){
     if(read==="finish"&&at===end)onFinish?.();
   }
   function keydown(e){
+    if(host.closest("[data-art-only=true]"))return;
     if(e.altKey||e.ctrlKey||e.metaKey||e.repeat||!["ArrowLeft","ArrowRight"].includes(e.key))return;
     e.preventDefault();e.stopPropagation();stopRecruitAuto();
     const to=at+(e.key==="ArrowLeft"?-1:1);

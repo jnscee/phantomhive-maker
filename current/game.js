@@ -47,7 +47,9 @@ const previewLesson=Object.hasOwn(choreography,requestedLesson)?requestedLesson:
 const previewStory=previewQuery.get("story-preview");
 const previewIncident=monthlyIncidents.find(item=>item.id===previewStory);
 const previewCompanyCase=companyCases.find(item=>item.id===previewStory);
-const storyDemo=Boolean(previewIncident||previewCompanyCase)||Object.hasOwn(middleObservations,previewStory);
+const requestedEnding=previewQuery.get("ending-preview");
+const previewEnding=Object.hasOwn(endingScenes,requestedEnding)?requestedEnding:null;
+const storyDemo=Boolean(previewEnding||previewIncident||previewCompanyCase)||Object.hasOwn(middleObservations,previewStory);
 const storageKey="earl-phantomhive-maker-v1";
 let saves, storageOk=true;
 try{ saves=previewLesson||previewFair||storyDemo?{}:JSON.parse(localStorage.getItem(storageKey)||"{}"); }catch{ storageOk=false; }
@@ -2234,6 +2236,19 @@ if(previewLesson){
   document.addEventListener("change",event=>{
     if(event.target.id==="preview-lesson")location.search="?lesson-preview="+encodeURIComponent(event.target.value);
   });
+}else if(previewEnding){
+  tab="plan";
+  Object.assign(state,{month:state.duration,planMonth:state.duration,phase:"ending",ending:previewEnding});
+  if(previewEnding==="vowNoTitle"){
+    const requestedRoute=previewQuery.get("route");
+    state.londonCareer=Object.hasOwn(londonEndingCGs,requestedRoute)?requestedRoute:"pursuit";
+    const [management,fund,insight]={merchant:[350,2000,280],broker:[260,1500,320],pursuit:[220,1000,130]}[state.londonCareer];
+    Object.assign(state.stats,{경영:management,통찰:insight});
+    state.fund=fund;
+  }
+  const position=previewQuery.get("view");
+  if(position==="last")state.endingBeat=endingScenes[previewEnding].lines.length-1;
+  if(position==="first")state.endingBeat=0;
 }else if(storyDemo){
   tab="plan";state=normalizeSave(initial());
   state.month=state.planMonth=previewIncident?.previewMonth??previewIncident?.month??previewCompanyCase?.previewMonth??{"season-16":16,jubilee:18,birthday2:24}[previewStory];

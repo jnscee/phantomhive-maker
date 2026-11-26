@@ -45,16 +45,29 @@
 
 #dialogue-visibility {display:none}
 #scene[data-story=true] #dialogue-visibility {
-  display:block;position:absolute;z-index:10;left:50%;top:7%;transform:translateX(-50%);white-space:nowrap;
-  color:#f3f5fa;background:#182536f2;border:1px solid #c7d3df;border-radius:5px;
-  font:inherit;font-size:clamp(12px,1.4cqw,15px);padding:6px 12px;cursor:pointer;
+  display:inline-grid;place-items:center;box-sizing:border-box;width:36px;height:36px;
+  padding:0;cursor:pointer;color:#edf2f9;line-height:1;touch-action:manipulation;
 }
+#scene #dialogue-visibility::before {content:none}
+#scene[data-story=true] > #dialogue-visibility,
+#scene[data-art-only=true] .opening-top > #dialogue-visibility {
+  border:1px solid #9aaec490;border-radius:6px;background:#18283de8;
+}
+#scene[data-story=true] > #dialogue-visibility {
+  position:absolute;z-index:10;right:12%;top:10%;
+}
+#scene[data-story=true] #dialogue-visibility:is(:hover,:focus-visible) {background:#425c77}
+#dialogue-visibility:focus-visible {outline:2px solid white;outline-offset:2px}
+#dialogue-visibility[aria-pressed=true] .eye-off,
+#dialogue-visibility[aria-pressed=false] .eye-open {display:none}
 #scene[data-art-only=true] :is(#date,#money,.opening-mat,#opening-read,
-  #conversation .dialogue,#conversation .answers,#conversation .opening-top,
+  #conversation .dialogue,#conversation .answers,.opening-top,
   #conversation .review-bubble,#conversation .review-slip) {
   visibility:hidden;pointer-events:none;
 }
-#dialogue-visibility:focus-visible {outline:2px solid white;outline-offset:2px}
+#scene[data-art-only=true] .opening-top > #dialogue-visibility {
+  visibility:visible;pointer-events:auto;
+}
 
 /* The painted cutouts share the stage lighting used by the other portraits. */
 img:is([src$="/soma.webp"],[src$="/agni.webp"],[src$="/mey-owl.webp"]) {
@@ -62,7 +75,7 @@ img:is([src$="/soma.webp"],[src$="/agni.webp"],[src$="/mey-owl.webp"]) {
 }
 
 body.guiding #scene #dialogue-visibility {display:none}
-@media(pointer:coarse){#scene[data-story=true] #dialogue-visibility {min-height:44px}}
+@media(pointer:coarse){#scene[data-story=true] #dialogue-visibility {width:44px;height:44px}}
 
 /* The native greeting button contains the visible, age-specific portrait. */
 #scene[data-mode=home] #ciel-greet {
@@ -146,7 +159,7 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
 }
 @keyframes ciel-small-hop {0%,100%{transform:none}45%{transform:translateY(-4px)}}
 
-#scene[data-art-only=true] #conversation :is(.dialogue,.answers,.opening-top,.review-bubble,.review-slip){display:none!important}
+#scene[data-art-only=true] #conversation :is(.dialogue,.answers,.review-bubble,.review-slip){display:none!important}
 
 #scene #conversation:has(.ending-cg) > .cast { z-index:1; }
 @media (orientation:landscape) and (max-height:530px) {
