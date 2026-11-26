@@ -2103,6 +2103,12 @@ html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.m
   text-shadow:none;
 }
 #scene #calendar > .calendar-foot {
+  --panel-secondary:#304760;
+  background:linear-gradient(125deg,#fcfdffbf,#edf3f9b3 60%,#dce7f2bf);
+  border:1px solid #cbd9e4;
+  box-shadow:inset 0 1px 1px #fff,0 3px 12px #10263e38;
+  .calendar-summary {align-items:center;min-height:fit-content}
+  .invite-date {flex:0 0 auto;max-width:100%}
   .calendar-summary strong,.plan-costs dd,.plan-balance strong {color:var(--panel-ink)}
   .calendar-note,.plan-costs dt,.plan-balance span {color:var(--panel-secondary)}
   .calendar-settle,.calendar-periods,.plan-balance {border-color:var(--panel-rule)}
@@ -2114,18 +2120,18 @@ html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.m
   .plan-effect .loss {--delta:#903f46}
   .calendar-warning {color:#853d45}
   .period {
-    color:var(--panel-ink);background:#ffffff96;
-    border-color:var(--panel-rule);box-shadow:inset 0 0 0 1px #bac9d7;text-shadow:none;
+    color:var(--panel-ink);background:linear-gradient(145deg,#ffffffc9,#e8f1f9a8);
+    border:1px solid #90a5b9;border-radius:6px;box-shadow:inset 0 1px #fff,0 1px 2px #20365024;text-shadow:none;
   }
   .period span {color:var(--panel-secondary)}
-  .period:is(:hover,:focus-visible):enabled {background:#dbe8f3}
+  .period:not([aria-pressed=true]):is(:hover,:focus-visible):enabled {background:#dbe8f3}
   .period[aria-pressed=true] {
-    color:var(--panel-ink);background:#ccdeee;
-    box-shadow:inset 0 -3px var(--panel-selected),inset 0 0 0 1px #819bb6;
+    color:#fff;background:linear-gradient(145deg,#3e5c7c,#223d5c);
+    border-color:#99b3cc;box-shadow:inset 0 1px #ffffff52,inset 0 -2px #162c46;
   }
-  .period[aria-pressed=true] span {color:var(--panel-ink)}
-  .period.contest-period {color:var(--panel-ink);background:#faf3e3;box-shadow:inset 0 0 0 1px #bcaa87}
-  .period.contest-period span {color:#725423}
+  .period[aria-pressed=true] span {color:#fff}
+  .period.contest-period:not([aria-pressed=true]) {background:linear-gradient(145deg,#fffdf3d9,#ede7d5cc);border-color:#ad9872}
+  .period.contest-period:not([aria-pressed=true]) span {color:#644c28}
   .calendar-run {color:#fff;background:var(--panel-selected);box-shadow:inset 0 0 0 1px #718da6;text-shadow:none}
   .calendar-run:enabled:hover {background:#345a7b}
   .calendar-run:disabled {opacity:1;color:#52657a;background:#dee6ee;box-shadow:inset 0 0 0 1px #aebecd}
@@ -2137,4 +2143,10 @@ html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.m
   > button:focus-visible {outline:2px solid #284e73;outline-offset:1px}
   > button:disabled {color:#617184;opacity:.74}
   > :is(#opening-auto,[data-read=auto])[aria-pressed=true] {color:#fff;background:var(--panel-selected);border-color:#718da6}
+}
+
+/* Keep the silhouettes behind the home conversation from pooling into bright spots. */
+:root:not([data-dialogue-theme=dark]) #scene[data-mode=chat] #conversation > article.dialogue {
+  --reading-glass:linear-gradient(115deg,#fcfdffe8,#edf3f9e0);
+  --hud-glass-blur:blur(20px);
 }

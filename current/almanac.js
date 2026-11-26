@@ -541,10 +541,10 @@ function courtFolio(){
   const checks=criteria.filter(([label])=>label!=="가문 명성").map(([label,met])=>
     '<div><dt>'+label+'</dt><dd><span class="court-check-status" data-met="'+met+'">'+(met?"충족":"미충족")+'</span></dd></div>'
   ).join("");
-  return '<section class="court-folio"><div class="court-ruling"><header><div><small>'+monthText(state.month)+'</small><h3>왕실 작위 심의</h3></div>'+
+  return '<section class="court-folio"><div class="court-ruling"><header><span class="court-portrait" aria-hidden="true"><img src="assets/sebastian.webp" alt=""></span><div><small>'+monthText(state.month)+'</small><h3>왕실 작위 심의</h3></div>'+
     '<strong class="court-verdict">'+(recorded||(metAll?"충족":"미충족"))+'</strong></header>'+
     '<div class="court-renown-row"><span>가문 명성</span><meter class="court-renown" aria-label="가문 명성" min="0" max="'+renownScale+'" value="'+renown+'"></meter></div>'+
-    '<dl class="court-checks" aria-label="작위 심의 기준">'+checks+'</dl></div></section>';
+    '<dl class="court-checks" aria-label="작위 심의 기준">'+checks+'</dl><footer class="court-signature"><span>확인 · 집사 세바스찬</span><i lang="en" aria-hidden="true">S. Michaelis</i></footer></div></section>';
 }
 function familyFolio(history,album,extra=""){
   const allies=peopleInHouse();
