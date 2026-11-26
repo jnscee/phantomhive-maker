@@ -659,6 +659,8 @@ async function check(browserType){
         await farewell.locator('[data-farewell="skip"]').click();
         const backdrop=page.locator('.growth-backdrop');
         const endingImage=id==='vowNoTitle'?'london-merchant':id;
+        assert.equal(await page.evaluate(()=>musicTracks[creditTracks[trackForView()]].file),
+          'assets/audio/'+(approved?'title-approval':'good-ending')+'.mp3');
         assert.equal(await backdrop.getAttribute('src'),'assets/endings/'+endingImage+'.webp');
         await backdrop.evaluate(im=>im.decode());
         assert.equal(await page.locator('.growth-staff-row').count(),5);
@@ -694,6 +696,7 @@ async function check(browserType){
         },ending);
         await page.locator('#conversation [data-read="finish"]').click();
         assert.equal(await page.locator('.growth-backdrop').getAttribute('src'),'assets/endings/'+ending+'.webp');
+        assert.equal(await page.evaluate(()=>musicTracks[creditTracks[trackForView()]].file),'assets/audio/good-ending.mp3');
         assert.match(await page.locator('.growth-roll').innerText(),ending==='ill'?/세부 장부는 남아 있지 않습니다/:/팬텀사 회계/);
         await checkClosingCredits(page);
         await page.locator('.growth-end').click();

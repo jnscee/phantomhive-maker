@@ -9,7 +9,7 @@ const musicTracks = {
   harvest:{title:"Harvest Festival",file:"assets/audio/harvest.mp3"},
   newYear:{title:"New Year’s Garden Party",file:"assets/audio/new-year.mp3"},
   titleApproval:{title:"작위 승인",file:"assets/audio/title-approval.mp3",once:true},
-  goodEnding:{title:"굿엔딩",file:"assets/audio/good-ending.mp3"},
+  goodEnding:{title:"Finale",file:"assets/audio/good-ending.mp3"},
   dance:{title:"Studying of Dance",file:"assets/audio/dance.mp3"},
   violin:{title:"Studying of Music",file:"assets/audio/violin.mp3"},
   etiquette:{title:"Well Behaved",file:"assets/audio/etiquette.mp3"},
@@ -114,6 +114,8 @@ const endingTracks={
   vowTitle:"goodEnding",releaseTitle:"gloomy",releaseNoTitle:"gloomy",
   ill:"gloomy",broke:"gloomy",vowNoTitle:"goodEnding"
 };
+// Credits start at the beginning even if the last scene used the same audio file.
+const creditTracks={creditsApproval:"titleApproval",creditsFinale:"goodEnding"};
 function trackForView(){
   if(tab==="exit")return null;
   if(tab==="title"||coverPages.includes(tab))return "manor";
@@ -125,6 +127,9 @@ function trackForView(){
   if(tab==="plan"&&state.phase==="investiture")return "titleApproval";
   if((tab==="plan"&&state.phase==="ending")||(tab==="endingMemory"&&endingReplay)){
     const id=tab==="endingMemory"?endingReplay.id:state.ending;
+    if(tab==="endingMemory"?endingReplay.credits:state.growthCredits){
+      return isApprovedEnding(id)?"creditsApproval":"creditsFinale";
+    }
     const at=tab==="endingMemory"?endingReplay.at:state.endingBeat;
     return endingLineAt(id,at,tab==="endingMemory"?endingReplay:null).row?.[3]?.bgm||endingTracks[id]||"manor";
   }
@@ -194,10 +199,15 @@ const musicPlayer=(()=>{
     for(const {el} of tracks.values()){el.volume=0;if(!el.paused)el.pause();}
   }
   function sync(key=selected,retry=false){
-    if(key&&key!=="tutorial")backgroundTrack=key==="prologue"?"manor":key;
-    if(["prologue","tutorial","titleApproval","goodEnding"].includes(key)&&selected!==key&&tracks.has(key))tracks.get(key).el.currentTime=0;
+    const creditTrack=creditTracks[key];
+    if(key&&key!=="tutorial"&&!creditTrack)backgroundTrack=key==="prologue"?"manor":key;
+    const track=musicTracks[creditTrack||key];
+    const once=track?.once&&!creditTrack;
+    if(selected!==key&&tracks.has(key)&&(creditTrack||["prologue","tutorial","titleApproval","goodEnding"].includes(key))){
+      tracks.get(key).el.currentTime=0;
+    }
     selected=key;
-    if(!musicTracks[key]?.file){
+    if(!track?.file){
       stop();
       return;
     }
@@ -205,10 +215,10 @@ const musicPlayer=(()=>{
     if(failed===key&&!retry)return;
     let entry=tracks.get(key);
     if(!entry){
-      const el=new Audio(musicTracks[key].file);el.loop=!musicTracks[key].once;el.volume=0;
+      const el=new Audio(track.file);el.loop=!once;el.volume=0;
       entry={el,pending:false};tracks.set(key,entry);
     }
-    if(entry.pending||(musicTracks[key].once&&entry.el.ended))return;
+    if(entry.pending||(once&&entry.el.ended))return;
     if(!entry.el.paused){fadeTo(key);return;}
     failed=null;entry.pending=true;
     entry.el.play().then(()=>{
