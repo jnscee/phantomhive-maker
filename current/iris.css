@@ -2088,12 +2088,14 @@ html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.m
 ::highlight(dialogue-unread) { color: transparent; text-shadow: none; }
 
 /* The planning footer and dialogue toolbar share a light surface inside their own views. */
+#scene #calendar > .lesson-index,
 #scene #calendar > .calendar-foot,
 #scene :is(#conversation,#overture) .opening-top {
   --panel-ink:#203650;
   --panel-secondary:#425974;
   --panel-rule:#899eb58c;
   --panel-selected:#25415f;
+  --planner-active:linear-gradient(145deg,#e0eaf2f2,#c2d3e3ed);
   color:var(--panel-ink);
   background:linear-gradient(125deg,#fcfdfff0,#edf3f9e8 60%,#dce7f2eb);
   border-color:#a8bbcf;
@@ -2102,11 +2104,21 @@ html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.m
   backdrop-filter:blur(12px);
   text-shadow:none;
 }
-#scene #calendar > .calendar-foot {
+#scene #calendar > :is(.lesson-index,.calendar-foot) {
   --panel-secondary:#304760;
   background:linear-gradient(125deg,#fcfdffbf,#edf3f9b3 60%,#dce7f2bf);
   border:1px solid #cbd9e4;
   box-shadow:inset 0 1px 1px #fff,0 3px 12px #10263e38;
+}
+#scene #calendar > .lesson-index {
+  border-radius:8px;
+  .index-tab {color:var(--panel-ink);background:transparent;text-shadow:none}
+  button.index-tab:hover {background:#edf4f9cc}
+  .index-tab[aria-pressed=true] {color:var(--panel-ink);background:var(--planner-active);box-shadow:inset 0 -2px #738da7}
+  .index-tab:focus-visible {outline:2px solid #365a7a;outline-offset:-2px}
+  &.visit-index .index-tab {padding-inline:.8em;font-weight:700;box-shadow:none}
+}
+#scene #calendar > .calendar-foot {
   .calendar-summary {align-items:center;min-height:fit-content}
   .invite-date {flex:0 0 auto;max-width:100%}
   .calendar-summary strong,.plan-costs dd,.plan-balance strong {color:var(--panel-ink)}
@@ -2123,19 +2135,43 @@ html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.m
     color:var(--panel-ink);background:linear-gradient(145deg,#ffffffc9,#e8f1f9a8);
     border:1px solid #90a5b9;border-radius:6px;box-shadow:inset 0 1px #fff,0 1px 2px #20365024;text-shadow:none;
   }
-  .period span {color:var(--panel-secondary)}
+  .period > span {color:var(--panel-secondary)}
+  .period b .period-tier {font:inherit;color:inherit;white-space:nowrap}
   .period:not([aria-pressed=true]):is(:hover,:focus-visible):enabled {background:#dbe8f3}
   .period[aria-pressed=true] {
-    color:#fff;background:linear-gradient(145deg,#3e5c7c,#223d5c);
-    border-color:#99b3cc;box-shadow:inset 0 1px #ffffff52,inset 0 -2px #162c46;
+    color:var(--panel-ink);background:var(--planner-active);
+    border-color:#819bb3;box-shadow:inset 0 1px #fff9,inset 0 -2px #738da7;
   }
-  .period[aria-pressed=true] span {color:#fff}
+  .period[aria-pressed=true] > span {color:#334e68}
   .period.contest-period:not([aria-pressed=true]) {background:linear-gradient(145deg,#fffdf3d9,#ede7d5cc);border-color:#ad9872}
   .period.contest-period:not([aria-pressed=true]) span {color:#644c28}
   .calendar-run {color:#fff;background:var(--panel-selected);box-shadow:inset 0 0 0 1px #718da6;text-shadow:none}
   .calendar-run:enabled:hover {background:#345a7b}
   .calendar-run:disabled {opacity:1;color:#52657a;background:#dee6ee;box-shadow:inset 0 0 0 1px #aebecd}
   button:focus-visible {outline:2px solid #284e73;outline-offset:1px}
+}
+@media (max-width:700px) and (orientation:portrait), (max-height:550px) and (orientation:landscape) {
+  #scene #calendar .period b:has(.period-tier) {word-break:keep-all;overflow-wrap:anywhere}
+  #scene #calendar .period .period-tier {display:block}
+}
+
+/* An unlocked townhouse adds a destination. Give both banks the same two rows. */
+@media (min-width:701px), (orientation:landscape) {
+  #calendar .card-field:has([data-action="visit:townhouse"]) {
+    display:grid;grid-template-columns:repeat(2,minmax(0,min(43%,19rem)));
+    justify-content:space-between;align-content:center;align-items:stretch;
+    padding-inline:clamp(0px,2cqw,24px);box-sizing:border-box;
+  }
+  #calendar .card-field:has([data-action="visit:townhouse"]) > .card-bank {
+    display:grid;width:100%;max-width:none;translate:none;
+    grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,1fr);
+    gap:clamp(3px,.6cqw,7px);
+  }
+  #calendar .card-field:has([data-action="visit:townhouse"]) .visit-card {
+    grid-template: auto auto / minmax(0,1fr);justify-items:center;align-content:center;
+    min-height:48px;padding:4px 2px;gap:3px;text-align:center;
+  }
+  #calendar .card-field:has([data-action="visit:townhouse"]) .visit-card > :is(img,b) {grid-area:auto}
 }
 #scene :is(#conversation,#overture) .opening-top {
   > button {color:var(--panel-ink);background:transparent;text-shadow:none}

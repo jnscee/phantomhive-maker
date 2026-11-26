@@ -776,10 +776,12 @@ function plannerContents() {
           'activity:'+selectedSlot+':'+id, id===chosen, !canSchedule(state,id), 'lesson');
       });
   const half = Math.ceil(cards.length / 2);
-  const periods = state.plan.map((id,index) =>
-    contest&&index===contestSlot
-      ?calendarSlot("하순 · 경연",contest.title,"pick:"+index,false,true)
-      :calendarSlot(slotNames[index],actions[id]?courseName(id):"","pick:"+index,!editingVisit&&selectedSlot===index));
+  const periods = state.plan.map((id,index) => {
+    if(contest&&index===contestSlot)return calendarSlot("하순 · 경연",contest.title,"pick:"+index,false,true);
+    const tier=advancedCourse(state,id)?'<span class="period-tier">고급·</span> ':"";
+    const title=actions[id]?tier+escapeHTML(actions[id].name):"";
+    return calendarSlot(slotNames[index],title,"pick:"+index,!editingVisit&&selectedSlot===index);
+  });
   periods.push(calendarSlot("자유행동", visitButtonName(state.visit,visits[state.visit]??""), "pick-visit", editingVisit));
   const estimate = marketStats();
   const invitations=openContests(state);
