@@ -385,7 +385,7 @@ async function check(browserType){
       });
       assert.ok(awardLayout,'Result card and character nameplates must remain unobstructed');
       assert.equal(await award.locator('.award-dialogue').count(),0);
-      const lines=await fairPage.evaluate(()=>victoryLines(pendingEvent().contest,state.fairBook[pendingEvent().contest.id]));
+      const lines=await fairPage.evaluate(()=>contestClosingLines(pendingEvent().contest,state.fairBook[pendingEvent().contest.id]));
       const narration=await fairPage.evaluate(()=>contestResultLine(pendingEvent().contest,state.fairBook[pendingEvent().contest.id]));
       assert.deepEqual(lines[0],["",narration]);
       assert.ok(!(await award.innerText()).includes(narration));
@@ -404,22 +404,28 @@ async function check(browserType){
         if(speaker)assert.equal(await reading.locator('small').innerText(),speaker);
         else assert.equal(await reading.locator('small').count(),0);
         assert.ok((await reading.locator('p').innerText()).includes(line));
-        await reading.locator('[data-action="fair-victory-next:'+page+'"]').click();
+        await reading.locator('[data-action="fair-closing-next:'+page+'"]').click();
       }
-      assert.equal(await reading.locator('[data-action^="fair-victory-next"]').count(),0);
-      // A tied result keeps its paging controls and has only one painted pane behind the dialogue.
-      await fairPage.goto(base+'?fair-preview=newYear-1887&entry=0');
-      await fairPage.evaluate(()=>{
-        const fair=pendingEvent().contest,duel=state.sequence.duel;
-        duel.judgment.score=duel.rivalScore;
-        settleFestival(state,duel);render(true);
-      });
-      const embedded=fairPage.locator('.award-dialogue article.dialogue');
-      assert.ok(await embedded.isVisible());
-      for(const theme of ['dark','light']){
-        await fairPage.evaluate(theme=>document.documentElement.dataset.dialogueTheme=theme,theme);
-        const layers=await embedded.evaluate(el=>[getComputedStyle(el).backgroundImage,getComputedStyle(el.closest('.contest-slip')).backgroundImage]);
-        assert.deepEqual(layers,['none',storyAppearance[theme].surface[0]]);
+      assert.equal(await reading.locator('[data-action^="fair-closing-next"]').count(),0);
+      for(const [margin,label] of [[-8,'패배'],[0,'공동 우승']]){
+        await fairPage.goto(base+'?fair-preview=newYear-1887&entry=0');
+        const expected=await fairPage.evaluate(margin=>{
+          const fair=pendingEvent().contest,duel=state.sequence.duel;
+          duel.judgment.score=duel.rivalScore+margin;
+          settleFestival(state,duel);render(true);
+          const script=contestResultScene(fair,state.fairBook[fair.id]);
+          return [["",script.narration],...script.lines];
+        },margin);
+        assert.equal(await award.locator('h3').innerText(),label);
+        assert.equal(await award.locator('.dialogue').count(),0);
+        await award.getByRole('button',{name:'결과창 닫기'}).click();
+        for(const [index,[speaker,line]] of expected.entries()){
+          assert.equal(await award.count(),0);
+          assert.equal(await reading.locator('small').allTextContents().then(names=>names.join('')),speaker);
+          assert.ok((await reading.innerText()).includes(line));
+          await reading.locator('[data-action="fair-closing-next:'+index+'"]').click();
+        }
+        assert.equal(await reading.locator('[data-action^="fair-closing-next"]').count(),0);
       }
       await fairPage.close();
       assert.equal(await page.locator('#overture').isVisible(),false);

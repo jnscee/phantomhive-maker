@@ -1380,3 +1380,71 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 }
 #conversation .award-comment .award-advance:hover {color:#0e263f;background:#cedfeb88}
 #conversation .award-comment .award-advance:focus-visible {outline:2px solid #496985;outline-offset:1px}
+
+/* Monthly settlement shares the white-glass palette of the ending folio. */
+#scene #sheet:has(.month-report) {
+  --report-ink:#192e49;
+  --report-muted:#495e73;
+  --report-line:#879eb663;
+  --report-gain:#185e51;
+  --report-loss:#923d42;
+  --report-paper:linear-gradient(150deg,#ffffffdc,#edf4f9c9);
+  color-scheme:light;
+  color:var(--report-ink);
+  background:linear-gradient(135deg,#fafcffed 0%,#e9f1f8e0 65%,#f6f8fce8);
+  border:1px solid #f7fbffdd;
+  box-shadow:inset 0 0 0 2px #98adc46b,0 9px 28px #10233938;
+  -webkit-backdrop-filter:blur(9px);
+  backdrop-filter:blur(9px);
+
+  .sheet-head {
+    background:linear-gradient(110deg,#fcfdfff5,#e0eaf4e6);
+    border-bottom:1px solid var(--report-line);
+  }
+  #sheet-title,.month-report,.month-report h3,.month-report summary,.month-report dt,
+  .delta-row > b,.ledger-close span,.ledger-close strong,.ledger-flow > span {
+    color:var(--report-ink);text-shadow:none;
+  }
+  #panel {background:transparent;scrollbar-color:#778da6 #e4edf4}
+  .month-report {padding:clamp(.6rem,1.6cqw,1.3rem)}
+  .report-date,.delta-head,.delta-row small,.stat-folio h4,.ledger-opening,
+  .ledger-fold p,.sample-review header small,.fair-report small {color:var(--report-muted)}
+  .report-date {font-weight:700;letter-spacing:.045em}
+  .butler-account {background:transparent;box-shadow:none}
+  .butler-account p {background:#f9fcffeb;border-color:#aebfcf;color:var(--report-ink)}
+  .butler-account p::before {background:#f9fcff;border-color:#aebfcf}
+  :is(.stat-folio,.settlement-ledger,.month-log,.sample-review,.fair-report) {
+    color:var(--report-ink);background:var(--report-paper);
+    border:1px solid var(--report-line);border-radius:.55rem;
+    box-shadow:inset 0 1px #fff,0 2px 8px #283e5910;
+    padding:clamp(.65rem,1.4cqw,1rem);
+  }
+  .stat-folio h3,.settlement-ledger h3 {border-bottom:1px solid var(--report-line);padding-bottom:.4rem}
+  .stat-folio h4 {font-weight:700}
+  .delta-head,.delta-row,.ledger-flows,.ledger-fold dl > div {border-color:var(--report-line)}
+  .delta-row.gain {--delta:var(--report-gain);--shade:#63a695}
+  .delta-row.loss {--delta:var(--report-loss);--shade:#ce8f90}
+  .delta-row.flat {--delta:var(--report-muted);--shade:#8ba0b5}
+  .delta-meter,.ledger-flow > i {background:#d8e2ec;border:0;border-radius:3px;box-shadow:none}
+  .delta-meter b {background:#344d67}
+  .ledger-detail-grid > details {background:#f7fbffe3;border-color:var(--report-line)}
+  .ledger-fold .ledger-entries {--entry-accent:var(--report-gain);background:#deeee9}
+  .ledger-fold .ledger-entries.expense {--entry-accent:var(--report-loss);background:#f5e7e6}
+  .ledger-close strong {font-variant-numeric:tabular-nums}
+  .ledger-opening .gain,.ledger-flow.income,.investment-result .gain,.log-gain {color:var(--report-gain)}
+  .ledger-opening .loss,.ledger-flow.expense,.investment-result .loss,.log-loss {color:var(--report-loss)}
+  .ledger-fold summary > b,.ledger-fold .investment-result,.ledger-opening .flat {color:var(--report-ink)}
+  .ledger-flow.income strong::before {content:"+"}
+  .ledger-flow.expense strong::before {content:"−"}
+  .sample-review p,.fair-report p {color:var(--report-ink);border-color:var(--report-line)}
+  .report-timeline > li {color:var(--report-ink);background:#f7faffc9;border-color:var(--report-line)}
+  .report-timeline .log-period {border-inline-start-color:#718ca6}
+  .log-period header small {color:#fff;background:#344f6d}
+  .log-effects > span {color:var(--report-ink);background:#e4edf4}
+  .danger {color:#842f38;background:#fae9e9;border-inline-start:3px solid #ac565e;padding:.55em .8em}
+  .report-end button,.sample-actions button,.sheet-head .close {
+    color:#fff;background:linear-gradient(145deg,#36516f,#213955);border:1px solid #516c89;text-shadow:none;
+  }
+  .report-end button:enabled:hover,.sample-actions button:enabled:hover,.sheet-head .close:hover {background:#385d80}
+  :is(button,summary):focus-visible {outline:2px solid #315c85;outline-offset:2px}
+}

@@ -308,21 +308,37 @@ function contestResultDialogueMarkup(fair,entry){
     btn(page===scene.lines.length-1?"마지막 대사":"다음 대사","fair-result-next:"+page,page===scene.lines.length-1)+
     btn("다시 보기","fair-result-restart:"+page,page===0)+'</nav></section>';
 }
-const openVictoryDialogues=new WeakSet();
-function victoryLines(fair,entry){
-  if(!entry || entry.reason || entry.scoreCondition || entry.tied || entry.rank!==2)return null;
-  if(!entry.match && entry.duel && entry.score<=entry.duel.rivalScore)return null;
-  const dialogue=contestResultScene(fair,entry)?.lines || (fair.company
-    ? [["세바스찬","팬텀사의 이름이 불렸습니다, 도련님."],["시엘","상장은 제작실에 걸어 둬. 견본을 만든 직원들도 봐야지."]]
-    : [["세바스찬","축하드립니다, 도련님."],["시엘","상장을 잘 챙겨 둬, 세바스찬."]]);
-  return [["",contestResultLine(fair,entry)],...dialogue];
+const openContestClosings=new WeakSet();
+function contestClosingLines(fair,entry){
+  if(!entry || entry.reason || !Number.isFinite(entry.score))return null;
+  const authored=contestResultScene(fair,entry);
+  if(authored)return [["",authored.narration],...authored.lines];
+  const historicalTie=!entry.match && entry.duel?.rivalScore===entry.score;
+  const narration=contestResultLine(fair,historicalTie?{...entry,tied:true}:entry);
+  let dialogue;
+  if(entry.tied||historicalTie){
+    dialogue=fair.company
+      ? [["세바스찬","두 견본의 심사표에 같은 점수가 적혔군요."],["시엘","우리 표도 챙겨 둬. 다음 견본을 만들 때 꺼내 보게."]]
+      : [["세바스찬","도련님의 성함도 함께 불렸습니다."],["시엘","들었어. 같이 인사하고 올게."]];
+  }else if(entry.rank===2&&!entry.scoreCondition){
+    dialogue=fair.company
+      ? [["세바스찬","팬텀사의 이름이 불렸습니다, 도련님."],["시엘","상장은 제작실에 걸어 둬. 견본을 만든 직원들도 봐야지."]]
+      : [["세바스찬","축하드립니다, 도련님."],["시엘","상장을 잘 챙겨 둬, 세바스찬."]];
+  }else if(!entry.match&&entry.rank===1){
+    dialogue=[["세바스찬","은상입니다, 도련님."],["시엘","심사표도 함께 챙겨 둬."]];
+  }else{
+    dialogue=fair.company
+      ? [["시엘","우리 견본은 내가 가져가지. 심사표는 네가 챙겨."],["세바스찬","예. 제작실에서 함께 보실 수 있도록 준비하겠습니다."]]
+      : [["세바스찬","마차를 부를까요, 도련님?"],["시엘","잠깐만. 심사위원에게 한 가지만 묻고 갈 거야."]];
+  }
+  return [["",narration],...dialogue];
 }
-function contestResultSlip(fair,entry,line){
-  const victory=victoryLines(fair,entry);
-  if(victory && openVictoryDialogues.has(entry)){
-    const page=contestResultPage(entry,{lines:victory}),last=page===victory.length-1;
-    const [speaker,text]=victory[page];
-    const next='<button type="button" class="line-next" data-action="fair-victory-next:'+page+'" aria-label="'+(last?'행사 마치기':'다음 대사')+'"><span aria-hidden="true">▼</span></button>';
+function contestResultSlip(fair,entry){
+  const lines=contestClosingLines(fair,entry);
+  if(lines && openContestClosings.has(entry)){
+    const page=contestResultPage(entry,{lines}),last=page===lines.length-1;
+    const [speaker,text]=lines[page];
+    const next='<button type="button" class="line-next" data-action="fair-closing-next:'+page+'" aria-label="'+(last?'행사 마치기':'다음 대사')+'"><span aria-hidden="true">▼</span></button>';
     return sceneLine(escapeHTML(speaker),escapeHTML(text),next,'aria-live="polite"');
   }
   const duel=entry.duel;
@@ -340,18 +356,15 @@ function contestResultSlip(fair,entry,line){
     const match=/^(.*) ([+-]\d+)$/.exec(change);
     return '<span class="award-gain">'+(match?escapeHTML(match[1])+' <b>'+escapeHTML(match[2])+'</b>':escapeHTML(change))+'</span>';
   }).join("");
-  const commentary=victory?"":'<p class="award-comment">'+escapeHTML(line)+
-    ' <button type="button" class="line-next award-advance" data-action="fair-close" aria-label="행사 마치기"><span aria-hidden="true">▼</span></button></p>'+
-    contestResultDialogueMarkup(fair,entry);
   return '<article class="contest-slip award-sheet" data-rank="'+entry.rank+'" aria-label="경연 결과" aria-live="polite">'+
     '<header class="award-head"><h3>'+escapeHTML(rank)+'</h3><strong>'+escapeHTML(verdict)+'</strong>'+
     (margin?'<span>'+Math.abs(margin)+'점 차</span>':'')+
-    (victory?btn("결과창 닫기","fair-close",false,"award-dismiss"):'')+'</header>'+
-    '<div class="award-body">'+commentary+'<dl class="award-ledger">'+
-    '<div><dt>심사 점수</dt><dd><strong class="award-total">'+entry.score+'점</strong>'+
+    btn("결과창 닫기","fair-close",false,"award-dismiss")+'</header>'+
+    '<div class="award-body"><dl class="award-ledger">'+
+    '<div><dt>심사 점수</dt><dd><strong class="award-total">'+(Number.isFinite(entry.score)?entry.score+'점':'—')+'</strong>'+
     (entry.scoreCondition?'<small>'+escapeHTML(entry.scoreCondition)+'</small>':'')+'</dd></div>'+
     '<div><dt>능력 변화</dt><dd>'+(growth||'—')+'</dd></div>'+
-    (entry.purse||entry.prize||fair.exhibitors?'<div><dt>'+(entry.match?'승리 보상':'입상 보상')+'</dt><dd>'+
+    (entry.match||entry.purse||entry.prize||fair.exhibitors?'<div><dt>'+(entry.rank===0?'보상':entry.match?'승리 보상':'입상 보상')+'</dt><dd>'+
     (entry.purse?'<strong class="award-purse">상금 '+money(entry.purse)+'</strong>':'')+
     (entry.prize?'<span>'+escapeHTML(entry.prize)+'</span>':'')+
     (!entry.purse&&!entry.prize?'—':'')+'</dd></div>':'')+
@@ -396,7 +409,7 @@ function duelScene(fair,ticket,duel,entry){
     rivalArtwork(exhibitor)+sample(exhibitor.product),exhibitor.score+"점",false)).join("")||"";
   let slip;
   if(done){
-    slip=contestResultSlip(fair,entry,contestResultLine(fair,entry));
+    slip=contestResultSlip(fair,entry);
   }else{
     const speaker=handoff?"":turn?(fair.entrant||"시엘"):rival.name;
     const line=handoff||(turn===0?(rival.laterQuotes?.[appearance-1]??rival.quote):
@@ -404,7 +417,7 @@ function duelScene(fair,ticket,duel,entry){
     const next='<button type="button" class="line-next" aria-label="다음 대사" data-action="fair-next:'+(handoff?'handoff':turn)+'"><span aria-hidden="true">▼</span></button>';
     slip=sceneLine(escapeHTML(speaker),escapeHTML(line),next,'aria-live="polite"');
   }
-  return '<section class="contest-screen duel-screen'+(done&&!openVictoryDialogues.has(entry)?' duel-result':'')+'" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+
+  return '<section class="contest-screen duel-screen'+(done&&!openContestClosings.has(entry)?' duel-result':'')+'" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+
     '<header><span>'+monthText(fair.month)+' · '+(fair.company?'출품 심사':option.label)+'</span><h2 id="contest-title">'+fair.title+'</h2></header>'+
     '<div class="duel-stage'+(fair.exhibitors?" exhibition-stage":"")+(done?' is-revealed':'')+'">'+
     side(rival.name,fair.company?products[rival.product].name:rival.role,rivalArtwork(rival)+(showSamples?sample(rival.product):''),(duel.rivalScore??contestRivalAbility(fair))+"점",!turn&&!done)+
@@ -435,8 +448,8 @@ function contestScene(event){
     (entry.product?'<img class="contest-sample" src="assets/map-cart-'+entry.product+'.png" alt="'+label+' 견본">':'')+
     '<div class="contest-actor" role="img" aria-label="경연에 참가한 시엘"><img src="'+actors[poses[0]]+'" alt=""><img src="'+actors[poses[1]]+'" alt=""></div></div>';
   if(revealed&&!entry.reason&&entry.score!=null){
-    return '<section class="contest-screen'+(openVictoryDialogues.has(entry)?'':' duel-result')+'" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+
-      '<header><span>'+monthText(fair.month)+'</span><h2 id="contest-title">'+fair.title+'</h2></header>'+display+contestResultSlip(fair,entry,line)+'</section>';
+    return '<section class="contest-screen'+(openContestClosings.has(entry)?'':' duel-result')+'" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+
+      '<header><span>'+monthText(fair.month)+'</span><h2 id="contest-title">'+fair.title+'</h2></header>'+display+contestResultSlip(fair,entry)+'</section>';
   }
   return '<section class="contest-screen" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+
     '<header><span>'+monthText(fair.month)+'</span><h2 id="contest-title">'+fair.title+'</h2></header>'+display+
@@ -447,7 +460,7 @@ function contestScene(event){
     btn(revealed?"행사 마치기":"심사 결과 보기",revealed?"fair-close":"fair-reveal",false,"primary")+'</div></section>';
 }
 function festivalAction(action,id){
-  if(!["fair-next","fair-reveal","fair-close","fair-victory-next","fair-result-prev","fair-result-next","fair-result-restart"].includes(action))return false;
+  if(!["fair-next","fair-reveal","fair-close","fair-closing-next","fair-result-prev","fair-result-next","fair-result-restart"].includes(action))return false;
   if(tab!=="plan"||state.phase!=="event")return true;
   const event=pendingEvent(),fair=event?.contest;
   if(!fair)return true;
@@ -471,23 +484,23 @@ function festivalAction(action,id){
     return true;
   }
   if(!entry)return true;
-  const victory=victoryLines(fair,entry);
-  if(victory && (entry.revealed||entry.duel)){
+  const lines=contestClosingLines(fair,entry);
+  if(lines && (entry.revealed||entry.duel)){
     if(action==="fair-close"){
-      if(!openVictoryDialogues.has(entry)){
-        openVictoryDialogues.add(entry);contestResultPages.set(entry,0);
-        render(true);focusAction("fair-victory-next:0");
+      if(!openContestClosings.has(entry)){
+        openContestClosings.add(entry);contestResultPages.set(entry,0);
+        render(true);focusAction("fair-closing-next:0");
       }
       return true;
     }
-    if(action==="fair-victory-next"){
-      const page=contestResultPage(entry,{lines:victory});
-      if(!openVictoryDialogues.has(entry)||id!==String(page))return true;
-      if(page===victory.length-1){
-        openVictoryDialogues.delete(entry);
+    if(action==="fair-closing-next"){
+      const page=contestResultPage(entry,{lines});
+      if(!openContestClosings.has(entry)||id!==String(page))return true;
+      if(page===lines.length-1){
+        openContestClosings.delete(entry);
         if(previewFair)location.reload();else finishEventChoice(event);
       }else{
-        contestResultPages.set(entry,page+1);render();focusAction("fair-victory-next:"+(page+1));
+        contestResultPages.set(entry,page+1);render();focusAction("fair-closing-next:"+(page+1));
       }
       return true;
     }

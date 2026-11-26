@@ -158,18 +158,13 @@ for(const [id,index,group,subject] of resultSubjects){
       const scene=contestResultScene(fair,entry),expected=contestResultDialogue[resultGroup][resultSubject][resultOutcome];
       if(contestResultOutcome(fair,entry)!==resultOutcome||scene!==expected||contestResultLine(fair,entry)!==scene.narration)return false;
       const html=duelScene(fair,entry,entry.duel,entry);
-      if(entry.rank===2){
-        if(html.includes(escapeHTML(scene.narration))||html.includes(escapeHTML(scene.lines[0][1]))||!html.includes('결과창 닫기'))return false;
-        openVictoryDialogues.add(entry);
-        const first=duelScene(fair,entry,entry.duel,entry);
-        if(!first.includes('<p>'+escapeHTML(scene.narration)+' ')||first.includes('award-sheet')||first.includes('<small></small>'))return false;
-        contestResultPages.set(entry,1);
-        const next=duelScene(fair,entry,entry.duel,entry);
-        return next.includes(escapeHTML(scene.lines[0][1]))&&!next.includes(escapeHTML(scene.narration));
-      }
-      return html.includes(escapeHTML(scene.narration))&&html.includes(escapeHTML(scene.lines[0][0]))&&
-        html.includes(escapeHTML(scene.lines[0][1]))&&html.includes('aria-label="결과 대사"')&&
-        html.includes('data-action="fair-close"')&&!/undefined|NaN/.test(html);
+      if(html.includes(escapeHTML(scene.narration))||html.includes(escapeHTML(scene.lines[0][1]))||!html.includes('결과창 닫기'))return false;
+      openContestClosings.add(entry);
+      const first=duelScene(fair,entry,entry.duel,entry);
+      if(!first.includes('<p>'+escapeHTML(scene.narration)+' ')||first.includes('award-sheet')||first.includes('<small></small>'))return false;
+      contestResultPages.set(entry,1);
+      const next=duelScene(fair,entry,entry.duel,entry);
+      return next.includes(escapeHTML(scene.lines[0][1]))&&!next.includes(escapeHTML(scene.narration));
     })()`);
   }
 }
@@ -232,24 +227,10 @@ assert.deepEqual(run('structuredClone(state)'),absenceState);
 setup('tab="plan";state.month=state.planMonth=13;state.phase="event";state.pending="contest-newYear-1887";state.stats.기품=400;state.fairTickets={"newYear-1887":{index:0}};settleFestival(state);state.fairBook["newYear-1887"].revealed=true');
 resultHtml=run('contestScene(pendingEvent())');
 assert.doesNotMatch(resultHtml,/award-dialogue/);assert.match(resultHtml,/award-total/);
-// Pagination is UI-only: stale/repeated actions cannot settle, persist, or draw randomness.
-for(const id of ['newYear-1887','royalWarrant-1887']){
-  ctx.resultFairId=id;
-  setup('tab="plan";{const fair=contestArchive.find(f=>f.id===resultFairId);state.month=state.planMonth=fair.month;state.stats.기품=400;state.quality="fine";state.qty=1;state.shop.design=state.shop.works=3;state.productNotes={toys:{material:"select",reworked:true}};state.productHistory={toys:{reputation:20,units:240,orders:12}};state.fairTickets={[fair.id]:fair.company?{product:"toys"}:{index:0}};state.sequence={contest:fair.id};prepareContest(state);settleFestival(state,state.sequence.duel)}');
+// Absence keeps its in-card reader and never repeats settlement.
+{
+  setup('tab="plan";state.month=state.planMonth=13;state.phase="event";state.pending="contest-newYear-1887";state.hp=10;state.ill=true;state.fairTickets={"newYear-1887":{index:0}};settleFestival(state)');
   const paid=run('structuredClone(state)'),saved=Array.from(mem);
-  if(run('!!victoryLines(pendingEvent().contest,state.fairBook[resultFairId])')){
-    run('handleAction("fair-close")');
-    const lines=run('victoryLines(pendingEvent().contest,state.fairBook[resultFairId])');
-    for(const [page,[,line]] of lines.entries()){
-      const view=run('contestScene(pendingEvent())');
-      assert.match(view,/class="dialogue"/);assert.doesNotMatch(view,/award-sheet/);
-      assert.ok(view.includes(run('escapeHTML('+JSON.stringify(line)+')')));
-      assert.deepEqual(run('structuredClone(state)'),paid);
-      run('handleAction("fair-victory-next:'+page+'")');
-    }
-    assert.notEqual(run('state.pending'),"contest-"+id);
-    continue;
-  }
   assertOk(`(()=>{
     const event=pendingEvent(),entry=state.fairBook[event.contest.id],scene=contestResultScene(event.contest,entry);
     const settle=settleFestival,monthly=settleMonth,save=persist,rng=Math.random;
@@ -278,10 +259,39 @@ for(const id of ['newYear-1887','royalWarrant-1887']){
   })()`);
   assert.deepEqual(run('structuredClone(state)'),paid);
   assert.deepEqual(Array.from(mem),saved);
-  assert.equal(run('settleFestival(state,state.sequence.duel)'),null);
-  assert.deepEqual(run('structuredClone(state)'),paid);
-  run('handleAction("fair-result-next:0");state=structuredClone(state)');
-  assertOk('contestResultPage(state.fairBook[resultFairId],contestResultScene(pendingEvent().contest,state.fairBook[resultFairId]))===0');
+}
+// Each scored result closes into narration, advances once per click, and ends on the last line.
+for(const id of ['newYear-1887','royalWarrant-1887','jubilee1887']){
+  for(const margin of [-8,0,8]){
+    Object.assign(ctx,{resultFairId:id,resultMargin:margin});
+    setup(`tab="plan";{
+      const fair=contestArchive.find(f=>f.id===resultFairId);
+      state.month=state.planMonth=fair.month;
+      state.stats.기품=400;state.qty=1;state.quality="fine";state.shop.design=state.shop.works=3;
+      state.productHistory={toys:{reputation:20,units:240,orders:12}};
+      state.fairTickets={[fair.id]:fair.company?{product:"toys"}:{index:0}};
+      state.sequence={contest:fair.id};prepareContest(state);
+      const duel=state.sequence.duel;duel.judgment.score=duel.rivalScore+resultMargin;
+      settleFestival(state,duel);
+    }`);
+    assert.equal(run('contestRank(state.fairBook[resultFairId])'),margin===0?'공동 우승':margin>0?'승리':'패배');
+    const paid=run('structuredClone(state)'),saved=Array.from(mem);
+    assert.equal(run('settleFestival(state,state.sequence.duel)'),null);
+    const lines=run('contestClosingLines(pendingEvent().contest,state.fairBook[resultFairId])');
+    assert.equal(lines[0][0],'');assert.ok(lines.length>=2);
+    assert.match(run('contestScene(pendingEvent())'),/award-sheet/);
+    run('handleAction("fair-close")');
+    for(const [page,[,line]] of lines.entries()){
+      run('handleAction("fair-close");handleAction("fair-closing-next:'+(page-1)+'")');
+      const view=run('contestScene(pendingEvent())');
+      assert.match(view,/class="dialogue"/);assert.doesNotMatch(view,/award-sheet/);
+      assert.ok(view.includes(run('escapeHTML('+JSON.stringify(line)+')')));
+      assert.deepEqual(run('structuredClone(state)'),paid);
+      assert.deepEqual(Array.from(mem),saved);
+      run('handleAction("fair-closing-next:'+page+'")');
+    }
+    assert.notEqual(run('state.pending'),"contest-"+id);
+  }
 }
 // Authored dialogue stays text even when it contains markup-like characters.
 assertOk(`(()=>{
