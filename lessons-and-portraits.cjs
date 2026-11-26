@@ -40,7 +40,9 @@ async function dialogueTransmission(card,contest){
     }finally{await style.evaluate(s=>s.remove());}
   }
   const transmission=samples[1].map((value,i)=>value-samples[0][i]);
-  assert.ok(transmission.every(value=>value>=65&&value<=90),'Scene transmission through dialogue: '+JSON.stringify(samples));
+  const theme=await page.locator('html').getAttribute('data-dialogue-theme');
+  const [min,max]=theme==='dark'?[65,90]:[53,73];
+  assert.ok(transmission.every(value=>value>=min&&value<=max),theme+' scene transmission through dialogue: '+JSON.stringify(samples));
   const ink=await card.evaluate(el=>['p','small'].map(tag=>getComputedStyle(el.querySelector(tag)).color.match(/[\d.]+/g).slice(0,3).map(Number)));
   const luminance=rgb=>rgb.map(channel=>{
     const n=channel/255;
@@ -764,6 +766,7 @@ async function check(browserType){
       }
       await page.getByRole('button',{name:'바르도'}).click();
       const dialogue=page.locator('#conversation .dialogue');
+      assert.equal(await dialogue.evaluate(el=>getComputedStyle(el).backdropFilter),'blur(12px)');
       const words=await dialogue.innerText();
       const actor=page.locator('.standing-window img').first();
       if(await actor.count())await actor.evaluate(im=>im.decode());

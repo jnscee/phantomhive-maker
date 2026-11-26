@@ -1019,7 +1019,7 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
   --hud-glass-middle:.675;
   --hud-glass-blur:blur(3px);
   --hud-navy-glass:linear-gradient(115deg,rgb(19 34 55 / var(--hud-glass-edge)),rgb(30 48 74 / var(--hud-glass-middle)) 62%,rgb(20 35 56 / var(--hud-glass-edge)));
-  --reading-glass:linear-gradient(115deg,rgb(255 255 255 / var(--hud-glass-edge)),rgb(246 250 255 / var(--hud-glass-middle)) 62%,rgb(231 240 250 / var(--hud-glass-edge)));
+  --reading-glass:linear-gradient(115deg,rgb(255 255 255 / .77),rgb(246 250 255 / .725) 62%,rgb(231 240 250 / .77));
   --reading-ink:#172d46;
   --reading-label:#273e56;
   --reading-border:#a3b9cd;
@@ -2043,6 +2043,8 @@ html[data-placement-editor=true] .performer,html[data-placement-editor=true] .pe
 html[data-placement-editor=true] .performer[data-dragging=true],html[data-placement-editor=true] .performer[data-dragging=true] * {cursor:grabbing!important}
 html[data-placement-editor=true] .performer:focus-visible {outline:2px solid #fff0b6;outline-offset:3px}
 html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.motion-object) {animation-play-state:paused!important}
+
+#conversation, #overture { --hud-glass-blur:blur(12px); }
 
 /* The frame and its text stay crisp; only the glass transmits the scene below. */
 #scene :is(
