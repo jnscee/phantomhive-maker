@@ -301,9 +301,9 @@ function contestResultDialogueMarkup(fair,entry){
   if(!scene)return "";
   const page=contestResultPage(entry,scene),[speaker,line]=scene.lines[page];
   return '<section class="award-dialogue" aria-label="결과 대사">'+
-    '<div class="award-dialogue-line" aria-live="polite" aria-atomic="true">'+
-    '<div class="award-dialogue-heading"><h4>'+escapeHTML(speaker)+'</h4><span>'+(page+1)+' / '+scene.lines.length+'</span></div>'+
-    '<p>'+escapeHTML(line)+'</p></div><nav class="award-dialogue-controls" aria-label="결과 대사 넘기기">'+
+    sceneLine(escapeHTML(speaker),escapeHTML(line),"",'aria-live="polite" aria-atomic="true"')+
+    '<span class="award-page">'+(page+1)+' / '+scene.lines.length+'</span>'+
+    '<nav class="award-dialogue-controls" aria-label="결과 대사 넘기기">'+
     btn("이전 대사","fair-result-prev:"+page,page===0)+
     btn(page===scene.lines.length-1?"마지막 대사":"다음 대사","fair-result-next:"+page,page===scene.lines.length-1)+
     btn("다시 보기","fair-result-restart:"+page,page===0)+'</nav></section>';
