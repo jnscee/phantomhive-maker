@@ -21,7 +21,10 @@ function playMarkup(){
   const outcome=lessonGrades[seq.grade]?.label;
   const stageText=(advancedCourse(state,id)?advancedLessons[id]+" ":"")+(outcome?lessonPlayback(id,seq.grade,seq.remark):line);
   const all=Object.keys(seq.after).filter(k=>seq.before[k]!==seq.after[k]);
-  let rows=all.map(k=>'<div class="stage-stat"><span>'+statLabel(k)+'</span><em data-stat="'+k+'">'+seq.before[k]+'</em><i><b></b></i><small>'+signed(seq.after[k]-seq.before[k])+'</small></div>').join("");
+  const rows=all.map(k=>{
+    const delta=seq.after[k]-seq.before[k];
+    return '<div class="stage-stat '+deltaTone(k,delta)+'"><span>'+statLabel(k)+'</span><em data-stat="'+k+'">'+seq.before[k]+'</em><i><b></b></i><small>'+signed(delta)+'</small></div>';
+  }).join("");
   const controls=previewLesson
     ? '<select id="preview-lesson" aria-label="미리 볼 일정">'+Object.keys(choreography).map(key=>'<option value="'+key+'"'+(key===id?' selected':'')+'>'+actions[key].name+'</option>').join("")+'</select><a href="./">표지로</a>'
     : '<button data-action="speed">재생 ×'+speed+'</button><button data-action="skip">이 순 마치기 ›</button>';

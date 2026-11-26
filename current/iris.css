@@ -1024,13 +1024,21 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
   --reading-label:#273e56;
   --reading-border:#a3b9cd;
   --reading-shadow:inset 0 1px #ffffffb0,0 3px 12px #12243b30;
+  --read-control:linear-gradient(135deg,#f9fcfff0,#e3edf7ed);
+  --read-hover:#d9e8f5;--read-active:#304c69;--read-active-ink:#fff;
+  --read-focus:#416687;--read-track:#c5d0dd;--read-rule:#647e983e;
+  --read-gain:#155443;--read-loss:#802c39;
 }
 :root[data-dialogue-theme="dark"] {
   --reading-glass:var(--hud-navy-glass);
   --reading-ink:#fff;
   --reading-label:#f5f9ff;
   --reading-border:#c7d9ee80;
-  --reading-shadow:inset 0 1px #effaff80,0 3px 10px #101d3238;
+  --reading-shadow:inset 0 1px #effaff80,0 3px 12px #101d3238;
+  --read-control:linear-gradient(135deg,#304960f2,#1a2d43ed);
+  --read-hover:#405e78;--read-active:#d3e4f1;--read-active-ink:#1a324b;
+  --read-focus:#bfd7ed;--read-track:#3c4f64;--read-rule:#c9dbef45;
+  --read-gain:#a4e9d6;--read-loss:#ffbeb6;
 }
 #scene[data-mode=home] :is(#money,#nav) {background:var(--hud-navy-glass);-webkit-backdrop-filter:var(--hud-glass-blur);backdrop-filter:var(--hud-glass-blur)}
 
@@ -2044,13 +2052,14 @@ html[data-placement-editor=true] .performer[data-dragging=true],html[data-placem
 html[data-placement-editor=true] .performer:focus-visible {outline:2px solid #fff0b6;outline-offset:3px}
 html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.motion-object) {animation-play-state:paused!important}
 
-#conversation, #overture { --hud-glass-blur:blur(12px); }
+#conversation, #overture, #playback { --hud-glass-blur:blur(12px); }
 
 /* The frame and its text stay crisp; only the glass transmits the scene below. */
 #scene :is(
   #conversation article.dialogue:not([id="impact-summary"]),
   #overture:not([data-voice-only="true"]) .dialogue,
-  #playback .stage-foot,
+  #playback :is(.stage-foot,.stage-record,.stage-top),
+  #conversation :is(.review-bubble,.review-slip),
   .lau-counter .shop-talk,
   #conversation .contest-slip:has(.award-dialogue)
 ) {
@@ -2073,12 +2082,28 @@ html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.m
   padding:.35em 0;background:none;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;
   overflow:visible;cursor:auto;text-align:start;
 }
-:root:not([data-dialogue-theme="dark"]) #scene :is(#conversation,#overture) .answers button {
-  color:#1c3751;background:linear-gradient(135deg,#f9fcffef,#e3edf7ed);border-color:#9fb4c7;text-shadow:none;
+#scene :is(#conversation .answers button,#overture .answers button,#playback .stage-foot button,
+  #conversation .review-slip button,#conversation #impact-summary button) {
+  color:var(--reading-ink);background:var(--read-control);border:1px solid var(--reading-border);
+  border-radius:5px;box-shadow:var(--reading-shadow);text-shadow:none;
+  &:is(:hover,:focus-visible):enabled {color:var(--reading-ink);background:var(--read-hover);border-color:var(--read-focus)}
+  &:focus-visible {outline:2px solid var(--read-focus);outline-offset:1px}
 }
-:root:not([data-dialogue-theme="dark"]) #scene :is(#conversation,#overture) .answers button:is(:hover,:focus-visible):enabled {
-  color:#152c43;background:#d9e8f5;border-color:#516e88;
+#scene #playback .stage-stat, #scene #conversation .review-slip .delta-row {
+  --delta:var(--reading-label);--shade:var(--reading-label);
+  &.gain {--delta:var(--read-gain);--shade:var(--read-gain)}
+  &.loss {--delta:var(--read-loss);--shade:var(--read-loss)}
+  em,> b {color:var(--reading-ink)}
+  > i {background:var(--read-track);box-shadow:none}
 }
+#scene #conversation .review-bubble::after {background:var(--read-control);border-color:var(--reading-border)}
+#scene #conversation .review-slip .delta-row small {color:var(--reading-label)}
+#scene #conversation .review-slip .delta-meter {border-color:var(--read-rule)}
+#scene #conversation .review-slip .delta-meter > b {background:var(--reading-ink)}
+#scene #playback .stage-stat small {color:var(--delta)}
+#scene #playback .stage-stat i b {background:var(--delta)}
+#scene #conversation .review-slip h3 small,#scene #conversation .review-bubble > b,
+#scene #playback .stage-top > span {color:var(--reading-label);text-shadow:none}
 .dialogue-theme-options button::before {
   content:"";display:inline-block;width:.8em;height:.8em;margin-inline-end:.45em;
   border-radius:50%;vertical-align:-.04em;border:1px solid #a3b6cc;background:#f3f7fb;
@@ -2087,10 +2112,9 @@ html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.m
 
 ::highlight(dialogue-unread) { color: transparent; text-shadow: none; }
 
-/* The planning footer and dialogue toolbar share a light surface inside their own views. */
+/* Planner surfaces keep their light palette in both reading modes. */
 #scene #calendar > .lesson-index,
-#scene #calendar > .calendar-foot,
-#scene :is(#conversation,#overture) .opening-top {
+#scene #calendar > .calendar-foot {
   --panel-ink:#203650;
   --panel-secondary:#425974;
   --panel-rule:#899eb58c;
@@ -2174,15 +2198,21 @@ html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.m
   #calendar .card-field:has([data-action="visit:townhouse"]) .visit-card > :is(img,b) {grid-area:auto}
 }
 #scene :is(#conversation,#overture) .opening-top {
-  > button {color:var(--panel-ink);background:transparent;text-shadow:none}
-  > button:is(:hover,:focus-visible):enabled {color:var(--panel-ink);background:#d6e5f2;border-color:#92a9bf}
-  > button:focus-visible {outline:2px solid #284e73;outline-offset:1px}
-  > button:disabled {color:#617184;opacity:.74}
-  > :is(#opening-auto,[data-read=auto])[aria-pressed=true] {color:#fff;background:var(--panel-selected);border-color:#718da6}
+  color:var(--reading-ink);background:var(--read-control);border-color:var(--reading-border);
+  box-shadow:var(--reading-shadow);text-shadow:none;
+  -webkit-backdrop-filter:var(--hud-glass-blur);backdrop-filter:var(--hud-glass-blur);
+  > button {color:var(--reading-ink);background:transparent;text-shadow:none}
+  > button:is(:hover,:focus-visible):enabled {color:var(--reading-ink);background:var(--read-hover);border-color:var(--read-focus)}
+  > button:focus-visible {outline:2px solid var(--read-focus);outline-offset:1px}
+  > button:disabled {color:var(--reading-label);opacity:.65}
+  > :is(#opening-auto,[data-read=auto])[aria-pressed=true] {color:var(--read-active-ink);background:var(--read-active);border-color:var(--read-focus)}
 }
-
+#scene[data-story=true] > button#dialogue-visibility,
+#scene[data-art-only=true] .opening-top > button#dialogue-visibility {
+  color:var(--reading-ink);background:var(--read-control);border-color:var(--reading-border);
+}
 /* Keep the silhouettes behind the home conversation from pooling into bright spots. */
-:root:not([data-dialogue-theme=dark]) #scene[data-mode=chat] #conversation > article.dialogue {
+:root:not([data-dialogue-theme=dark]) #scene[data-mode=chat] #conversation > article.dialogue:not(#impact-summary) {
   --reading-glass:linear-gradient(115deg,#fcfdffe8,#edf3f9e0);
   --hud-glass-blur:blur(20px);
 }

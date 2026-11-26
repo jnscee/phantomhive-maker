@@ -92,8 +92,7 @@ async function checkNotebook(page){
   await page.locator('[data-action="motion:reduced"]').click();
   assert.equal(await page.locator('[data-action="motion:reduced"]').getAttribute('aria-pressed'),'true');
   const light=page.getByRole('button',{name:'화이트',exact:true});
-  assert.equal(await light.getAttribute('aria-pressed'),'true');
-  await page.getByRole('button',{name:'다크',exact:true}).click();
+  assert.equal(await page.getByRole('button',{name:'다크',exact:true}).getAttribute('aria-pressed'),'true');
   assert.equal(await page.locator('html').getAttribute('data-dialogue-theme'),'dark');
   await light.click();
   const book=page.locator('.notebook-guide');
@@ -248,12 +247,12 @@ async function check(browserType){
       });
       assert.ok(coverFits,'The fan game notice must be visible when the cover opens');
       await page.locator('[data-action="cover:settings"]').click();
-      await page.getByRole('button',{name:'다크',exact:true}).click();
-      await page.reload({waitUntil:'domcontentloaded'});
-      assert.equal(await page.locator('html').getAttribute('data-dialogue-theme'),'dark');
-      await page.locator('[data-action="cover:settings"]').click();
       assert.equal(await page.getByRole('button',{name:'다크',exact:true}).getAttribute('aria-pressed'),'true');
       await page.getByRole('button',{name:'화이트',exact:true}).click();
+      await page.reload({waitUntil:'domcontentloaded'});
+      assert.equal(await page.locator('html').getAttribute('data-dialogue-theme'),'light');
+      await page.locator('[data-action="cover:settings"]').click();
+      assert.equal(await page.getByRole('button',{name:'화이트',exact:true}).getAttribute('aria-pressed'),'true');
       await page.locator('.cover-leaf [data-action="back"]').click();
       const storyAppearance={},storyTransmission={};
       const weatherPage=await browser.newPage({viewport});

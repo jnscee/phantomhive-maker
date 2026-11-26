@@ -35,6 +35,7 @@
 <button type="button" id="rail-music" aria-label="배경음악" aria-pressed="true">BGM 켜짐</button>
 </nav></main></div>
 <script src="js/prince.js?v=9bcfe5638274"></script><script src="js/recruit.js?v=6be14a12315b"></script><script src="js/audio.js?v=bcabf0c41067"></script><script>
+document.documentElement.dataset.dialogueTheme=readDialogueTheme();
 const tourSession=false;
 document.getElementById("rail-music").addEventListener("click",()=>toggleChannel("bgm"));
 for(const type of ["click","keydown"])document.addEventListener(type,e=>{if(e.isTrusted)musicPlayer.unlock();},{capture:true,once:true});

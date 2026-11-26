@@ -1118,13 +1118,8 @@ function recordPanel(){
   const album='<div class="ending-album">'+(endingGalleryEntries().map(([id,route])=>endingThumb(id,route)).join("")||"아직 기록된 엔딩이 없습니다.")+'</div>';
   return frame("가문 장부",familyFolio(history,album));
 }
-const dialogueThemeKey="earl-phantomhive-dialogue-theme";
 const dialogueThemes={light:"화이트",dark:"다크"};
-let dialogueTheme="light";
-try{
-  const stored=localStorage.getItem(dialogueThemeKey);
-  if(Object.hasOwn(dialogueThemes,stored))dialogueTheme=stored;
-}catch{}
+let dialogueTheme=readDialogueTheme();
 function dialogueThemeControls(){
   return '<section class="mixer"><h3>대화창 테마</h3><div class="opts dialogue-theme-options">'+
     Object.entries(dialogueThemes).map(([key,label])=>option(label,"dialogue-theme:"+key,dialogueTheme===key)).join("")+'</div></section>';

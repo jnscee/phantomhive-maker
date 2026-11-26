@@ -286,12 +286,15 @@ html:is([data-fair-preview],[data-story-preview]) :is(#system-menu,#mobile-menu)
 #calendar .plan-effects {display:inline-flex;max-width:100%;flex-wrap:wrap;gap:.1rem .35rem;vertical-align:baseline}
 #calendar .plan-effect {display:inline-block;white-space:nowrap}
 #calendar .plan-effect b {font-size:.88em;letter-spacing:.03em}
-#calendar .plan-effect .gain,#impact-summary .gain {--delta:#9ee6c9}
-#calendar .plan-effect .loss,#impact-summary .loss {--delta:#ffb2a5}
+#calendar .plan-effect .gain {--delta:#9ee6c9}
+#impact-summary .gain {--delta:var(--read-gain)}
+#calendar .plan-effect .loss {--delta:#ffb2a5}
+#impact-summary .loss {--delta:var(--read-loss)}
 #calendar .plan-effect b,#impact-summary li strong {color:var(--delta,inherit)}
 #impact-summary li {row-gap:.2rem;padding:.35rem 0}
-#impact-summary li small {font-size:.85em;color:#d3dfe8}
-#impact-summary .impact-track {grid-column:1/-1;height:5px;border-radius:3px;background:linear-gradient(to right,#a1aebd 0 var(--low),var(--delta) var(--low) var(--high),#ffffff24 var(--high) 100%)}
+#impact-summary li {border-color:var(--read-rule)}
+#impact-summary li small {font-size:.85em;color:var(--reading-label)}
+#impact-summary .impact-track {grid-column:1/-1;height:5px;border-radius:3px;background:linear-gradient(to right,#a1aebd 0 var(--low),var(--delta) var(--low) var(--high),var(--read-track) var(--high) 100%)}
 
 /* The judges' scorecard shares a baseline and palette with the two nameplates. */
 .duel-art .duel-portrait {image-rendering:pixelated}
@@ -544,16 +547,15 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
 #live-budget .expense-details>summary {cursor:pointer;font-weight:600}
 
 #scene #conversation:not([data-review=true]) > article#impact-summary {
-  background:linear-gradient(114deg,#d9efff22,transparent 36%,#b7d8f010),linear-gradient(165deg,#324a60da,#142a3dcc);
-  border:1px solid #a7bdd4bb;border-radius:8px;
-  box-shadow:inset 0 1px #effaff80,inset 0 -1px #cedfff38,0 4px 12px #101d3255;
-  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)
+  color:var(--reading-ink);background:var(--reading-glass);
+  border:1px solid var(--reading-border);border-radius:12px;box-shadow:var(--reading-shadow);text-shadow:none;
+  backdrop-filter:var(--hud-glass-blur);-webkit-backdrop-filter:var(--hud-glass-blur)
 }
-#impact-summary header {display:flex;align-items:center;gap:.65em;color:#f3e5c7;font-family:var(--serif)}
+#impact-summary header {display:flex;align-items:center;gap:.65em;color:var(--reading-label);font-family:var(--serif)}
 #impact-summary header::after {content:"";flex:1;height:1px;background:linear-gradient(90deg,#c9b99699,transparent)}
-#impact-summary .impact-scroll .affinity-rise {display:block;border:0;padding:.18em 0;color:#c4eddf;line-height:1.4}
+#impact-summary .impact-scroll .affinity-rise {display:block;border:0;padding:.18em 0;color:var(--read-gain);line-height:1.4}
 #impact-summary .impact-notes {display:flex;flex-wrap:wrap;gap:.25em .45em;margin-top:.35em}
-#impact-summary .impact-notes span {padding:.12em .58em;border:1px solid #a3b6cd66;border-radius:4px;color:#e6edf6;background:#273e526e;font-size:.84em}
+#impact-summary .impact-notes span {padding:.12em .58em;border:1px solid #a3b6cd66;border-radius:4px;color:var(--reading-ink);background:var(--read-control);font-size:.84em}
 
 .london-board .london-growth {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:8px 0}
 .london-growth>div {padding:5px 9px;background:#1f3448;border:1px solid #8296ac75;border-radius:4px}

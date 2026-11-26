@@ -571,9 +571,10 @@ function judgeContest(run,fair,ticket){
     if(fair.warrant&&history.units<18)condition="누적 판매·납품 18개 미달";
   }
   const strength=factors.reduce((n,[,factor])=>n*factor,basis[1]);
-  const score=Math.round(strength),ratio=score/contestRivalAbility(fair);
+  const managementBonus=fair.warrant?Math.floor(cap(Number(run.stats?.경영)||0,500)/50):0;
+  const score=Math.round(strength)+managementBonus,ratio=score/contestRivalAbility(fair);
   return {...base,score,speechTier:ratio<.7?0:ratio<1.1?1:2,
-    scoreParts:[basis],factors,scoreCondition:condition};
+    scoreParts:[basis],factors,scoreCondition:condition,...(managementBonus?{managementBonus}:{})};
 }
 
 function matchAssessment(run,fair,ticket,duel){
@@ -664,7 +665,7 @@ function contestRank(entry){
     const factors=entry?.factors;
     if(Array.isArray(basis)&&basis.length===1&&Number.isFinite(basis[0]?.[1])&&basis[0][1]>=0&&
       Array.isArray(factors)&&factors.length&&factors.every(row=>Array.isArray(row)&&Number.isFinite(row[1])&&row[1]>=0)) {
-      return factors.reduce((n,row)=>n*row[1],basis[0][1]);
+      return factors.reduce((n,row)=>n*row[1],basis[0][1])+(entry.managementBonus||0);
     }
     return Number.isFinite(entry?.score)&&entry.score>=0?entry.score:null;
   }
@@ -920,7 +921,7 @@ if(typeof module!=="undefined")module.exports=PreviewEngine;
     const scoreHelp='<p>최신 코드 그대로 표시된 정수 점수를 비교합니다. 높은 점수가 이기며, 점수가 같으면 공동 우승입니다. 인증 요건을 충족하지 못하면 점수와 관계없이 인증이 보류됩니다.</p>';
     const note='<p>대사 분기는 상대 점수의 95% 이상인 패배를 근소한 패배로, 동점보다 높고 110% 미만인 승리를 접전 승리로 구분합니다. 승패와 보상은 원본 결산이 결정하며, 대사를 다시 볼 때에는 확정된 결과를 재사용합니다.</p>';
     const company=s.fair.company?'<tr><th>판매·납품 실적</th><td>'+b.productHistory.sweets.units+'개</td></tr><tr><th>설계 / 제작 시설</th><td>'+b.shop.design+' / '+b.shop.works+'단계</td></tr>':'';
-    const maximum=s.group==='warrant'&&s.year===2?'<p>이 연도의 팬텀사 최고 점수는 152점이며, 상대는 148점입니다. 충분히 준비한 상태도 점수 차이는 접전 구간에 해당합니다.</p>':'';
+    const maximum=s.group==='warrant'&&s.year===2?'<p>이 연도의 상대는 148점입니다. 견본과 납품 실적에 시엘의 경영이 함께 반영됩니다.</p>':'';
     $('inspection-body').innerHTML='<h3>판정에 사용한 값</h3>'+status+scoreHelp+'<table><tbody>'+rows+company+rankRow+'</tbody></table>'+
       '<h3>원본 결산으로 계산한 변화</h3><table><tbody><tr><th>상금</th><td>'+amount(e.purse)+'</td></tr><tr><th>능력 변화</th><td>'+escapeHTML((e.growth||[]).join(' · ')||'없음')+'</td></tr><tr><th>가문 명성</th><td>+'+(a.renown-b.renown)+'</td></tr><tr><th>왕실 평가</th><td>+'+(a.royal-b.royal)+'</td></tr><tr><th>왕실 인증</th><td>'+(a.royalWarrants.sweets?'비스킷 · 이후 매달 수요 +2개':'없음')+'</td></tr></tbody></table>'+note+maximum+
       '<p class="revision">확인 기준 · '+sourceRevision+'</p>';

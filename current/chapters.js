@@ -261,7 +261,7 @@ function calendarEvents(){
 function foundationEvents(){return [{id:"homecoming",chapter:true,household:true,speaker:"타나카",title:recruitScenes.homecoming.title,text:"서재로 돌아온 타나카가 시엘에게 그날의 일을 이야기하고, 다시 가문의 서신을 맡는다.",sees:tanakaReturns,choices:[
  choice("서재 열쇠를 돌려준다","타나카 복귀 · 서재 근무",()=>{recruit("tanaka");state.staff="library";}),
  choice("먼저 다과를 함께한다","타나카 복귀 · 신뢰 상승",()=>{recruit("tanaka");state.staff="library";talkTrust("tanaka",2);})]},
- {id:"unasked",speaker:"세바스찬",title:"명령보다 한 박자 먼저",lines:[["","시엘이 손을 내밀자 흰 장갑이 이미 그 위에 놓였다."],["시엘","“… 아직 안 불렀는데?”"],["","세바스찬은 태연히 반대쪽 장갑의 단추를 풀었다."],["세바스찬","“다시 벗겨 드릴까요?”"]],sees:s=>s.month>=4&&(s.flags.attention||0)>=3,choices:[choice("말없이 다음 장갑을 건넨다","둘만의 아침 습관 기록",()=>{state.flags.morningGloves=true;}),choice("도련님의 대답을 기다린다","의지 +15",()=>changeStat("의지",15))]}];}
+ {id:"unasked",speaker:"세바스찬",title:"명령보다 한 박자 먼저",lines:[["","시엘이 손을 내밀자 흰 장갑이 이미 그 위에 놓였다."],["시엘","… 아직 안 불렀는데?"],["","세바스찬은 태연히 반대쪽 장갑의 단추를 풀었다."],["세바스찬","다시 벗겨 드릴까요?"]],sees:s=>s.month>=4&&(s.flags.attention||0)>=3,choices:[choice("말없이 다음 장갑을 건넨다","둘만의 아침 습관 기록",()=>{state.flags.morningGloves=true;}),choice("도련님의 대답을 기다린다","의지 +15",()=>changeStat("의지",15))]}];}
 function sourceNote(e){return e.source||({jubilee:"1887년 6월 빅토리아 여왕 즉위 50주년 · 가문 참여 IF",match:"1888년 런던 성냥공장 파업 · 회사 대응 IF",circus:"런던 타운하우스 · 소마와 아그니가 맞이한 방문객",gardener:"원작 연구소 탈출 · 첫 만남과 명명 / 게임 달력에 배치",maid:"원작 30권 · 올빼미에게 건넨 고용 제안 / 피니안 합류 뒤 월말 추첨",cook:"원작의 서재 면담 · 메이린 합류 뒤 게임 달력에 배치",homecoming:"타나카의 저택 복귀 · 게임 달력에 배치"}[e.id])||"";}
 function houseValues(){
  const staff=Object.values(state.jobs),matched=Object.entries(state.jobs).filter(([p,r])=>servants[p]?.job===r).length;

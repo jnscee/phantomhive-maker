@@ -376,6 +376,11 @@ function sceneLine(speaker,text,next,attributes="",heading=""){
 }
 const novelExpressions={};
 const recruitNames={ciel:"시엘",ciel11:"시엘",ciel12:"시엘",seb:"세바스찬",finny:"피니안",mey:"메이린",owl:"올빼미",bard:"바르도",tanaka:"타나카",snake:"스네이크",soma:"소마",agni:"아그니"};
+const dialogueThemeKey="earl-phantomhive-dialogue-theme";
+function readDialogueTheme(){
+  try{return localStorage.getItem(dialogueThemeKey)==="light"?"light":"dark";}
+  catch{return "dark";}
+}
 function readerControls(at,last,auto){
   return '<div class="opening-top recruit-controls" role="group" aria-label="대사 재생">'+
     '<button type="button" data-read="previous" '+(at===0?'disabled':'')+'>이전</button>'+

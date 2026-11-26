@@ -91,7 +91,7 @@ function festivalNotice(){
     const when=(state.month===fair.month?"이달":"다음 달")+" 하순";
     const criteria=fair.company?[
       ["견본","생산품·재고에서 1개를 빌려 심사 후 반환"],
-      ["평가 항목","견본 등급, 제품 평판, 판매·납품 실적, 설계·제작 시설"],
+      ["평가 항목","견본 등급, 제품 평판, 판매·납품 실적, 설계·제작 시설"+(fair.warrant?", 시엘의 경영":"")],
       ...(fair.warrant?[["인증 요건","출품 전 누적 판매·납품 18개 이상"]]:[])
     ]:[
       ["심사","종목 능력치에 그날의 컨디션·의욕·스트레스가 반영됩니다."],
@@ -174,9 +174,10 @@ function judgeContest(run,fair,ticket){
     if(fair.warrant&&history.units<18)condition="누적 판매·납품 18개 미달";
   }
   const strength=factors.reduce((n,[,factor])=>n*factor,basis[1]);
-  const score=Math.round(strength),ratio=score/contestRivalAbility(fair);
+  const managementBonus=fair.warrant?Math.floor(cap(Number(run.stats?.경영)||0,500)/50):0;
+  const score=Math.round(strength)+managementBonus,ratio=score/contestRivalAbility(fair);
   return {...base,score,speechTier:ratio<.7?0:ratio<1.1?1:2,
-    scoreParts:[basis],factors,scoreCondition:condition};
+    scoreParts:[basis],factors,scoreCondition:condition,...(managementBonus?{managementBonus}:{})};
 }
 function matchAssessment(run,fair,ticket,duel){
   return duel?.judgment?.match?duel.judgment:judgeContest(run,fair,ticket);

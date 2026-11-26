@@ -130,6 +130,16 @@ for(const [units,expected] of [[240,"승리"],[18,"승리"],[17,"인증 요건 �
   assert.equal(run('state.royalWarrants?.toys===33'),units>=18);
   if(units<18)assert.match(run('contestScene(pendingEvent())'),/누적 판매·납품 18개 미달/);
 }
+// Management can tip a close warrant without changing the scores at other fairs.
+setup('state.quality="fine";state.qty=1;state.shop.design=state.shop.works=3;state.productHistory={toys:{reputation:15,units:24,orders:0}}');
+const sampleScore=(id,management)=>run('state.stats.경영='+management+';judgeContest(state,contestArchive.find(f=>f.id==="'+id+'"),{product:"toys"}).score');
+const warrantBase=sampleScore('royalWarrant-1886',0);
+assert.equal(warrantBase,107);
+assert.equal(sampleScore('royalWarrant-1886',150),110);
+assert.equal(sampleScore('royalWarrant-1886',500),warrantBase+10);
+assert.equal(sampleScore('jubilee1887',0),sampleScore('jubilee1887',500));
+run('state.productHistory.toys.units=17');
+assert.equal(run('judgeContest(state,contests.find(f=>f.warrant),{product:"toys"}).scoreCondition'),'누적 판매·납품 18개 미달');
 // An unfinished legacy match keeps both contestants' scores. A previously awarded upset stays final.
 setup('state.month=13;state.stats.기품=210;state.fairTickets={"newYear-1887":{index:0}};state.sequence={contest:"newYear-1887"};prepareContest(state);state.sequence.duel.rivalScore=195;state.sequence.duel.judgment.chance=0;state.stats.기품=50;persist();state=normalizeSave(saves.auto)');
 assertOk('contestScene(pendingEvent()).includes("195점")');
