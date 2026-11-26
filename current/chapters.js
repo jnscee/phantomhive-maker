@@ -92,12 +92,16 @@ function nextVisitEvent(run){
 function visitPreview(id){
  if(!id)return "방문지를 선택하세요.";
  if(id==="none")return "방문 생략";
- // Visits follow the booked lessons and precede the estate's month-end bonuses.
- const forecast=projectTraining(scheduledActivities(state).length);
- if(forecast.ill)return "병환 시 방문 취소";
+ const planning=state.phase==="plan";
+ const atVisit=state.phase==="visit"&&state.visit===id&&Boolean(state.sequence);
+ if(atVisit&&(state.sequence.visitBefore||state.visitTurn===state.month))return visitName(visitPerson(id));
+ // Project only the lessons before arrival. Once there, the lessons are already in state.
+ const forecast=planning?projectTraining(scheduledActivities(state).length):{...state,stats:{...state.stats}};
+ if(planning&&forecast.ill)return "병환 시 방문 취소";
  // A first investigation can change the garden host before the visit.
- if(id==="garden"&&finnyMissing(state)&&(forecast.counts.casework||0)>(state.counts.casework||0))return "만남은 방문 때 확인";
+ if(planning&&id==="garden"&&finnyMissing(state)&&(forecast.counts.casework||0)>(state.counts.casework||0))return "만남은 방문 때 확인";
  forecast.visit=id;
+ forecast.visitTurn=forecast.month;
  forecast.flags={...forecast.flags};
  const person=visitPerson(id,forecast);
  if(person)forecast.people={...forecast.people,[person]:{...forecast.people[person]}};
@@ -105,7 +109,8 @@ function visitPreview(id){
  const host=visitName(person),event=nextVisitEvent(forecast);
  if(!event)return host;
  const guest=castName(event);
- return host+" / 교류 시 가능 · "+(guest===host?"":guest+" ")+"「"+event.title+"」";
+ const certainty=atVisit?"교류 시 확정":"교류 시 가능";
+ return host+" / "+certainty+" · "+(guest===host?"":guest+" ")+"「"+event.title+"」";
 }
 function visitScene(){
  const id=state.visit,[room,plain,label]=visitsVN[id];

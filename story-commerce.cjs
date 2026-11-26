@@ -1132,6 +1132,81 @@ assertOk('state.ill && !hasPendingVisit()');
 run('state.hp=57;state.stress=51;persist()');
 assertOk('!state.ill && hasPendingVisit()');
 
+// Preview eligibility uses the post-interaction state without applying rewards or saving.
+const checkedVisitPreview=place=>{
+  ctx.previewPlace=place;
+  const before=run('JSON.stringify(state)'),saved=JSON.stringify([...mem]);
+  const text=run('visitPreview(previewPlace)');
+  assert.equal(run('JSON.stringify(state)'),before,'visit preview changed campaign state');
+  assert.equal(JSON.stringify([...mem]),saved,'visit preview wrote browser storage');
+  return text;
+};
+for(const [hp,recovery,supperDone,expected] of [
+  [73,0,true,null],[74,0,true,null],[72,0,true,'visitKitchenBowl'],[75,0,true,null],
+  [74,1,true,'visitKitchenBowl'],[73,0,false,'bardSupper']
+]){
+  Object.assign(ctx,{previewHP:hp,previewRecovery:recovery,previewSupperDone:supperDone});
+  setup('tab="plan";state.month=state.planMonth=24;recruit("bard");state.visit="kitchen";state.phase="visit";state.sequence={index:2};state.hp=previewHP;state.counts.recovery=previewRecovery;state.flags.bardSupper=previewSupperDone;state.events=previewSupperDone?[{id:"bardSupper",index:0,month:20}]:[]');
+  const text=checkedVisitPreview('kitchen');
+  assert.equal(text.includes('손잡이 달린 그릇'),expected==='visitKitchenBowl','HP '+hp+' bowl preview');
+  if(expected)assert.match(text,/교류 시 확정/);else assert.doesNotMatch(text,/확정|손잡이 달린 그릇/);
+  assert.equal(text.includes('식기 전에'),expected==='bardSupper');
+  run('visitDone(true)');
+  assert.equal(run('state.sequence.visitEvent||null'),expected);
+  assertOk('state.hp===previewHP+2&&state.stats.지성===22&&state.people.bard.toward===3');
+}
+// Listing every eligible speaker promises meetings after the first selected event.
+for(const [place,activity,event,extraName] of [
+  ['parlor','dance','audience','엘리자베스'],['town','supplier','trade','라우']
+]){
+  Object.assign(ctx,{previewPlace:place,previewActivity:activity});
+  setup('tab="plan";state.month=state.planMonth=3;state.visit=previewPlace;state.counts[previewActivity]=1');
+  const planned=checkedVisitPreview(place);
+  assert.match(planned,/교류 시 가능/);assert.doesNotMatch(planned,/확정/);
+  assert.ok(!planned.includes(extraName),place+' advertised a later event speaker');
+  run('state.phase="visit";state.sequence={index:2}');
+  assert.match(checkedVisitPreview(place),/교류 시 확정/);
+  run('visitDone(true)');assert.equal(run('state.sequence.visitEvent'),event);
+}
+setup('tab="plan";state.month=state.planMonth=24;recruit("finny");state.people.finny.toward=4;state.visit="garden";state.phase="visit";state.sequence={index:2}');
+assert.match(checkedVisitPreview('garden'),/교류 시 확정.*온실의 여벌 열쇠/);
+assert.doesNotMatch(checkedVisitPreview('garden'),/신뢰|체력|[0-9]/);
+run('visitDone(false)');
+assertOk('!state.sequence.visitEvent&&state.people.finny.toward===4&&state.stats.체력===50&&state.stress===16&&state.motivation===72');
+assert.equal(checkedVisitPreview('garden'),'피니안');
+run('state.sequence={index:2}'); // A restored visitTurn guard must also prevent another forecast.
+assert.equal(checkedVisitPreview('garden'),'피니안');
+run('delete state.visitTurn;state.visit="library"');
+assert.match(checkedVisitPreview('garden'),/교류 시 가능/);
+assert.doesNotMatch(checkedVisitPreview('garden'),/확정/);
+assert.equal(checkedVisitPreview(null),'방문지를 선택하세요.');
+assert.equal(checkedVisitPreview('none'),'방문 생략');
+// Running a preview before either choice must preserve every real effect, including caps.
+for(const place of ['library','garden','kitchen','quarters','parlor','company','town','townhouse']){
+  for(const [ability,grown] of [[12,16],[498,499],[500,500]])for(const engage of [false,true]){
+    Object.assign(ctx,{previewPlace:place,previewAbility:ability,previewEngage:engage});
+    setup('tab="plan";state.month=state.planMonth=24;state.visit=previewPlace;state.phase="visit";state.sequence={index:2};state.flags.townhouse=true;for(const id of Object.keys(servants)){recruit(id);state.people[id].toward=previewAbility===500?20:19;}for(const key of stats)state.stats[key]=previewAbility;state.hp=99;state.stress=1;state.salesBook=[{month:23,product:"toys",sold:12,revenue:168,cost:40}]');
+    ctx.previewSeed=run('structuredClone(state)');
+    run('visitDone(previewEngage)');
+    const direct=run('JSON.stringify(state)');
+    assert.equal(run('state.stats[visitGrowth[previewPlace]]'),engage?grown:ability);
+    run('state=structuredClone(previewSeed)');
+    const text=checkedVisitPreview(place);
+    assert.equal(checkedVisitPreview(place),text);
+    run('visitDone(previewEngage)');
+    assert.equal(run('JSON.stringify(state)'),direct,place+' rewards changed after a preview');
+    if(engage){
+      assertOk('!visitPerson(previewPlace)||state.people[visitPerson(previewPlace)].toward===20');
+      if(place==='library')assert.equal(run('state.trust'),2);
+      if(place==='kitchen')assert.equal(run('state.hp'),100);
+      if(place==='garden')assert.equal(run('state.stress'),0);
+      if(place==='townhouse')assertOk('state.flags.agniTea');
+      if(run('state.sequence.visitEvent'))assert.ok(text.includes(run('events.find(e=>e.id===state.sequence.visitEvent).title')));
+    }
+  }
+}
+console.log('PASS visit-preview HP boundaries, event priority, conditional certainty, first-event speakers, purity, quiet choice and all eight places with unchanged capped rewards');
+
 setup('for(const [key,[target]] of Object.entries(courtEducation))state.stats[key]=target;Object.assign(state.level,{library:2,kitchen:2});state.salesBook=Array.from({length:14},()=>({revenue:30,cost:15}));state.events=Array.from({length:6},(_,i)=>({id:"portfolio-"+i+"-1",index:0,month:30}));state.royal=8;state.renown=30;state.fund=2100;state.debt=0;state.advancedStudy={study:2,etiquette:2,accounts:2}');
 assertOk('qualifies() && courtRows().length===11');
 assertOk('cielEndingId(460,true,39)==="releaseTitle" && cielEndingId(460,true,40)==="vowTitle" && cielEndingId(459,true,70)==="vowTitle"');
