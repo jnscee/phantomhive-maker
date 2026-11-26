@@ -80,15 +80,25 @@ function visitPreview(id){
  if(!id)return "방문지를 선택하세요.";
  if(id==="none")return "방문 생략";
  const person=visitPerson(id);
- const forecast={...state,visit:id};
- if(person&&state.people[person]){
-   const relation=state.people[person];
-   forecast.people={...state.people,[person]:{...relation,toward:Math.min(20,relation.toward+1)}};
+ const atVisit=state.phase==="visit"&&state.visit===id&&Boolean(state.sequence);
+ if(atVisit&&(state.sequence.visitBefore||state.visitTurn===state.month))return visitName(person);
+ const forecast=structuredClone(state);
+ forecast.visit=id;
+ forecast.visitTurn=forecast.month;
+ if(person){
+   const relation=forecast.people[person];
+   relation.toward=Math.min(20,relation.toward+1);
  }
- const possible=events.filter(e=>e.visitPlace===id&&!state.flags[e.id]&&e.sees(forecast));
- const people=[...new Set([visitName(person),...possible.map(castName)])].join(", ");
- const event=possible[0];
- return event?people+" / "+castName(event)+" · "+event.title:people;
+ if(person==="agni")forecast.flags.agniTea=true;
+ if(id==="library"&&forecast.people.tanaka)forecast.trust++;
+ const growth=visitGrowth[id];
+ forecast.stats[growth]=cap(forecast.stats[growth]+ordinaryAbilityGain(forecast.stats[growth],4),statMax(growth));
+ if(id==="garden")forecast.stress=cap(forecast.stress-3);
+ if(id==="kitchen")forecast.hp=cap(forecast.hp+2);
+ const event=events.find(e=>e.visitPlace===id&&!forecast.flags[e.id]&&e.sees(forecast));
+ const people=[...new Set([visitName(person),...(event?[castName(event)]:[])])].join(", ");
+ const certainty=atVisit?"교류 시 확정":"조건부";
+ return event?people+" / "+certainty+" · "+castName(event)+" · "+event.title:people;
 }
 const visitGrowth={library:"통찰",garden:"체력",kitchen:"지성",quarters:"통찰",parlor:"기품",company:"경영",town:"매력",townhouse:"매력"};
 function visitScene(){
