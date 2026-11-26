@@ -989,16 +989,21 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
 #calendar .calendar-periods {border-bottom:0}
 #calendar .calendar-foot {background:linear-gradient(130deg,#263d50b3,#162635bd);box-shadow:inset 0 1px #daebfa44,0 4px 12px #0e1b283d}
 
+#scene .lau-counter .goods-ticket[aria-pressed=true] {outline:2px solid #e3cca3;outline-offset:-2px}
+#scene .lau-counter .goods-ticket:focus-visible {outline:2px solid #725628;outline-offset:1px}
+
 #calendar .calendar-settle .plan-balance {display:grid;gap:2px;border-left:1px solid #93abc266;padding-left:12px}
 .plan-balance strong {color:#f5dfb0;font:600 20px/1.1 var(--serif);font-variant-numeric:tabular-nums}
 #calendar .calendar-run {padding:15px calc(clamp(18px,2.2cqw,28px) + 6px);min-height:56px;margin:0;line-height:1.2}
-#calendar .card-bank .lesson {
+/* Shop goods and scheduled activities share the same glass and selection treatment. */
+#calendar .card-bank .lesson, #scene .lau-counter .goods-ticket {
   color:#213448;background:linear-gradient(140deg,#fffaf0bf,#e7eceda8 50%,#c8d9e5ad);
   border:1px solid #afbdcba8;border-radius:6px;box-shadow:inset 0 0 0 2px #f8f7efaa,inset 0 0 0 3px #899dac80,0 2px 6px #101c2b66;
   backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);text-shadow:none;
 }
-#calendar .lesson small {color:#40556b}
-#calendar .card-bank .lesson:is(:hover,:focus-visible,[aria-pressed=true]) {
+#calendar .lesson small, #scene .lau-counter .goods-ticket strong {color:#40556b}
+#calendar .card-bank .lesson:is(:hover,:focus-visible,[aria-pressed=true]),
+#scene .lau-counter .goods-ticket:is(:hover,:focus-visible,[aria-pressed=true]) {
   background:linear-gradient(135deg,#fff9e9c9,#eedcb6b5);color:#30291c;border-color:#c2a466;
   box-shadow:inset 0 0 0 2px #fff4d9,inset 0 0 0 3px #ae905b;outline-color:#e3cca3;
 }
@@ -1022,8 +1027,8 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
 }
 :root[data-dialogue-theme="dark"] {
   --reading-glass:var(--hud-navy-glass);
-  --reading-ink:#f4f8ff;
-  --reading-label:#e3edf8;
+  --reading-ink:#fff;
+  --reading-label:#f5f9ff;
   --reading-border:#c7d9ee80;
   --reading-shadow:inset 0 1px #effaff80,0 3px 10px #101d3238;
 }
