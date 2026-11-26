@@ -808,12 +808,15 @@ body { background:radial-gradient(ellipse at 50% 42%,#263247,#0c1421 78%); }
 .notebook-slots .opts button:disabled { background:#253447; color:#a0afbe; border-color:#526578; opacity:1; }
 .notebook-slots .opts button:is(:hover,:focus-visible):enabled { outline:2px solid #e4c997; outline-offset:1px; }
 
-/* Keep dialogue at a comfortable reading measure inside the stage. */
+/* Contest results occupy the same reading area as the dialogue that follows. */
+#scene {--reading-width:min(68%,38rem); --reading-min-height:min(9.25rem,34%)}
+#scene #conversation .contest-screen > :is(article.dialogue,.award-sheet),
+#scene :is(#conversation,.opening-mat):not([data-review=true]) > .dialogue {
+  box-sizing:border-box; width:var(--reading-width); min-height:var(--reading-min-height); margin-inline:auto;
+}
 #scene :is(#conversation,.opening-mat):not([data-review=true]) > .dialogue,
-#scene #conversation .duel-screen > article.dialogue {
-  box-sizing:border-box;
-  left:0; right:0; margin-inline:auto;
-  width:min(68%,38rem); min-height:min(9.25rem,34%);
+#scene #conversation .contest-screen > article.dialogue {
+  left:0; right:0;
   max-height:45%; overflow:auto;
   padding:clamp(15px,2cqw,25px) clamp(18px,2.5cqw,32px);
 }
@@ -822,16 +825,17 @@ body { background:radial-gradient(ellipse at 50% 42%,#263247,#0c1421 78%); }
 }
 :is(#conversation,.opening-mat) .dialogue h2 { margin:4px 0 9px; }
 @media(max-width:960px) and (orientation:portrait),(max-width:540px) {
+  #scene {--reading-width:min(100%,35rem); --reading-min-height:min(9.5rem,32svh)}
   #scene :is(#conversation,.opening-mat):not([data-review=true]) > .dialogue,
-#scene #conversation .duel-screen > article.dialogue {
-    width:min(100%,35rem); justify-self:center;
-    min-height:min(9.5rem,32svh); max-height:42svh;
+  #scene #conversation .contest-screen > article.dialogue {
+    justify-self:center; max-height:42svh;
   }
 }
 @media(max-height:550px) and (orientation:landscape) {
+  #scene {--reading-width:min(75%,35rem); --reading-min-height:min(7rem,34%)}
   #scene :is(#conversation,.opening-mat):not([data-review=true]) > .dialogue,
-#scene #conversation .duel-screen > article.dialogue {
-    width:min(75%,35rem); min-height:min(7rem,34%); padding:10px 18px;
+  #scene #conversation .contest-screen > article.dialogue {
+    padding:10px 18px;
   }
   :is(#conversation,.opening-mat) .dialogue h2 { margin:2px 0 4px; }
 }

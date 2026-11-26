@@ -274,8 +274,15 @@ async function check(browserType){
       const narration=await fairPage.evaluate(()=>contestResultLine(pendingEvent().contest,state.fairBook[pendingEvent().contest.id]));
       assert.deepEqual(lines[0],["",narration]);
       assert.ok(!(await award.innerText()).includes(narration));
+      const resultBox=await award.boundingBox();
       await award.getByRole('button',{name:'결과창 닫기',exact:true}).click();
       const reading=fairPage.locator('#conversation .dialogue');
+      const dialogueBox=await reading.boundingBox();
+      for(const edge of ['x','width','bottom']){
+        const value=box=>edge==='bottom'?box.y+box.height:box[edge];
+        assert.ok(Math.abs(value(resultBox)-value(dialogueBox))<=1,
+          'Result and dialogue must share '+edge+' at '+viewport.width+'px: '+JSON.stringify([resultBox,dialogueBox]));
+      }
       for(const [page,[speaker,line]] of lines.entries()){
         assert.equal(await award.count(),0);
         if(speaker)assert.equal(await reading.locator('small').innerText(),speaker);
