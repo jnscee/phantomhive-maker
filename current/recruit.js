@@ -260,7 +260,7 @@ function observePortraitStage(stage){
   const opening=stage.querySelector("#overture");
   const conversation=stage.querySelector("#conversation");
   function placeToggle(){
-    const bar=!opening.hidden && opening.dataset.signing!=="true" && opening.dataset.voiceOnly!=="true"
+    const bar=opening && !opening.hidden && opening.dataset.signing!=="true" && opening.dataset.voiceOnly!=="true"
       ? opening.querySelector(".opening-top")
       : !conversation.hidden && conversation.querySelector(":scope > .recruit-controls");
     const parent=stage.dataset.artOnly==="true"?stage:(bar||stage);
@@ -269,7 +269,7 @@ function observePortraitStage(stage){
   // Each new conversation line may replace the entire playback toolbar.
   const controlsObserver=new MutationObserver(placeToggle);
   controlsObserver.observe(stage,{attributes:true,attributeFilter:["data-art-only"]});
-  controlsObserver.observe(opening,{attributes:true,attributeFilter:["hidden","data-signing","data-voice-only"]});
+  if(opening)controlsObserver.observe(opening,{attributes:true,attributeFilter:["hidden","data-signing","data-voice-only"]});
   controlsObserver.observe(conversation,{childList:true,attributes:true,attributeFilter:["hidden"]});
   placeToggle();
   toggle.addEventListener("click",event=>{
