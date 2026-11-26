@@ -1405,9 +1405,12 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
     font-size:clamp(15px,3.8cqw,18px);
   }
   #scene[data-mode=home] #ciel-aside:not(:empty) {
+    position:relative;
     grid-area:1 / 1;
-    inset:auto var(--home-inset) 12px auto;
-    max-width:min(72%,22rem);
+    place-self:center start;
+    inset:12% auto auto 61%;
+    max-width:35%;
+    padding:6px 9px;
   }
 }
 @media (max-width:960px) and (orientation:portrait), (max-width:960px) and (pointer:coarse) {
