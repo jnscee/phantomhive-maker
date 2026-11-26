@@ -45,9 +45,9 @@ const previewFair=previewQuery.has("fair-preview")?(contestArchive.find(f=>f.id=
 const requestedLesson=previewQuery.get("lesson-preview");
 const previewLesson=Object.hasOwn(choreography,requestedLesson)?requestedLesson:null;
 const previewStory=previewQuery.get("story-preview");
-const previewSetback=monthlySetbacks.find(item=>item.id===previewStory);
+const previewIncident=monthlyIncidents.find(item=>item.id===previewStory);
 const previewCompanyCase=companyCases.find(item=>item.id===previewStory);
-const storyDemo=Boolean(previewSetback||previewCompanyCase)||Object.hasOwn(middleObservations,previewStory);
+const storyDemo=Boolean(previewIncident||previewCompanyCase)||Object.hasOwn(middleObservations,previewStory);
 const storageKey="earl-phantomhive-maker-v1";
 let saves, storageOk=true;
 try{ saves=previewLesson||previewFair||storyDemo?{}:JSON.parse(localStorage.getItem(storageKey)||"{}"); }catch{ storageOk=false; }
@@ -192,7 +192,7 @@ function flagEvent(id,effect){
   state.flags[id]=true;
   effect();
 }
-const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),finalYearDecisions(),followupEvents(),appliedExams(),portfolioEvents(),visitorEvents(),setbackEvents(),companyCaseEvents(),authoredStoryEvents(),contestArchive.map(contestEvent)).map(appendAuthoredOptions);
+const events=foundationEvents().concat(initialEvents(),examEvents(),scriptedEvents(),calendarEvents(),finalYearDecisions(),followupEvents(),appliedExams(),portfolioEvents(),visitorEvents(),incidentEvents(),companyCaseEvents(),authoredStoryEvents(),contestArchive.map(contestEvent)).map(appendAuthoredOptions);
 
 function pendingEvent(){
   return events.find(event=>event.id===state.pending);
@@ -322,8 +322,10 @@ function settleMonth(){
   queue.push(...events.filter(e=>e.authored&&!state.flags[e.id]&&e.sees(state)).map(e=>e.id));
   const inquiry=dueCompanyCase(state);
   if(inquiry)queue.push(inquiry.id);
-  const setback=drawMonthlySetback(state,Boolean(strainedRide));
-  if(setback)queue.push(setback);
+  const cashIncident=drawCashIncident(state);
+  if(cashIncident)queue.push(cashIncident);
+  const incident=drawMonthlyIncident(state,Boolean(strainedRide));
+  if(incident)queue.push(incident);
   state.pending=queue.shift()||null;
   state.eventQueue=queue;
   state.phase=state.pending?"event":"result";
@@ -404,7 +406,7 @@ function impactMarkup(impact){
   const milestones=notes.size?'<div class="impact-notes">'+[...notes].map(n=>'<span>'+escapeHTML(n)+'</span>').join("")+'</div>':"";
   const blocks='<ul>'+lines+'</ul>'+milestones+(!lines&&!notes.size?'<p>능력치 변화 없음</p>':'');
   const visitResult=impact.next==="visit" || (impact.next==="term-close" && state.sequence?.readingVisitOutcome);
-  const heading=visitResult?"자유행동 결과":impact.setback?"사건 결과":"선택 결과";
+  const heading=visitResult?"자유행동 결과":(impact.monthlyIncident||impact.setback)?"사건 결과":"선택 결과";
   return '<article id="impact-summary" class="dialogue" aria-label="'+heading+'"><header>'+heading+'</header><div class="impact-scroll">'+blocks+'</div>'+btn("확인","impact-close",false,"primary")+'</article>';
 }
 function choose(index){
@@ -414,13 +416,15 @@ function choose(index){
   const isRecruit=Object.hasOwn(recruitScenes,event.id);
   if(isRecruit&&recruitPage(event.id)!==recruitReadingOrder(event.id,Boolean(state.people.tanaka)).at(-1))return;
   const pages=termPages(event);
-  if((event.setback&&state.flags[event.id])||state.termOutcome||(pages&&(state.termPage||0)<pages.length-1))return;
+  const incidentSettled=event.monthlyIncident&&(event.recurringCash?
+    state.events.some(record=>record.id===event.id&&record.month===state.month):state.flags[event.id]);
+  if(incidentSettled||state.termOutcome||(pages&&(state.termPage||0)<pages.length-1))return;
   const scriptedOutcome=pages&&(event.authored||!event.lines||observedLines(event));
   const examBefore=event.exam||scriptedOutcome?snapStats(state):null;
   const before=choiceSnapshot();
   flagEvent(event.id,choice.effect);
   showChoiceImpact(choice.label,before);
-  if(event.setback&&state.choiceImpact)state.choiceImpact.setback=true;
+  if(event.monthlyIncident&&state.choiceImpact)state.choiceImpact.monthlyIncident=true;
   let examNote="";
   if(examBefore){
     const after=snapStats(state);
@@ -641,8 +645,8 @@ function educationRecord(run){
   });
 }
 const courtEducation={
-  지성:[465,"서재 수업"],기품:[450,"귀족 예법"],매력:[445,"사교 수업"],
-  통찰:[455,"가문 기록 조사"],경영:[455,"팬텀사 회계"],의지:[385,"사건 조사"],체력:[400,"승마"]
+  지성:[475,"서재 수업"],기품:[475,"귀족 예법"],매력:[465,"사교 수업"],
+  통찰:[470,"가문 기록 조사"],경영:[475,"팬텀사 회계"],의지:[410,"사건 조사"],체력:[440,"승마"]
 };
 function courtEducationPriority(keys=Object.keys(courtEducation)){
   return keys.filter(k=>state.stats[k]<courtEducation[k][0])
@@ -658,17 +662,21 @@ function courtRows(){
     return [label,!next,progress+(next?" · 추천 수업: "+courtEducation[next][1]:"")];
   }
   const courses=educationRecord(state);
+  const finalSubjects=new Set(state.events.filter(entry=>
+    entry.index===0 && portfolios.some((_,i)=>entry.id==="portfolio-"+i+"-1")
+  ).map(entry=>entry.id));
   return [
     ["고급 과정 이수",courses.every(row=>row.done),courses.map(r=>r.note).join(" · ")+" · 각 분야 한 과목의 실기 합격 뒤 같은 과목 2회 수강"],
+    ["여러 분야의 최종 실기 통과",finalSubjects.size>=6,"마지막 해에 서로 다른 분야의 최종 실기를 통과하세요."],
     statRow("귀족 교육","지성","기품"),
     statRow("사교와 조사","매력","통찰"),
     statRow("사업과 결단","경영","의지"),
     statRow("현장 수행","체력"),
     ["저택 재건",rooms>=2,"서재와 응접실, 주방을 개수하세요."],
-    ["회사 기반",profitableMonths>=7,"판매·납품 흑자 "+profitableMonths+"/7개월 (상금 제외)"],
-    ["왕실 신임",state.royal>=6,"왕실 서신에 답하거나 납품 인증으로 신임을 얻으세요."],
+    ["회사 기반",profitableMonths>=14,"판매·납품 흑자 "+profitableMonths+"/14개월 (상금 제외)"],
+    ["왕실 신임",state.royal>=8,"왕실 서신에 답하거나 납품 인증으로 신임을 얻으세요."],
     ["가문 명성",state.renown>=courtRenownRequirement,"접객과 팬텀사 판매로 명성 쌓기"],
-    ["재정 안정",state.fund>=1200 && state.debt===0,"채무를 상환하고 가문 자금을 비축하세요."]
+    ["재정 안정",state.fund>=2100 && state.debt===0,"채무를 상환하고 가문 자금을 비축하세요."]
   ];
 }
 function titleRequirements(){return courtRows().map(row=>row[1]);}
@@ -1128,7 +1136,7 @@ function syncMotion(){
   document.documentElement.dataset.gameMotion=motionMode==="reduced"?"reduced":motionReduced()?"gentle":"full";
 }
 function motionControls(){
-  return '<section class="mixer"><h3>동작 설정</h3><p>시엘의 인사와 일정 애니메이션</p><div class="opts motion-options">'+
+  return '<section class="mixer"><h3>동작 설정</h3><p>시엘의 인사, 일정 애니메이션과 대사 표시 효과</p><div class="opts motion-options">'+
     Object.entries(motionLabels).map(([key,name])=>option(name,"motion:"+key,motionMode===key,false)).join("")+'</div></section>';
 }
 function savePanel(){
@@ -2228,9 +2236,9 @@ if(previewLesson){
   });
 }else if(storyDemo){
   tab="plan";state=normalizeSave(initial());
-  state.month=state.planMonth=previewSetback?.month??previewCompanyCase?.previewMonth??{"season-16":16,jubilee:18,birthday2:24}[previewStory];
-  if(previewSetback?.renown)state.renown=5;
-  if(!previewSetback&&!previewCompanyCase){
+  state.month=state.planMonth=previewIncident?.previewMonth??previewIncident?.month??previewCompanyCase?.previewMonth??{"season-16":16,jubilee:18,birthday2:24}[previewStory];
+  if(previewIncident?.renown)state.renown=5;
+  if(!previewIncident&&!previewCompanyCase){
     const directions=Object.keys(middleObservations[previewStory]),selected=previewQuery.get("stat");
     state.stats[directions.includes(selected)?selected:directions[0]]=400;
   }

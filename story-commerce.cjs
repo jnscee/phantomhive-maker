@@ -542,21 +542,60 @@ for(const queued of [false,true]){
 }
 console.log('PASS business-case timing and selection, all gates, common start, cooldown, saved draws, reserved queues, and legacy completion records');
 // Month-end incidents cannot be declined or resolved twice, including after reloading.
-for(const id of run('monthlySetbacks.map(item=>item.id)')){
+for(const id of run('monthlyIncidents.map(item=>item.id)')){
   ctx.incident=id;
   setup('state.month=22;state.pending=incident;state.phase="event";state.renown=4');
   assertOk('pendingEvent().choices.length===1');
+  const item=run('monthlyIncidents.find(row=>row.id===incident)');
+  if(item.income||item.cost){
+    run('tab="plan"');
+    assert.equal(run('trackForView()'),item.income?'cheerful':'gloomy');
+  }
+  const beforeCash=run('state.fund');
   run('state.termPage=1;state=normalizeSave(state);choose(0);');
-  assertOk('state.flags[incident] && state.choiceImpact.setback && state.choiceImpact.items[0].rows.length');
-  const once=run('JSON.stringify([state.fund,state.hp,state.stress,state.motivation,state.renown,state.accounts.setbacks,state.events])');
+  assert.equal(run('state.fund'),beforeCash+(item.income||0)-(item.cost||0));
+  if(item.income){
+    assert.equal(run('state.accounts.windfalls'),item.income);
+    assert.equal(run('state.renown'),4);
+  }
+  assertOk('state.flags[incident] && state.choiceImpact.monthlyIncident && state.choiceImpact.items[0].rows.length');
+  const once=run('JSON.stringify([state.fund,state.hp,state.stress,state.motivation,state.renown,state.accounts.setbacks,state.accounts.windfalls,state.events])');
   run('state=normalizeSave(state);choose(0)');
-  assert.equal(run('JSON.stringify([state.fund,state.hp,state.stress,state.motivation,state.renown,state.accounts.setbacks,state.events])'),once);
+  assert.equal(run('JSON.stringify([state.fund,state.hp,state.stress,state.motivation,state.renown,state.accounts.setbacks,state.accounts.windfalls,state.events])'),once);
+}
+// Cash draws are independent of progress, unlocked goods, weather, and the preceding month's draw.
+setup('state.month=1');
+const cashSample=run(`(()=>{
+  const tally={},r=initial();let consecutive=false,repeat=false;
+  for(let seed=1;seed<=4096;seed++){
+    r.owlSeed=seed;r.month=1;const id=drawCashIncident(r);
+    const rich={...r,fund:5000,weather:"heat",productHistory:{toys:{units:150,orders:8}},events:[{id,month:1}],flags:{[id]:true}};
+    if(drawCashIncident(rich)!==id)throw Error("Trade or weather changed a cash draw");
+    tally[id||"none"]=(tally[id||"none"]||0)+1;
+    r.month=2;const next=drawCashIncident(r);if(id&&next)consecutive=true;if(id&&id===next)repeat=true;
+  }
+  return {tally,consecutive,repeat};
+})()`);
+assert.ok(cashSample.consecutive&&cashSample.repeat);
+for(const pool of ['cashWindfalls','cashLosses']){
+  const ids=run(pool+'.map(item=>item.id)');
+  const count=ids.reduce((sum,id)=>{assert.ok(cashSample.tally[id]>0);return sum+cashSample.tally[id];},0);
+  assert.ok(count>110&&count<230);
+}
+for(const id of ['windfallWindow','setbackGlass']){
+  ctx.incident=id;
+  setup('tab="plan";state.pending=incident;state.phase="event";state.termPage=1;state.flags[incident]=true;state.month=2;state.events=[{id:incident,month:1,index:0}]');
+  run('choose(0)');
+  assertOk('state.events.filter(e=>e.id===incident).length===2');
+  const funds=run('state.fund');
+  run('state=normalizeSave(state);choose(0)');
+  assert.equal(run('state.fund'),funds);
 }
 setup('state.month=3;state.report={sold:10}');
-assertOk('drawMonthlySetback(state,false,()=>0)==="setbackGlass" && drawMonthlySetback(state,false,()=>.99)===null');
-run('state.events.push({id:"setbackGlass",month:2,index:0})');assertOk('drawMonthlySetback(state,true,()=>0)===null');
+assertOk('drawMonthlyIncident(state,true,()=>0)==="setbackFall" && drawMonthlyIncident(state,true,()=>.99)===null');
+run('state.events.push({id:"setbackFall",month:2,index:0})');assertOk('drawMonthlyIncident(state,true,()=>0)===null');
 setup('state.month=2;state.report={sold:0}');
-assertOk('!drawMonthlySetback(state,false,()=>0) && drawMonthlySetback(state,true,()=>0)==="setbackFall"');
+assertOk('!drawMonthlyIncident(state,false,()=>0) && drawMonthlyIncident(state,true,()=>0)==="setbackFall"');
 for(let month=1;month<=35;month++){
   ctx.m=month;const season=(month-1)%12+1;
   assert.equal(run('rollSeasonWeather(m,()=>0)'),season===6?'heat':season===12?'cold':null);
@@ -571,7 +610,7 @@ for(const weather of ['heat','cold']){
   const ordinary=run('overhead()');
   run('state.weather=weatherKind;state=normalizeSave(state)');
   assert.equal(run('overhead()'),ordinary+(weather==='heat'?22:30));
-  assertOk('!drawMonthlySetback(state,true,()=>0)');
+  assertOk('!drawMonthlyIncident(state,true,()=>0)');
   for(const activity of ['exercise','riding','study','language','rest','recovery']){
     ctx.subject=activity;
     const [clear,extreme]=run('[null,weatherKind].map(weather=>{const r=structuredClone(state);r.weather=weather;applyActivity(r,subject,"steady");return [r.hp,r.stress,r.stats.체력,r.stats.의지,r.stats.지성]})');
@@ -868,7 +907,7 @@ function playCampaign(invest){
   ctx.invest=invest;
   return vm.runInContext(`(()=>{
   let january;
-  const originalRandom=Math.random,originalWeather=rollSeasonWeather,originalSetback=drawMonthlySetback;
+  const originalRandom=Math.random,originalWeather=rollSeasonWeather,originalSetback=drawMonthlyIncident;
   // Loading each dialogue calls initial() for defaults. Keep weather and incidents
   // independent of how many optional business scenes the campaign happens to read.
   const monthlyRandom=(month,salt)=>{
@@ -876,7 +915,7 @@ function playCampaign(invest){
     return ()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/0x100000000);
   };
   rollSeasonWeather=month=>originalWeather(month,monthlyRandom(month,0x57454154));
-  drawMonthlySetback=(run,ride)=>originalSetback(run,ride,monthlyRandom(run.month,0x53455442));
+  drawMonthlyIncident=(run,ride)=>originalSetback(run,ride,monthlyRandom(run.month,0x53455442));
   let trialSeed=5371;
   Math.random=()=>((trialSeed=(Math.imul(trialSeed,1664525)+1013904223)>>>0)/0x100000000);
   state=initial();state.owlSeed=0;state.phase="plan";tab="plan";
@@ -915,7 +954,7 @@ function playCampaign(invest){
       else break;
     }
   }
-  Math.random=originalRandom;rollSeasonWeather=originalWeather;drawMonthlySetback=originalSetback;
+  Math.random=originalRandom;rollSeasonWeather=originalWeather;drawMonthlyIncident=originalSetback;
   return {january,finished:state.phase==="ending"||state.phase==="investiture",ending:state.ending,
     stats:Object.values(state.stats),fund:state.fund,decisions:state.events.filter(e=>["winterAxles","carrierPlace","estateRoof"].includes(e.id)).map(e=>e.month),
     birthdays:state.events.filter(e=>birthdayDialogue[e.id]).map(e=>e.month),exams:state.events.filter(e=>e.id.startsWith("portfolio-")).length};
@@ -1093,12 +1132,12 @@ assertOk('state.ill && !hasPendingVisit()');
 run('state.hp=57;state.stress=51;persist()');
 assertOk('!state.ill && hasPendingVisit()');
 
-setup('for(const [key,[target]] of Object.entries(courtEducation))state.stats[key]=target;Object.assign(state.level,{library:2,kitchen:2});state.salesBook=Array.from({length:7},()=>({revenue:30,cost:15}));state.royal=6;state.renown=30;state.fund=1200;state.debt=0;state.advancedStudy={study:2,etiquette:2,accounts:2}');
-assertOk('qualifies() && courtRows().length===10');
+setup('for(const [key,[target]] of Object.entries(courtEducation))state.stats[key]=target;Object.assign(state.level,{library:2,kitchen:2});state.salesBook=Array.from({length:14},()=>({revenue:30,cost:15}));state.events=Array.from({length:6},(_,i)=>({id:"portfolio-"+i+"-1",index:0,month:30}));state.royal=8;state.renown=30;state.fund=2100;state.debt=0;state.advancedStudy={study:2,etiquette:2,accounts:2}');
+assertOk('qualifies() && courtRows().length===11');
 assertOk('cielEndingId(460,true,39)==="releaseTitle" && cielEndingId(460,true,40)==="vowTitle" && cielEndingId(459,true,70)==="vowTitle"');
 assertOk('cielEndingId(459,true,69)==="releaseTitle" && cielEndingId(461,true,0)==="vowTitle"');
 assertOk('cielEndingId(459,false,69)==="releaseNoTitle" && cielEndingId(461,false,0)==="vowNoTitle"');
-for(const change of ['stats.지성--','stats.기품--','stats.매력--','stats.통찰--','stats.경영--','stats.의지--','stats.체력--','advancedStudy.study--','level.kitchen--','salesBook.pop()','royal--','renown--','fund--','debt++']){
+for(const change of ['stats.지성--','stats.기품--','stats.매력--','stats.통찰--','stats.경영--','stats.의지--','stats.체력--','advancedStudy.study--','events[0].index++','events[0].id=state.events[1].id','level.kitchen--','salesBook.pop()','royal--','renown--','fund--','debt++']){
   const previous=run('structuredClone(state)');
   run('state.'+change);assertOk('!qualifies()');ctx.savedCourt=previous;run('state=savedCourt');
 }

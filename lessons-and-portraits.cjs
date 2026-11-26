@@ -232,6 +232,12 @@ async function check(browserType){
         const dialogue=weatherPage.locator('#conversation .dialogue');
         assert.equal(await dialogue.locator('small').innerText(),'세바스찬');
         assert.equal(await dialogue.locator('h2').innerText(),label);
+        if(await weatherPage.evaluate(()=>Boolean(CSS.highlights && globalThis.Highlight))){
+          await weatherPage.waitForFunction(()=>CSS.highlights.has('dialogue-unread'));
+          await dialogue.getByRole('button',{name:'다음 대사'}).click();
+          assert.equal(await weatherPage.evaluate(()=>state.phase),"weatherBriefing");
+          assert.ok(await weatherPage.evaluate(()=>!CSS.highlights.has('dialogue-unread')));
+        }
         if(weather==='heat'){
           for(const theme of ['dark','light']){
             await weatherPage.evaluate(theme=>document.documentElement.dataset.dialogueTheme=theme,theme);
@@ -267,7 +273,7 @@ async function check(browserType){
       assert.equal(await creditPage.evaluate(()=>state.phase),"scene");
       assert.equal(await creditPage.evaluate(()=>state.fund),-30);
       await creditPage.close();
-      const fairPage=await browser.newPage({viewport});
+      const fairPage=await browser.newPage({viewport,reducedMotion:'reduce'});
       await fairPage.goto(base+'?fair-preview=newYear-1887&entry=1');
       await fairPage.evaluate(()=>{
         state.stats.매력=300;
@@ -538,7 +544,7 @@ async function check(browserType){
           for(const person of ['finny','mey','bard','tanaka','snake'])recruit(person);
           Object.assign(state.stats,Object.fromEntries(stats.map(s=>[s,500])));state.stats.의지=will;state.advancedStudy={study:2,social:2,accounts:2};
           state.flags.deed=false;state.hp=45;state.fund=2500;state.motivation=50;state.renown=approved?70:0;
-          Object.assign(state.level,{parlor:3,library:3});state.shop.works=3;state.royal=approved?12:0;state.salesBook=Array.from({length:8},()=>({revenue:50,cost:10}));
+          Object.assign(state.level,{parlor:3,library:3});state.shop.works=3;state.royal=approved?12:0;state.events=Array.from({length:6},(_,i)=>({id:"portfolio-"+i+"-1",index:0,month:30}));state.salesBook=Array.from({length:14},()=>({revenue:50,cost:10}));
           talkTrust('mey');
           advance();
         },{will,approved});

@@ -2061,3 +2061,5 @@ html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.m
   border-radius:50%;vertical-align:-.04em;border:1px solid #a3b6cc;background:#f3f7fb;
 }
 .dialogue-theme-options [data-action="dialogue-theme:dark"]::before {background:#1c3048}
+
+::highlight(dialogue-unread) { color: transparent; text-shadow: none; }
