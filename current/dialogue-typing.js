@@ -65,6 +65,7 @@
     watch.observe(document.getElementById(id),{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:["hidden"]});
   }
   watch.observe(document.getElementById("sheet"),{attributes:true,attributeFilter:["hidden"]});
+  watch.observe(document.documentElement,{attributes:true,attributeFilter:["data-game-motion"]});
   function finishOnInput(event){
     if(!frame||!line?.isConnected||window.getSelection()?.toString())return;
     const within=event.target.closest(".dialogue, .award-dialogue, .farewell-bubble, #ciel-aside");

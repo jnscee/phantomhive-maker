@@ -297,7 +297,7 @@ async function check(browserType){
       assert.equal(await creditPage.evaluate(()=>state.phase),"scene");
       assert.equal(await creditPage.evaluate(()=>state.fund),-30);
       await creditPage.close();
-      const fairPage=await browser.newPage({viewport,reducedMotion:'reduce'});
+      const fairPage=await browser.newPage({viewport});
       await fairPage.goto(base+'?fair-preview=newYear-1887&entry=1');
       await fairPage.evaluate(()=>{
         state.stats.매력=300;
@@ -314,6 +314,8 @@ async function check(browserType){
           assert.ok(sample.every((value,i)=>Math.abs(value-storyTransmission[theme][i])<=4),'Contest glass should transmit as much of the set as ordinary dialogue');
         }
       }
+      await fairPage.emulateMedia({reducedMotion:'reduce'});
+      await fairPage.waitForFunction(()=>document.documentElement.dataset.gameMotion==='gentle' && !CSS.highlights?.has('dialogue-unread'));
       await fairPage.locator('.duel-portrait').evaluate(img=>img.decode());
       assert.equal(await fairPage.locator('[data-action^="fair-play"]').count(),0);
       await fairPage.locator('.dialogue [data-action="fair-next:0"]').click();
