@@ -189,7 +189,10 @@ function businessTailwind(id){
   const trend=["가족","어린이","다과회","어린이","가족","다과회","어린이","가족","다과회","가족","선물","선물"][season];
   return {audience:audience[id],trend,bonus:state.month===1?0:(audience[id]===trend?3:0)+(id==="hamper"&&season>=10?2:0)};
 }
-function changeStat(name,value){state.stats[name]=cap(state.stats[name]+ordinaryAbilityGain(state.stats[name],value),statMax(name));}
+function changeStat(name,value,run=state){
+  const current=run.stats[name];
+  run.stats[name]=cap(current+ordinaryAbilityGain(current,value),statMax(name));
+}
 function flagEvent(id,effect){
   state.flags[id]=true;
   effect();

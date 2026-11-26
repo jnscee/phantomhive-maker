@@ -1162,7 +1162,7 @@ for(const [place,activity,event,extraName] of [
   Object.assign(ctx,{previewPlace:place,previewActivity:activity});
   setup('tab="plan";state.month=state.planMonth=3;state.visit=previewPlace;state.counts[previewActivity]=1');
   const planned=checkedVisitPreview(place);
-  assert.match(planned,/조건부/);assert.doesNotMatch(planned,/확정/);
+  assert.match(planned,/교류 시 가능/);assert.doesNotMatch(planned,/확정/);
   assert.ok(!planned.includes(extraName),place+' advertised a later event speaker');
   run('state.phase="visit";state.sequence={index:2}');
   assert.match(checkedVisitPreview(place),/교류 시 확정/);
@@ -1177,7 +1177,7 @@ assert.equal(checkedVisitPreview('garden'),'피니안');
 run('state.sequence={index:2}'); // A restored visitTurn guard must also prevent another forecast.
 assert.equal(checkedVisitPreview('garden'),'피니안');
 run('delete state.visitTurn;state.visit="library"');
-assert.match(checkedVisitPreview('garden'),/조건부/);
+assert.match(checkedVisitPreview('garden'),/교류 시 가능/);
 assert.doesNotMatch(checkedVisitPreview('garden'),/확정/);
 assert.equal(checkedVisitPreview(null),'방문지를 선택하세요.');
 assert.equal(checkedVisitPreview('none'),'방문 생략');
@@ -1265,6 +1265,28 @@ for(const index of [0,1]){
   assertOk('state.sequence.visitEvent===(replyIndex===0?"visitLibraryWax":"visitLibraryCarbon")');
 }
 assert.deepEqual(Array.from(run('Object.keys(endingScenes).sort()')),['broke','ill','releaseNoTitle','releaseTitle','vowNoTitle','vowTitle']);
+// Scheduling, the doorstep choice, and selecting the event use distinct moments of the month.
+for(const fixture of [
+  {place:"kitchen",setup:'recruit("bard");state.flags.bardSupper=true;state.hp=73',note:"바르도",event:null},
+  {place:"kitchen",setup:'recruit("bard");state.flags.bardSupper=true;state.hp=72',note:"바르도 / 교류 시 가능 · 「손잡이 달린 그릇」",event:"visitKitchenBowl"},
+  {place:"parlor",setup:'state.counts.dance=1',note:"세바스찬 / 교류 시 가능 · 「여왕의 초청장」",event:"audience"},
+  {place:"quarters",setup:'recruit("mey");state.flags.linenMarks=true;state.stats.기품=19',
+    plan:["rest","etiquette","rest"],note:"메이린 / 교류 시 가능 · 「소매 안쪽의 바늘땀」",event:"visitQuartersHem"},
+  {place:"garden",setup:'recruit("finny");state.people.finny.toward=4',quiet:true,
+    note:"피니안 / 교류 시 가능 · 「온실의 여벌 열쇠」",event:null}
+]){
+  ctx.visitFixture=fixture;
+  setup('state.month=state.planMonth=26;state.visit=visitFixture.place;state.plan=visitFixture.plan||emptyPlan();'+fixture.setup);
+  const beforePreview=run('JSON.stringify(state)');
+  assert.equal(run('visitPreview(state.visit)'),fixture.note);
+  assert.equal(run('JSON.stringify(state)'),beforePreview);
+  if(fixture.plan){
+    run('execute();for(let i=0;i<3;i++){finishScene();continueSequence()}');
+    assert.equal(run('state.phase'),"visit");
+  }else run('state.phase="visit";state.sequence={index:2}');
+  run('visitDone(!visitFixture.quiet)');
+  assert.equal(run('state.sequence.visitEvent??null'),fixture.event);
+}
 const minimumEndingLines={broke:46,ill:43,releaseNoTitle:41,releaseTitle:48,vowNoTitle:42,vowTitle:47};
 for(const [id,minimum] of Object.entries(minimumEndingLines))assert.ok(run('endingScenes.'+id+'.lines.length')>=minimum,id);
 for(const [ending,edition,beat,expected] of [

@@ -12,7 +12,7 @@ function visitorEvents(){
     id:card.id, title:card.title, speaker:card.npc, text:card.lines[0][1], visitPlace:card.place,
     visitOnly:true, source:"저택과 런던의 방문 기록",
     sees:run=>run.visit===card.place && card.condition(run) &&
-      (card.place!=="quarters" || visitName(visitPerson("quarters"))===card.npc),
+      (card.place!=="quarters" || visitName(visitPerson("quarters",run))===card.npc),
     choices:card.choices.map(answer=>answer.authored??({
       label:answer.label, result:answer.reply[1],
       effect(){

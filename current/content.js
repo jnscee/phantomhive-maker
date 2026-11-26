@@ -151,9 +151,9 @@ function currentCielAge(){return tourSession?.age??campaignAge(state);}
 function cielArt(age){return age>=12?"assets/ciel-12.webp":age===11?"assets/ciel-11.webp":"assets/ciel.png";}
 function ageAt(turn,day=1){const d=calendarDate(turn,day);return d.getUTCFullYear()-1875-(d.getUTCMonth()<11||d.getUTCDate()<14?1:0);}
 function peopleInHouse(){return Object.keys(servants).filter(k=>state.people[k]);}
-function talkTrust(id,n=1,other=1){
-  if(!state.people[id])return;
-  const rel=state.people[id];
+function talkTrust(id,n=1,other=1,run=state){
+  if(!run.people[id])return;
+  const rel=run.people[id];
   rel.toward=Math.min(20,rel.toward+n);
 }
 function canVisit(id){
