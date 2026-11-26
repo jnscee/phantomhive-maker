@@ -41,6 +41,15 @@ async function dialogueTransmission(card,contest){
   }
   const transmission=samples[1].map((value,i)=>value-samples[0][i]);
   assert.ok(transmission.every(value=>value>=65&&value<=90),'Scene transmission through dialogue: '+JSON.stringify(samples));
+  const ink=await card.evaluate(el=>['p','small'].map(tag=>getComputedStyle(el.querySelector(tag)).color.match(/[\d.]+/g).slice(0,3).map(Number)));
+  const luminance=rgb=>rgb.map(channel=>{
+    const n=channel/255;
+    return n<=.04045?n/12.92:((n+.055)/1.055)**2.4;
+  }).reduce((total,value,i)=>total+value*[.2126,.7152,.0722][i],0);
+  for(const foreground of ink)for(const backdrop of samples){
+    const [low,high]=[luminance(foreground),luminance(backdrop)].sort((a,b)=>a-b);
+    assert.ok((high+.05)/(low+.05)>=4.5,'Text must remain legible over the glass: '+JSON.stringify([foreground,backdrop]));
+  }
   return transmission;
 }
 async function checkNotebook(page){
@@ -548,11 +557,24 @@ async function check(browserType){
       assert.equal(await page.locator('[data-duty="kitchen"] em').textContent(),'아그니');
       await page.evaluate(()=>{state=initial();state.phase='plan';tab='home';render();});
       await page.locator('#nav [data-action="tab:plan"]').click();
+      const buttonFinish=button=>button.evaluate(el=>{
+        const css=getComputedStyle(el);
+        return [css.backgroundImage,css.color,css.borderTopColor,css.borderRadius,css.boxShadow,css.backdropFilter];
+      });
+      const activity=page.locator('#calendar .lesson[aria-pressed="false"]:enabled').first();
+      await page.mouse.move(0,0);
+      const baseFinish=await buttonFinish(activity);
+      await activity.click();
+      await page.mouse.move(0,0);
+      const activeFinish=await buttonFinish(page.locator('#calendar .lesson[aria-pressed="true"]').first());
       await page.locator('#system-book').click();
       assert.ok(await page.locator('#sheet').isVisible());
       assert.ok((await page.locator('#sheet').evaluate(e=>+getComputedStyle(e).zIndex))>(await page.locator('#date').evaluate(e=>+getComputedStyle(e).zIndex)));
       await page.evaluate(()=>{tab='market';render();});
       assert.equal(await page.locator('.goods-ticket').count(),await page.evaluate(()=>Object.keys(marketGoods).length));
+      await page.mouse.move(0,0);
+      assert.deepEqual(await buttonFinish(page.locator('.goods-ticket[aria-pressed="false"]').first()),baseFinish);
+      assert.deepEqual(await buttonFinish(page.locator('.goods-ticket[aria-pressed="true"]')),activeFinish);
       const charmBefore=await page.evaluate(()=>state.stats.매력);
       await page.locator('[data-action="goods:birds"]').click();
       await page.locator('[data-action="buy:birds"]').click();

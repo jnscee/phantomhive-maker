@@ -139,7 +139,6 @@ html[data-game-motion=reduced] :is(#ciel-greet > .greeting-hop,.performer,.motio
   #scene[data-mode=market] .goods-ticket img {width:16px;height:14px}
   #scene[data-mode=market] .shop-talk p {margin:2px 0;font-size:12px}
 }
-#scene[data-mode=market] .goods-ticket:focus-visible {outline:2px solid #735327;outline-offset:-3px}
 /* An intentional tap still has a small response with OS motion reduction.
    The game's explicit reduced setting keeps the pose still. */
 html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
@@ -297,17 +296,11 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
   grid-template-columns:minmax(0,1fr);align-content:center;justify-items:center;
   box-sizing:border-box;width:100%;min-width:0;min-height:5.65rem;aspect-ratio:1;margin:0;
   padding:.23rem .22rem;gap:.12rem;text-align:center;
-  color:#f1f6fb;background:linear-gradient(145deg,#b5cde33d,#7798b521 68%,#a9c7e22e);
-  border:1px solid #b8d1e870;border-radius:.36rem;
-  box-shadow:inset 0 1px #e4f3ff3b;text-shadow:0 1px 2px #14263b;
+
 }
 #scene .lau-counter .goods-ticket img {grid-area:icon;width:min(52%,2.75rem);height:auto;aspect-ratio:1;object-fit:contain;image-rendering:pixelated}
 #scene .lau-counter .goods-ticket b {grid-area:name;font-size:.8rem;line-height:1.12;word-break:keep-all;overflow-wrap:anywhere}
-#scene .lau-counter .goods-ticket strong {grid-area:price;font-size:.9rem;line-height:1.1;color:#d2e3f0}
-#scene .lau-counter .goods-ticket[aria-pressed="true"] {color:#fff1d5;background:linear-gradient(145deg,#765e3bdf,#473826df);border-color:#e4c389;box-shadow:inset 0 1px #ffe6b061}
-#scene .lau-counter .goods-ticket[aria-pressed="true"] strong {color:#f6dbad}
-#scene .lau-counter .goods-ticket:hover:not([aria-pressed="true"]) {background:linear-gradient(145deg,#b5cde366,#7798b543)}
-#scene .lau-counter .goods-ticket:focus-visible {outline:2px solid #e8d09c;outline-offset:-3px}
+#scene .lau-counter .goods-ticket strong {grid-area:price;font-size:.9rem;line-height:1.1}
 #scene[data-mode=market] .lau-standing {
   grid-area:1/2/4/3;inset:auto auto 0 50%;width:100%;height:95%;translate:-50% 0;
 }
