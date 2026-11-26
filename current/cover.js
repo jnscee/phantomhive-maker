@@ -31,7 +31,7 @@ function coverPanel() {
   } else if (tab==="album") {
     return cgAlbum();
   } else if (tab==="settings") {
-    body='<div class="cover-settings">'+languageControls()+audioControls()+motionControls()+'</div>';
+    body='<div class="cover-settings">'+dialogueThemeControls()+languageControls()+audioControls()+motionControls()+'</div>';
   } else {
     body='<p class="cover-exit-note">'+gameString(!storageOk&&hasCoverSave("auto")?"temporaryExit":"exitHint")+'</p>';
   }

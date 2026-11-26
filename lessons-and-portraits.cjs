@@ -45,6 +45,11 @@ async function checkNotebook(page){
   assert.ok(layout.fits&&layout.rowGap>=6&&layout.columnGap>=6&&layout.overflow<=1,JSON.stringify(layout));
   await page.locator('[data-action="motion:reduced"]').click();
   assert.equal(await page.locator('[data-action="motion:reduced"]').getAttribute('aria-pressed'),'true');
+  const light=page.getByRole('button',{name:'화이트',exact:true});
+  assert.equal(await light.getAttribute('aria-pressed'),'true');
+  await page.getByRole('button',{name:'다크',exact:true}).click();
+  assert.equal(await page.locator('html').getAttribute('data-dialogue-theme'),'dark');
+  await light.click();
   const book=page.locator('.notebook-guide');
   await book.locator(':scope > summary').click();
   assert.equal(await book.locator('.guide-topic').count(),9);
@@ -196,6 +201,14 @@ async function check(browserType){
           note.top>=bounds.top-1 && note.bottom<=bounds.bottom+1;
       });
       assert.ok(coverFits,'The fan game notice must be visible when the cover opens');
+      await page.locator('[data-action="cover:settings"]').click();
+      await page.getByRole('button',{name:'다크',exact:true}).click();
+      await page.reload({waitUntil:'domcontentloaded'});
+      assert.equal(await page.locator('html').getAttribute('data-dialogue-theme'),'dark');
+      await page.locator('[data-action="cover:settings"]').click();
+      assert.equal(await page.getByRole('button',{name:'다크',exact:true}).getAttribute('aria-pressed'),'true');
+      await page.getByRole('button',{name:'화이트',exact:true}).click();
+      await page.locator('.cover-leaf [data-action="back"]').click();
       const weatherPage=await browser.newPage({viewport});
       await openGame(weatherPage);
       for(const [month,weather,label] of [[6,"heat","폭염"],[12,"cold","한파"]]){
@@ -277,6 +290,7 @@ async function check(browserType){
       const resultBox=await award.boundingBox();
       await award.getByRole('button',{name:'결과창 닫기',exact:true}).click();
       const reading=fairPage.locator('#conversation .dialogue');
+      assert.equal(await reading.locator('p').evaluate(e=>getComputedStyle(e).color),'rgb(23, 45, 70)');
       const dialogueBox=await reading.boundingBox();
       for(const edge of ['x','width','bottom']){
         const value=box=>edge==='bottom'?box.y+box.height:box[edge];

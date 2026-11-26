@@ -1103,6 +1103,17 @@ function recordPanel(){
   const album='<div class="ending-album">'+(endingGalleryEntries().map(([id,route])=>endingThumb(id,route)).join("")||"아직 기록된 엔딩이 없습니다.")+'</div>';
   return frame("가문 장부",familyFolio(history,album));
 }
+const dialogueThemeKey="earl-phantomhive-dialogue-theme";
+const dialogueThemes={light:"화이트",dark:"다크"};
+let dialogueTheme="light";
+try{
+  const stored=localStorage.getItem(dialogueThemeKey);
+  if(Object.hasOwn(dialogueThemes,stored))dialogueTheme=stored;
+}catch{}
+function dialogueThemeControls(){
+  return '<section class="mixer"><h3>대화창 테마</h3><div class="opts dialogue-theme-options">'+
+    Object.entries(dialogueThemes).map(([key,label])=>option(label,"dialogue-theme:"+key,dialogueTheme===key)).join("")+'</div></section>';
+}
 const motionLabels={auto:"기기 설정 따르기",full:"항상 재생",reduced:"동작 줄이기"};
 const motionKey="earl-phantomhive-motion";
 let motionMode="auto";
@@ -1131,7 +1142,7 @@ function savePanel(){
       (index?btn("저장","store:"+id,false,"slot-write"):"")+btn("불러오기","load:"+id,!record,"slot-read")+'</div></div>';
   }).join("");
   return frame("저장 · 설정",'<section class="notebook-slots" aria-labelledby="save-slots-title"><h3 id="save-slots-title">저장 기록</h3>'+rows+'</section>'+(!storageOk?'<p class="small danger">브라우저 저장소를 사용할 수 없습니다. 이 탭을 닫으면 진행 내용이 사라집니다.</p>':"")+
-    '<div class="notebook-settings">'+languageControls()+audioControls()+motionControls()+'</div>'+instructionBook()+
+    '<div class="notebook-settings">'+dialogueThemeControls()+languageControls()+audioControls()+motionControls()+'</div>'+instructionBook()+
     '<div class="notebook-actions">'+(state.phase!=="contract"?btn("프롤로그 다시 보기","recollect"):"")+btn("새 회차","reset")+btn("표지로","tab:title")+'</div>'+
     '<details class="annexes game-references"><summary>제작 참고</summary><ul><li>프린세스 메이커 3</li><li>카모카테 시리즈</li><li>카이로소프트 ‘○○○ 스토리’ 시리즈</li></ul></details>');
 }
@@ -1853,6 +1864,11 @@ function handleAction(key,rect,confirmed=false){
   if(action==="goods"&&tab==="market"&&Object.hasOwn(marketGoods,id)){
     selectedGood=id;redrawShop();focusAction(key);respond("choose",rect);return;
   }
+  if(action==="dialogue-theme"&&(tab==="save"||tab==="settings")&&Object.hasOwn(dialogueThemes,id)){
+    dialogueTheme=id;document.documentElement.dataset.dialogueTheme=id;
+    try{localStorage.setItem(dialogueThemeKey,id);}catch{}
+    render();focusAction("dialogue-theme:"+id);return;
+  }
   if(action==="motion"&&(tab==="save"||tab==="settings")&&Object.hasOwn(motionLabels,id)){
     motionMode=id;try{localStorage.setItem(motionKey,id);}catch{}
     syncMotion();render();focusAction("motion:"+id);return;
@@ -2226,6 +2242,7 @@ fitHomeStanding();
 render();
 
 document.documentElement.lang=gameLanguage;
+document.documentElement.dataset.dialogueTheme=dialogueTheme;
 syncMotion();
 matchMedia("(prefers-reduced-motion: reduce)").addEventListener?.("change",syncMotion);
 $("launch-help").hidden=true;
