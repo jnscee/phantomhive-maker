@@ -20,6 +20,29 @@ async function dialogueAppearance(card){
     };
   });
 }
+// Read a pixel of the actual composited glass with the scene art alternately black and white.
+async function dialogueTransmission(card,contest){
+  const page=card.page(),box=await card.boundingBox();
+  const clip={x:Math.floor(box.x+box.width-25),y:Math.floor(box.y+box.height-12),width:1,height:1};
+  const samples=[];
+  for(const color of ['black','white']){
+    const style=await page.addStyleTag({content:contest
+      ? '.contest-screen {--contest-art:linear-gradient('+color+','+color+')!important}'
+      : '#conversation > .review-room {background:'+color+'!important;filter:none!important} #conversation > .cast {visibility:hidden}'});
+    try{
+      const png=await page.screenshot({clip,animations:'disabled'});
+      samples.push(await page.evaluate(async data=>{
+        const img=await createImageBitmap(await (await fetch('data:image/png;base64,'+data)).blob());
+        const canvas=document.createElement('canvas');canvas.width=canvas.height=1;
+        const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);img.close();
+        return Array.from(ctx.getImageData(0,0,1,1).data).slice(0,3);
+      },png.toString('base64')));
+    }finally{await style.evaluate(s=>s.remove());}
+  }
+  const transmission=samples[1].map((value,i)=>value-samples[0][i]);
+  assert.ok(transmission.every(value=>value>=65&&value<=90),'Scene transmission through dialogue: '+JSON.stringify(samples));
+  return transmission;
+}
 async function checkNotebook(page){
   await page.locator('#system-save').click();
   assert.equal(await page.locator('#sheet-title').innerText(),'저장 · 설정');
@@ -221,7 +244,7 @@ async function check(browserType){
       assert.equal(await page.getByRole('button',{name:'다크',exact:true}).getAttribute('aria-pressed'),'true');
       await page.getByRole('button',{name:'화이트',exact:true}).click();
       await page.locator('.cover-leaf [data-action="back"]').click();
-      const storyAppearance={};
+      const storyAppearance={},storyTransmission={};
       const weatherPage=await browser.newPage({viewport});
       await openGame(weatherPage);
       for(const [month,weather,label] of [[6,"heat","폭염"],[12,"cold","한파"]]){
@@ -236,6 +259,7 @@ async function check(browserType){
           for(const theme of ['dark','light']){
             await weatherPage.evaluate(theme=>document.documentElement.dataset.dialogueTheme=theme,theme);
             storyAppearance[theme]=await dialogueAppearance(dialogue);
+            if(viewport.width===1280)storyTransmission[theme]=await dialogueTransmission(dialogue,false);
           }
         }
         await dialogue.getByRole('button',{name:'다음 대사'}).press('Enter');
@@ -279,6 +303,10 @@ async function check(browserType){
         await fairPage.evaluate(theme=>document.documentElement.dataset.dialogueTheme=theme,theme);
         assert.deepEqual(await dialogueAppearance(fairPage.locator('.duel-screen .dialogue')),storyAppearance[theme],
           'Contest and story dialogue must share their reading styles in '+theme+' at '+viewport.width+'px');
+        if(viewport.width===1280){
+          const sample=await dialogueTransmission(fairPage.locator('.duel-screen .dialogue'),true);
+          assert.ok(sample.every((value,i)=>Math.abs(value-storyTransmission[theme][i])<=4),'Contest glass should transmit as much of the set as ordinary dialogue');
+        }
       }
       await fairPage.locator('.duel-portrait').evaluate(img=>img.decode());
       assert.equal(await fairPage.locator('[data-action^="fair-play"]').count(),0);
@@ -351,6 +379,20 @@ async function check(browserType){
         await reading.locator('[data-action="fair-victory-next:'+page+'"]').click();
       }
       assert.equal(await reading.locator('[data-action^="fair-victory-next"]').count(),0);
+      // A tied result keeps its paging controls and has only one painted pane behind the dialogue.
+      await fairPage.goto(base+'?fair-preview=newYear-1887&entry=0');
+      await fairPage.evaluate(()=>{
+        const fair=pendingEvent().contest,duel=state.sequence.duel;
+        duel.judgment.score=duel.rivalScore;
+        settleFestival(state,duel);render(true);
+      });
+      const embedded=fairPage.locator('.award-dialogue article.dialogue');
+      assert.ok(await embedded.isVisible());
+      for(const theme of ['dark','light']){
+        await fairPage.evaluate(theme=>document.documentElement.dataset.dialogueTheme=theme,theme);
+        const layers=await embedded.evaluate(el=>[getComputedStyle(el).backgroundImage,getComputedStyle(el.closest('.contest-slip')).backgroundImage]);
+        assert.deepEqual(layers,['none',storyAppearance[theme].surface[0]]);
+      }
       await fairPage.close();
       assert.equal(await page.locator('#overture').isVisible(),false);
       await page.locator('.book-cover [data-action="reset"]').click();

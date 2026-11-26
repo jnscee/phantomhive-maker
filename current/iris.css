@@ -1009,7 +1009,25 @@ body.guiding #picker[open] { position:fixed; inset:0; margin:auto; z-index:30; a
 }
 
 #scene[data-calendar=true] #calendar {grid-template-rows:auto minmax(min-content,1fr) auto}
-#scene[data-mode=home] :is(#money,#nav) {background:linear-gradient(115deg,#132237b8,#1e304aac 62%,#142338b8);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+:root {
+  --hud-glass-edge:.72;
+  --hud-glass-middle:.675;
+  --hud-glass-blur:blur(3px);
+  --hud-navy-glass:linear-gradient(115deg,rgb(19 34 55 / var(--hud-glass-edge)),rgb(30 48 74 / var(--hud-glass-middle)) 62%,rgb(20 35 56 / var(--hud-glass-edge)));
+  --reading-glass:linear-gradient(115deg,rgb(255 255 255 / var(--hud-glass-edge)),rgb(246 250 255 / var(--hud-glass-middle)) 62%,rgb(231 240 250 / var(--hud-glass-edge)));
+  --reading-ink:#172d46;
+  --reading-label:#273e56;
+  --reading-border:#a3b9cd;
+  --reading-shadow:inset 0 1px #ffffffb0,0 3px 12px #12243b30;
+}
+:root[data-dialogue-theme="dark"] {
+  --reading-glass:var(--hud-navy-glass);
+  --reading-ink:#f4f8ff;
+  --reading-label:#e3edf8;
+  --reading-border:#c7d9ee80;
+  --reading-shadow:inset 0 1px #effaff80,0 3px 10px #101d3238;
+}
+#scene[data-mode=home] :is(#money,#nav) {background:var(--hud-navy-glass);-webkit-backdrop-filter:var(--hud-glass-blur);backdrop-filter:var(--hud-glass-blur)}
 
 @media (orientation:landscape) {
   #calendar .card-bank .lesson {min-height:clamp(48px,7cqw,80px);padding-block:5px;row-gap:2px}
@@ -2029,26 +2047,32 @@ html[data-placement-editor=true] .performer[data-dragging=true],html[data-placem
 html[data-placement-editor=true] .performer:focus-visible {outline:2px solid #fff0b6;outline-offset:3px}
 html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.motion-object) {animation-play-state:paused!important}
 
-/* A pale reading surface over the artwork; voice-only scenes keep their black stage. */
-:root:not([data-dialogue-theme="dark"]) #scene :is(
+/* The frame and its text stay crisp; only the glass transmits the scene below. */
+#scene :is(
   #conversation article.dialogue:not([id="impact-summary"]),
   #overture:not([data-voice-only="true"]) .dialogue,
   #playback .stage-foot,
   .lau-counter .shop-talk,
-  .contest-slip .award-dialogue
+  #conversation .contest-slip:has(.award-dialogue)
 ) {
-  color:#172d46;
-  background:linear-gradient(120deg,rgba(255,255,255,.95),rgba(247,251,255,.92) 55%,rgba(228,238,248,.92));
-  border-color:#a3b9cd;
-  box-shadow:inset 0 1px #fff,0 3px 12px #12243b30;
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  color:var(--reading-ink);
+  background:var(--reading-glass);
+  border:1px solid var(--reading-border);
+  border-radius:12px;
+  box-shadow:var(--reading-shadow);
+  -webkit-backdrop-filter:var(--hud-glass-blur);backdrop-filter:var(--hud-glass-blur);
   text-shadow:none;
 
-  & > :is(p,h2,h3), & .award-dialogue-line > p {color:inherit;text-shadow:none}
-  & > small, & .award-dialogue-heading :is(h4,span), & .line-next, & .line-next span {color:#38526d;text-shadow:none}
-  & .line-next:focus-visible {outline:2px solid #27547b;outline-offset:1px}
-  & .award-dialogue-controls {background:#dce7f099;border-color:#a3b9cd}
-  & a {color:#245279}
+  & > :is(p,h2,h3), & .award-comment {color:inherit;text-shadow:none}
+  & > small, & .line-next, & .line-next span {color:var(--reading-label);text-shadow:none}
+  & .line-next:focus-visible {outline:2px solid currentColor;outline-offset:1px}
+  & a {color:var(--reading-label)}
+}
+/* An inline result reading shares its enclosing pane's single layer of glass. */
+#scene #conversation .contest-slip .award-dialogue > article.dialogue {
+  position:static;inset:auto;margin:0;width:100%;height:auto;min-height:0;max-height:none;
+  padding:.35em 0;background:none;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;
+  overflow:visible;cursor:auto;text-align:start;
 }
 :root:not([data-dialogue-theme="dark"]) #scene :is(#conversation,#overture) .answers button {
   color:#1c3751;background:linear-gradient(135deg,#f9fcffef,#e3edf7ed);border-color:#9fb4c7;text-shadow:none;

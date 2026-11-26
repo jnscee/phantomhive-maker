@@ -89,7 +89,7 @@
 .contest-screen {
   display:flex;flex-direction:column;gap:.65rem;height:100%;overflow:auto;box-sizing:border-box;
   padding:clamp(.65rem,3%,2rem);word-break:keep-all;overflow-wrap:anywhere;color:#f5ecda;
-  background:linear-gradient(180deg,#101a2be8 0%,#15283d26 43%,#101a2be8 100%),var(--contest-art) center/cover;
+  background:linear-gradient(180deg,#101a2b99,transparent 35%),var(--contest-art) center/cover;
   border:1px solid #9aa9bb;
 }
 .contest-screen>header,.contest-slip {width:min(100%,40rem);margin-inline:auto;box-sizing:border-box}
@@ -1050,31 +1050,15 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
   #scene[data-ending-summary=true] #sheet {width:94%;top:4%;bottom:3%}
 }
 
-/* Result dialogue stays inside the scorecard; its controls do not advance the event. */
-.contest-slip .award-dialogue {
-  min-inline-size:0;margin:.55rem 0 .75rem;
-  border:1px solid #9eb0c5;border-radius:.4rem .15rem;
-  background:linear-gradient(112deg,#172942,#1b2c47 76%,#273b5b);
-  color:#eef4fb;box-shadow:inset 0 0 0 2px #34496255;
-}
-.award-dialogue .award-dialogue-line {min-inline-size:0;padding:.75rem .85rem}
-.award-dialogue .award-dialogue-heading {
-  display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;
-}
-.award-dialogue-heading h4 {
-  min-inline-size:0;margin:0;color:#f5f7ff;font-size:1rem;font-weight:700;
-  line-height:1.45;word-break:keep-all;overflow-wrap:anywhere;
-}
-.award-dialogue-heading > span {
-  flex:none;color:#c3d2e3;font-size:.875rem;white-space:nowrap;font-variant-numeric:tabular-nums;
-}
-.award-dialogue .award-dialogue-line > p {
-  min-block-size:3.3em;margin:.5rem 0 0;color:#eef4fb;
-  font-size:1rem;line-height:1.65;word-break:keep-all;overflow-wrap:anywhere;
+/* The result keeps its reading controls and borrows the story dialogue typography. */
+.contest-slip .award-dialogue {min-inline-size:0;margin:.35rem 0 .55rem;text-align:start}
+.award-dialogue .award-page {
+  display:block;text-align:end;font-size:.78rem;line-height:1.25;
+  font-variant-numeric:tabular-nums;color:var(--reading-label);
 }
 .award-dialogue .award-dialogue-controls {
   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.4rem;
-  padding:.55rem .65rem .65rem;border-top:1px solid #9eb0c548;background:#10213566;
+  padding-block:.4rem;border-top:1px solid var(--reading-border);
 }
 .award-dialogue .award-dialogue-controls button {
   display:inline-flex;align-items:center;justify-content:center;
@@ -1093,8 +1077,6 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
   opacity:1;border-color:#61728a;background:#192c41;color:#9aafc5;box-shadow:none;cursor:default;
 }
 @media(max-width:540px) {
-  .award-dialogue .award-dialogue-line {padding:.65rem .7rem}
-  .award-dialogue .award-dialogue-line > p {line-height:1.75}
   .award-dialogue .award-dialogue-controls {gap:.35rem;padding:.55rem}
 }
 @media(max-width:395px) {
@@ -1369,8 +1351,6 @@ html[data-lesson-preview] .stage-foot a {color:#eef3fc;align-self:center;white-s
   .award-sheet .award-comment {padding-block:.25rem .35rem;font-size:.88rem}
   .award-sheet .award-ledger>div {padding-block:.25rem}
   .award-sheet .award-dialogue {margin-block:.28rem}
-  .award-dialogue .award-dialogue-line {padding-block:.4rem}
-  .award-dialogue .award-dialogue-line>p {min-block-size:0;margin-top:.22rem;line-height:1.45}
   .award-dialogue .award-dialogue-controls {padding-block:.25rem}
   .award-dialogue .award-dialogue-controls button {min-block-size:1.9rem}
 }
