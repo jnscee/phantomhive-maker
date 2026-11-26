@@ -297,7 +297,7 @@ async function check(browserType){
         state.visit="parlor";state.flags.audience=true;state.plan=["rest","dance","rest"];render();
       });
       const visitNote=weatherPage.locator("#calendar .visit-note");
-      assert.equal(await visitNote.innerText(),"세바스찬 / 교류 시 가능 · 엘리자베스 「반주자가 없는 왈츠」");
+      assert.equal(await visitNote.innerText(),"만날 수 있는 사람: 세바스찬 / 교류 시 가능 · 엘리자베스 「반주자가 없는 왈츠」");
       assert.ok(await visitNote.evaluate(note=>{
         const frame=note.closest("#calendar").getBoundingClientRect();
         const text=document.createRange();text.selectNodeContents(note);

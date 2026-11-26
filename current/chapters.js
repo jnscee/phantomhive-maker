@@ -94,7 +94,7 @@ function visitPreview(id){
  if(id==="none")return "방문 생략";
  const planning=state.phase==="plan";
  const atVisit=state.phase==="visit"&&state.visit===id&&Boolean(state.sequence);
- if(atVisit&&(state.sequence.visitBefore||state.visitTurn===state.month))return visitName(visitPerson(id));
+ if(atVisit&&(state.sequence.visitBefore||state.visitTurn===state.month))return "만날 수 있는 사람: "+visitName(visitPerson(id));
  // Project only the lessons before arrival. Once there, the lessons are already in state.
  const forecast=planning?projectTraining(scheduledActivities(state).length):{...state,stats:{...state.stats}};
  if(planning&&forecast.ill)return "병환 시 방문 취소";
@@ -107,10 +107,10 @@ function visitPreview(id){
  if(person)forecast.people={...forecast.people,[person]:{...forecast.people[person]}};
  applyVisitInteraction(forecast,person);
  const host=visitName(person),event=nextVisitEvent(forecast);
- if(!event)return host;
+ if(!event)return "만날 수 있는 사람: "+host;
  const guest=castName(event);
  const certainty=atVisit?"교류 시 확정":"교류 시 가능";
- return host+" / "+certainty+" · "+(guest===host?"":guest+" ")+"「"+event.title+"」";
+ return "만날 수 있는 사람: "+host+" / "+certainty+" · "+(guest===host?"":guest+" ")+"「"+event.title+"」";
 }
 function visitScene(){
  const id=state.visit,[room,plain,label]=visitsVN[id];

@@ -1183,9 +1183,9 @@ assert.match(checkedVisitPreview('garden'),/교류 시 확정.*온실의 여벌 
 assert.doesNotMatch(checkedVisitPreview('garden'),/신뢰|체력|[0-9]/);
 run('visitDone(false)');
 assertOk('!state.sequence.visitEvent&&state.people.finny.toward===4&&state.stats.체력===50&&state.stress===16&&state.motivation===72');
-assert.equal(checkedVisitPreview('garden'),'피니안');
+assert.equal(checkedVisitPreview('garden'),'만날 수 있는 사람: 피니안');
 run('state.sequence={index:2}'); // A restored visitTurn guard must also prevent another forecast.
-assert.equal(checkedVisitPreview('garden'),'피니안');
+assert.equal(checkedVisitPreview('garden'),'만날 수 있는 사람: 피니안');
 run('delete state.visitTurn;state.visit="library"');
 assert.match(checkedVisitPreview('garden'),/교류 시 가능/);
 assert.doesNotMatch(checkedVisitPreview('garden'),/확정/);
@@ -1277,13 +1277,13 @@ for(const index of [0,1]){
 assert.deepEqual(Array.from(run('Object.keys(endingScenes).sort()')),['broke','ill','releaseNoTitle','releaseTitle','vowNoTitle','vowTitle']);
 // Scheduling, the doorstep choice, and selecting the event use distinct moments of the month.
 for(const fixture of [
-  {place:"kitchen",setup:'recruit("bard");state.flags.bardSupper=true;state.hp=73',note:"바르도",event:null},
-  {place:"kitchen",setup:'recruit("bard");state.flags.bardSupper=true;state.hp=72',note:"바르도 / 교류 시 가능 · 「손잡이 달린 그릇」",event:"visitKitchenBowl"},
-  {place:"parlor",setup:'state.counts.dance=1',note:"세바스찬 / 교류 시 가능 · 「여왕의 초청장」",event:"audience"},
+  {place:"kitchen",setup:'recruit("bard");state.flags.bardSupper=true;state.hp=73',note:"만날 수 있는 사람: 바르도",event:null},
+  {place:"kitchen",setup:'recruit("bard");state.flags.bardSupper=true;state.hp=72',note:"만날 수 있는 사람: 바르도 / 교류 시 가능 · 「손잡이 달린 그릇」",event:"visitKitchenBowl"},
+  {place:"parlor",setup:'state.counts.dance=1',note:"만날 수 있는 사람: 세바스찬 / 교류 시 가능 · 「여왕의 초청장」",event:"audience"},
   {place:"quarters",setup:'recruit("mey");state.flags.linenMarks=true;state.stats.기품=19',
-    plan:["rest","etiquette","rest"],note:"메이린 / 교류 시 가능 · 「소매 안쪽의 바늘땀」",event:"visitQuartersHem"},
+    plan:["rest","etiquette","rest"],note:"만날 수 있는 사람: 메이린 / 교류 시 가능 · 「소매 안쪽의 바늘땀」",event:"visitQuartersHem"},
   {place:"garden",setup:'recruit("finny");state.people.finny.toward=4',quiet:true,
-    note:"피니안 / 교류 시 가능 · 「온실의 여벌 열쇠」",event:null}
+    note:"만날 수 있는 사람: 피니안 / 교류 시 가능 · 「온실의 여벌 열쇠」",event:null}
 ]){
   ctx.visitFixture=fixture;
   setup('state.month=state.planMonth=26;state.visit=visitFixture.place;state.plan=visitFixture.plan||emptyPlan();'+fixture.setup);
