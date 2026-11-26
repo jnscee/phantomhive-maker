@@ -69,7 +69,7 @@ function actualBudget(){
   if(!r)return "";
   const incomeRows=[
     ["팬텀사 소매 매출",r.income-(r.wholesale||0)],["거래처 납품 대금",r.wholesale],
-    ["라우 상점 재고 매각",a.lauSales],["라우 상점 중고 교본 매각",a.lauBookSales],["설비 매각 대금",a.divest],["납품 선금",r.advance],["경연 상금",r.festivalIncome],["대출 입금",a.borrowed]
+    ["라우 상점 재고 매각",a.lauSales],["라우 상점 중고 교본 매각",a.lauBookSales],["설비 매각 대금",a.divest],["납품 선금",r.advance],["경영 행운 수입",a.windfalls],["경연 상금",r.festivalIncome],["대출 입금",a.borrowed]
   ];
   const debt=r.debtPayment||0;
   const expenseRows=[

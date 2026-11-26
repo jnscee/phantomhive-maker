@@ -30,7 +30,7 @@ function authoredChoice([label,response,stat,amount,responseLines,route]){
   };
 }
 function appendAuthoredOptions(event){
-  if(event.setback||!Object.hasOwn(authoredOptions,event.id)||visitEncounterCards.some(card=>card.id===event.id))return event;
+  if(event.monthlyIncident||!Object.hasOwn(authoredOptions,event.id)||visitEncounterCards.some(card=>card.id===event.id))return event;
   const choices=authoredOptions[event.id].map(authoredChoice);
   return {...event,choices:[...event.choices,...choices]};
 }
@@ -43,11 +43,11 @@ function authoredStoryEvents(){
 }
 // A decision is settled once, through the same event and monthly accounts as the campaign.
 function fundedDecision(label,result,cost,account,effect){
-  return choice(label+" · £"+cost,result,()=>{
+  return {...choice(label+" · £"+cost,result,()=>{
     state.fund-=cost;
     state.accounts[account]+=cost;
     effect();
-  },run=>run.fund>=cost,"자금 부족");
+  },run=>run.fund>=cost,"자금 부족"),cost};
 }
 function finalYearDecisions(){
   return [
@@ -499,14 +499,23 @@ function companyCaseEvents(){
 }
 
 // Each incident has a single outcome. The monthly draw is saved in the event queue.
-const monthlySetbacks = [
-  {id:"setbackGlass",month:3,title:"온실에 남은 서른두 칸",room:"garden",cost:34,
+const monthlyIncidents = [
+  {id:"windfallWindow",previewMonth:1,title:"유리창 한 칸의 사용료",room:"street",income:32,
+   lines:[["","팬텀사의 진열창 앞에서 화가가 화판을 접었다. 그가 그려 둔 자리에 백화점의 새 모자를 한 주만 전시하게 해 달라는 편지가 도착했다."],
+          ["시엘","우리 상표가 보이게 놓는다는 조건으로 빌려줘. 사용료를 받으면 어느 진열장 값인지 장부에 적어 두고."]]},
+  {id:"windfallCrates",previewMonth:1,title:"빈 상자의 값",room:"office",income:44,
+   lines:[["세바스찬","창고를 정리하다가 참나무 상자를 한 무더기 찾았습니다. 운송 조합에서 마침 그 규격을 구한다며 수표를 보내왔습니다."],
+          ["시엘","뚜껑에 우리 문장이 찍혀 있을 텐데. 그 판자만 떼어 두고 나머지는 조합에 넘겨."]]},
+  {id:"windfallIllustration",previewMonth:1,title:"달력에 실린 완구",room:"office",income:56,
+   lines:[["","인쇄소에서 내년 달력의 견본을 보내왔다. 5월 그림에는 태엽을 감는 아이가, 그 발치에는 팬텀사의 목마가 그려져 있었다."],
+          ["세바스찬","도안 사용료도 함께 도착했습니다. 도련님께서 고르신 그림이 실린 달력을 한 부 남겨 둘까요?"]]},
+  {id:"setbackGlass",previewMonth:1,title:"온실에 남은 서른두 칸",room:"garden",cost:34,
    lines:[["","밤새 바람이 온실 유리를 한 줄 걷어 갔다. 깨진 유리는 서른두 칸이었다. 시엘의 아침 식탁에는 꽃 한 송이와 그 서른두 칸에 들어갈 유리값을 적은 유리공의 청구서가 나란히 놓였다."],
           ["시엘","청구서는 저택 앞으로 돌려. ……꽃은 왜 가져가? 그건 거기에 둬."]]},
   {id:"setbackFall",month:2,title:"빈 등자",room:"field",hp:-18,stress:5,eligible:(run,ride)=>ride,
    lines:[["","마지막 모퉁이를 도는데 발밑에 등자가 없었다. 다음으로 시엘이 본 것은 눈앞의 젖은 모래였다. 깔린 어깨가 아프다는 건 숨을 한 번 들이켠 뒤에야 알았다."],
           ["세바스찬","말은 제가 데려오지요. 도련님은 오늘 저녁에는 그쪽 손으로 찻잔만 안 드시면 됩니다."]]},
-  {id:"setbackPress",month:5,title:"한 줄 밀린 가격표",room:"office",cost:46,eligible:run=>run.report.sold>=6,
+  {id:"setbackPress",previewMonth:1,title:"한 줄 밀린 가격표",room:"office",cost:46,
    lines:[["","전단에 찍힌 값이 한 줄씩 밀렸다. 손님들은 제 물건 밑에 적힌 값을 셌고 점원은 그 돈을 받았다. 벌써 가게 밖까지 줄이 서 있었다."],
           ["시엘","손님이야 우리가 적은 값에 샀지. 차액도 전단을 다시 찍는 비용도 팬텀사 앞으로 달아."]]},
   {id:"setbackLetter",month:9,title:"연회가 끝난 뒤",room:"ballroom",renown:-2,stress:6,eligible:run=>run.renown>=2,
@@ -515,28 +524,42 @@ const monthlySetbacks = [
   {id:"setbackBells",month:10,title:"새벽 두 시의 종",room:"bedroom",hp:-10,motivation:-6,
    lines:[["","새벽 두 시에 울리기 시작한 마을 종이 동틀 무렵에야 멎었다. 이웃 헛간의 불은 꺼졌고, 시엘의 베개는 어제 펴 놓은 모양 그대로였다."],
           ["세바스찬","차를 새로 올릴까요, 도련님? 지금 읽으시는 면을 펴셨을 때는 찻잔에서 김이 났는데요."]]},
-  {id:"setbackAxle",month:15,title:"돌아오지 않은 마차",room:"office",cost:68,eligible:run=>run.report.sold>=9,
+  {id:"setbackAxle",previewMonth:1,title:"돌아오지 않은 마차",room:"office",cost:68,
    lines:[["","런던 다리를 앞두고 팬텀사 짐마차의 차축이 부러졌다. 빌린 마차 셋에 짐을 나눠 싣고 마지막 한 대가 도착하고서야 상점의 문을 열었다."],
           ["세바스찬","상자는 하나도 빠지지 않았습니다. 청구서가 좀 늘었군요. 마차 세 대의 운임에 새 차축 하나의 값까지 붙었습니다."]]},
-  {id:"setbackPipe",month:20,title:"식당 천장의 물자국",room:"ballroom",cost:84,
+  {id:"setbackPipe",previewMonth:1,title:"식당 천장의 물자국",room:"ballroom",cost:84,
    lines:[["","은쟁반 한복판에 물 한 방울이 떨어졌다. 쟁반을 옮기자 식탁보가 젖었다. 천장을 열어 보니 오래된 수도관의 이음매가 벌어져 있었다."],
           ["시엘","배관공이 오면 바로 식당으로 들여. 오늘 저녁은 내가 자리를 옮기지. 서재에 상을 차려."]]}
 ];
-function drawMonthlySetback(run,ride,random=Math.random){
+const cashWindfalls=monthlyIncidents.filter(item=>item.income);
+const cashLosses=monthlyIncidents.filter(item=>item.cost);
+const otherIncidents=monthlyIncidents.filter(item=>!item.income&&!item.cost);
+const monthlyCashChance=.08;
+function drawCashIncident(run){
+  const draw=monthlyDraw(run,0x43415348);
+  if(draw>=monthlyCashChance)return null;
+  const pool=draw<monthlyCashChance/2?cashWindfalls:cashLosses;
+  return pool[Math.floor(monthlyDraw(run,0x4c4f5453)*pool.length)].id;
+}
+function drawMonthlyIncident(run,ride,random=Math.random){
   if(run.duration!==35||run.month<2||weatherFor(run))return null;
-  const last=run.events.findLast(record=>monthlySetbacks.some(item=>item.id===record.id));
+  const last=run.events.findLast(record=>otherIncidents.some(item=>item.id===record.id));
   if(last&&run.month-last.month<2)return null;
-  const eligible=monthlySetbacks.filter(item=>run.month>=item.month&&!run.flags[item.id]&&(!item.eligible||item.eligible(run,ride)));
+  const eligible=otherIncidents.filter(item=>run.month>=item.month&&!run.flags[item.id]&&(!item.eligible||item.eligible(run,ride)));
   if(!eligible.length||random()>=(run.month<=12?.32:.42))return null;
   return eligible[Math.floor(random()*eligible.length)].id;
 }
-function setbackEvents(){
-  return monthlySetbacks.map(item=>{
-    const result=[item.cost&&"지출 £"+item.cost,item.hp&&"컨디션 "+signed(item.hp),
+function incidentEvents(){
+  return monthlyIncidents.map(item=>{
+    const result=[item.income&&"입금 £"+item.income,item.cost&&"지출 £"+item.cost,item.hp&&"컨디션 "+signed(item.hp),
       item.stress&&"스트레스 "+signed(item.stress),item.motivation&&"의욕 "+signed(item.motivation),
       item.renown&&"가문 명성 "+signed(item.renown)].filter(Boolean).join(" · ");
-    return {id:item.id,title:item.title,room:item.room,lines:item.lines,text:item.lines[0][1],setback:true,sees:()=>false,
+    return {id:item.id,title:item.title,room:item.room,lines:item.lines,text:item.lines[0][1],monthlyIncident:true,recurringCash:Boolean(item.income||item.cost),track:item.income?"cheerful":item.cost?"gloomy":undefined,sees:()=>false,
       choices:[choice("기록을 확인한다",item.title+" · "+result,()=>{
+        if(item.income){
+          state.fund+=item.income;
+          state.accounts.windfalls=(state.accounts.windfalls||0)+item.income;
+        }
         if(item.cost){
           state.fund-=item.cost;
           state.accounts.setbacks=(state.accounts.setbacks||0)+item.cost;

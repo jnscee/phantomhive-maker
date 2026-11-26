@@ -8,6 +8,7 @@ async function runEditorScenario(browser,base,scenario){
     ?await browser.browserType().launchPersistentContext("",{viewport})
     :await browser.newContext({viewport});
   const page=await context.newPage();
+  await page.emulateMedia({reducedMotion:"reduce"});
   const errors=[];
   page.on("pageerror",error=>errors.push(error.message));
   page.setDefaultTimeout(12000);

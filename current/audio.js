@@ -132,6 +132,13 @@ function trackForView(){
     const event=pendingEvent();
     return state.fairBook?.[event.contest.id]?.reason==="병중으로 불참"?"illness":event.track;
   }
+  if(tab==="plan"&&state.phase==="event"){
+    const event=pendingEvent();
+    if(event?.monthlyIncident&&event.track)return eventTrack(event.id,event.track);
+    if(event?.choices[state.termOutcome?.index]?.cost&&state.termOutcome?.id===event.id)return "gloomy";
+    if(state.choiceImpact?.next && state.choiceImpact.items.some(item=>item.rows.some(
+      row=>row.name==="가문 자금"&&row.value<row.before)))return "gloomy";
+  }
   // Recovery can clear illness before the scene's first frame.
   if(tab==="plan"&&["scene","review"].includes(state.phase)&&state.sequence?.onSickLeave &&
     (state.sequence.activity||state.plan[state.sequence.index])==="recovery")return "illness";
