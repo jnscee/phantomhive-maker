@@ -2086,3 +2086,55 @@ html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.m
 .dialogue-theme-options [data-action="dialogue-theme:dark"]::before {background:#1c3048}
 
 ::highlight(dialogue-unread) { color: transparent; text-shadow: none; }
+
+/* The planning footer and dialogue toolbar share a light surface inside their own views. */
+#scene #calendar > .calendar-foot,
+#scene :is(#conversation,#overture) .opening-top {
+  --panel-ink:#203650;
+  --panel-secondary:#425974;
+  --panel-rule:#899eb58c;
+  --panel-selected:#25415f;
+  color:var(--panel-ink);
+  background:linear-gradient(125deg,#fcfdfff0,#edf3f9e8 60%,#dce7f2eb);
+  border-color:#a8bbcf;
+  box-shadow:inset 0 1px #fff,0 3px 12px #10263e38;
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+  text-shadow:none;
+}
+#scene #calendar > .calendar-foot {
+  .calendar-summary strong,.plan-costs dd,.plan-balance strong {color:var(--panel-ink)}
+  .calendar-note,.plan-costs dt,.plan-balance span {color:var(--panel-secondary)}
+  .calendar-settle,.calendar-periods,.plan-balance {border-color:var(--panel-rule)}
+  .spending-bar {background:#d6e1ec}
+  :is(.plan-costs > div,.spending-bar i):nth-child(1) {--cost-color:#55799d}
+  :is(.plan-costs > div,.spending-bar i):nth-child(2) {--cost-color:#96743b}
+  :is(.plan-costs > div,.spending-bar i):nth-child(3) {--cost-color:#42786e}
+  .plan-effect .gain {--delta:#185d50}
+  .plan-effect .loss {--delta:#903f46}
+  .calendar-warning {color:#853d45}
+  .period {
+    color:var(--panel-ink);background:#ffffff96;
+    border-color:var(--panel-rule);box-shadow:inset 0 0 0 1px #bac9d7;text-shadow:none;
+  }
+  .period span {color:var(--panel-secondary)}
+  .period:is(:hover,:focus-visible):enabled {background:#dbe8f3}
+  .period[aria-pressed=true] {
+    color:var(--panel-ink);background:#ccdeee;
+    box-shadow:inset 0 -3px var(--panel-selected),inset 0 0 0 1px #819bb6;
+  }
+  .period[aria-pressed=true] span {color:var(--panel-ink)}
+  .period.contest-period {color:var(--panel-ink);background:#faf3e3;box-shadow:inset 0 0 0 1px #bcaa87}
+  .period.contest-period span {color:#725423}
+  .calendar-run {color:#fff;background:var(--panel-selected);box-shadow:inset 0 0 0 1px #718da6;text-shadow:none}
+  .calendar-run:enabled:hover {background:#345a7b}
+  .calendar-run:disabled {opacity:1;color:#52657a;background:#dee6ee;box-shadow:inset 0 0 0 1px #aebecd}
+  button:focus-visible {outline:2px solid #284e73;outline-offset:1px}
+}
+#scene :is(#conversation,#overture) .opening-top {
+  > button {color:var(--panel-ink);background:transparent;text-shadow:none}
+  > button:is(:hover,:focus-visible):enabled {color:var(--panel-ink);background:#d6e5f2;border-color:#92a9bf}
+  > button:focus-visible {outline:2px solid #284e73;outline-offset:1px}
+  > button:disabled {color:#617184;opacity:.74}
+  > :is(#opening-auto,[data-read=auto])[aria-pressed=true] {color:#fff;background:var(--panel-selected);border-color:#718da6}
+}
