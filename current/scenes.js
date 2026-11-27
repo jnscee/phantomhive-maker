@@ -275,7 +275,12 @@ const homeChatGreetings={
   unwell:"차는 침실로 올리겠습니다. 오늘은 어느 서류를 물릴까요?",
   stressed:"오늘은 찻잔이 식을 때까지 한 장도 넘기지 않으셨군요."
 };
+const monthlyChatTopics=["chess", "seal", "route"];
 const homeChatTopics={
+  chess:{"label": "체스판을 펼친다", "title": "체스 한 수", "line": "흑은 내 거야. 백을 잡았으면 네가 먼저 둬.", "reply": "그럼 이 폰을 두 칸 앞으로. 제 손보다 판을 보시는 편이 좋을 겁니다, 도련님."},
+  seal:{"label": "서신의 인장을 살핀다", "title": "봉랍의 흔적", "line": "인장이 거꾸로 찍혔어. 답장을 쓰기 전에 지난 편지를 가져와.", "reply": "여기 있습니다. 두 통을 나란히 놓으니, 도련님께서도 어느 손으로 눌렀는지 보이시겠지요?"},
+  route:{"label": "마차 노선을 의논한다", "title": "런던의 길", "line": "다리를 건너지 말고 강을 따라가. 조금 돌아도 공장이 문을 열 때 도착할 수 있어.", "reply": "그럼 마부에게 그렇게 전하지요. 돌아오는 길도 같은 길로 잡을까요?"},
+
   health:{title:"몸 상태",line:"좋은 타이밍에 물었네. 오늘 회의는 삼십 분 늦춰 줘.",memoryFlag:"morningGloves",
     memoryLine:"눈치가 좋은 줄 알았는데, 의외의 것을 묻네.\n시엘이 반대쪽 손도 내민다."},
   business:{title:"",line:"장식은 나중으로. 고객이 혼자서도 상자를 열 수 있는지부터 볼래."},
@@ -288,6 +293,10 @@ const butlerReplies={
  tea:["한 잔 더 올리지요. 이번엔 설탕을 넣기 전에 향부터 맡아 보십시오.","조금 더 진하게 우려 보았습니다. 어느 쪽이 나은지는 도련님께서 말씀해 주시지요.","예, 같은 차로 올리겠습니다. 두 번째 잔을 청하시면 그날의 차는 합격이라고 여겨도 되겠습니까?","한 잔 더, 입니까. 그럼 저도 배운 보람이 있군요."]
 };
 const chatFollowups={
+  chess:[["나이트를 가리킨다", "그쪽을 보라고? 네가 그렇게 친절할 때는 반대편을 보는 게 낫더군."]],
+  seal:[["두 편지를 빛에 비춘다", "종이도 달라. 인장을 빌린 건지 훔친 건지는 아직 모르겠군."]],
+  route:[["귀갓길을 지도에 짚는다", "돌아올 때는 시장을 거쳐. 우리 완구가 어느 창가에 놓였는지 직접 볼 거야."]],
+
   health:[
     ["회의 서류만 두고 간다","그 빨간 봉투도 두고 가. ……그 눈빛은 뭐야? 읽을 작정이면 안경부터 가져오라고 했겠지."],
     ["깨울 시각을 확인한다","큰 바늘이 여섯에 닿으면 깨워. 안 일어난다는 이유로 재워 놓지 말고."]
@@ -328,15 +337,16 @@ function chatDialogue(){
     const legacy=oldText?.length===2&&spoken.line==="“"+oldText[0]+"” "+oldText[1];
     return {caption:"시엘 팬텀하이브",line:legacy?memory:spoken.line,buttons:spoken.reply?btn("세바스찬의 대답을 듣는다","chat-reply")+end:end};
   }
+  const monthlyTopic=monthlyChatTopics[(state.month-1)%monthlyChatTopics.length];
   return {caption:"세바스찬 미카엘리스",line:state.ill||state.hp<35?homeChatGreetings.unwell:state.stress>60?homeChatGreetings.stressed:butlerGreetings[sebastianRegard(state.stats)],
-    buttons:btn("몸 상태를 묻는다","chatline:health")+btn("팬텀사 이야기를 꺼낸다","chatline:business")+btn("차를 한 잔 더 따른다","chatline:tea")+btn("다음에","back")};
+    buttons:btn("몸 상태를 묻는다","chatline:health")+btn("팬텀사 이야기를 꺼낸다","chatline:business")+btn("차를 한 잔 더 따른다","chatline:tea")+btn(homeChatTopics[monthlyTopic].label,"chatline:"+monthlyTopic)+btn("다음에","back")};
 }
 function speak(id){
   if(state.phase!=="plan"||state.spoken?.turn===state.month)return;
   if(!Object.hasOwn(homeChatTopics,id))return;
   if(id==="tea"||id==="health")state.flags.attention=(state.flags.attention||0)+1;
   const snapshot=choiceSnapshot();
-  let reply=butlerReplies[id][sebastianRegard(state.stats)];
+  let reply=homeChatTopics[id].reply ?? butlerReplies[id][sebastianRegard(state.stats)];
   const before=snapStats(state);
   if(id==="health"){
     changeStat("통찰",6);
@@ -344,10 +354,12 @@ function speak(id){
   }else if(id==="business"){
     changeStat("경영",7);
     changeStat("지성",4);
-  }else{
+  }else if(id==="tea"){
     changeStat("매력",6);
     state.motivation=cap(state.motivation+5);
     state.flags.quietTea=(state.flags.quietTea||0)+1;
+  }else{
+    changeStat({chess:"의지",seal:"통찰",route:"경영"}[id],6);
   }
   const after=snapStats(state);
   const effects=Object.keys(after).filter(k=>before[k]!==after[k])
@@ -355,12 +367,12 @@ function speak(id){
   const {title,line:usual,memoryFlag,memoryLine}=homeChatTopics[id];
   let line=memoryFlag&&state.flags[memoryFlag]?memoryLine:usual;
   const count=state.chatCounts?.[id]||0;
-  if(count%3 || (id==="health" && (state.ill||state.hp<35))){
+  if(chatVariations[id] && (count%3 || (id==="health" && (state.ill||state.hp<35)))){
     const variation=chatVariations[id][id==="health"&&(state.ill||state.hp<35)?0:(count-1)%2];
     [line,reply]=variation;
   }
   state.chatCounts??={};state.chatCounts[id]=count+1;
   state.spoken={turn:state.month,topic:id,title,line,reply,effects};
-  showChoiceImpact({health:"몸 상태를 묻는다",business:"팬텀사 이야기를 꺼낸다",tea:"차를 한 잔 더 따른다"}[id],snapshot);
+  showChoiceImpact({health:"몸 상태를 묻는다",business:"팬텀사 이야기를 꺼낸다",tea:"차를 한 잔 더 따른다"}[id] ?? homeChatTopics[id].label,snapshot);
   persist();render(true);
 }
