@@ -329,7 +329,7 @@ function setArtOnly(stage,hidden){
 function cielPortraitScale(age){return String(Math.min(152,140+6*(age-10))/186);}
 // Eye positions and eye-to-chin lengths were measured on each illustration at 400 px high.
 const standingMeasures={
-  "세바스찬":[189,68,40], "아그니":[193,53,36], "바르도":[181,52,46],
+  "세바스찬":[186,68,40], "아그니":[193,53,36], "바르도":[181,52,46],
   "피니안":[163,68,44], "메이린":[165,94,45], "올빼미":[165,77,40], "스네이크":[177,64,45],
   "소마":[171,74,44], "타나카":[166,64,44], "라우":[178,62,42],
   "엘리자베스11":[144,87,39], "엘리자베스12":[150,78,35], "엘리자베스13":[156,89,45]
@@ -339,7 +339,7 @@ function standingFit(profile,age){
   const [referenceHeight,referenceEye,referenceChin]=cielMeasures[age-10];
   const referenceScale=Number(cielPortraitScale(age));
   const [height,eye,chin]=standingMeasures[profile];
-  const eyeLevel=referenceScale*(1-referenceEye/400)+(height-referenceHeight)/300;
+  const eyeLevel=referenceScale*(1-referenceEye/400)+(height-referenceHeight)/215;
   if(profile==="엘리자베스12"&&age===11){
     // Match the two portraits by their face size, then position the crown just above Ciel’s.
     return {scale:referenceScale*referenceChin/chin*.93,window:referenceScale*1.018};
