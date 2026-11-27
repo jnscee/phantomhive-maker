@@ -266,7 +266,7 @@ html:is([data-fair-preview],[data-story-preview]) :is(#system-menu,#mobile-menu)
 #picker .fair-notice>summary b {color:#56332c}
 #picker .fair-dialog :is(header,.fair-body)>button {background:#fff6e6;color:#654433;border:1px solid #ac8b61;border-radius:4px;text-shadow:none}
 .fair-dialog .fair-options small {color:inherit}
-#picker .fair-options[aria-label="출품할 제품"] button small {font-size:.8125rem}
+#picker .fair-options:is([aria-label="출품할 제품"],[aria-label="Product to enter"],[aria-label="出品する商品"]) button small {font-size:.8125rem}
 #picker .fair-rules {padding:.12rem .75rem;border:1px solid #aa9474;border-radius:6px;background:#fffaf0ee;color:#372d25;box-shadow:inset 0 1px #fff}
 .fair-dialog .fair-rules>summary {display:list-item;min-height:0;padding:.5rem .15rem;text-decoration:none;color:#65452d;font-size:.95rem}
 #picker .rule-table b {color:#712f40;background:#f3e2dc;border-radius:3px;padding:0 .2em;white-space:nowrap}

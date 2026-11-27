@@ -64,6 +64,13 @@ async function checkNotebook(page){
   await slot.getByRole('button',{name:'저장',exact:true}).click();
   assert.equal(await slot.getAttribute('data-filled'),'true');
   assert.ok(await load.isEnabled());
+  const storedBook=await page.evaluate(()=>localStorage.getItem(storageKey));
+  for(const [code,heading] of [['en','Save & Settings'],['ja','セーブ・設定'],['ko','저장 · 설정']]){
+    await page.locator('#game-language').selectOption(code);
+    await page.waitForFunction(title=>document.getElementById('sheet-title').textContent===title,heading);
+    assert.equal(await page.locator('html').getAttribute('lang'),code);
+    assert.equal(await page.evaluate(()=>localStorage.getItem(storageKey)),storedBook);
+  }
   await slot.getByRole('button',{name:'저장',exact:true}).click();
   assert.ok(await page.locator('#picker [data-action="confirm"]').isVisible());
   await page.getByRole('button',{name:'취소',exact:true}).click();

@@ -1751,7 +1751,7 @@ html[data-game-motion=reduced] :is(.company-worker img,.duty-walker,.duty-walker
 /* Courses and visits share the same card banks, icon size and row height. */
 #calendar .card-bank .lesson { box-sizing:border-box; block-size:clamp(60px,6.1cqw,74px);min-height:0;padding:4px 7px;align-content:center; }
 #calendar .visit-card .planner-icon {justify-self:center}
-#calendar .lesson-index:has(+ [aria-label="자유행동"]) {min-height:38px;align-items:center;box-sizing:border-box}
+#calendar .lesson-index:has(+ :is([aria-label="자유행동"],[aria-label="Free time"],[aria-label="自由行動"])) {min-height:38px;align-items:center;box-sizing:border-box}
 @media (orientation:portrait) and (max-width:700px) {
   #calendar .card-bank .lesson {block-size:54px; padding:3px 6px}
   #calendar .visit-card .planner-icon {grid-row:span 2}
@@ -2219,3 +2219,6 @@ html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.m
   --reading-glass:linear-gradient(115deg,#fcfdffe8,#edf3f9e0);
   --hud-glass-blur:blur(20px);
 }
+
+/* Allow translated labels to wrap within the existing command and calendar grids. */
+html:is(:lang(en),:lang(ja)) :is(.command-grid,.calendar-foot,.cover-actions,.card-bank) button {min-inline-size:0;overflow-wrap:anywhere;line-height:1.2}

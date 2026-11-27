@@ -1610,7 +1610,7 @@ function render(focus=false,playbackOffset=0){
   panel.innerHTML=panels[tab]();
   if(openSections.size){
     for(const summary of panel.querySelectorAll("details > summary")){
-      if(openSections.has(summary.textContent))summary.parentElement.open=true;
+      if(openSections.has(translatedLine(summary.textContent)))summary.parentElement.open=true;
     }
   }
   panel.scrollTop=deskScroll;
