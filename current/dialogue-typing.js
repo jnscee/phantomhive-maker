@@ -15,7 +15,7 @@
   ].join(",");
   const segmenter=new Intl.Segmenter("ko",{granularity:"grapheme"});
   const highlightName="dialogue-unread";
-  let line=null, textNode=null, signature="", started=0, frame=0;
+  let line=null, textNode=null, displayedText="", signature="", started=0, frame=0;
   function reveal(){
     cancelAnimationFrame(frame);
     frame=0;
@@ -28,12 +28,15 @@
     }
     // A settings change may re-render the same passage, including the prologue
     // which keeps its span and replaces only its text node.
-    if(next===line && next.firstChild===textNode)return;
+    // Localisation may update the same Text node in place. Its live Range then
+    // collapses, so rebuild the grapheme offsets for the newly displayed text.
+    const content=next.textContent;
+    if(next===line && next.firstChild===textNode && content===displayedText)return;
     const key=next.id+"|"+next.parentElement.textContent;
     const same=key===signature;
     const complete=same&&!frame;
     reveal();
-    line=next;textNode=next.firstChild;signature=key;
+    line=next;textNode=next.firstChild;displayedText=content;signature=key;
     if(complete)return;
     if(!same)started=performance.now();
     const unread=new Highlight(),letters=[];

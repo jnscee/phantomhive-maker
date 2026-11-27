@@ -851,8 +851,24 @@ function londonCareer(run,managementMinimum=350,fundMinimum=2000){
 function epilogue(){
   const allies=peopleInHouse().filter(k=>state.people[k].toward>=5).map(k=>servants[k].name);
   const top=Object.keys(state.stats).sort((a,b)=>state.stats[b]/statMax(b)-state.stats[a]/statMax(a))[0];
-  const route=state.ending==="vowNoTitle"?(londonCareer(state)==="merchant"?"런던의 사업가로 자리 잡았습니다. ":londonCareer(state)==="broker"?"정보상의 연락망을 얻었습니다. ":"마차를 타고 옛 흔적을 좇습니다. "):"";
-  return route+(allies.length&&!["releaseTitle","releaseNoTitle","ill","broke"].includes(state.ending)?allies.join("·")+"은 다음 겨울에도 도련님의 지시를 따르겠다고 전했습니다. ":"")+"가장 단련된 능력은 "+statLabel(top)+"이었습니다. 팬텀사의 개발품은 "+state.unlocked.length+"종, 저택에 합류한 고용인은 "+peopleInHouse().filter(id=>servants[id].job).length+"명입니다.";
+  const career=state.ending==="vowNoTitle"?londonCareer(state):null;
+  const pledged=allies.length>0&&!["releaseTitle","releaseNoTitle","ill","broke"].includes(state.ending);
+  const staff=peopleInHouse().filter(id=>servants[id].job).length;
+  const products=state.unlocked.length;
+  const stat=translatedLine(statLabel(top));
+  if(gameLanguage==="en"){
+    const route={merchant:"Ciel established himself in business in London. ",broker:"Ciel gained a network of informants. ",pursuit:"Ciel set off by carriage to follow an old trail. "}[career]||"";
+    const names=new Intl.ListFormat("en-GB").format(allies.map(translatedLine));
+    const pledge=pledged?`${names} pledged to follow Ciel’s orders again next winter. `:"";
+    return route+pledge+`Ciel’s strongest attribute was ${stat}. Funtom developed ${products} ${products===1?"product":"products"}, and ${staff} ${staff===1?"servant":"servants"} joined the household.`;
+  }
+  if(gameLanguage==="ja"){
+    const route={merchant:"シエルはロンドンで実業家として身を立てた。",broker:"シエルは情報屋の連絡網を手に入れた。",pursuit:"シエルは馬車に乗り、かつての足跡を追う。"}[career]||"";
+    const pledge=pledged?allies.map(translatedLine).join("、")+"は、次の冬も坊ちゃんの指示に従うと伝えてきた。":"";
+    return route+pledge+`最も磨かれた能力は${stat}だった。ファントム社が開発した製品は${products}種類。屋敷に加わった使用人は${staff}人だった。`;
+  }
+  const route=career?(career==="merchant"?"런던의 사업가로 자리 잡았습니다. ":career==="broker"?"정보상의 연락망을 얻었습니다. ":"마차를 타고 옛 흔적을 좇습니다. "):"";
+  return route+(pledged?allies.join("·")+"은 다음 겨울에도 도련님의 지시를 따르겠다고 전했습니다. ":"")+"가장 단련된 능력은 "+stat+"이었습니다. 팬텀사의 개발품은 "+products+"종, 저택에 합류한 고용인은 "+staff+"명입니다.";
 }
 function canBuyTownhouse(){return state.phase==="plan" && !state.flags.townhouse && state.fund>=250;}
 function startHouseholdVisit(run){

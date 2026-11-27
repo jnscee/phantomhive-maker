@@ -142,6 +142,31 @@ function monthlyTimeline(entries){
   });
   return '<ol class="report-timeline">'+items.join('')+'</ol>';
 }
+function monthlyReportWords(best,previous,current,growth){
+  const highlight=value=>'<strong class="report-key">'+value+'</strong>';
+  const stat=highlight(escapeHTML(translatedLine(statLabel(best))));
+  const fund=highlight(money(state.fund));
+  const sold=state.report?.sold;
+  if(gameLanguage==="en"){
+    const progress=growth>0
+      ? `Your greatest improvement this month was in ${stat}, from ${highlight(previous)} to ${highlight(current)}. `
+      : "Your abilities held steady this month. ";
+    const sales=sold==null?"":`Funtom sold ${highlight(sold+" "+(sold===1?"item":"items"))}. `;
+    return progress+sales+`You have ${fund} at your disposal next month, my lord.`;
+  }
+  if(gameLanguage==="ja"){
+    const progress=growth>0
+      ? `今月最も伸びたのは${stat}でございます。${highlight(previous)}から${highlight(current)}までお上げになりましたね。`
+      : "今月の能力に大きな変化はございませんでした。";
+    const sales=sold==null?"":`ファントム社の販売数は${highlight(sold+"個")}でございました。`;
+    return progress+sales+`来月お使いいただけるのは${fund}でございます、坊ちゃん。`;
+  }
+  const growthLine=growth>0
+    ?"이번 달에는 "+stat+"에서 가장 진전이 컸습니다. "+highlight(previous)+"에서 "+highlight(current)+"까지 올리셨군요. "
+    :"이번 달 능력에는 큰 변동이 없었습니다. ";
+  const salesLine=state.report?"팬텀사에서는 "+highlight(state.report.sold+"개")+"를 판매했습니다. ":"";
+  return growthLine+salesLine+"도련님께서 다음 달에 쓰실 수 있는 돈은 "+fund+"입니다.";
+}
 function monthlyResults(){
   const before=state.accounts.stats,after=snapStats(state);
   const group=(title,keys)=>'<h4>'+title+'</h4>'+keys.map(k=>deltaRow(k,before[k],after[k])).join('');
@@ -158,13 +183,9 @@ function monthlyResults(){
   const warnings=[healthWarning,financeWarning].filter(Boolean).map(note=>'<p class="danger">'+note+'</p>').join("");
   const best=stats.slice().sort((a,b)=>(after[b]-before[b])/statMax(b)-(after[a]-before[a])/statMax(a))[0];
   const growth=after[best]-before[best];
-  const highlight=value=>'<strong class="report-key">'+value+'</strong>';
-  const growthLine=growth>0
-    ?"이번 달에는 "+highlight(escapeHTML(statLabel(best)))+"에서 가장 진전이 컸습니다. "+highlight(before[best])+"에서 "+highlight(after[best])+"까지 올리셨군요. "
-    :"이번 달 능력에는 큰 변동이 없었습니다. ";
-  const salesLine=state.report?"팬텀사에서는 "+highlight(state.report.sold+"개")+"를 판매했습니다. ":"";
-  const words=growthLine+salesLine+"도련님께서 다음 달에 쓰실 수 있는 돈은 "+highlight(money(state.fund))+"입니다.";
-  return '<div class="month-report"><div class="butler-account"><img src="assets/sebastian.webp" alt="세바스찬"><p><b>세바스찬의 월말 보고</b><br>'+words+(moneyRemark?' '+moneyRemark:'')+'</p></div>'+warnings+'<div class="report-date">'+monthText(state.month)+' 결산</div><div class="report-columns">'+
+  const words=monthlyReportWords(best,before[best],after[best],growth);
+  const heading=translatedLine("세바스찬의 월말 보고");
+  return '<div class="month-report"><div class="butler-account"><img src="assets/sebastian.webp" alt="세바스찬"><p><b>'+heading+'</b><br>'+words+(moneyRemark?' '+moneyRemark:'')+'</p></div>'+warnings+'<div class="report-date">'+monthText(state.month)+' 결산</div><div class="report-columns">'+
     '<section class="stat-folio"><h3>시엘의 성장 기록</h3><div class="delta-head"><span>항목</span><span>이전</span><span>현재</span><span>변화 그래프</span><span>증감</span></div>'+
     group("능력 · 500점",stats)+group("현재 상태 · 100점",["건강","스트레스","의욕"])+'</section>'+actualBudget()+'</div>'+thisMonthFairReport()+sampleReview()+
     '<details class="month-log"><summary>이달 일정·사건 기록</summary>'+monthlyTimeline(state.log)+'</details>'+
@@ -216,7 +237,12 @@ function reviewMarkup(){
   let line=reviewLines[id];
   if(seq.grade)line=lessonFeedback(id,seq.grade,seq.remark);
   if(seq.grade==="great"&&seq.remark===1&&butlerLessonPraise[id])line=butlerLessonPraise[id][sebastianRegard(state.stats)];
-  if(seq.linkedFrom&&seq.grade!=="poor")line="지난 "+actions[seq.linkedFrom].name+"에서 익히신 것을 여기 쓰셨군요. 따로 설명드릴 필요가 없겠습니다.";
+  if(seq.linkedFrom&&seq.grade!=="poor"){
+    const lesson=escapeHTML(translatedLine(actions[seq.linkedFrom].name));
+    if(gameLanguage==="en")line=`I see you have applied what you learnt in your previous session, ‘${lesson}’. I need hardly explain it again.`;
+    else if(gameLanguage==="ja")line=`先日の「${lesson}」でお学びになったことを、ここで生かされましたね。改めてご説明するまでもございません。`;
+    else line="지난 "+lesson+"에서 익히신 것을 여기 쓰셨군요. 따로 설명드릴 필요가 없겠습니다.";
+  }
   if(!seq.grade&&tired)line="끝까지 자리를 지키셨군요. 다음 순에는 차를 일찍 올리겠습니다. 오늘은 평소보다 피로가 짙으셨습니다.";
   const lead=preferred[0]||(["건강","스트레스","의욕"].find(k=>after[k]!==seq.before[k]));
   if(!changed.length&&!seq.grade)line="오늘 기록은 지난 순과 같군요. 다음에는 다른 과목을 편성해 보시겠습니까, 도련님?";

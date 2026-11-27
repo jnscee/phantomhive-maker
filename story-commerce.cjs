@@ -12,6 +12,21 @@ run('render=()=>{};respond=()=>{};announce=()=>{};focusAction=()=>{};popMoney=()
 const assertOk=source=>assert.ok(run(source),source);
 run('$("status-drawer").hidden=true;');
 const setup=(code="")=>run('state=initial();state.owlSeed=1;state.phase="plan";tab="company";'+code);
+// A translated clue must remain inside its complete evidence sentence after markup.
+for (const language of ["en", "ja"]) {
+  ctx.evidenceLanguage = language;
+  const missing = run(`gameLanguage = evidenceLanguage;
+    companyCases.flatMap(item => item.evidence.flatMap((entry, i) => {
+      const phrases = item.evidenceEmphasis[i];
+      const html = companyEvidenceEntry(entry, phrases);
+      return phrases.filter(phrase => {
+        const translated = translatedLine(phrase);
+        return translated === phrase || !html.includes("<mark>" + escapeHTML(translated) + "</mark>");
+      }).map(phrase => item.id + ": " + phrase);
+    }))`);
+  assert.equal(missing.length, 0, language + " missing translated clues: " + missing.join(", "));
+}
+run('gameLanguage = "ko"');
 // Both tea-party events in each of the three years use Edward, including on a restored scorecard.
 const teaParties=run('contests.filter(f=>f.id.startsWith("newYear-")).map(f=>f.id)');
 assert.equal(teaParties.length,2);

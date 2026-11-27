@@ -1,7 +1,7 @@
 "use strict";
 
 // A language becomes selectable when its game translation is ready to ship.
-const gameLanguages = {ko:"한국어", ja:"日本語 (β)", en:"English (Beta)"};
+const gameLanguages = {ko:"한국어", ja:"日本語", en:"English"};
 const gameText = {
   ko:{
     title:"팬텀하이브 백작 메이커", menu:"표지 메뉴", start:"게임 시작", continue:"이어하기",
@@ -54,22 +54,6 @@ document.addEventListener("change", event => {
 });
 
 // Translate presentation only. Stats, save keys and event conditions stay in Korean.
-// Reviewed New Year dialogue and character names.
-Object.assign(editionLines, {
-  "에드워드": ["Edward","エドワード"],
-  "에드워드 미드포드": ["Edward Midford","エドワード・ミッドフォード"],
-  "미드포드가 장남": ["Eldest son of House Midford","ミッドフォード家の長男"],
-  "신년 다과회": ["New Year’s Tea Party","新年の茶会"],
-  "시엘, 난 아직 널 내 매제로 인정하지 않았다. ……뭐? 다과회랑 무슨 상관이냐고? 아무튼, 내가 먼저다!": ["Ciel, I still haven’t accepted you as my brother-in-law. …What’s that? What does that have to do with a tea party? Never mind. I’m going first!","シエル、僕はまだ君を義弟と認めていないぞ。……何？　茶会と何の関係があるかって？　とにかく、僕が先だ！"],
-  "해가 바뀌었다고 내가 마음을 바꾼 줄은 아니겠지, 시엘? 리지의 옆자리는 더더욱 양보 못 해!": ["A new year doesn’t mean I’ve changed my mind, Ciel. And you certainly can’t have the seat next to Lizzy!","年が明けたからって、僕が考えを変えたと思うなよ、シエル。リジーの隣の席ならなおさら譲れない！"],
-  "시엘, 잘해라. 리지가 보고 있다. ……응원한 게 아니다! 내 매제가 되려면 그 정도는 해야지.": ["Do your best, Ciel. Lizzy’s watching. …I wasn’t cheering for you! I expect that much of anyone who means to marry my sister.","シエル、しっかりやれ。リジーが見ているぞ。……応援したわけじゃない！　僕の義弟になろうというなら、それくらい当然だ。"],
-  "내가 언제 인정해 달랬어? ……먼저 해, 에드워드. 손님들 차가 식겠어.": ["When did I ask for your blessing? …Go on, Edward. Our guests’ tea is getting cold.","僕がいつ認めてくれと頼んだ？　……先にどうぞ、エドワード。お客様の紅茶が冷めてしまう。"],
-  "리지가 가운데에 앉으면 아무 문제도 안 생기는 일이잖아….": ["If Lizzy sat between us, we wouldn’t have a problem…","リジーが真ん中に座れば何の問題もないだろう……。"],
-  "그래, 응원 고마워. ……그렇게 노려보지 마. 리지한테는 비밀로 할 테니까.": ["Well, thank you for cheering me on. …No need to glare. I won’t tell Lizzy.","そうか、応援ありがとう。……そんなに睨むな。リジーには黙っておくから。"],
-  "잠깐. 그 잔은 이미 식었군. 새로 우려 오도록 해.": ["Wait. That cup’s gone cold. Have a fresh pot brought in.","待て。その紅茶はもう冷めている。新しく淹れ直してくれ。"],
-  "우유를 곁들이신다고요? 이번 잔은 조금 진하게 따르겠습니다.": ["You take milk? Then let me pour you a slightly stronger cup.","ミルクをお入れになりますか？　では、今度は少し濃いめにお注ぎします。"],
-  "첫 잔은 거의 안 드셨더군요. 이번엔 조금 연하게 해 봤습니다. 어떠십니까?": ["I noticed you barely touched the first cup. I’ve made this one a little weaker. Is it more to your liking?","一杯目はあまりお口にされませんでしたね。今度は少し薄めにしてみました。いかがですか？"]
-});
 const localizedNodes = new WeakMap();
 const phraseBuckets = new Map();
 for (const source of Object.keys(editionLines).sort((a,b)=>b.length-a.length)) {
@@ -81,6 +65,8 @@ function translatedLine(value) {
   if(gameLanguage==="ko" || !/[가-힣]/.test(value)) return value;
   const column=gameLanguage==="ja"?1:0;
   const lookup=s=>Object.hasOwn(editionLines,s)?editionLines[s][column]:null;
+  const full=lookup(value);
+  if(full)return full;
   const raw=value.trim(), exact=lookup(raw);
   if(exact) return value.replace(raw,()=>exact);
   const date=new Intl.DateTimeFormat(gameLanguage==="ja"?"ja-JP":"en-GB",{year:"numeric",month:"long",timeZone:"UTC"});
@@ -110,16 +96,16 @@ function translateSubtree(root) {
   if(root.nodeType===Node.TEXT_NODE){translateNode(root);return;}
   if(root.nodeType===Node.ELEMENT_NODE){
     translateAttributes(root);
-    root.querySelectorAll("[aria-label],[title]").forEach(translateAttributes);
+    root.querySelectorAll("[aria-label],[title],[alt]").forEach(translateAttributes);
   }
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
   while(walker.nextNode())translateNode(walker.currentNode);
 }
 const localizedAttributes = new WeakMap();
 function translateAttributes(el){
-  if(!el.matches("[aria-label],[title]"))return;
+  if(!el.matches("[aria-label],[title],[alt]"))return;
   const prior=localizedAttributes.get(el)||{};
-  for(const attr of ["aria-label","title"]){
+  for(const attr of ["aria-label","title","alt"]){
     if(!el.hasAttribute(attr))continue;
     const current=el.getAttribute(attr), saved=prior[attr];
     const source=saved?.output===current?saved.source:current;
@@ -138,6 +124,6 @@ const languageObserver=new MutationObserver(records=>{
   }
 });
 if(document.body){
-  languageObserver.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:["aria-label","title"]});
+  languageObserver.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:["aria-label","title","alt"]});
   if(gameLanguage!=="ko")translateSubtree(document.body);
 }

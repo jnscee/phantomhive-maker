@@ -124,9 +124,12 @@ function termCue(event){
   return lines?.[Math.min(state.termPage||0,lines.length-1)]?.[3];
 }
 function companyEvidenceEntry([label, detail], emphasis=[]){
-  const paragraphs=detail.split(/(?<=[.!?])\s+(?=[^’”])/u).map(sentence=>{
+  const copy=translatedLine(detail);
+  const clues=emphasis.map(translatedLine);
+  // Translate the whole entry before inserting paragraph and clue boundaries.
+  const paragraphs=copy.split(/(?<!\bNo\.)(?<=[.!?])\s+(?=[^’”])|(?<=[。！？])(?=[^」』])/u).map(sentence=>{
     let text=escapeHTML(sentence);
-    for(const phrase of emphasis){
+    for(const phrase of clues){
       const escaped=escapeHTML(phrase);
       text=text.replace(escaped,()=>'<mark>'+escaped+'</mark>');
     }
