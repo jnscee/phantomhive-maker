@@ -398,3 +398,23 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
     height:min(100%,calc(var(--cast-unit) * var(--figure-scale) * 1.22));
   }
 }
+
+/* English labels wrap at spaces and share the full card width. */
+html:lang(en) #scene .lau-counter .goods-shelf {
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,7.5rem),1fr));
+}
+html:lang(en) #scene .lau-counter .goods-ticket {
+  aspect-ratio:auto;
+  padding-block:.4rem;
+}
+html:lang(en) #scene .lau-counter .goods-ticket b,
+html:lang(en) #calendar .card-bank .lesson b {
+  word-break:normal;
+  overflow-wrap:normal;
+}
+html:lang(en) #calendar .card-bank .lesson:not(.visit-card) b {
+  grid-area:1/1/2/-1;
+}
+html:lang(en) #calendar .card-bank .lesson:not(.visit-card) .planner-icon {
+  grid-area:2/1;
+}

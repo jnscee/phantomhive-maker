@@ -64,7 +64,16 @@ for (const source of Object.keys(editionLines).sort((a,b)=>b.length-a.length)) {
 function translatedLine(value) {
   if(gameLanguage==="ko" || !/[가-힣]/.test(value)) return value;
   const column=gameLanguage==="ja"?1:0;
-  const lookup=s=>Object.hasOwn(editionLines,s)?editionLines[s][column]:null;
+  const lookup=source=>{
+    if(!Object.hasOwn(editionLines,source))return null;
+    let text=editionLines[source][column];
+    if(gameLanguage==="en"){
+      // Dialogue around inline emphasis can occupy separate text nodes.
+      if(/^\s/.test(source) && /^[A-Za-z0-9“‘]/.test(text))text=source.match(/^\s+/)[0]+text;
+      if(/\s$/.test(source) && /\S$/.test(text))text+=source.match(/\s+$/)[0];
+    }
+    return text;
+  };
   const full=lookup(value);
   if(full)return full;
   const raw=value.trim(), exact=lookup(raw);
@@ -79,6 +88,8 @@ function translatedLine(value) {
     const segment=lookup(key);
     if(!column && /[A-Za-z0-9]$/.test(out) && /^[A-Za-z]/.test(segment))out+=" ";
     out+=segment;i+=key.length;
+    // Korean labels can touch a variable amount or level without a space.
+    if(!column && /[A-Za-z]$/.test(segment) && /^[0-9£]/.test(dynamic.slice(i,i+1)))out+=" ";
   }
   return out;
 }
