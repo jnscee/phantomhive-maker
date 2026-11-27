@@ -245,11 +245,11 @@ body { background:radial-gradient(ellipse at 50% 42%,#263247,#0c1421 78%); }
   backdrop-filter:blur(5px) saturate(120%);
   -webkit-backdrop-filter:blur(5px) saturate(120%);
 }
-#scene .home-standing,#scene .cast img[alt="시엘"] {
+#scene .home-standing,#scene .cast img[data-portrait="ciel"] {
   filter:url(#ciel-tailoring) var(--standing-glow);
 }
 /* The new age-ten portrait already has its painted blue jacket. */
-#scene[data-cast-age="10"] :is(.home-standing,.cast img[alt="시엘"]) {
+#scene[data-cast-age="10"] :is(.home-standing,.cast img[data-portrait="ciel"]) {
   filter:var(--standing-glow);
 }
 #scene #conversation .butler:not([alt="시엘"]):not([alt="세바스찬"]):not([alt="타나카"]) {

@@ -359,7 +359,8 @@ function setPortraitAge(stage,age){
 function framedStanding(name,src,classes,profile=name){
   const age=Number(document.getElementById("scene").dataset.castAge)||10;
   const fit=name==="시엘"?{scale:Number(cielPortraitScale(age)),window:Number(cielPortraitScale(age))}:standingFit(Object.hasOwn(standingMeasures,profile)?profile:"세바스찬",age);
-  return '<span class="standing-window '+classes+'" style="--figure-scale:'+fit.scale+';--figure-height:'+fit.window+'"><img src="'+src+'" alt="'+String(name).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')+'"></span>';
+  const portraitId=name==="시엘"?' data-portrait="ciel"':"";
+  return '<span class="standing-window '+classes+'" style="--figure-scale:'+fit.scale+';--figure-height:'+fit.window+'"><img'+portraitId+' src="'+src+'" alt="'+String(name).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')+'"></span>';
 }
 function sceneStanding(name,side,src,age){
   const profile=name==="엘리자베스"?name+(age||Number(document.getElementById("scene").dataset.castAge)+1):name;
