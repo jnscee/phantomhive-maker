@@ -1338,15 +1338,15 @@ for(const fixture of [
   run('visitDone(!visitFixture.quiet)');
   assert.equal(run('state.sequence.visitEvent??null'),fixture.event);
 }
-const minimumEndingLines={broke:46,ill:43,releaseNoTitle:41,releaseTitle:48,vowNoTitle:42,vowTitle:47};
+const minimumEndingLines={broke:46,ill:40,releaseNoTitle:41,releaseTitle:48,vowNoTitle:42,vowTitle:47};
 for(const [id,minimum] of Object.entries(minimumEndingLines))assert.ok(run('endingScenes.'+id+'.lines.length')>=minimum,id);
 for(const [ending,edition,beat,expected] of [
   ["vowTitle",2,27,27],["vowTitle",3,26,26],["vowTitle",3,27,28],
   ["broke",2,46,46],["broke",3,5,5],["broke",3,6,5],["broke",3,45,44],
-  ["broke",4,46,46],["ill",2,20,20]
+  ["broke",4,46,46],["ill",2,20,17],["ill",4,7,7],["ill",4,8,8],["ill",4,10,8],["ill",4,11,8],["ill",4,42,39],["ill",5,20,20]
 ]){
   Object.assign(ctx,{ending,edition,beat,expected});
-  assertOk('(()=>{const saved=normalizeSave({...initial(),storyPageEdition:edition,phase:"ending",ending,endingBeat:beat});return saved.storyPageEdition===4&&saved.endingBeat===expected&&normalizeSave(saved).endingBeat===expected;})()');
+  assertOk('(()=>{const saved=normalizeSave({...initial(),storyPageEdition:edition,phase:"ending",ending,endingBeat:beat});return saved.storyPageEdition===5&&saved.endingBeat===expected&&normalizeSave(saved).endingBeat===expected;})()');
 }
 console.log('PASS illness, reserved tuition during sick leave, recovery, optional fair outcomes and demand, both library follow-ups after loading, one-way trust, and all six ending scripts.');
 
