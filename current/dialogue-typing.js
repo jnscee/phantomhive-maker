@@ -46,7 +46,13 @@
       const range=document.createRange();
       range.selectNodeContents(node);unread.add(range);
       for(const {index,segment} of segmenter.segment(node.data)){
-        letters.push([range,node,index+segment.length]);
+        const previous=letters.at(-1);
+        // Closing punctuation belongs to the preceding visible grapheme.
+        if(previous && previous[1]===node && /^[\p{Pe}\p{Pf}.!?…,。！？]+$/u.test(segment)){
+          previous[2]=index+segment.length;
+        }else{
+          letters.push([range,node,index+segment.length]);
+        }
       }
     }
     if(!letters.length)return;
@@ -54,12 +60,13 @@
     let shown=0;
     function tick(now){
       const count=Math.min(letters.length,1+Math.floor(Math.max(0,now-started)/24));
+      // Remove the still-nonempty highlight so its last painted glyphs are invalidated.
+      if(count===letters.length){reveal();return;}
       while(shown<count){
         const [range,node,end]=letters[shown++];
         range.setStart(node,end);
       }
-      if(count===letters.length)reveal();
-      else frame=requestAnimationFrame(tick);
+      frame=requestAnimationFrame(tick);
     }
     tick(performance.now());
   }
