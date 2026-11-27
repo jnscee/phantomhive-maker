@@ -186,7 +186,7 @@ function monthlyResults(){
   const growth=after[best]-before[best];
   const words=monthlyReportWords(best,before[best],after[best],growth);
   const heading=translatedLine("세바스찬의 월말 보고");
-  return '<div class="month-report"><div class="butler-account"><img src="assets/sebastian.webp" alt="세바스찬"><p><b>'+heading+'</b><br>'+words+(moneyRemark?' '+moneyRemark:'')+'</p></div>'+warnings+'<div class="report-date">'+editionFormat("{month} 결산",{month:translatedLine(monthText(state.month))})+'</div><div class="report-columns">'+
+  return '<div class="month-report"><div class="butler-account"><img src="assets/portraits/sebastian-head.webp" alt="세바스찬"><p><b>'+heading+'</b><br>'+words+(moneyRemark?' '+moneyRemark:'')+'</p></div>'+warnings+'<div class="report-date">'+editionFormat("{month} 결산",{month:translatedLine(monthText(state.month))})+'</div><div class="report-columns">'+
     '<section class="stat-folio"><h3>시엘의 성장 기록</h3><div class="delta-head"><span>항목</span><span>이전</span><span>현재</span><span>변화 그래프</span><span>증감</span></div>'+
     group("능력 · 500점",stats)+group("현재 상태 · 100점",["건강","스트레스","의욕"])+'</section>'+actualBudget()+'</div>'+thisMonthFairReport()+sampleReview()+
     '<details class="month-log"><summary>이달 일정·사건 기록</summary>'+monthlyTimeline(state.log)+'</details>'+
