@@ -1639,7 +1639,7 @@ function render(focus=false,playbackOffset=0){
   panel.scrollTop=deskScroll;
   if(focus){
     const target=tab==="title"?panel.querySelector(".cover-actions button"):
-      coverPages.includes(tab)?panel.querySelector(".cover-leaf h2"):title;
+      coverPages.includes(tab)?panel.querySelector(".cover-leaf h2, .cg-reader h2"):title;
     target.focus({preventScroll:true});
   }
 }

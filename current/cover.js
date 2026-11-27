@@ -121,14 +121,19 @@ function restoreCGRecords(){
 }
 function cgAlbum(){
   const entries=cgAlbumEntries(),seen=entries.filter(e=>e.seen).length;
+  const endings=endingGalleryEntries();
   if(albumPicture!==null&&entries[albumPicture]?.seen){
     const e=entries[albumPicture];
-    return '<article class="cg-reader"><header><h2 tabindex="-1">'+escapeHTML(e.title)+'</h2>'+btn("앨범으로","back")+'</header><img src="'+e.src+'" alt="'+escapeHTML(e.title)+'"></article>';
+    const ending=endings.find(([id,route])=>{
+      const art=endingCareerArt(id,route);
+      return e.src==="assets/endings/"+(art?.id||id)+".webp";
+    });
+    const replay=ending?btn("엔딩 다시 보기",["ending-art",...ending.filter(Boolean)].join(":")):"";
+    return '<article class="cg-reader"><header><h2 tabindex="-1">'+escapeHTML(e.title)+'</h2>'+btn("앨범으로","back")+'</header>'+replay+'<img src="'+e.src+'" alt="'+escapeHTML(e.title)+'"></article>';
   }
   const cells=entries.map((e,i)=>e.seen?
     btn('<img loading="lazy" src="'+e.src+'" alt=""><span>'+escapeHTML(e.title)+'</span>',"cg:"+i,false,"cg-print"):
     '<div class="cg-print cg-blank"><i aria-hidden="true">◇</i><span>미수집</span></div>').join("");
-  const endings=endingGalleryEntries();
-  return '<article class="cover-leaf cg-album"><header><h2 tabindex="-1">CG 앨범</h2>'+btn("표지로 돌아가기","back")+'</header><p class="cover-count">수집한 CG <b>'+seen+' / '+entries.length+'</b></p><div class="cg-grid">'+cells+'</div>'+
-    (endings.length?'<details><summary>엔딩 다시 보기</summary><div class="cover-gallery">'+endings.map(([id,route])=>endingThumb(id,route)).join("")+'</div></details>':'')+'</article>';
+  const replayList=endings.length?'<details><summary>엔딩 다시 보기</summary><div class="cover-gallery">'+endings.map(([id,route])=>endingThumb(id,route)).join("")+'</div></details>':'';
+  return '<article class="cover-leaf cg-album"><header><h2 tabindex="-1">CG 앨범</h2>'+btn("표지로 돌아가기","back")+'</header>'+replayList+'<p class="cover-count">수집한 CG <b>'+seen+' / '+entries.length+'</b></p><div class="cg-grid">'+cells+'</div></article>';
 }
