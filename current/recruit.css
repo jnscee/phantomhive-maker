@@ -19,6 +19,7 @@
   display:block;overflow:hidden;pointer-events:none;scale:none;
 }
 #scene .standing-window > img {
+  image-rendering:auto;
   position:absolute;top:0;left:50%;translate:-50% 0;
   width:auto;max-width:none;height:calc(var(--cast-unit) * var(--figure-scale));
 }
