@@ -366,7 +366,12 @@ async function check(browserType){
       await checkReadingInset();
       if(viewport.width===1280){
         await fairPage.setViewportSize({width:940,height:644});
-        await fairPage.waitForFunction(()=>Math.abs(parseFloat(document.getElementById('scene').style.getPropertyValue('--portrait-scene-width'))-document.getElementById('scene').clientWidth)<2);
+        await fairPage.waitForFunction(()=>{
+          const stage=document.getElementById('scene');
+          const card=stage.querySelector('.duel-screen .dialogue');
+          const inset=stage.getBoundingClientRect().bottom-card.getBoundingClientRect().bottom;
+          return Math.abs(inset-stage.clientHeight*.065)<=3;
+        });
         await checkReadingInset();
         await fairPage.setViewportSize(viewport);
       }
