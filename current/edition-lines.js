@@ -2521,8 +2521,8 @@ const editionLines = {"가족":
 ["The left hand, yes? …What’s that look for? I held out the proper hand, didn’t I?","左手だろう？　……なんだ、その顔は。ちゃんと合ってるじゃないか。"],"우리 표도 챙겨 둬. 다음 견본을 만들 때 꺼내 보게.":
 ["Keep our sheet too. I want to refer to it when we make the next sample.","うちの審査表も取っておけ。次の見本を作る時に見返したい。"],"이 품목의 누적 판매와 납품이 열여덟 개에 못 미치는군.":
 ["Sales and deliveries of this product still total fewer than eighteen units.","この品目の販売と納品を合わせても、まだ十八個に届かないのか。"],"이미 봤겠지. 기왕 들킨 김에 이 꽃 이름이나 가르쳐 줘.":
-["I expect he’s seen them already. Now that I’ve been found out, you might as well tell me what this flower’s called.","どうせもう見てるさ。見つかったついでだ。この花の名前を教えてくれ。"],"이쪽은 볕이 아주 잘 든다고. 그건 네 눈에도 보이잖아.":
-["Tell them this room gets plenty of sun. Even you can see that.","こっちはよく日が当たるって。それならお前にも見えるだろう。"],"잘됐네! 우린 아까 만났잖아. 그럼 새 손님은 아니지?":
+["I expect he’s seen them already. Now that I’ve been found out, you might as well tell me what this flower’s called.","どうせもう見てるさ。見つかったついでだ。この花の名前を教えてくれ。"],"이쪽은 볕이 아주 잘 든다고.":
+["Tell them this room gets plenty of sun.","こっちはよく日が当たるって。"],"잘됐네! 우린 아까 만났잖아. 그럼 새 손님은 아니지?":
 ["Perfect! We met earlier, so we don't count as new visitors, do we?","よかった！　俺たち、さっき会っただろ？　なら新しい客じゃないよな？"],"잠깐. 그 방이 마음에 들면 계속 써도 좋아. 허락해 주지.":
 ["Wait. If you like that room, you may go on using it. You have my permission.","待て。その部屋が気に入ったなら、これからも使っていい。僕が許す。"],"저번에 네가 고른 차, 오늘은 내가 끓이려고 했어, 시엘.":
 ["Ciel, I was going to make the tea myself today. The one you chose last time.","この前お前が選んだ茶、今日は俺が淹れるつもりだったんだ、シエル。"],"접시마다 딱 한 입씩만 베어 드시고 물리신 것을 말씀하십니까?":
