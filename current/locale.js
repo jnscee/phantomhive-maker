@@ -20,6 +20,13 @@ const gameText = {
 for(const [code,column] of [["en",0],["ja",1]]) {
   gameText[code]=Object.fromEntries(Object.entries(gameText.ko).map(([key,value])=>[key,editionLines[value][column]]));
 }
+// Use complete sentences for variable amounts and quantities so each edition
+// can place the values around the appropriate words and inline emphasis.
+function editionFormat(source, values) {
+  const template = gameLanguage === "ko" ? source : (editionLines[source]?.[gameLanguage === "ja" ? 1 : 0] ?? source);
+  return template.replace(/\{(\w+)\}/g, (token, name) => values[name] ?? token);
+}
+const originalPageTitle = document.title;
 const languageKey = "earl-phantomhive-maker-language";
 let gameLanguage = "ko";
 try {
@@ -47,6 +54,7 @@ document.addEventListener("change", event => {
   if (field.id!=="game-language" || !Object.hasOwn(gameText,field.value)) return;
   gameLanguage = field.value;
   document.documentElement.lang = gameLanguage;
+  document.title = gameLanguage==="ko" ? originalPageTitle : gameString("title");
   try { localStorage.setItem(languageKey,gameLanguage); } catch {}
   render();
   translateSubtree(document.body);
@@ -56,6 +64,9 @@ document.addEventListener("change", event => {
 // Translate presentation only. Stats, save keys and event conditions stay in Korean.
 const localizedNodes = new WeakMap();
 const phraseBuckets = new Map();
+const editionDates = Object.fromEntries([["en","en-GB"],["ja","ja-JP"]].map(([code,locale])=>
+  [code,new Intl.DateTimeFormat(locale,{year:"numeric",month:"long",timeZone:"UTC"})]
+));
 for (const source of Object.keys(editionLines).sort((a,b)=>b.length-a.length)) {
   const initial=source[0];
   if(!phraseBuckets.has(initial)) phraseBuckets.set(initial,[]);
@@ -78,9 +89,23 @@ function translatedLine(value) {
   if(full)return full;
   const raw=value.trim(), exact=lookup(raw);
   if(exact) return value.replace(raw,()=>exact);
-  const date=new Intl.DateTimeFormat(gameLanguage==="ja"?"ja-JP":"en-GB",{year:"numeric",month:"long",timeZone:"UTC"});
-  const dynamic=value.replace(/(\d{4})년\s*(\d{1,2})월/g,(_,year,month)=>date.format(new Date(Date.UTC(+year,+month-1,1))))
-    .replace(/왕실은 작위 승인을 보류했습니다\. 금고에 남은 돈은 (£[\d,]+)\. 도련님, 가문의 첫 장부는 어느 수첩에 보관하면 되겠습니까\?/g,(_,fund)=>column?`王室は爵位の承認を保留しました。金庫には${fund}。坊ちゃん、最初の帳簿はどの手帳にお納めしますか？`:`The Crown has deferred its decision on your title. The treasury holds ${fund}. Which notebook shall I use for our first ledger, my lord?`);
+  if (!column) {
+    const counted = /^(\d[\d,]*)(개|명|회|건|개월|점|세|단계)$/.exec(raw);
+    if (counted) {
+      const forms = {개:["unit","units"], 명:["person","people"], 회:["time","times"],
+        건:["case","cases"], 개월:["month","months"], 점:["point","points"],
+        세:["year old","years old"], 단계:["level","levels"]};
+      const [singular, plural] = forms[counted[2]];
+      return value.replace(raw, counted[1]+" "+(counted[1]==="1"?singular:plural));
+    }
+  }
+  if(raw.endsWith(" 중인 시엘")){
+    const lesson=raw.slice(0,-" 중인 시엘".length);
+    return editionFormat("{lesson} 중인 시엘",{lesson:translatedLine(lesson)});
+  }
+  const signing = /^왕실은 작위 승인을 보류했습니다\. 금고에 남은 돈은 (£[-−]?[\d,]+)\. 도련님, 가문의 첫 장부는 어느 수첩에 보관하면 되겠습니까\?$/.exec(raw);
+  if(signing)return value.replace(raw,()=>editionFormat("왕실은 작위 승인을 보류했습니다. 금고에 남은 돈은 {fund}. 도련님, 가문의 첫 장부는 어느 수첩에 보관하면 되겠습니까?",{fund:signing[1]}));
+  const dynamic=value.replace(/(\d{4})년\s*(\d{1,2})월/g,(_,year,month)=>editionDates[gameLanguage].format(new Date(Date.UTC(+year,+month-1,1))));
   let out="";
   for(let i=0;i<dynamic.length;) {
     const key=phraseBuckets.get(dynamic[i])?.find(k=>dynamic.startsWith(k,i));

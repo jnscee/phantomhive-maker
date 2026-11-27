@@ -90,7 +90,7 @@ let recollectionLine=0, openingAuto=false, openingTimer=0, openingSession=false;
 function openingHold(entry){
   const line=1500+entry.text.length*87;
   const breath=entry.speaker==="독백"?420:entry.beat===0?350:0;
-  return Math.min(6100,line+breath);
+  return readingDelay(entry.text,Math.min(6100,line+breath));
 }
 
 function inOpening(){return tab==="recollection"||(state.phase==="contract"&&tab==="plan");}

@@ -1292,7 +1292,7 @@ function purchaseOrder(order,accepted){
   return '<article class="purchase-order" data-buyer="'+buyer+'"><header><span>발주처</span><strong class="buyer-sign">'+escapeHTML(tradeBuyer(order))+'</strong></header>'+
     '<p class="order-subject">'+productLabel(order.id)+'</p><dl class="ledger-figures">'+
     ledgerFigure("발주 수량",order.qty+"개")+ledgerFigure("개당 단가",money(order.rate))+ledgerFigure("완납 시 대금",money(order.qty*order.rate))+'</dl>'+
-    '<p class="order-due"><b>납기</b> '+monthText(order.due)+' 월말</p><small>미납 1개당 '+money(order.shortFee??2)+' 부담</small>'+
+    '<p class="order-due"><b>납기</b> '+editionFormat("{month} 월말",{month:translatedLine(monthText(order.due))})+'</p><small>'+editionFormat("미납 1개당 {fee} 부담",{fee:money(order.shortFee??2)})+'</small>'+
     (accepted?'<strong class="order-stamp">수락 완료 · 월말 자동 납품</strong>':btn('발주 수락','order:'+order.id,state.phase!=="plan","order-accept"))+'</article>';
 }
 function orderDesk(){
@@ -1336,7 +1336,7 @@ function expansionQuote(id){
     const result=next>level?' → <strong class="'+tone+'">'+format(after)+'</strong>':'';
     return '<div class="quote-row"><span>'+label+'</span><b>'+format(before)+result+'</b></div>';
   }
-  const units=n=>n+"개",percent=n=>n+"%";
+  const units=n=>translatedLine(n+"개"),percent=n=>n+"%";
   let rows="";
   if(id==="works")rows+=compare("개당 생산 원가",now.unit,after.unit,money,true);
   if(id==="store")rows+=compare("구매 수요",now.demand,after.demand,units)+compare("현재 물량으로 판매",now.sold,after.sold,units);
@@ -1345,7 +1345,7 @@ function expansionQuote(id){
   rows+=compare("이달 영업이익",now.margin,after.margin,money);
   if(next===level)return rows;
   const gain=after.margin-now.margin, cost=departments[id].cost*level;
-  let detail=gain<0?'현재 물량에서는 증설 뒤 비용이 더 큽니다.':gain>0?'같은 물량·가격·수요라면 '+Math.ceil(cost/gain)+'개월에 증설비 회수':id==="store"?"팔 수 있는 물량이 부족해 이달 추가 매출은 £0입니다.":"현재 생산·판매 조건에서는 이달 추가 이익이 없습니다.";
+  let detail=gain<0?'현재 물량에서는 증설 뒤 비용이 더 큽니다.':gain>0?editionFormat("같은 물량·가격·수요라면 {months}개월에 증설비 회수",{months:Math.ceil(cost/gain)}):id==="store"?"팔 수 있는 물량이 부족해 이달 추가 매출은 £0입니다.":"현재 생산·판매 조건에서는 이달 추가 이익이 없습니다.";
   if(id==="design")detail+=' · 개발비 할인 별도';
   rows+='<p class="quote-summary">증설비 '+money(cost)+' · 이달 영업이익 <strong class="'+(gain>0?"gain":gain<0?"loss":"")+'">'+(gain>0?"+":gain<0?"−":"")+money(Math.abs(gain))+'</strong></p><small>'+detail+'</small>';
   const neededAfter=cashNeeded()+(after.unit-now.unit)*state.qty;
@@ -1353,11 +1353,11 @@ function expansionQuote(id){
   return rows;
 }
 function productionCost(unit){
-  return '<span>총생산비</span><strong>'+money(unit*state.qty)+'</strong><small>개당 '+money(unit)+' × '+state.qty+'개</small>';
+  return '<span>총생산비</span><strong>'+money(unit*state.qty)+'</strong><small>'+editionFormat("개당 {price} × {quantity}개",{price:money(unit),quantity:state.qty})+'</small>';
 }
 function salesGauge(sold){
   const available=forecast().available;
-  return '<span>판매 가능 '+available+'개 중 예상 판매 <b>'+sold+'개</b> · '+(available?Math.round(sold/available*100):0)+'%</span>'+
+  return '<span>'+editionFormat("판매 가능 {available}개 중 예상 판매 <b>{sold}개</b>",{available,sold})+' · '+(available?Math.round(sold/available*100):0)+'%</span>'+
     '<progress aria-label="예상 판매 비중" value="'+sold+'" max="'+Math.max(1,available)+'"></progress>';
 }
 function businessForecast(){
@@ -1436,8 +1436,8 @@ function exchangeQuote(g){
   const limit=state.flags.lateDispatch?exchangeAmount:Math.max(0,masteryThreshold-current)+1;
   const gain=ordinaryAbilityGain(current,Math.min(exchangeAmount,limit));
   const reason=state.flags.lauExchangeMonth===state.month?"이달의 교본은 이미 사용했습니다.":
-    gain<=0?"교본으로 기를 수 있는 "+statLabel(g.raise)+"의 한도에 도달했습니다.":
-    state.stats[g.lower]<exchangeAmount?statLabel(g.lower)+" 수치가 "+exchangeAmount+" 이상 필요합니다.":"";
+    gain<=0?editionFormat("교본으로 기를 수 있는 {stat}의 한도에 도달했습니다.",{stat:translatedLine(statLabel(g.raise))}):
+    state.stats[g.lower]<exchangeAmount?editionFormat("{stat} 수치가 {amount} 이상 필요합니다.",{stat:translatedLine(statLabel(g.lower)),amount:exchangeAmount}):"";
   return {gain,reason};
 }
 function marketPanel(){
@@ -1462,7 +1462,7 @@ function marketPanel(){
     '<div class="shop-purse"><span>보유금</span><strong>'+money(state.fund)+'</strong></div>'+'<div class="goods-list" role="group" aria-label="판매 상품">'+cards+'</div>'+
     '<div class="shop-details"><section class="shop-talk dialogue" aria-label="라우의 대사"><small>라우</small><p>'+g.line+'</p></section>'+
     '<section class="shop-purchase" aria-label="상품 구매"><header><b>'+g.name+'</b>'+
-    btn(money(g.cost)+" 구매","buy:"+selectedGood,Boolean(reason),"shop-buy")+'</header>'+
+    btn(editionFormat("{price} 구매",{price:money(g.cost)}),"buy:"+selectedGood,Boolean(reason),"shop-buy")+'</header>'+
     '<dl class="shop-effects">'+effects+'</dl>'+
     (exchange?'<small>교본 전체 중 매월 1권 · 즉시 사용</small>':'')+
     (reason?'<p class="shop-unavailable">'+reason+'</p>':'')+'</section></div></div>';
@@ -2281,6 +2281,7 @@ fitHomeStanding();
 render();
 
 document.documentElement.lang=gameLanguage;
+if(gameLanguage!=="ko")document.title=gameString("title");
 document.documentElement.dataset.dialogueTheme=dialogueTheme;
 syncMotion();
 matchMedia("(prefers-reduced-motion: reduce)").addEventListener?.("change",syncMotion);

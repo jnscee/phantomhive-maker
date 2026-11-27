@@ -26,6 +26,22 @@ for (const language of ["en", "ja"]) {
     }))`);
   assert.equal(missing.length, 0, language + " missing translated clues: " + missing.join(", "));
 }
+// Quantities and handbook terms also appear in old, Korean-language save data.
+for (const [language, unitLabel, accountsLabel] of [["en","Per unit","Monthly accounts"],["ja","1個あたり","月次決算"]]) {
+  ctx.edition = language;
+  run("gameLanguage = edition");
+  assert.equal(run('translatedLine("개당")'), unitLabel);
+  assert.equal(run('translatedLine("결산")'), accountsLabel);
+  const lines = run('recruitScenes.cook.lines.map(row=>row.text).filter(text=>text.includes("팬텀하이브 가의 이름")||text.includes("요리 솜씨를 보아서"))');
+  assert.equal(lines.length, 2);
+  for (const korean of lines) {
+    ctx.korean = korean;
+    assert.equal(run('korean.split("\\n").map(s=>translatedLine(s.trim())).join("\\n")'),run('translatedLine(korean)'));
+  }
+  assert.equal(run('translatedLine("1명")'), language==="en"?"1 person":"1人");
+  assert.equal(run('translatedLine("12명")'), language==="en"?"12 people":"12人");
+  assert.ok(run('editionFormat("개당 {price} × {quantity}개", {price:"£7",quantity:12})').includes("12"));
+}
 run('gameLanguage = "ko"');
 // Both tea-party events in each of the three years use Edward, including on a restored scorecard.
 const teaParties=run('contests.filter(f=>f.id.startsWith("newYear-")).map(f=>f.id)');

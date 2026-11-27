@@ -26,10 +26,10 @@ function tradeCosts(trade){
     return '<div><dt>'+label+'</dt><dd>'+money(value)+'</dd>'+(note?'<dd class="fee-rule">'+note+'</dd>':'')+'</div>';
   }
   return '<dl class="trade-fees">'+fee("설비 운영",trade.operation-(trade.guaranteeFee||0))+(trade.guaranteeFee?fee("거래 보증료",trade.guaranteeFee):"")+
-    fee("운송",trade.freight,"소매·납품 합계 <strong>"+trade.freightAllowance+"</strong>개까지 무료<br>초과 <strong>1</strong>개당 <strong>£3</strong>")+
-    fee("월말 보관",trade.holding,"전 품목 합산 <strong>8</strong>개까지 무료<br>초과 <strong>1</strong>개당 <strong>£1</strong>")+
+    fee("운송",trade.freight,editionFormat("소매·납품 합계 <strong>{limit}</strong>개까지 무료<br>초과 <strong>1</strong>개당 <strong>{fee}</strong>",{limit:trade.freightAllowance,fee:"£3"}))+
+    fee("월말 보관",trade.holding,editionFormat("전 품목 합산 <strong>{limit}</strong>개까지 무료<br>초과 <strong>1</strong>개당 <strong>{fee}</strong>",{limit:8,fee:"£1"}))+
     (trade.order?fee("미납 부담",trade.penalty,"예상 납품 "+trade.shipped+" / "+trade.order.qty+"개"):"")+
-    (trade.contribution?fee("수익 분담금",trade.contribution,"가용 자금 "+money(profitContributionFloor)+"를 넘겨 남는 순이익에 단계 적용"):"")+'</dl>';
+    (trade.contribution?fee("수익 분담금",trade.contribution,editionFormat("가용 자금 {floor}를 넘겨 남는 순이익에 단계 적용",{floor:money(profitContributionFloor)})):"")+'</dl>';
 }
 function budgetTable(compact=false){
   const b=monthlyBudget();
@@ -112,7 +112,8 @@ function deltaRow(key,before,after){
   const scale=statMax(key);
   const change=after-before, direction=change>0?"▲":change<0?"▼":"—";
   const tone=change===0?"flat":(key==="스트레스"?change<0:change>0)?"gain":"loss";
-  return '<div class="delta-row '+tone+'" aria-label="'+statLabel(key)+' '+before+'에서 '+after+'로, 변화 '+signed(change)+'">'+
+  const label=editionFormat("{stat} {before}에서 {after}로, 변화 {change}",{stat:translatedLine(statLabel(key)),before,after,change:signed(change)});
+  return '<div class="delta-row '+tone+'" aria-label="'+escapeHTML(label)+'">'+
     '<span>'+statLabel(key)+'</span><small>'+before+'</small><b>'+after+'</b>'+
     '<i class="delta-meter" aria-hidden="true" style="--from:'+before/scale*100+'%;--to:'+after/scale*100+'%"><i></i><b></b></i>'+
     '<strong>'+direction+' '+(change===0?'0':signed(change))+'</strong></div>';
@@ -185,7 +186,7 @@ function monthlyResults(){
   const growth=after[best]-before[best];
   const words=monthlyReportWords(best,before[best],after[best],growth);
   const heading=translatedLine("세바스찬의 월말 보고");
-  return '<div class="month-report"><div class="butler-account"><img src="assets/sebastian.webp" alt="세바스찬"><p><b>'+heading+'</b><br>'+words+(moneyRemark?' '+moneyRemark:'')+'</p></div>'+warnings+'<div class="report-date">'+monthText(state.month)+' 결산</div><div class="report-columns">'+
+  return '<div class="month-report"><div class="butler-account"><img src="assets/sebastian.webp" alt="세바스찬"><p><b>'+heading+'</b><br>'+words+(moneyRemark?' '+moneyRemark:'')+'</p></div>'+warnings+'<div class="report-date">'+editionFormat("{month} 결산",{month:translatedLine(monthText(state.month))})+'</div><div class="report-columns">'+
     '<section class="stat-folio"><h3>시엘의 성장 기록</h3><div class="delta-head"><span>항목</span><span>이전</span><span>현재</span><span>변화 그래프</span><span>증감</span></div>'+
     group("능력 · 500점",stats)+group("현재 상태 · 100점",["건강","스트레스","의욕"])+'</section>'+actualBudget()+'</div>'+thisMonthFairReport()+sampleReview()+
     '<details class="month-log"><summary>이달 일정·사건 기록</summary>'+monthlyTimeline(state.log)+'</details>'+

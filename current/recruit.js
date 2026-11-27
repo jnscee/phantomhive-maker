@@ -447,16 +447,24 @@ function drawRecruitReader(host,id,at,file,readOnly,onPage,onFinish,answers="",h
   const index=order.indexOf(at),end=order.length-1;
   clearTimeout(recruitTimer);if(index===end)stopRecruitAuto();
   host.innerHTML=recruitMarkup(id,at,file,readOnly,recruitAuto,answers,hasTanaka,order);
-  const {text,cue}=recruitScenes[id].lines[at];
+  const {text,withTanaka,cue}=recruitScenes[id].lines[at];
+  const passage=hasTanaka && typeof withTanaka==="string"?withTanaka:text;
   playNovelCue(host,id+":"+at,cue);
-  bindSceneReader(host,index,end,text,to=>onPage(order[to]),answers?null:onFinish,cue?.wait);
+  bindSceneReader(host,index,end,passage,to=>onPage(order[to]),answers?null:onFinish,cue?.wait);
+}
+// The standalone preview loads the Korean script without the locale module.
+function readingDelay(source, koreanDelay){
+  if(typeof gameLanguage==="undefined" || gameLanguage==="ko")return koreanDelay;
+  const length=Array.from(translatedLine(source)).length;
+  // Allow the typewriter to finish and leave time to read the complete line.
+  return Math.max(koreanDelay,1200+length*(gameLanguage==="en"?48:86));
 }
 function bindSceneReader(host,at,end,text,onPage,onFinish,wait=0){
   const line=host.querySelector(".dialogue"),bar=host.querySelector(".recruit-controls");
   function step(to){if(line.isConnected)onPage(to);}
   function arm(){
     if(!recruitAuto||at===end)return;
-    const delay=Math.min(6200,1700+text.length*90)+wait;
+    const delay=readingDelay(text,Math.min(6200,1700+text.length*90))+wait;
     recruitTimer=setTimeout(()=>{if(line.isConnected&&!document.hidden)step(at+1);else stopRecruitAuto();},delay);
   }
   function click(e){

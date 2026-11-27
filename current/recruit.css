@@ -418,3 +418,23 @@ html:lang(en) #calendar .card-bank .lesson:not(.visit-card) b {
 html:lang(en) #calendar .card-bank .lesson:not(.visit-card) .planner-icon {
   grid-area:2/1;
 }
+
+@media (max-width: 420px) and (orientation: portrait) {
+  html:is(:lang(en), :lang(ja)) #scene :is(#conversation, #overture) .opening-top {
+    inset-inline: 2%;
+    width: fit-content;
+    max-width: 96%;
+    margin-inline: auto;
+    box-sizing: border-box;
+  }
+  html:is(:lang(en), :lang(ja)) #scene :is(#conversation, #overture) .opening-top button {
+    min-width: 0;
+    padding-inline: 4px;
+    white-space: normal;
+  }
+  html:is(:lang(en), :lang(ja)) #scene #conversation:not([data-review=true]) > article.dialogue[data-book] {
+    height: auto;
+    min-height: min(8rem, 22dvh);
+    max-height: min(19rem, 45dvh);
+  }
+}

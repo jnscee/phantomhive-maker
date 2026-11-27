@@ -71,7 +71,7 @@
   watch.observe(document.documentElement,{attributes:true,attributeFilter:["data-game-motion"]});
   function finishOnInput(event){
     if(!frame||!line?.isConnected||window.getSelection()?.toString())return;
-    const within=event.target.closest(".dialogue, .award-dialogue, .farewell-bubble, #ciel-aside");
+    const within=event.target.closest(".dialogue, .award-dialogue, .farewell-bubble, .shop-talk, #ciel-aside");
     const control=event.target.closest("button");
     const advance=control?.matches(".answers button,.line-next,#opening-read,#ciel-greet,[data-farewell=next],[data-action^='fair-result-next']");
     if(!(within?.contains(line)||advance||event.key==="ArrowRight"&&inOpening()))return;
