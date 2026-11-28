@@ -6,6 +6,8 @@
   <title>팬텀하이브 콘텐츠 편집기</title>
   <link rel="stylesheet" href="/editor.css">
   <script src="/story-flow.js" defer></script>
+  <script src="/standing-model.js" defer></script>
+  <script src="/standing-editor.js" defer></script>
   <script src="/editor.js" defer></script>
 </head>
 <body>
@@ -69,6 +71,12 @@
   <dialog id="review-dialog" aria-labelledby="review-title">
     <header><h2 id="review-title">변경 비교 · 검사</h2><form method="dialog"><button>닫기</button></form></header>
     <div id="review-content"></div>
+  </dialog>
+  <dialog id="standing-dialog" aria-labelledby="standing-dialog-title">
+    <header><h2 id="standing-dialog-title">스탠딩 대화창</h2>
+      <select aria-label="미리보기 기기"><option value="desktop">데스크톱 · 1280 × 800</option><option value="mobile">모바일 · 390 × 844</option></select>
+      <form method="dialog"><button>닫기</button></form></header>
+    <div class="portrait-viewport"><iframe title="스탠딩 실제 대화창" tabindex="-1" sandbox="allow-scripts"></iframe></div>
   </dialog>
   <dialog id="game-dialog">
     <header><h2>게임 미리보기</h2><form method="dialog"><button>닫기</button></form></header>

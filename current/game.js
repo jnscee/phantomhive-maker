@@ -1465,7 +1465,7 @@ function marketPanel(){
   }
   const effects=exchange?effect(statLabel(g.raise),state.stats[g.raise],state.stats[g.raise]+exchange.gain)+
     effect(statLabel(g.lower),state.stats[g.lower],Math.max(0,state.stats[g.lower]-exchangeAmount)):effect(g.label,before,after);
-  return '<div class="lau-counter">'+framedStanding("라우","assets/npc-lau.webp","lau-standing")+
+  return '<div class="lau-counter">'+framedStanding("라우",guestStandingArt.lau,"lau-standing")+
     '<div class="shop-purse"><span>보유금</span><strong>'+money(state.fund)+'</strong></div>'+'<div class="goods-list" role="group" aria-label="판매 상품">'+cards+'</div>'+
     '<div class="shop-details"><section class="shop-talk dialogue" aria-label="라우의 대사"><small>라우</small><p>'+g.line+'</p></section>'+
     '<section class="shop-purchase" aria-label="상품 구매"><header><b>'+g.name+'</b>'+

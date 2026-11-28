@@ -2224,11 +2224,8 @@ html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.m
 html:is(:lang(en),:lang(ja)) :is(.command-grid,.calendar-foot,.cover-actions,.card-bank) button {min-inline-size:0;overflow-wrap:anywhere;line-height:1.2}
 
 /* Apply the soft outer halo after the portrait window has cropped the figure. */
-#scene .standing-window:has(> img:is([data-portrait="ciel"],[src$="/sebastian.webp"])) {
-  /* The window supplies the halo; avoid adding the inherited glow to its image too. */
+#scene .standing-window[data-halo] {
   --standing-glow:opacity(1);
-  filter:drop-shadow(0 0 7px #eff8ff16) drop-shadow(0 0 24px #c1e4ff27);
+  filter:var(--portrait-halo);
 }
-#scene .home-standing {
-  --standing-glow:drop-shadow(0 0 7px #eff8ff16) drop-shadow(0 0 24px #c1e4ff27);
-}
+#scene .home-standing {--standing-glow:var(--home-halo)}

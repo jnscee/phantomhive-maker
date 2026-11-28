@@ -1,9 +1,9 @@
 "use strict";
 
 const $ = id => document.getElementById(id);
-const sections = {story:"스토리", events:"이벤트", eventScripts:"날씨 · 경영 · 경연", dialogue:"기타 대사", score:"BGM 배정", audio:"BGM · SE", assets:"CG · 이미지", fx:"화면 효과"};
+const sections = {story:"스토리", events:"이벤트", eventScripts:"날씨 · 경영 · 경연", dialogue:"기타 대사", score:"BGM 배정", audio:"BGM · SE", assets:"CG · 이미지", standing:"스탠딩 편집기", fx:"화면 효과"};
 let data;
-let section = "story";
+let section = new URLSearchParams(location.search).get("section")==="standing"?"standing":"story";
 let selected = null;
 let activePane = null;
 let changes = {};
@@ -1021,7 +1021,7 @@ function drawList() {
         $("entry-title").scrollIntoView({block:"start"});
       }else $("list").querySelector('[aria-current="true"]')?.focus({preventScroll:true});
     });
-    if(group.detail) b.append(node("small",group.detail));
+    if(group.detail) b.append(node("small",group.section==="standing"?value(group.fields[0]).height+" cm":group.detail));
     if(group.key===selected&&!newEvent) b.setAttribute("aria-current","true");
     return b;
   });
@@ -1071,6 +1071,12 @@ function drawDesk() {
   $("entry-detail").textContent=group?sections[group.section]+(group.detail?" / "+group.detail:""):"";
   $("preview").textContent=group?.preview?"게임에서 미리보기 ↗":"게임 시작하기 ↗";
   if(!group) return;
+  if(group.section==="standing"){
+    $("preview").textContent="대화창 미리보기 ↗";
+    $("entry-detail").textContent=sections.standing+" / "+value(group.fields[0]).height+" cm";
+    drawStandingEditor(panel,group.fields[0]);
+    return;
+  }
   if(section==="score"){
     $("entry-detail").textContent="BGM 배정 / "+(group.detail||group.title);
     for(const field of group.fields.filter(field=>field.assignment))panel.append(fieldEditor(field));
@@ -1165,7 +1171,7 @@ async function refresh() {
     $("export-older").hidden=past.hidden=!data.past.length;
     $("export-backup").hidden=!data.hasDraft&&!data.past.length;
   }
-  if(!currentGroup()) selected=filtered()[0]?.key;
+  if(!currentGroup()) selected=section==="standing"?"portrait-seb":filtered()[0]?.key;
   drawList();
   drawDesk();
   updateToolbar();
@@ -1197,7 +1203,7 @@ for(const [id,label] of Object.entries(sections)) {
     section=id;
     activePane=null;
     $("search").value="";
-    selected=filtered()[0]?.key;
+    selected=id==="standing"?"portrait-seb":filtered()[0]?.key;
     drawList();
     drawDesk();
   });
@@ -1224,6 +1230,7 @@ $("new-event").addEventListener("click",openNewEvent);
 $("preview").addEventListener("click",()=>openGamePreview());
 async function openGamePreview(cut){
   if(busy||deleteEvent)return;
+  if(currentGroup()?.section==="standing")return openStandingPreview();
   disposePlacementEditor();
   busy=true;updateToolbar();status("게임 미리보기를 준비하고 있습니다.");
   try {
@@ -1238,6 +1245,11 @@ async function openGamePreview(cut){
   } catch(error){status(error.message,true);if(activePane==="placement")drawDesk();}
   finally{busy=false;updateToolbar();}
 }
+$("standing-dialog").addEventListener("close",()=>{
+  standingFrameObserver?.disconnect();
+  $("standing-dialog").querySelector("iframe").removeAttribute("src");
+  if(web)void queuePreview(()=>web.then(adapter=>adapter.closePreview())).catch(()=>{});
+});
 $("game-dialog").addEventListener("close",()=>{
   $("game-dialog").querySelector("iframe").removeAttribute("src");
   // Queue cleanup before the replacement preview, but redraw its controls now.

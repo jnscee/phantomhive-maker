@@ -326,45 +326,28 @@ function setArtOnly(stage,hidden){
     toggle.title=hidden?"대화창 다시 표시 (H)":"대화창 숨기기 (H)";
   }
 }
-function cielPortraitScale(age){return String(Math.min(152,140+6*(age-10))/186);}
-// Eye positions and eye-to-chin lengths were measured on each illustration at 400 px high.
-const standingMeasures={
-  "세바스찬":[186,68.1,39], "아그니":[193,53,36], "바르도":[181,52,46],
-  "피니안":[163,68,44], "메이린":[165,94,45], "올빼미":[165,77,40], "스네이크":[177,64,45],
-  "소마":[171,74,44], "타나카":[166,64,44], "라우":[178,62,42],
-  "엘리자베스11":[144,87,39], "엘리자베스12":[150,78,35], "엘리자베스13":[156,89,45]
-};
-const cielMeasures=[[140,86,46],[146,79,45],[152,62,46]];
-function standingFit(profile,age){
-  const [referenceHeight,referenceEye,referenceChin]=cielMeasures[age-10];
-  const referenceScale=Number(cielPortraitScale(age));
-  const [height,eye,chin]=standingMeasures[profile];
-  const eyeLevel=referenceScale*(1-referenceEye/400)+(height-referenceHeight)/215;
-  if(profile==="엘리자베스12"&&age===11){
-    // Match the two portraits by their face size, then position the crown just above Ciel’s.
-    return {scale:referenceScale*referenceChin/chin*.93,window:referenceScale*1.018};
-  }
-  const faceRatio=profile.startsWith("엘리자베스")?1:1.08;
-  const scale=Math.max(referenceScale*referenceChin*faceRatio/chin,eyeLevel/(1-eye/400));
-  return {scale,window:eyeLevel+scale*eye/400};
-}
+function cielPortraitScale(age){return String(standingProfiles[cielStandingId(age)].height/186);}
 function setPortraitAge(stage,age){
   const ageIndex=Math.max(10,Math.min(12,age));
   stage.dataset.castAge=String(ageIndex);
   stage.style.setProperty("--ciel-scale",cielPortraitScale(ageIndex));
-  // Fit the tallest illustration once. Clipping each head separately flattens differences in height.
-  const tallest=Math.max(...Object.keys(standingMeasures).map(profile=>standingFit(profile,ageIndex).window));
-  stage.style.setProperty("--cast-camera",String(Math.min(1,.91/tallest)));
+  stage.style.setProperty("--cast-camera",String(standingCamera(standingProfiles,ageIndex)));
+  stage.style.setProperty("--home-halo",standingHalo(standingProfiles[cielStandingId(ageIndex)].glow));
 }
-function framedStanding(name,src,classes,profile=name){
+function framedStanding(name,src,classes,profile=name,actorId){
   const age=Number(document.getElementById("scene").dataset.castAge)||10;
-  const fit=name==="시엘"?{scale:Number(cielPortraitScale(age)),window:Number(cielPortraitScale(age))}:standingFit(Object.hasOwn(standingMeasures,profile)?profile:"세바스찬",age);
+  const id=actorId&&!["ciel","ciel11","ciel12"].includes(actorId)?actorId:
+    name==="시엘"?cielStandingId(age):name==="라우"?"lau":name==="엘리자베스"?"liz"+profile.slice(-2):
+    Object.keys(recruitNames).find(key=>recruitNames[key]===name);
+  const fit=standingGeometry(standingProfiles,id??"seb",age);
+  const glow=standingProfiles[id]?.glow;
   const portraitId=name==="시엘"?' data-portrait="ciel"':"";
-  return '<span class="standing-window '+classes+'" style="--figure-scale:'+fit.scale+';--figure-height:'+fit.window+'"><img'+portraitId+' src="'+src+'" alt="'+String(name).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')+'"></span>';
+  const halo=glow==null?"":";--portrait-halo:"+standingHalo(glow);
+  return '<span class="standing-window '+classes+'"'+(glow==null?"":" data-halo")+' style="--figure-scale:'+fit.scale+';--figure-height:'+fit.window+halo+'"><img'+portraitId+' src="'+src+'" alt="'+String(name).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')+'"></span>';
 }
-function sceneStanding(name,side,src,age){
+function sceneStanding(name,side,src,age,actorId){
   const profile=name==="엘리자베스"?name+(age||Number(document.getElementById("scene").dataset.castAge)+1):name;
-  return framedStanding(name,src,"cast cast-"+side,profile);
+  return framedStanding(name,src,"cast cast-"+side,profile,actorId);
 }
 function novelSpeakerName(speaker){
   const name=speaker?.trim();
@@ -416,7 +399,7 @@ function novelCast(cue,file=x=>x){
     if(!Object.hasOwn(recruitCast,id))return "";
     const expression=novelExpressions[cue[side+"Expression"]];
     const art=expression?.actor===id?expression.file:recruitCast[id];
-    return sceneStanding(recruitNames[id],side,file(art));
+    return sceneStanding(recruitNames[id],side,file(art),undefined,id);
   }).join("");
 }
 function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers="",hasTanaka=false,order=recruitReadingOrder(id,hasTanaka)){
@@ -431,7 +414,7 @@ function recruitMarkup(id,at,file=x=>x,readOnly=false,auto=false,answers="",hasT
   const cast=cue?.standing?[cue.standing]:scene.castBySpeaker?.[speaker]||scene.cast||[];
   const actors=novelCast(cue,file)??cast.map((person,i)=>{
     const side=person==="ciel"?"right":cast.includes("ciel")||i===0?"left":"right";
-    return sceneStanding(recruitNames[person],side,file(recruitCast[person]));
+    return sceneStanding(recruitNames[person],side,file(recruitCast[person]),undefined,person);
   }).join("");
   const label=last?(readOnly?"회상 마치기":"영입 확정"):"다음 대사";
   const arrow=answers?'':'<button type="button" class="line-next" data-read="'+(last?'finish':'next')+'" aria-label="'+label+'">▼</button>';
