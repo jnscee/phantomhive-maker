@@ -341,7 +341,7 @@ function framedStanding(name,src,classes,profile=name,actorId){
     Object.keys(recruitNames).find(key=>recruitNames[key]===name);
   const fit=standingGeometry(standingProfiles,id??"seb",age);
   const glow=standingProfiles[id]?.glow;
-  const portraitId=name==="시엘"?' data-portrait="ciel"':"";
+  const portraitId=name==="시엘"?' data-portrait="ciel"':id==="lau"?' data-portrait="lau"':"";
   const halo=glow==null?"":";--portrait-halo:"+standingHalo(glow);
   return '<span class="standing-window '+classes+'"'+(glow==null?"":" data-halo")+' style="--figure-scale:'+fit.scale+';--figure-height:'+fit.window+halo+'"><img'+portraitId+' src="'+src+'" alt="'+String(name).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')+'"></span>';
 }

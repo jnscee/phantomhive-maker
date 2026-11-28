@@ -23,6 +23,9 @@
   position:absolute;top:0;left:50%;translate:-50% 0;
   width:auto;max-width:none;height:calc(var(--cast-unit) * var(--figure-scale));
 }
+#scene .standing-window > img[data-portrait=lau] {
+  max-width:100%;object-fit:contain;object-position:center top;
+}
 #scene #conversation:not([data-review=true]) > .standing-window {
   position:absolute;bottom:1%;width:44%;max-width:none;translate:-50% 0;margin:0;
 }
@@ -357,14 +360,20 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
 .lau-counter .shop-purchase small {font-size:.68rem}
 @media(orientation:portrait) and (max-width:650px) {
   #scene[data-mode=market] .lau-counter {
-    height:auto;min-height:100%;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;
+    height:100%;min-height:100%;grid-template-columns:minmax(0,1fr) minmax(0,.55fr);grid-template-rows:auto auto minmax(7rem,1fr) auto;
     gap:.4rem;padding:.45rem 8% 1.3rem;
   }
   #scene[data-mode=market] .sheet-head {padding:clamp(20px,6vw,34px) 12% 8px}
-  .lau-counter .shop-purse {grid-area:1/1}
-  #scene[data-mode=market] .lau-counter .goods-list {grid-area:2/1;max-height:min(43svh,25rem)}
-  .lau-counter .shop-details {grid-area:3/1}
-  #scene[data-mode=market] .lau-standing {grid-area:1/1/4/2;width:80%}
+  #scene[data-mode=market] .shop-purse {grid-area:1/1;justify-self:start}
+  #scene[data-mode=market] .lau-counter .goods-list {grid-area:3/1/4/-1;max-height:none}
+  .lau-counter .shop-details {display:contents}
+  .lau-counter .shop-talk {grid-area:2/1;align-self:end}
+  .lau-counter .shop-purchase {grid-area:4/1/5/-1}
+  #scene[data-mode=market] .lau-standing {
+    grid-area:1/2/3/3;position:relative;inset:auto;align-self:end;translate:none;
+    width:100%;height:clamp(7rem,18svh,10rem);z-index:0;
+  }
+  #scene[data-mode=market] .lau-standing > img[data-portrait=lau] {width:100%;height:100%;object-position:center bottom}
 }
 @media(orientation:landscape) and (max-height:530px) {
   #scene[data-mode=market] .sheet-head {padding:.18rem 12%}
@@ -397,6 +406,7 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
   #scene[data-mode=market] .lau-standing > img {
     top:auto;bottom:0;
     height:min(100%,calc(var(--cast-unit) * var(--figure-scale) * 1.22));
+    object-position:center bottom;
   }
 }
 

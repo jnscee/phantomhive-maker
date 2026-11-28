@@ -610,6 +610,15 @@ async function check(browserType){
       assert.ok((await page.locator('#sheet').evaluate(e=>+getComputedStyle(e).zIndex))>(await page.locator('#date').evaluate(e=>+getComputedStyle(e).zIndex)));
       await page.evaluate(()=>{tab='market';render();});
       assert.equal(await page.locator('.goods-ticket').count(),await page.evaluate(()=>Object.keys(marketGoods).length));
+      const lauFit=await page.locator('.lau-standing img').evaluate(async image=>{
+        await image.decode();
+        const art=image.getBoundingClientRect(),frame=image.parentElement.getBoundingClientRect();
+        const shelf=document.querySelector('.goods-list').getBoundingClientRect();
+        return {width:art.width,contained:getComputedStyle(image).objectFit==='contain',
+          fits:art.left>=frame.left-1&&art.right<=frame.right+1,aboveShelf:frame.bottom<=shelf.top+1};
+      });
+      assert.ok(lauFit.width>0&&lauFit.contained&&lauFit.fits,JSON.stringify(lauFit));
+      if(viewport.width===390)assert.ok(lauFit.aboveShelf,'Shop shelves cover Lau on mobile');
       await page.mouse.move(0,0);
       assert.deepEqual(await buttonFinish(page.locator('.goods-ticket[aria-pressed="false"]').first()),baseFinish);
       assert.deepEqual(await buttonFinish(page.locator('.goods-ticket[aria-pressed="true"]')),activeFinish);
