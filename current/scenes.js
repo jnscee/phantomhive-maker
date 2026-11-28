@@ -235,6 +235,7 @@ function faceDialogue(){
     playNovelCue(con,null);
     return true;
   }
+  if(tab==="scriptMemory"&&scriptReplay){showScriptReplay(con);return true;}
   if(showEndingScene(con))return true;
   if(tab==="staffMemory"&&recruitMemory){showRecruitMemory(con);return true;}
   if(event?.contest&&(state.sequence?.duel||state.fairBook?.[event.contest.id])){
@@ -344,6 +345,7 @@ function chatDialogue(){
 function speak(id){
   if(state.phase!=="plan"||state.spoken?.turn===state.month)return;
   if(!Object.hasOwn(homeChatTopics,id))return;
+  const greeting=chatDialogue().line;
   if(id==="tea"||id==="health")state.flags.attention=(state.flags.attention||0)+1;
   const snapshot=choiceSnapshot();
   let reply=homeChatTopics[id].reply ?? butlerReplies[id][sebastianRegard(state.stats)];
@@ -372,7 +374,7 @@ function speak(id){
     [line,reply]=variation;
   }
   state.chatCounts??={};state.chatCounts[id]=count+1;
-  state.spoken={turn:state.month,topic:id,title,line,reply,effects};
+  state.spoken={turn:state.month,topic:id,title,line,reply,effects,greeting};
   showChoiceImpact({health:"몸 상태를 묻는다",business:"팬텀사 이야기를 꺼낸다",tea:"차를 한 잔 더 따른다"}[id] ?? homeChatTopics[id].label,snapshot);
   persist();render(true);
 }

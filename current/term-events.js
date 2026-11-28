@@ -99,21 +99,28 @@ const observationReplies={
   "season-16":[["엘리자베스","그걸 봤어? 리본까지 새로 묶었는데! 자, 열어 봐. 마지막 달걀은 네 거야."],["엘리자베스","그럼 셋 하면 같이 들어 올리자. 하나, 둘…… 시엘, 벌써 봤지?"]],
   jubilee:[["","시엘은 서신 끝에 가문의 이름을 적었다. 봉랍에 인장을 누르고, 붉은 밀랍이 다 식은 뒤에야 손을 뗐다."],["","세바스찬이 비단으로 견본을 감쌌다. 왕실에 갈 상자의 뚜껑은 시엘이 받아 제 손으로 덮었다."]]
 };
-function observedLines(event){
+function observationKey(event,abilities){
+  return Object.keys(middleObservations[event.id]).reduce((a,b)=>abilities[a]>=abilities[b]?a:b);
+}
+function observationPages(event,key){
   const variants=middleObservations[event.id];
   if(!variants)return null;
-  const key=Object.keys(variants).reduce((a,b)=>state.stats[a]>=state.stats[b]?a:b);
+
   if(event.id==="birthday2"){
     const lines=birthdayDialogue.birthday2.lines;
     return [...lines.slice(0,-2),["시엘",variants[key]],...lines.slice(-2)];
   }
   return [...(event.lines||[[event.speaker,event.text]]),["시엘",variants[key]]];
 }
+function observedLines(event){
+  return middleObservations[event.id]?observationPages(event,observationKey(event,state.stats)):null;
+}
 function termPages(event){
   if(event.authored)return event.lines;
-  const observation=observedLines(event);
-  if(observation)return observation;
-  if(event.lines)return event.rememberedText?[...event.lines,[event.speaker,event.rememberedText(state)]]:event.lines;
+  return observedLines(event)||baseTermPages(event,event.rememberedText?.(state));
+}
+function baseTermPages(event,remembered){
+  if(event.lines)return remembered?[...event.lines,[event.speaker,remembered]]:event.lines;
   const birthday=birthdayDialogue[event.id];
   if(birthday)return birthday.lines;
   const script=event.slot&&examDialogue[event.slot];

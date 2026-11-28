@@ -3,7 +3,7 @@ const mem=new Map(),elements=new Map();
 function element(){return {isConnected:true,append(){},dataset:{},style:{setProperty(){}},addEventListener(){},setAttribute(){},focus(){},querySelector(){return this},querySelectorAll(){return []},classList:{contains(){return false},toggle(){}}}}
 const doc={baseURI:"https://example.test/",hidden:false,getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id)},querySelectorAll(){return []},addEventListener(){}};
 const ctx=vm.createContext({console,structuredClone,document:doc,ResizeObserver:class {observe(){}},MutationObserver:class {observe(){}},localStorage:{getItem:k=>mem.get(k)||null,setItem:(k,v)=>mem.set(k,v)},setTimeout,clearTimeout,clearInterval,window:{getSelection(){return null},addEventListener(){}},URL,URLSearchParams});
-for(const name of ['edition-lines','locale','cover','content','prince','standing','recruit','story','scenes','audio','reports','prologue','chapters','staffing','term-events','visitors','festivals','almanac','game']){
+for(const name of ['edition-lines','locale','album-scripts','cover','content','prince','standing','recruit','story','scenes','audio','reports','prologue','chapters','staffing','term-events','visitors','festivals','almanac','game']){
  let s=fs.readFileSync(require('node:path').join(process.argv[2]||'site','js',name+'.js'),'utf8');if(name==='game')s=s.slice(0,s.indexOf('\nrender();\n'));
  vm.runInContext(s,ctx,{filename:name+'.js'});
 }
@@ -1399,3 +1399,16 @@ for(const year of [1886,1887,1888]){
   const stage=run('contestScene(pendingEvent())');
   assert.ok(stage.includes('class="duel-vs"')&&stage.includes('fair-next:2')&&!stage.includes('class="duel-sample"'));
 }
+
+// The cover reads only earned choices, including manual slots and old, title-only records.
+run('saves={};state=initial();scriptRecords.clear();');
+run('saves[2]={...initial(),events:[{id:"greenhouseKey",index:0,month:4},{id:"visitGardenMorning",index:1,month:5}],visitMemories:{greenhouseKey:true}};restoreScriptRecords()');
+assertOk('(()=>{const shelf=makeScriptShelf();const key=shelf.groups.find(g=>g.title==="온실의 여벌 열쇠");return key.people.has("피니안")&&key.versions.length===1&&key.versions[0].label==="맡아 둔다"&&shelf.groups.some(g=>g.section==="echo");})()');
+run('saves.auto={...initial(),events:[{id:"greenhouseKey",index:1,month:4}]};restoreScriptRecords();saves={};');
+assertOk('(()=>{const shelf=makeScriptShelf();return shelf.groups.find(g=>g.title==="온실의 여벌 열쇠").versions.length===2 && !shelf.groups.some(g=>g.section==="ending");})()');
+assertOk('(()=>{const e=events.find(e=>e.id==="visitGardenMorning"),r=eventScript(e,{index:1});return r.rows.at(-1)[1]===visitEncounterCards.find(c=>c.id===e.id).choices[1].reply[1];})()');
+assertOk('(()=>{const e=events.find(e=>e.id==="season-16"),r=eventScript(e,{index:null});return r.partial&&!r.rows.some(row=>Object.values(middleObservations[e.id]).includes(row[1]));})()');
+assertOk('(()=>{const r=eventScript(events.find(e=>e.id==="visitPrince"),{index:null});return r.partial&&!r.rows.some(row=>recruitScenes.visitPrince.lines.some(page=>page.withTanaka&&page.text===row[1]));})()');
+run('saves.gallery={ill:"건강 악화로 종료"};');
+assertOk('(()=>{const ending=makeScriptShelf().groups.find(g=>g.section==="ending");return ending.versions[0].rows.length===40&&ending.people.has("시엘")&&ending.people.has("세바스찬");})()');
+console.log("PASS character album, independent visit choices, incomplete historical records, recruitment cast and collected ending scripts");

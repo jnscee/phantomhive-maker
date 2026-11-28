@@ -144,7 +144,7 @@ function visitDone(engage){
  const id=state.visit,seq=state.sequence;
  const before=choiceSnapshot();
  const memory=visitMemory(id,visitPerson(id));
- if(memory){state.visitMemories??={};state.visitMemories[memory.id]=true;}
+ if(memory){state.visitMemories??={};state.visitMemories[memory.id]=true;rememberVisitEcho(state,memory.id);}
  seq.visitBefore=snapStats(state);
  state.visitTurn=state.month;
  if(engage){
@@ -170,7 +170,9 @@ function chooseVisitEvent(index){
  const before=choiceSnapshot();
  flagEvent(event.id,choice.effect);
  showChoiceImpact(choice.label,before);
- state.events.push({id:event.id,index,month:state.month});
+ const entry={id:event.id,index,month:state.month};
+ state.events.push(entry);
+ collectScript(eventScriptRecord(state,event,entry));
  seq.visitReply=choice.response||event.responses?.[index]||null;
  seq.replySpeaker=castName(event);
  state.log.push(choice.result);

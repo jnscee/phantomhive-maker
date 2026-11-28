@@ -85,6 +85,7 @@ function persist(){
   if(tourSession||previewLesson||previewFair||storyDemo)return;
   updateIllness(state);
   clearUnavailableRecovery(state);
+  if(tab==="chat")rememberChatScript(state.spoken);
   saves.auto=structuredClone(state);
   writeSaveBook(saves);
 }
@@ -425,6 +426,9 @@ function choose(index){
     state.events.some(record=>record.id===event.id&&record.month===state.month):state.flags[event.id]);
   if(incidentSettled||state.termOutcome||(pages&&(state.termPage||0)<pages.length-1))return;
   const scriptedOutcome=pages&&(event.authored||!event.lines||observedLines(event));
+  const scriptContext={};
+  if(middleObservations[event.id])scriptContext.observation=observationKey(event,state.stats);
+  if(event.rememberedText)scriptContext.remembered=event.rememberedText(state);
   const examBefore=event.exam||scriptedOutcome?snapStats(state):null;
   const before=choiceSnapshot();
   flagEvent(event.id,choice.effect);
@@ -439,7 +443,9 @@ function choose(index){
     if(state.sequence)state.sequence.examNote=examNote;
   }
   if(isRecruit)delete state.recruitPage;
-  state.events.push({id:event.id,index,month:state.month,...(examNote?{examNote}:{}),...(isRecruit?{edition:"canonical",age:currentCielAge()}:{}),...(event.id==="visitPrince"?{hadTanaka:Boolean(state.people.tanaka)}:{})});
+  const entry={id:event.id,index,month:state.month,...scriptContext,...(examNote?{examNote}:{}),...(isRecruit?{edition:"canonical",age:currentCielAge()}:{}),...(event.id==="visitPrince"?{hadTanaka:Boolean(state.people.tanaka)}:{})};
+  state.events.push(entry);
+  collectScript(eventScriptRecord(state,event,entry));
   state.log.push(examNote||choice.result);
   if(scriptedOutcome||choice.response){
     state.termOutcome={id:event.id,index,note:choice.response?"":examNote,response:choice.response,responseLines:choice.responseLines,nextScene:choice.nextScene};
@@ -1128,9 +1134,8 @@ function recordPanel(){
     if(!event)return "";
     if(Object.hasOwn(recruitScenes,event.id)){
       const old=record.edition!=="canonical";
-      const past={gardener:["온실 열쇠를 건넨다","가벼운 일부터 가르친다"],maid:["저택의 시야를 맡긴다","타나카에게 교육을 맡긴다"],cook:["조리대를 맡긴다","화구 수리부터 함께한다"],circus:["저택에 자리를 마련한다","우리의 행선지를 확인한다"],visitPrince:["함께 차를 든다","다음 방문을 약속한다"]};
       const selected=event.choices[record.index];
-      const oldLabel=past[event.id]?.[record.index]||selected?.label||"영입 완료";
+      const oldLabel=oldRecruitChoices[event.id]?.[record.index]||selected?.label||"영입 완료";
       const note=old?"이전 회차의 선택 · "+oldLabel:recruitScenes[event.id].result+
         (event.choices.length>1&&selected?" · "+selected.label:"");
       return '<details><summary>'+monthText(record.month||state.month)+' · '+event.title+'</summary><p>'+note+'</p>'+btn('영입 장면 다시 보기','recruit-memory:'+event.id)+'</details>';
@@ -1483,6 +1488,7 @@ for(const run of [saves.auto,saves[1],saves[2],saves[3]]){
 }
 
 restoreCGRecords();
+restoreScriptRecords();
 
 function sheetTitle(){
   if(coverPages.includes(tab))return gameString(tab==="exit"?"exitTitle":tab);
@@ -1529,7 +1535,7 @@ function render(focus=false,playbackOffset=0){
   }
   const panel=$("panel");
   $("scene").dataset.cover=String(tab==="title"||coverPages.includes(tab));
-  $("scene").dataset.albumReplay=String(tab==="endingMemory"&&endingReplay?.origin==="album");
+  $("scene").dataset.albumReplay=String(tab==="scriptMemory"||(tab==="endingMemory"&&endingReplay?.origin==="album"));
   const sameDesk=(tab==="estate"||tab==="company"||tab==="townhouse"||tab==="staffing") && $("scene").dataset.mode===tab && !$("sheet").hidden;
   const deskScroll=sameDesk?panel.scrollTop:0;
   const openSections=new Set(sameDesk
@@ -1539,7 +1545,7 @@ function render(focus=false,playbackOffset=0){
   if(tab==="home"&&standing.parentElement!==greetButton)greetButton.append(standing);
   if(tab!=="home"&&standing.parentElement===greetButton)greetButton.after(standing);
   if(standing.getAttribute("src")!==portraits.시엘)standing.src=portraits.시엘;
-  const memory=tab==="endingMemory"?endingReplay:tab==="staffMemory"?recruitMemory:null;
+  const memory=tab==="endingMemory"?endingReplay:tab==="staffMemory"?recruitMemory:tab==="scriptMemory"?scriptReplay:null;
   setPortraitAge($("scene"),memory?.age??currentCielAge());
   updateIllness(state);
   clearUnavailableRecovery(state);
@@ -1857,6 +1863,7 @@ function handleAction(key,rect,confirmed=false){
     }
     return;
   }
+  if(scriptAction(action,id))return;
   if(action==="ending-art"&&(tab==="record"||tab==="album"||(tab==="plan"&&state.phase==="ending"))){
     const route=londonEndingRoutes.includes(value)&&id==="vowNoTitle"?value:null;
     if(!hasEndingRecord(id,route))return;

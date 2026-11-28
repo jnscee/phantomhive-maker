@@ -51,7 +51,7 @@ function isAlbumCG(source){
     !source.endsWith("/black.webp")&&source!=="assets/endings/royal-gates.webp";
 }
 function rememberCG(source){
-  if(tab==="endingMemory"||previewLesson||previewFair||storyDemo||typeof editorPreview!=="undefined"||
+  if(tab==="endingMemory"||tab==="scriptMemory"||previewLesson||previewFair||storyDemo||typeof editorPreview!=="undefined"||
     !isAlbumCG(source))return;
   // The guided practice state is temporary, but viewed CGs belong to the player's album.
   const book=tourSession?.saves??saves;
@@ -122,6 +122,7 @@ function restoreCGRecords(){
   }
 }
 function cgAlbum(){
+  if(scriptShelf)return scriptPage();
   const endings=endingGalleryEntries();
   const entries=cgAlbumEntries(endings),seen=entries.filter(e=>e.seen).length;
   if(albumPicture!==null&&entries[albumPicture]?.seen){
@@ -134,5 +135,5 @@ function cgAlbum(){
     btn('<img loading="lazy" src="'+e.src+'" alt=""><span>'+escapeHTML(e.title)+'</span>',"cg:"+i,false,"cg-print"):
     '<div class="cg-print cg-blank"><i aria-hidden="true">◇</i><span>미수집</span></div>').join("");
   const replayList=endings.length?'<details><summary>엔딩 다시 보기</summary><div class="cover-gallery">'+endings.map(([id,route])=>endingThumb(id,route)).join("")+'</div></details>':'';
-  return '<article class="cover-leaf cg-album"><header><h2 tabindex="-1">CG 앨범</h2>'+btn("표지로 돌아가기","back")+'</header>'+replayList+'<p class="cover-count">수집한 CG <b>'+seen+' / '+entries.length+'</b></p><div class="cg-grid">'+cells+'</div></article>';
+  return '<article class="cover-leaf cg-album"><header><h2 tabindex="-1">CG 앨범</h2>'+btn("표지로 돌아가기","back")+'</header>'+btn(scriptText("인물별 회상"),"scripts",false,"script-open")+replayList+'<p class="cover-count">수집한 CG <b>'+seen+' / '+entries.length+'</b></p><div class="cg-grid">'+cells+'</div></article>';
 }

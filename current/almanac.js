@@ -215,6 +215,7 @@ function settleFestival(run,duel){
   run.fund+=entry.purse;
   run.fairBook??={};
   run.fairBook[fair.id]=entry;
+  if(run===state)rememberFairScript(fair,entry);
   run.log.push(fair.title+" · "+contestRank(entry)+(entry.purse?" · 상금 "+money(entry.purse):""));
   return fair;
 }
