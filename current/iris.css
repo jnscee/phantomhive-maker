@@ -2225,8 +2225,8 @@ html:is(:lang(en),:lang(ja)) :is(.command-grid,.calendar-foot,.cover-actions,.ca
 
 /* Apply the soft outer halo after the portrait window has cropped the figure. */
 #scene .standing-window:has(> img:is([data-portrait="ciel"],[src$="/sebastian.webp"])) {
-  filter:drop-shadow(0 0 7px #eff8ffaa) drop-shadow(0 0 24px #c1e4ff88);
+  filter:drop-shadow(0 0 7px #eff8ff96) drop-shadow(0 0 24px #c1e4ff78);
 }
 #scene .home-standing {
-  --standing-glow:drop-shadow(0 0 7px #eff8ffaa) drop-shadow(0 0 24px #c1e4ff88);
+  --standing-glow:drop-shadow(0 0 7px #eff8ff96) drop-shadow(0 0 24px #c1e4ff78);
 }
