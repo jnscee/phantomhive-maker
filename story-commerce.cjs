@@ -3,7 +3,7 @@ const mem=new Map(),elements=new Map();
 function element(){return {isConnected:true,append(){},dataset:{},style:{setProperty(){}},addEventListener(){},setAttribute(){},focus(){},querySelector(){return this},querySelectorAll(){return []},classList:{contains(){return false},toggle(){}}}}
 const doc={baseURI:"https://example.test/",hidden:false,getElementById(id){if(!elements.has(id))elements.set(id,element());return elements.get(id)},querySelectorAll(){return []},addEventListener(){}};
 const ctx=vm.createContext({console,structuredClone,document:doc,ResizeObserver:class {observe(){}},MutationObserver:class {observe(){}},localStorage:{getItem:k=>mem.get(k)||null,setItem:(k,v)=>mem.set(k,v)},setTimeout,clearTimeout,clearInterval,window:{getSelection(){return null},addEventListener(){}},URL,URLSearchParams});
-for(const name of ['edition-lines','locale','cover','content','prince','recruit','story','scenes','audio','reports','prologue','chapters','staffing','term-events','visitors','festivals','almanac','game']){
+for(const name of ['edition-lines','locale','cover','content','prince','standing','recruit','story','scenes','audio','reports','prologue','chapters','staffing','term-events','visitors','festivals','almanac','game']){
  let s=fs.readFileSync(require('node:path').join(process.argv[2]||'site','js',name+'.js'),'utf8');if(name==='game')s=s.slice(0,s.indexOf('\nrender();\n'));
  vm.runInContext(s,ctx,{filename:name+'.js'});
 }

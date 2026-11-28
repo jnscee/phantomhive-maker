@@ -8,7 +8,7 @@ import { tmpdir } from "node:os";
 import { createHash, randomUUID } from "node:crypto";
 import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { applyEdits, catalog } from "./catalog.mjs";
+import { applyEdits, catalog, standingPreview } from "./catalog.mjs";
 
 const editor = path.dirname(fileURLToPath(import.meta.url));
 const source = path.resolve(editor,"../../current");
@@ -22,7 +22,7 @@ const maxRequest = 60*1024*1024;
 const types = {
   ".html":"text/html; charset=utf-8",".css":"text/css; charset=utf-8",".js":"text/javascript; charset=utf-8",
   ".png":"image/png",".webp":"image/webp",".jpg":"image/jpeg",".jpeg":"image/jpeg",".gif":"image/gif",
-  ".avif":"image/avif",".svg":"image/svg+xml",".mp3":"audio/mpeg",".ogg":"audio/ogg",".wav":"audio/wav",
+  ".wasm":"application/wasm",".avif":"image/avif",".svg":"image/svg+xml",".mp3":"audio/mpeg",".ogg":"audio/ogg",".wav":"audio/wav",
   ".woff":"font/woff",".woff2":"font/woff2",".zip":"application/zip"
 };
 const previews = new Map();
@@ -49,11 +49,14 @@ function currentModel() {
   const files=Object.fromEntries(readdirSync(source).filter(file=>file.endsWith(".js")).sort()
     .map(file=>[file,readFileSync(path.join(source,file),"utf8")]));
   const version=createHash("sha256").update(JSON.stringify(files)).digest("hex")+":"+revision;
-  return catalog(files,assets,version);
+  const heads=path.join(source,"assets/portraits/heads");
+  const extra=existsSync(heads)?readdirSync(heads).filter(name=>/^[a-z0-9-]+\.webp$/.test(name)).map(name=>"assets/portraits/heads/"+name):[];
+  return catalog(files,[...new Set([...assets,...extra])],version);
 }
 
-function assetBytes(filename, encoded) {
-  if(!assets.includes(filename)||typeof encoded!=="string"||encoded.length>Math.ceil(maxMedia/3)*4||!/^[\w+/]+={0,2}$/.test(encoded))
+function assetBytes(filename, encoded, model) {
+  const known=assets.includes(filename)||model.groups.some(g=>g.section==="standing"&&g.fields[0].head===filename);
+  if(!known||typeof encoded!=="string"||encoded.length>Math.ceil(maxMedia/3)*4||!/^[\w+/]+={0,2}$/.test(encoded))
     throw new Error("교체할 리소스 또는 파일 크기를 확인해 주세요. 파일당 20 MB까지 가능합니다.");
   const data=Buffer.from(encoded,"base64");
   const extension=path.extname(filename).toLowerCase();
@@ -77,7 +80,7 @@ function assetBytes(filename, encoded) {
 function snapshot(body) {
   const model=currentModel();
   const files=applyEdits(model,body);
-  const uploads=Object.fromEntries(Object.entries(body.uploads??{}).map(([filename,base64])=>[filename,assetBytes(filename,base64)]));
+  const uploads=Object.fromEntries(Object.entries(body.uploads??{}).map(([filename,base64])=>[filename,assetBytes(filename,base64,model)]));
   return {model,files,uploads};
 }
 
@@ -185,7 +188,7 @@ function validPreview(spec,model,newEvent) {
 }
 
 function previewAsset(filename, session) {
-  if(!assets.includes(filename)) return null;
+  if(!assets.includes(filename)&&!/^assets\/portraits\/heads\/[a-z0-9-]+\.webp$/.test(filename))return null;
   return session?.uploads[filename]??readOptional(path.join(source,filename))??readOptional(path.join(base,filename));
 }
 
@@ -275,6 +278,7 @@ const server=http.createServer(async (req,res)=>{
         const token=randomUUID();
         const requested=validPreview(body.preview,changes.model,body.newEvent);
         const spec=requested?{...requested,cut:Number.isInteger(body.cut)?body.cut:0}:null;
+        standingPreview(changes.model,spec,body.standingView);
         if(body.placementEditor){
           if(body.placementEditor!==true||spec?.kind!=="activity"||typeof body.channel!=="string"||!/^[a-f0-9-]{36}$/.test(body.channel))
             throw new Error("도트 배치를 편집할 일정을 다시 선택해 주세요.");
@@ -286,10 +290,13 @@ const server=http.createServer(async (req,res)=>{
         return json(res,{url:"/game/"+token+"/index.html"+query});
       }
     }
-    const staticFiles={"/":"index.html","/story-flow.js":"story-flow.js","/editor.js":"editor.js","/editor.css":"editor.css"};
+    if(get && urlPath==="/standing-model.js")return media(res,readFileSync(path.join(source,"standing.js")),".js");
+    const codecFiles={"/codec/webp_enc.js":"codec/enc/webp_enc.js","/codec/webp_enc.wasm":"codec/enc/webp_enc.wasm","/codec/meta.js":"meta.js"};
+    if(get&&Object.hasOwn(codecFiles,urlPath))return media(res,readFileSync(path.join(editor,"node_modules/@jsquash/webp",codecFiles[urlPath])),path.extname(urlPath));
+    const staticFiles={"/":"index.html","/story-flow.js":"story-flow.js","/standing-editor.js":"standing-editor.js","/editor.js":"editor.js","/editor.css":"editor.css"};
     if(get && Object.hasOwn(staticFiles,urlPath)) {
       const file=staticFiles[urlPath];
-      res.setHeader("Content-Security-Policy","default-src 'self'; img-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'none'");
+      res.setHeader("Content-Security-Policy","default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; img-src 'self' blob:; media-src 'self' blob:; object-src 'none'; base-uri 'none'");
       return media(res,readFileSync(path.join(editor,"public",file)),path.extname(file));
     }
     res.writeHead(404).end();

@@ -9,6 +9,7 @@
     "start": "node server.mjs"
   },
   "dependencies": {
+    "@jsquash/webp": "1.5.0",
     "acorn": "8.16.0",
     "diff": "8.0.3",
     "fflate": "0.8.2"

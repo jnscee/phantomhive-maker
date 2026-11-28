@@ -35,6 +35,11 @@ const workerSource=await readFile(path.join(source,"web/service-worker.mjs"),"ut
 await writeFile(path.join(editor,"service-worker.js"),workerSource.replace('import {read} from "./storage.mjs";',
   ()=>storeSource.replaceAll("export async function","async function")));
 await cp(path.join(source,"preview.js"),path.join(editor,"preview.js"));
+await mkdir(path.join(editor,"codec"),{recursive:true});
+const codec=path.join(source,"node_modules/@jsquash/webp");
+for(const [name,target] of [["codec/enc/webp_enc.js","webp_enc.js"],["codec/enc/webp_enc.wasm","webp_enc.wasm"],["meta.js","meta.js"],["LICENSE","LICENSE"],["codec/LICENSE.codec.md","LICENSE.codec.md"]]){
+  await cp(path.join(codec,name),path.join(editor,"codec",target));
+}
 const dependencies=[
   ["acorn/dist/acorn.mjs","acorn.mjs"],
   ["acorn/LICENSE","acorn-LICENSE"],
@@ -51,9 +56,11 @@ const adapter=await readFile(path.join(editor,"web.mjs"),"utf8");
 await writeFile(path.join(editor,"web.mjs"),adapter.replace('"preview.js?v="+release',JSON.stringify("preview.js?v="+uiVersion)).replace('"./catalog.mjs"','"./catalog.mjs?v='+uiVersion+'"'));
 const html=(await readFile(path.join(editor,"index.html"),"utf8"))
   .replace("<body>",'<body data-web-editor>')
-  .replace('sandbox="allow-scripts"','sandbox="allow-scripts allow-same-origin"')
+  .replaceAll('sandbox="allow-scripts"','sandbox="allow-scripts allow-same-origin"')
   .replace('href="/editor.css"',`href="./editor.css?v=${uiVersion}"`)
   .replace('src="/story-flow.js"',`src="./story-flow.js?v=${uiVersion}"`)
+  .replace('src="/standing-model.js"',`src="../js/standing.js?v=${release}"`)
+  .replace('src="/standing-editor.js"',`src="./standing-editor.js?v=${uiVersion}"`)
   .replace('src="/editor.js"',`src="./editor.js?v=${uiVersion}"`);
 await writeFile(path.join(editor,"index.html"),html);
 const app=(await readFile(path.join(editor,"editor.js"),"utf8")).replace('import("./web.mjs")',`import("./web.mjs?v=${uiVersion}")`);

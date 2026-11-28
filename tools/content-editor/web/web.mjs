@@ -1,4 +1,4 @@
-import {catalog,applyEdits,additionPath,inspectRoutes} from "./catalog.mjs";
+import {catalog,applyEdits,additionPath,inspectRoutes,standingPreview} from "./catalog.mjs";
 import {zip,strToU8} from "./fflate.mjs";
 import {read,write,releaseKeys} from "./storage.mjs";
 
@@ -70,7 +70,7 @@ function edits(current,body){
   for(const name of Object.keys(changes))if(sources[name]===original[name])delete sources[name];
   const newPath=body.addition&&!["scene","opening","fx"].includes(body.addition.kind)?additionPath(body.addition):null;
   const uploads=Object.fromEntries(Object.entries(body.uploads??{}).map(([name,data])=>{
-    if(!current.assetSet.has(name)&&name!==newPath)throw new Error("이 파일은 등록할 수 없습니다.");
+    if(!current.assetSet.has(name)&&name!==newPath&&!current.groups.some(g=>g.section==="standing"&&g.fields[0].head===name))throw new Error("이 파일은 등록할 수 없습니다.");
     return [name,assetBlob(name,data)];
   }));
   return {sources,media:{...saved.media,...uploads},files:[...Object.keys(changes),...Object.keys(uploads)]};
@@ -101,6 +101,7 @@ async function preview(current,body){
   if(body.preview && !current.groups.some(group=>JSON.stringify(group.preview)===JSON.stringify(body.preview))
     && body.preview.id!=="custom-"+body.newEvent?.id)throw new Error("테스트할 장면을 찾지 못했습니다.");
   const spec=body.preview?{...body.preview,cut:Number.isInteger(body.cut)?body.cut:0}:null;
+  standingPreview(current,spec,body.standingView);
   if(body.placementEditor){
     if(body.placementEditor!==true||spec?.kind!=="activity"||typeof body.channel!=="string"||!/^[a-f0-9-]{36}$/.test(body.channel))
       throw new Error("도트 배치를 편집할 일정을 다시 선택해 주세요.");

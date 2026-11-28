@@ -56,6 +56,7 @@ export function catalog(files, publishedAssets = [], version = "") {
     recruitArt:["recruit.js",variable("recruit.js","recruitArt")],motionObjects:["scenes.js",variable("scenes.js","motionObjects")],
     novelExpressions:["recruit.js",variable("recruit.js","novelExpressions")],
     authoredOptions:["story.js",variable("story.js","authoredOptions")]};
+  registers.standingProfiles=["standing.js",variable("standing.js","standingProfiles")];
   const recruitTargets=new Map();
 
   function group(section, key, title, detail="", preview=null) {
@@ -203,6 +204,25 @@ export function catalog(files, publishedAssets = [], version = "") {
     return [id,{actor,name,file:path}];
   }));
   inventory.standing=Object.fromEntries(recruitCast.map(p=>[propertyName(p),value(p.value)]));
+  const guests=Object.fromEntries(properties(variable("standing.js","guestStandingArt")).map(p=>[propertyName(p),value(p.value)]));
+  const castNames=variable("recruit.js","recruitNames");
+  const profileTable=registers.standingProfiles[1];
+  const source=files["standing.js"];
+  const readProfile=node=>JSON.parse(source.slice(node.start,node.end));
+  const art={...inventory.standing,...guests};
+  for(const id of Object.keys(art)){
+    const node=prop(profileTable,id);
+    if(!profileTable||(!node&&!id.startsWith("extra-")))continue;
+    const initial=node?readProfile(node):{...readProfile(prop(profileTable,"seb")),glow:null,crop:null};
+    const age={ciel:10,ciel11:11,ciel12:12,liz11:11,liz12:12,liz13:13}[id];
+    const name=value(prop(castNames,id))??(id.startsWith("liz")?"엘리자베스":"라우");
+    const g=group("standing","portrait-"+id,name+(age?" "+age+"세":""),initial.height+" cm",{kind:"standing",id});
+    const head=id==="seb"?"assets/portraits/sebastian-head.webp":"assets/portraits/heads/"+id+".webp";
+    const field={id:"portrait:"+id,actor:id,type:"portrait",label:"스탠딩 설정",file:"standing.js",value:initial,
+      image:art[id],head,hasHead:assetSet.has(head)};
+    g.fields.push(field);
+    fields.set(field.id,{field,node});
+  }
   // Dialogue selects Ciel once. The image catalog exposes each age's replaceable file.
   for(const [id,age] of [["ciel",10],["ciel11",11],["ciel12",12]]){
     const path=inventory.standing[id];
@@ -654,6 +674,16 @@ function lineValues(input, field = {}) {
 
 function statementValue(field, input, assetSet) {
   switch(field.type) {
+    case "portrait": {
+      const within=(n,min,max)=>Number.isFinite(n)&&n>=min&&n<=max;
+      if(!input||!within(input.height,50,260)||!within(input.eye,0,398)||!within(input.jaw,input.eye+1,400)
+        ||!within(input.eyeX,0,100)||!within(input.jawX,0,100)
+        ||(input.glow!==null&&!within(input.glow,0,80)))throw new Error("키, 눈·턱 기준점과 글로우 범위를 확인해 주세요.");
+      const {height,eye,jaw,eyeX,jawX,glow,crop}=input;
+      if(crop!==null&&(!crop||!within(crop.x,0,100)||!within(crop.y,0,100)||!within(crop.size,1,100)))
+        throw new Error("두상 크롭 위치와 크기를 확인해 주세요.");
+      return {height,eye,jaw,eyeX,jawX,glow,crop:crop&&{x:crop.x,y:crop.y,size:crop.size}};
+    }
     case "placement": {
       const limits={x:[0,100],bottom:[0,100],scale:[0.05,1]};
       if(!input||typeof input!=="object"||Array.isArray(input)||Object.keys(input).length!==3
@@ -712,6 +742,14 @@ function statementValue(field, input, assetSet) {
   }
 }
 
+export function standingPreview(model,spec,view){
+  if(spec?.kind!=="standing")return;
+  const known=id=>model.fields.has("portrait:"+id);
+  if(!view||![10,11,12].includes(view.age)||!known(view.left)||!known(view.right))
+    throw new Error("미리 볼 인물과 시엘의 기준 연령을 선택해 주세요.");
+  spec.view={age:view.age,left:view.left,right:view.right};
+}
+
 export function applyEdits(model, request) {
   if(request.version!==model.version) throw new Error("게임 파일이 변경되었습니다. 편집기를 새로 열어 주세요.");
   const edits = new Map();
@@ -736,7 +774,8 @@ export function applyEdits(model, request) {
     if(JSON.stringify(field.value)===JSON.stringify(input)) continue;
     const checked=statementValue(field,input,model.assetSet);
     if(optionId&&optionId===request.deleteEvent) throw new Error("삭제할 이벤트의 편집 내용을 먼저 적용하거나 취소해 주세요.");
-    if(placementRow&&!node){
+    if(field.type==="portrait"&&!node)insertProperty("standingProfiles",field.actor,checked);
+    else if(placementRow&&!node){
       const last=rows(placementRow).at(-1);
       replace(field.file,last?.end??placementRow.start+1,last?.end??placementRow.start+1,(last?",":"")+quoted(checked));
     }

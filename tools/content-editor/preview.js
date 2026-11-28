@@ -8,7 +8,15 @@ state=initial();
 tab="plan";
 
 const previewCut=length=>Math.min(Math.max(0,length-1),Math.max(0,editorPreview?.cut||0));
-if(editorPreview?.kind==="opening"){
+if(editorPreview?.kind==="standing"){
+  const {age}=editorPreview.view;
+  mixer.bgm=false;mixer.sfx=false;
+  state.month=state.planMonth=1+(age-10)*12;
+  state.phase="event";
+  state.pending="gardener";
+  const at=recruitScenes.gardener.lines.findIndex(line=>line.i===2)+1;
+  state.recruitPage={id:"gardener",at,version:3};
+}else if(editorPreview?.kind==="opening"){
   openingSession=true;
   openingAuto=false;
   state.contractFiled=Boolean(editorPreview.handoff);
@@ -90,5 +98,16 @@ if(editorPreview?.kind==="opening"){
   }
 }
 render();
+if(editorPreview?.kind==="standing"){
+  const host=document.getElementById("conversation");
+  const {left,right}=editorPreview.view;
+  host.querySelectorAll(":scope > .cast").forEach(actor=>actor.remove());
+  for(const [id,side] of [[left,"left"],[right,"right"]]){
+    const name=recruitNames[id]??(id.startsWith("liz")?"엘리자베스":"라우");
+    const file=recruitCast[id]??guestStandingArt[id];
+    host.querySelector(".dialogue").insertAdjacentHTML("beforebegin",sceneStanding(name,side,file,id.startsWith("liz")?Number(id.slice(3)):undefined,id));
+  }
+  document.body.inert=true;
+}
 if(editorPreview?.kind==="activity"&&editorPreview.placementEditor)
   startLessonPlacementEditor(editorPreview.placementEditor);
