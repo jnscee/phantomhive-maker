@@ -614,11 +614,16 @@ async function check(browserType){
         await image.decode();
         const art=image.getBoundingClientRect(),frame=image.parentElement.getBoundingClientRect();
         const shelf=document.querySelector('.goods-list').getBoundingClientRect();
-        return {width:art.width,contained:getComputedStyle(image).objectFit==='contain',
-          fits:art.left>=frame.left-1&&art.right<=frame.right+1,aboveShelf:frame.bottom<=shelf.top+1};
+        const phone=matchMedia('(orientation:portrait) and (max-width:650px)').matches;
+        const floor=phone?document.querySelector('.shop-purchase').getBoundingClientRect().top:
+          document.querySelector('.lau-counter').getBoundingClientRect().bottom;
+        const css=getComputedStyle(image);
+        return {width:art.width,contained:css.objectFit==='contain',bottomAligned:css.objectPosition==='50% 100%',
+          fits:art.left>=frame.left-1&&art.right<=frame.right+1,atFloor:Math.abs(art.bottom-floor)<=2,
+          clearOfShelf:phone?frame.top>=shelf.bottom-1:frame.left>=shelf.right-1};
       });
       assert.ok(lauFit.width>0&&lauFit.contained&&lauFit.fits,JSON.stringify(lauFit));
-      if(viewport.width===390)assert.ok(lauFit.aboveShelf,'Shop shelves cover Lau on mobile');
+      assert.ok(lauFit.bottomAligned&&lauFit.atFloor&&lauFit.clearOfShelf,JSON.stringify(lauFit));
       await page.mouse.move(0,0);
       assert.deepEqual(await buttonFinish(page.locator('.goods-ticket[aria-pressed="false"]').first()),baseFinish);
       assert.deepEqual(await buttonFinish(page.locator('.goods-ticket[aria-pressed="true"]')),activeFinish);

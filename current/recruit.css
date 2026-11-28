@@ -135,7 +135,6 @@ html[data-game-motion=reduced] :is(#ciel-greet > .greeting-hop,.performer,.motio
 #scene[data-mode=market] .goods-ticket img {grid-column:1; width:26px;height:22px}
 #scene[data-mode=market] .goods-ticket strong {grid-column:2;align-self:center;font-size:clamp(15px,2cqw,24px)}
 #scene[data-mode=market] .shop-talk {width:100%;margin:0;padding:8px}
-#scene[data-mode=market] .lau-standing {right:4%;height:95%}
 .estate-ledger>summary {cursor:pointer;font-weight:700;padding:7px 0}
 @media (orientation:portrait) and (max-width:650px) {
   #scene[data-mode=market] .lau-counter {grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;padding:4px 5% 9px}
@@ -257,6 +256,8 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
 }
 
 #scene[data-mode=market] .lau-counter {
+  --counter-bottom:clamp(1.4rem,3cqw,2.6rem);
+  --counter-gap:.6rem;
   --shelf-card-width:6.4rem;
   --shelf-card-gap:.42rem;
   --shelf-inset:.5rem;
@@ -267,7 +268,7 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
   position:relative;isolation:isolate;box-sizing:border-box;height:100%;min-height:18rem;
   display:grid;grid-template-columns:minmax(0,var(--shelf-width)) minmax(0,19rem);
   grid-template-rows:auto minmax(0,1fr) auto;justify-content:center;
-  gap:.6rem clamp(.65rem,2cqw,1.4rem);padding:.65rem 7% clamp(1.4rem,3cqw,2.6rem);
+  gap:var(--counter-gap) clamp(.65rem,2cqw,1.4rem);padding:.65rem 7% var(--counter-bottom);
 }
 .lau-counter .shop-purse {grid-area:1/2;justify-self:end;align-self:start;margin:0}
 #scene[data-mode=market] .lau-counter .goods-list {
@@ -319,7 +320,12 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
 #scene .lau-counter .goods-ticket b {grid-area:name;font-size:.8rem;line-height:1.12;word-break:keep-all;overflow-wrap:anywhere}
 #scene .lau-counter .goods-ticket strong {grid-area:price;font-size:.9rem;line-height:1.1}
 #scene[data-mode=market] .lau-standing {
-  grid-area:1/2/4/3;inset:auto auto 0 50%;width:100%;height:95%;translate:-50% 0;
+  grid-area:1/2/4/3;inset:auto auto calc(-1 * var(--counter-bottom)) 50%;translate:-50% 0;
+  width:100%;height:min(100%,var(--window-height));
+}
+#scene[data-mode=market] .lau-standing > img[data-portrait=lau] {
+  top:auto;bottom:0;object-position:center bottom;
+  height:calc(var(--cast-unit) * var(--figure-scale));max-height:100%;
 }
 .lau-counter .shop-details {grid-area:3/2;z-index:1;display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:.45rem;min-width:0;width:min(100%,24rem);justify-self:end}
 #scene .lau-counter .shop-talk {
@@ -360,24 +366,27 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
 .lau-counter .shop-purchase small {font-size:.68rem}
 @media(orientation:portrait) and (max-width:650px) {
   #scene[data-mode=market] .lau-counter {
-    height:100%;min-height:100%;grid-template-columns:minmax(0,1fr) minmax(0,.55fr);grid-template-rows:auto auto minmax(7rem,1fr) auto;
-    gap:.4rem;padding:.45rem 8% 1.3rem;
+    --counter-gap:.4rem;
+    height:100%;min-height:100%;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);grid-template-rows:auto minmax(7rem,1fr) auto auto;
+    gap:var(--counter-gap);padding:.45rem 8% 1.3rem;
   }
   #scene[data-mode=market] .sheet-head {padding:clamp(20px,6vw,34px) 12% 8px}
-  #scene[data-mode=market] .shop-purse {grid-area:1/1;justify-self:start}
-  #scene[data-mode=market] .lau-counter .goods-list {grid-area:3/1/4/-1;max-height:none}
+  #scene[data-mode=market] .shop-purse {grid-area:1/1/2/-1;justify-self:end}
+  #scene[data-mode=market] .lau-counter .goods-list {grid-area:2/1/3/-1;max-height:none}
   .lau-counter .shop-details {display:contents}
-  .lau-counter .shop-talk {grid-area:2/1;align-self:end}
-  .lau-counter .shop-purchase {grid-area:4/1/5/-1}
+  .lau-counter .shop-talk {grid-area:3/1;align-self:end}
+  .lau-counter .shop-purchase {grid-area:4/1/5/-1;position:relative;z-index:1;width:100%}
   #scene[data-mode=market] .lau-standing {
-    grid-area:1/2/3/3;position:relative;inset:auto;align-self:end;translate:none;
-    width:100%;height:clamp(7rem,18svh,10rem);z-index:0;
+    grid-area:3/2;position:relative;inset:auto;align-self:end;translate:0 calc(var(--counter-gap) + 1px);
+    width:100%;height:min(var(--window-height),25svh);z-index:0;
   }
-  #scene[data-mode=market] .lau-standing > img[data-portrait=lau] {width:100%;height:100%;object-position:center bottom}
 }
 @media(orientation:landscape) and (max-height:530px) {
   #scene[data-mode=market] .sheet-head {padding:.18rem 12%}
-  #scene[data-mode=market] .lau-counter {padding:.25rem 6% .65rem;gap:.3rem 2.5%}
+  #scene[data-mode=market] .lau-counter {
+    --counter-gap:.3rem;--counter-bottom:.65rem;grid-template-rows:auto minmax(5.5rem,1fr) auto;
+    padding:.25rem 6% var(--counter-bottom);gap:var(--counter-gap) 2.5%;
+  }
   .lau-counter .shop-purse {padding:.1rem .5rem}
 }
 @media(pointer:coarse) {#scene .lau-counter .shop-buy {min-height:44px}}
@@ -394,19 +403,9 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
   .lau-counter .shop-purse {white-space:nowrap}
   .lau-counter .shop-details,.lau-counter .shop-purchase {width:100%}
 }
-@media (orientation:portrait) and (650px < width <= 960px) {
-  #scene[data-mode=market] .lau-counter {
-    --shop-row-gap:.6rem;
-    row-gap:var(--shop-row-gap);
-  }
+@media (orientation:portrait) and (650px < width <= 960px), (orientation:landscape) and (max-height:530px) {
   #scene[data-mode=market] .lau-standing {
-    grid-area:1/2/3/3;
-    bottom:calc(-1 * var(--shop-row-gap) - 2px);
-  }
-  #scene[data-mode=market] .lau-standing > img {
-    top:auto;bottom:0;
-    height:min(100%,calc(var(--cast-unit) * var(--figure-scale) * 1.22));
-    object-position:center bottom;
+    grid-area:1/2/3/3;bottom:calc(-1 * var(--counter-gap) - 1px);
   }
 }
 
