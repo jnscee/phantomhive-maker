@@ -332,7 +332,8 @@ function setPortraitAge(stage,age){
   stage.dataset.castAge=String(ageIndex);
   stage.style.setProperty("--ciel-scale",cielPortraitScale(ageIndex));
   stage.style.setProperty("--cast-camera",String(standingCamera(standingProfiles,ageIndex)));
-  stage.style.setProperty("--home-halo",standingHalo(standingProfiles[cielStandingId(ageIndex)].glow));
+  const ciel=standingProfiles[cielStandingId(ageIndex)];
+  stage.style.setProperty("--home-halo",standingHalo(ciel.glow,ciel.glowTransparency));
 }
 function framedStanding(name,src,classes,profile=name,actorId){
   const age=Number(document.getElementById("scene").dataset.castAge)||10;
@@ -342,7 +343,7 @@ function framedStanding(name,src,classes,profile=name,actorId){
   const fit=standingGeometry(standingProfiles,id??"seb",age);
   const glow=standingProfiles[id]?.glow;
   const portraitId=name==="시엘"?' data-portrait="ciel"':id==="lau"?' data-portrait="lau"':"";
-  const halo=glow==null?"":";--portrait-halo:"+standingHalo(glow);
+  const halo=glow==null?"":";--portrait-halo:"+standingHalo(glow,standingProfiles[id].glowTransparency);
   return '<span class="standing-window '+classes+'"'+(glow==null?"":" data-halo")+' style="--figure-scale:'+fit.scale+';--figure-height:'+fit.window+halo+'"><img'+portraitId+' src="'+src+'" alt="'+String(name).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')+'"></span>';
 }
 function sceneStanding(name,side,src,age,actorId){

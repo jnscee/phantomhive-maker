@@ -41,7 +41,11 @@ function standingCamera(profiles,age){
     .map(id=>standingGeometry(profiles,id,age).window);
   return Math.min(1,.91/Math.max(...heights));
 }
-function standingHalo(radius){
+// Transparency refers to the wider shadow. At 84.7% the two alpha bytes are 22 and 39.
+const defaultGlowTransparency=84.7;
+function standingHalo(radius,transparency=defaultGlowTransparency){
   if(!radius)return "drop-shadow(0 0 0 transparent)";
-  return "drop-shadow(0 0 "+(radius*7/24)+"px #eff8ff16) drop-shadow(0 0 "+radius+"px #c1e4ff27)";
+  const alpha=255*(1-transparency/100);
+  const hex=value=>Math.round(value).toString(16).padStart(2,"0");
+  return "drop-shadow(0 0 "+(radius*7/24)+"px #eff8ff"+hex(alpha*22/39)+") drop-shadow(0 0 "+radius+"px #c1e4ff"+hex(alpha)+")";
 }

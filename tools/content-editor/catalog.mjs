@@ -680,10 +680,12 @@ function statementValue(field, input, assetSet) {
       if(!input||!within(input.height,50,260)||!within(input.eye,0,398)||!within(input.jaw,input.eye+1,400)
         ||!within(input.eyeX,0,100)||!within(input.jawX,0,100)
         ||(input.glow!==null&&!within(input.glow,0,80)))throw new Error("키, 눈·턱 기준점과 글로우 범위를 확인해 주세요.");
+      if(Object.hasOwn(input,"glowTransparency")&&!within(input.glowTransparency,0,100))
+        throw new Error("글로우 투명도는 0~100%로 입력해 주세요.");
       const {height,eye,jaw,eyeX,jawX,glow,crop}=input;
       if(crop!==null&&(!crop||!within(crop.x,0,100)||!within(crop.y,0,100)||!within(crop.size,1,100)))
         throw new Error("두상 크롭 위치와 크기를 확인해 주세요.");
-      return {height,eye,jaw,eyeX,jawX,glow,crop:crop&&{x:crop.x,y:crop.y,size:crop.size}};
+      return {height,eye,jaw,eyeX,jawX,glow,...(input.glowTransparency===undefined?{}:{glowTransparency:input.glowTransparency}),crop:crop&&{x:crop.x,y:crop.y,size:crop.size}};
     }
     case "placement": {
       const limits={x:[0,100],bottom:[0,100],scale:[0.05,1]};

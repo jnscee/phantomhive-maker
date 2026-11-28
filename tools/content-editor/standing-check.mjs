@@ -41,3 +41,17 @@ for(const invalid of [{eye:change.jaw},{jaw:401},{height:0},{crop:{x:-1,y:20,siz
   assert.throws(()=>applyEdits(model,{version:model.version,changes:{[seb.id]:{...change,...invalid}}}));
 }
 console.log("PASS standing: all original ages, NPC proportions, shared camera, Elizabeth pairing and edit round trip");
+
+assert.equal(evalModel("standingHalo(24)"),"drop-shadow(0 0 7px #eff8ff16) drop-shadow(0 0 24px #c1e4ff27)");
+assert.equal(evalModel("standingHalo(48,84.7)"),"drop-shadow(0 0 14px #eff8ff16) drop-shadow(0 0 48px #c1e4ff27)");
+assert.equal(evalModel("standingHalo(24,100)"),"drop-shadow(0 0 7px #eff8ff00) drop-shadow(0 0 24px #c1e4ff00)");
+assert.equal(evalModel("standingHalo(24,0)"),"drop-shadow(0 0 7px #eff8ff90) drop-shadow(0 0 24px #c1e4ffff)");
+for(const glow of [null,0,80]){
+  const profile={...change,glow,glowTransparency:0};
+  const output=applyEdits(model,{version:model.version,changes:{[seb.id]:profile}});
+  assert.deepEqual(catalog({...files,...output}).fields.get(seb.id).field.value,profile);
+}
+for(const glowTransparency of [null,-1,101,"80",NaN]){
+  assert.throws(()=>applyEdits(model,{version:model.version,changes:{[seb.id]:{...change,glowTransparency}}}));
+}
+console.log("PASS halo: public defaults, independent radius and transparency, legacy and boundary values");

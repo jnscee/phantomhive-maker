@@ -105,7 +105,15 @@ function drawStandingEditor(panel,field){
   const glowRow=node("label","글로우 범위");glowRow.append(glow,glowRead);
   glow.setAttribute("aria-label","글로우 범위");controls.append(glowRow);
   glow.oninput=()=>edit({glow:glow.valueAsNumber});
-  controls.append(button("기본 조명 복원",()=>edit({glow:isCielArt(id)||id==="seb"?24:null})));
+  const transparency=node("input"),transparencyRead=node("output");
+  transparency.type="range";transparency.min=0;transparency.max=100;transparency.step=.1;
+  transparency.setAttribute("aria-label","글로우 투명도");
+  const transparencyRow=node("label","글로우 투명도");
+  transparencyRow.append(transparency,transparencyRead);controls.append(transparencyRow);
+  transparency.oninput=()=>edit({glowTransparency:transparency.valueAsNumber});
+  controls.append(button("기본 조명 복원",()=>edit({
+    glow:isCielArt(id)||id==="seb"||id==="lau"?24:null,glowTransparency:defaultGlowTransparency
+  })));
   const cropBox=node("section",undefined,"portrait-crop");
   const headCanvas=node("canvas");headCanvas.width=headCanvas.height=384;
   const cropSize=node("input");cropSize.type="range";cropSize.min=1;cropSize.max=100;cropSize.step=.1;
@@ -153,6 +161,9 @@ function drawStandingEditor(panel,field){
     const p=profile();
     for(const [key,el] of Object.entries(inputs))el.value=p[key];
     distance.textContent="원본을 높이 400 px로 환산 · 눈에서 턱까지 "+roundPoint(p.jaw-p.eye)+" px";
+    transparency.value=p.glowTransparency??defaultGlowTransparency;
+    transparency.disabled=p.glow===null;
+    transparencyRead.textContent=transparency.disabled?"범위 지정 후 조절":transparency.value+" %";
     glow.value=p.glow??0;glowRead.textContent=p.glow===null?"게임 기본 조명":p.glow+" px";
   }
   function cropRect(){
@@ -275,7 +286,7 @@ function drawStandingEditor(panel,field){
       }
       frame.style.height=(fit.window*camera*200)+"px";
       img.style.height=(fit.scale*camera*200)+"px";
-      frame.style.filter=p.glow?standingHalo(p.glow):"none";
+      frame.style.filter=p.glow==null?"none":standingHalo(p.glow,p.glowTransparency);
       fig.lastChild.textContent=f.title+" · "+p.height+" cm";
       fig.classList.toggle("selected",key===id);
     }
