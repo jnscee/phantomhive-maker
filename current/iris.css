@@ -2272,6 +2272,7 @@ html:is(:lang(en),:lang(ja)) :is(.command-grid,.calendar-foot,.cover-actions,.ca
 #scene .visit-chosen .choice-mark {display:block}
 #scene #conversation [data-chosen=true] {border-inline-start:3px solid #c79b50}
 @media(max-width:560px){
+  #scene .album-sections button {flex:1 1 auto;overflow-wrap:anywhere}
   #scene .album-head {align-items:flex-start;flex-direction:column;gap:.15rem}
   #scene .album-back {order:-1;max-width:100%;text-align:left}
   .script-people {grid-template-columns:repeat(2,minmax(0,1fr))}
