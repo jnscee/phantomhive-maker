@@ -343,8 +343,7 @@ function framedStanding(name,src,classes,profile=name,actorId){
   const glow=standingProfiles[id]?.glow;
   const portraitId=name==="시엘"?' data-portrait="ciel"':"";
   const halo=glow==null?"":";--portrait-halo:"+standingHalo(glow);
-  const ambient=glow==null?"":";--standing-glow:"+standingHalo(glow,true);
-  return '<span class="standing-window '+classes+'"'+(glow==null?"":" data-halo")+' style="--figure-scale:'+fit.scale+';--figure-height:'+fit.window+halo+ambient+'"><img'+portraitId+' src="'+src+'" alt="'+String(name).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')+'"></span>';
+  return '<span class="standing-window '+classes+'"'+(glow==null?"":" data-halo")+' style="--figure-scale:'+fit.scale+';--figure-height:'+fit.window+halo+'"><img'+portraitId+' src="'+src+'" alt="'+String(name).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')+'"></span>';
 }
 function sceneStanding(name,side,src,age,actorId){
   const profile=name==="엘리자베스"?name+(age||Number(document.getElementById("scene").dataset.castAge)+1):name;

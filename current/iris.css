@@ -2224,5 +2224,8 @@ html[data-placement-editor=true][data-placement-playing=false] :is(.performer,.m
 html:is(:lang(en),:lang(ja)) :is(.command-grid,.calendar-foot,.cover-actions,.card-bank) button {min-inline-size:0;overflow-wrap:anywhere;line-height:1.2}
 
 /* Apply the soft outer halo after the portrait window has cropped the figure. */
-#scene .standing-window[data-halo] {filter:var(--portrait-halo)}
+#scene .standing-window[data-halo] {
+  --standing-glow:opacity(1);
+  filter:var(--portrait-halo);
+}
 #scene .home-standing {--standing-glow:var(--home-halo)}

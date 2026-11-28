@@ -1539,8 +1539,8 @@ function render(focus=false,playbackOffset=0){
   if(tab==="home"&&standing.parentElement!==greetButton)greetButton.append(standing);
   if(tab!=="home"&&standing.parentElement===greetButton)greetButton.after(standing);
   if(standing.getAttribute("src")!==portraits.시엘)standing.src=portraits.시엘;
-  const visibleAge=tab==="staffMemory"&&recruitMemory?recruitMemory.age:currentCielAge();
-  setPortraitAge($("scene"),visibleAge);
+  const memory=tab==="endingMemory"?endingReplay:tab==="staffMemory"?recruitMemory:null;
+  setPortraitAge($("scene"),memory?.age??currentCielAge());
   updateIllness(state);
   clearUnavailableRecovery(state);
   musicPlayer.sync(trackForView());
@@ -1861,7 +1861,10 @@ function handleAction(key,rect,confirmed=false){
     const route=londonEndingRoutes.includes(value)&&id==="vowNoTitle"?value:null;
     if(!hasEndingRecord(id,route))return;
     stopRecruitAuto();
-    endingReplay={id,route,at:0,origin:tab};
+    const recordedAge=savedEndingFarewells(id,{route})?.age;
+    // Full-term endings take place at twelve. Early endings may lack any surviving age record.
+    const age=recordedAge??(["broke","ill"].includes(id)?10:12);
+    endingReplay={id,route,age,at:0,origin:tab};
     tab="endingMemory";render(true);return;
   }
   if(tab==="endingMemory"&&["back","system-back"].includes(action)){

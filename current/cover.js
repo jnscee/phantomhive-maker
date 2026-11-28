@@ -51,7 +51,7 @@ function isAlbumCG(source){
     !source.endsWith("/black.webp")&&source!=="assets/endings/royal-gates.webp";
 }
 function rememberCG(source){
-  if(previewLesson||previewFair||storyDemo||typeof editorPreview!=="undefined"||
+  if(tab==="endingMemory"||previewLesson||previewFair||storyDemo||typeof editorPreview!=="undefined"||
     !isAlbumCG(source))return;
   // The guided practice state is temporary, but viewed CGs belong to the player's album.
   const book=tourSession?.saves??saves;
@@ -60,7 +60,7 @@ function rememberCG(source){
   book.cgSeen[source]=true;
   writeSaveBook(book);
 }
-function cgAlbumEntries(){
+function cgAlbumEntries(endings=endingGalleryEntries()){
   const entries=new Map();
   function add(group,id){
     if(!id)return;
@@ -89,7 +89,9 @@ function cgAlbumEntries(){
       for(const line of choice.responseLines||[])add("endings",line[3]?.cg);
     }
   }
-  return [...entries].map(([src,title])=>({src,title,seen:!!saves.cgSeen?.[src]}));
+  // Some older albums have an ending record and only a partial list of viewed CGs.
+  const covers=new Set(endings.map(([id,route])=>endingCoverPath(id,route)));
+  return [...entries].map(([src,title])=>({src,title,seen:covers.has(src)||!!saves.cgSeen?.[src]}));
 }
 function restoreCGRecords(){
   if(previewFair||storyDemo)return;
@@ -120,14 +122,11 @@ function restoreCGRecords(){
   }
 }
 function cgAlbum(){
-  const entries=cgAlbumEntries(),seen=entries.filter(e=>e.seen).length;
   const endings=endingGalleryEntries();
+  const entries=cgAlbumEntries(endings),seen=entries.filter(e=>e.seen).length;
   if(albumPicture!==null&&entries[albumPicture]?.seen){
     const e=entries[albumPicture];
-    const ending=endings.find(([id,route])=>{
-      const art=endingCareerArt(id,route);
-      return e.src==="assets/endings/"+(art?.id||id)+".webp";
-    });
+    const ending=endings.find(([id,route])=>e.src===endingCoverPath(id,route));
     const replay=ending?btn("엔딩 다시 보기",["ending-art",...ending.filter(Boolean)].join(":")):"";
     return '<article class="cg-reader"><header><h2 tabindex="-1">'+escapeHTML(e.title)+'</h2>'+btn("앨범으로","back")+'</header>'+replay+'<img src="'+e.src+'" alt="'+escapeHTML(e.title)+'"></article>';
   }

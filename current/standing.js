@@ -41,8 +41,7 @@ function standingCamera(profiles,age){
     .map(id=>standingGeometry(profiles,id,age).window);
   return Math.min(1,.91/Math.max(...heights));
 }
-function standingHalo(radius,ambient=false){
+function standingHalo(radius){
   if(!radius)return "drop-shadow(0 0 0 transparent)";
-  if(ambient)return "drop-shadow(0 0 "+(radius*5/24)+"px #ecf6ff34) drop-shadow(0 0 "+(radius*14/24)+"px #aed9ff24)";
-  return "drop-shadow(0 0 "+(radius*7/24)+"px #eff8ffaa) drop-shadow(0 0 "+radius+"px #c1e4ff88)";
+  return "drop-shadow(0 0 "+(radius*7/24)+"px #eff8ff16) drop-shadow(0 0 "+radius+"px #c1e4ff27)";
 }
