@@ -1417,3 +1417,12 @@ run('saves.growthGallery={ill:[{entries:[{title:"리넨장 맨 윗칸",month:12}
 assert.match(run('scriptDialoguePage()'),/어떤 답을 골랐는지 기록되어 있지 않습니다/);
 assert.doesNotMatch(run('scriptDialoguePage()'),/class="choice-earned"/);
 console.log("PASS visit-only album, historical provenance, separate dialogue page, earned branches, unknown choices and ending isolation");
+
+run('tab="album";scriptShelf.person="피니안";const visitEntry=scriptShelf.groups.findIndex(g=>g.event.id==="greenhouseKey"&&!g.echo);');
+run('handleAction("script-entry:"+visitEntry)');
+assertOk('tab==="scriptMemory"&&scriptReplay.at===0&&scriptShelf.choice===1');
+run('handleAction("system-back")');
+assertOk('tab==="album"&&scriptShelf.person==="피니안"&&scriptShelf.entry===null');
+run('handleAction("script-text:"+visitEntry);handleAction("script-version:0");handleAction("script-play");closeScriptReplay()');
+assertOk('tab==="albumDialogue"&&scriptShelf.choice===0');
+console.log("PASS one-click visit replay and return to the originating list or dialogue");

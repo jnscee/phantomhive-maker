@@ -132,7 +132,7 @@ function visitScript(group){
     const line=choice.response||event.responses?.[index];
     if(line)reply=[[castName(event),line]];
   }
-  const rows=[...opening,...(choice?[["선택",choice.label]]:[]),...reply];
+  const rows=echo?reply:[...opening,...(choice?[["선택",choice.label]]:[]),...reply];
   return {event,opening,reply,rows,age:record?.age||10,person:group.person,place:echo?visitRecollections[event.id].place:event.visitPlace};
 }
 function scriptIndex(){
@@ -142,8 +142,13 @@ function scriptIndex(){
       btn('<img src="'+img+'" alt=""><strong>'+name+'</strong>',"script-person:"+name,false,"script-person")).join("");
     return cards?'<div class="script-people">'+cards+'</div>':'<p class="cover-empty">'+scriptText("자유행동에서 만난 인물의 이벤트가 여기에 기록됩니다.")+'</p>';
   }
-  const items=groups.map((g,i)=>g.person===person?btn('<span>'+escapeHTML(g.event.title)+'</span>'+
-    (g.echo?'<small>'+scriptText("다음 방문")+'</small>':"")+'<i aria-hidden="true">›</i>',"script-entry:"+i,false,"script-item"):"").join("");
+  const items=groups.map((g,i)=>{
+    if(g.person!==person)return "";
+    const title=escapeHTML(scriptText(g.event.title)),suffix=g.echo?scriptText("다음 방문"):"";
+    const label='<span>'+title+'</span>'+(suffix?'<small>'+suffix+'</small>':"")+'<i aria-hidden="true">▶</i>';
+    return '<div class="script-event" role="group" aria-label="'+title+(suffix?" · "+suffix:"")+'">'+
+      btn(label,"script-entry:"+i,false,"script-item")+btn(scriptText("대화록"),"script-text:"+i,false,"script-text")+'</div>';
+  }).join("");
   return '<div class="script-items">'+items+'</div>';
 }
 function transcriptLines(rows){
@@ -166,8 +171,24 @@ function scriptDialoguePage(){
     (scriptShelf.choice===null?'<p class="script-note">'+scriptText("이 저장에는 어떤 답을 골랐는지 기록되어 있지 않습니다.")+'</p>':"")+
     '<ul>'+options+'</ul></section><ol class="script-lines script-reply" aria-live="polite">'+transcriptLines(v.reply)+'</ol></article>';
 }
+function openScriptReplay(group){
+  const version=visitScript(group);
+  if(!version.rows.length){tab="albumDialogue";render(true);return;}
+  stopRecruitAuto();
+  scriptReplay={version,age:version.age,at:0,origin:tab};
+  tab="scriptMemory";render(true);
+}
+function returnToScriptList(action){
+  const entry=scriptShelf.entry;
+  scriptShelf.entry=null;tab="album";render();
+  $("panel").scrollTop=scriptShelf.listScroll;
+  focusAction(action+":"+entry);
+}
 function closeScriptReplay(){
-  stopRecruitAuto();scriptReplay=null;tab="albumDialogue";render();focusAction("script-play");
+  const origin=scriptReplay.origin;
+  stopRecruitAuto();scriptReplay=null;
+  if(origin==="album"){returnToScriptList("script-entry");return;}
+  tab="albumDialogue";render();focusAction("script-play");
 }
 function showScriptReplay(host){
   const r=scriptReplay,v=r.version,event=v.event,[who,line,,cue]=v.rows[r.at],end=v.rows.length-1,last=r.at===end;
@@ -189,14 +210,12 @@ function scriptAction(action,id){
   if(tab==="albumDialogue"){
     const group=scriptShelf.groups[scriptShelf.entry];
     if(back){
-      const entry=scriptShelf.entry;scriptShelf.entry=null;tab="album";render();focusAction("script-entry:"+entry);
+      returnToScriptList("script-text");
     }else if(action==="script-version"&&group.versions.has(Number(id))){
       scriptShelf.choice=Number(id);
       const scroll=$("panel").scrollTop;render();$("panel").scrollTop=scroll;focusAction("script-version:"+id);
-    }else if(action==="script-play"){
-      const v=visitScript(group);
-      if(v.rows.length){stopRecruitAuto();scriptReplay={version:v,age:v.age,at:0};tab="scriptMemory";render(true);}
-    }else return false;
+    }else if(action==="script-play")openScriptReplay(group);
+    else return false;
     return true;
   }
   if(tab!=="album"||albumPicture!==null)return false;
@@ -206,11 +225,13 @@ function scriptAction(action,id){
   }
   if(!scriptShelf)return false;
   if(action==="script-person"&&scriptShelf.groups.some(g=>g.person===id))scriptShelf.person=id;
-  else if(action==="script-entry"&&scriptShelf.groups[id]?.person===scriptShelf.person){
+  else if((action==="script-entry"||action==="script-text")&&scriptShelf.groups[id]?.person===scriptShelf.person){
+    scriptShelf.listScroll=$("panel").scrollTop;
     scriptShelf.entry=Number(id);
     const group=scriptShelf.groups[id];
     const current=saves.auto?.events?.find(e=>e.id===group.event.id)?.index;
     scriptShelf.choice=group.versions.has(current)?current:group.versions.keys().next().value;
+    if(action==="script-entry"){openScriptReplay(group);return true;}
     tab="albumDialogue";
   }else if(back&&scriptShelf.person){
     const person=scriptShelf.person;scriptShelf.person=null;render();focusAction("script-person:"+person);return true;

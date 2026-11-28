@@ -2249,8 +2249,10 @@ html:is(:lang(en),:lang(ja)) :is(.command-grid,.calendar-foot,.cover-actions,.ca
 #scene .script-person {display:flex;align-items:center;gap:.7rem;padding:.4rem .65rem}
 .script-person img {width:2.7rem;height:3rem;object-fit:cover;object-position:50% 10%;flex:none}
 .script-items {display:grid;gap:.4rem;margin-top:1rem}
+.script-event {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.4rem}
+#scene .script-text {min-height:44px;padding:.4rem .65rem;color:#e2d2b4;background:transparent;border:1px solid #b5a88e66}
 #scene .script-item {display:flex;align-items:center;gap:.65rem;padding:.65rem .85rem}
-.script-item i {margin-inline-start:auto;color:#d3bc97;font:1.3em Georgia,serif}
+.script-item i {margin-inline-start:auto;color:#d3bc97;font:.8em Georgia,serif}
 .script-item small,.dialogue-tools p {color:#d3c4ab}
 .dialogue-tools {display:flex;justify-content:space-between;align-items:center;gap:.75rem;margin:.85rem 0 1.15rem}
 .dialogue-tools p {margin:0;font-size:.9em}
