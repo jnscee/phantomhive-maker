@@ -308,10 +308,10 @@ function contestResultDialogueMarkup(fair,entry){
 }
 const openContestClosings=new WeakSet();
 function contestClosingLines(fair,entry){
-  if(!entry || entry.reason || !Number.isFinite(entry.score))return null;
+  if(!entry||entry.reason||!Number.isInteger(entry.rank))return null;
   const authored=contestResultScene(fair,entry);
   if(authored)return [["",authored.narration],...authored.lines];
-  const historicalTie=!entry.match && entry.duel?.rivalScore===entry.score;
+  const historicalTie=!entry.match&&Number.isFinite(entry.score)&&entry.duel?.rivalScore===entry.score;
   const narration=contestResultLine(fair,historicalTie?{...entry,tied:true}:entry);
   let dialogue;
   if(entry.tied||historicalTie){
@@ -331,14 +331,17 @@ function contestClosingLines(fair,entry){
   }
   return [["",narration],...dialogue];
 }
+function contestClosingScene(fair,entry){
+  const lines=contestClosingLines(fair,entry),page=contestResultPage(entry,{lines});
+  const [speaker,text]=lines[page],last=page===lines.length-1;
+  const partner=speaker&&speaker!=="시엘"?speaker:lines.find(([name])=>name&&name!=="시엘")?.[0];
+  const cast=(Object.hasOwn(portraits,partner)?sceneStanding(partner,"left",portraits[partner],partner==="엘리자베스"?elizabethAge():undefined):"")+
+    sceneStanding("시엘","right",portraits.시엘);
+  const next='<button type="button" class="line-next" data-action="fair-closing-next:'+page+'" aria-label="'+(last?'행사 마치기':'다음 대사')+'"><span aria-hidden="true">▼</span></button>';
+  return '<div class="review-room" style="background-image:url(&quot;'+sceneArt[fair.room]+'&quot;)"></div>'+cast+
+    sceneLine(escapeHTML(speaker),escapeHTML(text),next,'aria-live="polite"');
+}
 function contestResultSlip(fair,entry){
-  const lines=contestClosingLines(fair,entry);
-  if(lines && openContestClosings.has(entry)){
-    const page=contestResultPage(entry,{lines}),last=page===lines.length-1;
-    const [speaker,text]=lines[page];
-    const next='<button type="button" class="line-next" data-action="fair-closing-next:'+page+'" aria-label="'+(last?'행사 마치기':'다음 대사')+'"><span aria-hidden="true">▼</span></button>';
-    return sceneLine(escapeHTML(speaker),escapeHTML(text),next,'aria-live="polite"');
-  }
   const duel=entry.duel;
   const margin=duel&&!entry.match?entry.score-duel.rivalScore:null;
   const rank=margin===0&&entry.rank===2?"공동 금상":contestRank(entry);
@@ -386,6 +389,7 @@ function contestResultLine(fair,entry){
   return entry.rank?"심사위원이 팬텀사의 견본 옆에 상장을 놓습니다.":"시엘은 심사표를 접어 견본 상자에 넣고, 상장을 받는 상대에게 고개를 숙입니다.";
 }
 function duelScene(fair,ticket,duel,entry){
+  if(entry&&openContestClosings.has(entry))return contestClosingScene(fair,entry);
   const rival=contestOpponent(fair),option=fair.options?.[ticket.index];
   const turn=duel.page??(Number.isInteger(duel.choice)?1:0),done=Boolean(entry);
   const appearance=contestAppearance(fair),reply=rival.replies?.[appearance];
@@ -415,7 +419,7 @@ function duelScene(fair,ticket,duel,entry){
     const next='<button type="button" class="line-next" aria-label="다음 대사" data-action="fair-next:'+(handoff?'handoff':turn)+'"><span aria-hidden="true">▼</span></button>';
     slip=sceneLine(escapeHTML(speaker),escapeHTML(line),next,'aria-live="polite"');
   }
-  return '<section class="contest-screen duel-screen'+(done&&!openContestClosings.has(entry)?' duel-result':'')+'" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+
+  return '<section class="contest-screen duel-screen'+(done?' duel-result':'')+'" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+
     '<header><span>'+monthText(fair.month)+' · '+(fair.company?'출품 심사':option.label)+'</span><h2 id="contest-title">'+fair.title+'</h2></header>'+
     '<div class="duel-stage'+(fair.exhibitors?" exhibition-stage":"")+(done?' is-revealed':'')+'">'+
     side(rival.name,fair.company?products[rival.product].name:rival.role,rivalArtwork(rival)+(showSamples?sample(rival.product):''),(duel.rivalScore??contestRivalAbility(fair))+"점",!turn&&!done)+
@@ -445,8 +449,9 @@ function contestScene(event){
   const display=entry.reason?"":'<div class="contest-display'+(revealed?" is-revealed":"")+'">'+
     (entry.product?'<img class="contest-sample" src="assets/map-cart-'+entry.product+'.png" alt="'+label+' 견본">':'')+
     '<div class="contest-actor" role="img" aria-label="경연에 참가한 시엘"><img src="'+actors[poses[0]]+'" alt=""><img src="'+actors[poses[1]]+'" alt=""></div></div>';
-  if(revealed&&!entry.reason&&entry.score!=null){
-    return '<section class="contest-screen'+(openContestClosings.has(entry)?'':' duel-result')+'" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+
+  if(revealed&&contestClosingLines(fair,entry)){
+    if(openContestClosings.has(entry))return contestClosingScene(fair,entry);
+    return '<section class="contest-screen duel-result" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+
       '<header><span>'+monthText(fair.month)+'</span><h2 id="contest-title">'+fair.title+'</h2></header>'+display+contestResultSlip(fair,entry)+'</section>';
   }
   return '<section class="contest-screen" aria-labelledby="contest-title" style="--contest-art:url(&quot;'+new URL(sceneArt[fair.room],document.baseURI).href+'&quot;)">'+

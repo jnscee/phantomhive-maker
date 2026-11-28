@@ -2231,13 +2231,13 @@ html:is(:lang(en),:lang(ja)) :is(.command-grid,.calendar-foot,.cover-actions,.ca
 #scene .home-standing {--standing-glow:var(--home-halo)}
 
 /* The gallery, ending shelf and visit index share the same album spread. */
-#scene:is([data-mode=album],[data-mode=albumDialogue]) #panel {align-items:start}
-#scene :is(.cg-album,.album-dialogue-page,.cg-reader) {
+#scene[data-mode=album] #panel {align-items:start}
+#scene :is(.cg-album,.cg-reader) {
   width:min(100%,46rem); margin:0 auto; padding:0 0 1rem; border:0;
 }
 #scene .album-head {display:flex;gap:1rem;align-items:center;justify-content:space-between;margin:0;padding:0 0 .8rem;border-bottom:1px solid #b39b756e}
 #scene .album-head h2 {margin:0;min-width:0;line-height:1.35;overflow-wrap:anywhere}
-#scene .album-back,.dialogue-tools button {min-height:44px;flex:none}
+#scene .album-back {min-height:44px;flex:none}
 #scene .album-back {border:0;background:transparent;box-shadow:none;color:#e2d2b4;padding:.3rem .15rem}
 .album-back span {margin-inline-end:.2rem}
 #scene .album-sections {display:flex;gap:.25rem;margin:0 0 1.15rem;padding:0;border-bottom:1px solid #b39b754d}
@@ -2249,30 +2249,12 @@ html:is(:lang(en),:lang(ja)) :is(.command-grid,.calendar-foot,.cover-actions,.ca
 #scene .script-person {display:flex;align-items:center;gap:.7rem;padding:.4rem .65rem}
 .script-person img {width:2.7rem;height:3rem;object-fit:cover;object-position:50% 10%;flex:none}
 .script-items {display:grid;gap:.4rem;margin-top:1rem}
-.script-event {display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.4rem}
-#scene .script-text {min-height:44px;padding:.4rem .65rem;color:#e2d2b4;background:transparent;border:1px solid #b5a88e66}
 #scene .script-item {display:flex;align-items:center;gap:.65rem;padding:.65rem .85rem}
 .script-item i {margin-inline-start:auto;color:#d3bc97;font:.8em Georgia,serif}
-.script-item small,.dialogue-tools p {color:#d3c4ab}
-.dialogue-tools {display:flex;justify-content:space-between;align-items:center;gap:.75rem;margin:.85rem 0 1.15rem}
-.dialogue-tools p {margin:0;font-size:.9em}
-.script-lines,.script-choices ul {padding:0;margin:0;list-style:none}
-.script-lines li {padding:.65rem 0}
-.script-lines b {color:#e8d1a5;font-size:.9em}
-.script-lines p {margin:.2rem 0 0;white-space:pre-line;overflow-wrap:anywhere;line-height:1.65;color:#f1ebe2}
-.script-choices {margin:.85rem 0;padding:1rem 0;border-block:1px solid #b39b754d}
-.script-choices h3 {margin:0 0 .55rem;color:#e1d4bc;font-size:1em}
-.script-choices ul {display:grid;gap:.4rem}
-#scene .choice-earned,.choice-unseen {display:flex;align-items:center;flex-wrap:wrap;gap:.35rem .7rem;min-height:44px;width:100%;box-sizing:border-box;padding:.6rem .75rem;border-radius:3px;text-align:left;line-height:1.45;overflow-wrap:anywhere}
-.choice-unseen {border:1px solid #79838b66;color:#c4cbd0;background:#17263688}
-#scene .choice-earned {background:#333337;border:1px solid #a3895f;color:#f9dea4}
-#scene .choice-earned[aria-pressed=true] {background:#453b2a;border-color:#e4c07c;box-shadow:inset 3px 0 #e4c07c}
-.choice-earned small {margin-inline-start:auto;color:#fff0c7}
+.script-item small {color:#d3c4ab}
 .choice-mark {display:inline-flex;align-items:center;gap:.25em;font-size:.82em;font-weight:700;color:#f6d498}
-.script-note {color:#d0d9df;font-size:.9em}
 #scene #conversation .answers .visit-chosen {border:2px solid #c79b50;background:#453b2a;color:#ffedc5}
 #scene .visit-chosen .choice-mark {display:block}
-#scene #conversation [data-chosen=true] {border-inline-start:3px solid #c79b50}
 @media(max-width:560px){
   #scene .album-sections button {flex:1 1 auto;overflow-wrap:anywhere}
   #scene .album-head {align-items:flex-start;flex-direction:column;gap:.15rem}
@@ -2281,3 +2263,13 @@ html:is(:lang(en),:lang(ja)) :is(.command-grid,.calendar-foot,.cover-actions,.ca
   #scene .script-person {padding:.35rem;gap:.4rem}
   .script-person img {width:2rem;height:2.4rem}
 }
+
+/* Give named dialogue the same heading and breathing room as the prologue. */
+#scene :is(.dialogue-speaker, #overture:not([data-voice-only=true]) #opening-speaker):not([hidden]):not(:empty) {
+  display:block;
+  margin:0 0 clamp(.3rem,.65cqw,.55rem);
+  font:700 clamp(1.1rem,2.3cqw,1.5rem)/1.25 var(--serif);
+  overflow-wrap:anywhere;
+}
+#scene :is(.dialogue,.review-bubble) > .dialogue-speaker {color:var(--reading-label)}
+#scene .farewell-bubble > .dialogue-speaker + p {margin-top:0}

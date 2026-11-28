@@ -170,6 +170,6 @@ function termDialogue(event,buttons){
     '<button type="button" popovertarget="company-evidence" popovertargetaction="hide">닫기</button></header><dl>'+
     event.companyCase.evidence.map((item,index)=>companyEvidenceEntry(item,event.companyCase.evidenceEmphasis?.[index])).join("")+'</dl></section>':"";
   const actions=outcome?btn(outcome.nextScene?"다음 장면":"기록을 덮는다","term-close"):buttons;
-  return backdrop+'<article class="dialogue'+(companyQuestion?' company-case-dialogue':'')+'">'+(speaker?'<small>'+speaker+'</small>':"")+'<p>'+text+'</p>'+evidence+
+  return backdrop+'<article class="dialogue'+(companyQuestion?' company-case-dialogue':'')+'">'+sceneSpeaker(speaker)+'<p>'+text+'</p>'+evidence+
     (outcome?.note&&!state.choiceImpact?'<small>'+escapeHTML(statResultText(outcome.note))+'</small>':'')+'<div class="answers">'+actions+'</div></article>';
 }

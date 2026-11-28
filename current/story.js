@@ -30,7 +30,7 @@ function authoredChoice([label,response,stat,amount,responseLines,route]){
   };
 }
 function appendAuthoredOptions(event){
-  if(event.monthlyIncident||!Object.hasOwn(authoredOptions,event.id)||visitEncounterCards.some(card=>card.id===event.id))return event;
+  if(event.noticeOnly||event.monthlyIncident||!Object.hasOwn(authoredOptions,event.id)||visitEncounterCards.some(card=>card.id===event.id))return event;
   const choices=authoredOptions[event.id].map(authoredChoice);
   return {...event,choices:[...event.choices,...choices]};
 }
@@ -161,12 +161,12 @@ function initialEvents(){
      {label:"관리 권한 인수",effect:()=>{state.trust+=2; state.flags.keys=true;},result:"서재 관리 권한 인수"},
      {label:"가문 장부 확인",effect:()=>{state.flags.deed=true;changeStat("통찰",5);},result:"가문 증빙 확보 · 통찰 +5"}
    ]},
-  {id:"discipline",title:"일정 과부하",speaker:"교육",
-   text:"교육 반복 또는 스트레스로 일정 조정이 필요합니다.",
+  {id:"discipline",title:"일정 과부하",speaker:"세바스찬",noticeOnly:true,
+   text:"도련님, 오늘은 같은 줄을 세 번이나 읽으셨습니다. 다음 일정에는 쉴 시간도 조금 남겨 두시지요.",
    sees:s=>s.stress>=55||Object.entries(s.counts).some(([id,count])=>actions[id].stress>0&&count>=4),
-   choices:[
-     {label:"교육 일정 완화",effect:()=>{state.stress=cap(state.stress-12);state.trust+=1;},result:"스트레스 -12"},
-     {label:"기존 일정 유지",effect:()=>{changeStat("의지",5);state.motivation=cap(state.motivation-5);},result:"의지 +5 · 의욕 -5"}
+   choices:[],archivedChoices:[
+     {label:"교육 일정 완화",result:"스트레스 -12"},
+     {label:"기존 일정 유지",result:"의지 +5 · 의욕 -5"}
    ]},
   {id:"proof",visitPlace:"library",title:"가문 장부 복원",speaker:"증빙",
    text:"가문 심의에 제출할 장부 원본을 발견했습니다.",

@@ -353,9 +353,12 @@ function novelSpeakerName(speaker){
   const name=speaker?.trim();
   return name&&name!=="장면"?name:"";
 }
-function sceneLine(speaker,text,next,attributes="",heading=""){
+function sceneSpeaker(speaker){
   const name=novelSpeakerName(speaker);
-  return '<article class="dialogue" '+attributes+'>'+(name?'<small>'+name+'</small>':'')+heading+
+  return name?'<small class="dialogue-speaker">'+name+'</small>':"";
+}
+function sceneLine(speaker,text,next,attributes="",heading=""){
+  return '<article class="dialogue" '+attributes+'>'+sceneSpeaker(speaker)+heading+
     '<p>'+text+' '+next+'</p></article>';
 }
 const novelExpressions={};

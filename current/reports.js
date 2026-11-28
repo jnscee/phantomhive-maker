@@ -255,7 +255,7 @@ function reviewMarkup(){
   const lastLesson=seq.index===(seq.contest?contestSlot-1:2);
   const next=lastLesson?(hasPendingVisit()?"자유행동으로":seq.contest?"하순 경연으로":"월말로"):slotNames[seq.index+1]+"으로";
   return '<div class="review-room" style="background-image:url(&quot;'+sceneArt[choreography[id][0]]+'&quot;)"></div>'+
-    framedStanding("세바스찬","assets/sebastian.webp","review-butler")+'<article class="review-bubble"><small>세바스찬</small><h2>'+a.name+' · '+(lessonGrades[seq.grade]?.label||'강평')+'</h2><p>'+line+'</p><b>'+note+'</b>'+(seq.examNote?'<p>'+escapeHTML(statResultText(seq.examNote))+'</p>':'')+'</article>'+
+    framedStanding("세바스찬","assets/sebastian.webp","review-butler")+'<article class="review-bubble"><small class="dialogue-speaker">세바스찬</small><h2>'+a.name+' · '+(lessonGrades[seq.grade]?.label||'강평')+'</h2><p>'+line+'</p><b>'+note+'</b>'+(seq.examNote?'<p>'+escapeHTML(statResultText(seq.examNote))+'</p>':'')+'</article>'+
     '<section class="review-slip"><h3>'+slotNames[seq.index]+' 성과 <small>'+a.name+'</small></h3>'+rows+
     '<div>'+btn(next,'next-turn:'+state.month+':'+seq.index,false,'primary')+'</div></section>';
 }

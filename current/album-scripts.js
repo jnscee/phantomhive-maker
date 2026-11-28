@@ -9,12 +9,11 @@ const scriptCharacters={
   "소마":"assets/portraits/soma.webp","아그니":"assets/portraits/agni.webp","엘리자베스":"assets/portraits/elizabeth-garden-party.png","라우":"assets/npc-lau.webp"
 };
 const scriptLabels={
-  "인물별 회상":["Character memories","人物別回想"],"대화록":["Dialogue","会話録"],"장면 재생":["Play scene","シーン再生"],
-  "인물 목록으로":["Back to characters","人物一覧へ"],"이벤트 목록으로":["Back to events","イベント一覧へ"],
+  "인물별 회상":["Character memories","人物別回想"],
+  "인물 목록으로":["Back to characters","人物一覧へ"],
   "다음 방문":["Return visit","再訪"],"이전에 고른 선택":["Previously chosen","選択済み"],
-  "읽는 중":["Reading","閲覧中"],"선택지":["Choices","選択肢"],"엔딩":["Endings","エンディング"],
+  "지난 방문에서 한 말을 고르세요.":["Choose what you said on the previous visit.","前の訪問での返答を選んでください。"],"엔딩":["Endings","エンディング"],
   "자유행동에서 만난 인물의 이벤트가 여기에 기록됩니다.":["Events with characters you meet on outings appear here.","自由行動で出会った人物のイベントがここに記録されます。"],
-  "이 저장에는 어떤 답을 골랐는지 기록되어 있지 않습니다.":["This save does not record which answer you chose.","このセーブには選んだ答えの記録がありません。"],
   "수집한 CG":["Collected CGs","収集したCG"],"CG 앨범":["CG gallery","CGアルバム"]
 };
 function scriptText(label){
@@ -88,12 +87,13 @@ function previousVisitChoices(event){
   for(const r of scriptRecords.values())if(r.id===event.id&&Number.isInteger(r.index)&&event.choices[r.index])indices.add(r.index);
   return indices;
 }
-function visitChoiceButtons(event){
+function visitChoiceButtons(event,replay=false){
   const previous=previousVisitChoices(event);
   return event.choices.map((choice,i)=>{
-    const locked=choice.when&&!choice.when(state),seen=previous.has(i);
+    if(replay&&scriptReplay.group.echo&&!visitRecollections[event.id].lines[i])return "";
+    const locked=!replay&&choice.when&&!choice.when(state),seen=previous.has(i);
     const label=escapeHTML(choice.label)+(locked?" · "+escapeHTML(choice.hint):"");
-    return btn((seen?choiceMark():"")+label,"visit-choice:"+i,locked,seen?"visit-chosen":"");
+    return btn((seen?choiceMark():"")+label,(replay?"script-choice:":"visit-choice:")+i,locked,seen?"visit-chosen":"");
   }).join("");
 }
 function choiceMark(){
@@ -118,22 +118,7 @@ function makeScriptShelf(){
   }
   for(const g of groups.values())if(g.versions.size>1)g.versions.delete(null);
   const ordered=events.flatMap(e=>[groups.get("visit/"+e.id),groups.get("echo/"+e.id)]).filter(Boolean);
-  return {groups:ordered,person:null,entry:null,choice:null};
-}
-function visitScript(group){
-  const {event,card,echo}=group,index=scriptShelf.choice,record=group.versions.get(index);
-  const choice=event.choices[index];
-  const opening=echo?[]:card?card.lines:[[event.narration?"":castName(event),event.lines?.[0]?.[1]??event.text]];
-  let reply=[];
-  if(echo)reply=[[group.person,visitRecollections[event.id].lines[index]]];
-  else if(choice?.responseLines)reply=choice.responseLines;
-  else if(card&&choice)reply=[card.choices[index].reply];
-  else if(choice){
-    const line=choice.response||event.responses?.[index];
-    if(line)reply=[[castName(event),line]];
-  }
-  const rows=echo?reply:[...opening,...(choice?[["선택",choice.label]]:[]),...reply];
-  return {event,opening,reply,rows,age:record?.age||10,person:group.person,place:echo?visitRecollections[event.id].place:event.visitPlace};
+  return {groups:ordered,person:null,entry:null};
 }
 function scriptIndex(){
   const {groups,person}=scriptShelf;
@@ -146,77 +131,63 @@ function scriptIndex(){
     if(g.person!==person)return "";
     const title=escapeHTML(scriptText(g.event.title)),suffix=g.echo?scriptText("다음 방문"):"";
     const label='<span>'+title+'</span>'+(suffix?'<small>'+suffix+'</small>':"")+'<i aria-hidden="true">▶</i>';
-    return '<div class="script-event" role="group" aria-label="'+title+(suffix?" · "+suffix:"")+'">'+
-      btn(label,"script-entry:"+i,false,"script-item")+btn(scriptText("대화록"),"script-text:"+i,false,"script-text")+'</div>';
+    return btn(label,"script-entry:"+i,false,"script-item");
   }).join("");
   return '<div class="script-items">'+items+'</div>';
 }
-function transcriptLines(rows){
-  return rows.map(([who,line])=>'<li>'+(who?'<b>'+escapeHTML(who)+'</b>':'')+'<p>'+escapeHTML(line)+'</p></li>').join("");
-}
-function scriptDialoguePage(){
-  const group=scriptShelf.groups[scriptShelf.entry],v=visitScript(group);
-  const options=group.event.choices.map((c,i)=>{
-    const earned=group.versions.has(i),active=scriptShelf.choice===i;
-    const label='<span>'+escapeHTML(c.label)+'</span>';
-    if(!earned)return '<li class="choice-unseen">'+label+'</li>';
-    return '<li><button type="button" class="choice-earned" data-action="script-version:'+i+'" aria-pressed="'+active+'">'+
-      choiceMark()+label+(active?'<small>'+scriptText("읽는 중")+'</small>':'')+'</button></li>';
-  }).join("");
-  return '<article class="cover-leaf album-dialogue-page">'+albumHeader(group.event.title,"이벤트 목록으로")+
-    '<div class="dialogue-tools"><p>'+group.person+' · '+scriptText(group.echo?"다음 방문":"대화록")+'</p>'+
-    btn(scriptText("장면 재생"),"script-play",!v.rows.length)+'</div>'+
-    '<ol class="script-lines">'+transcriptLines(v.opening)+'</ol>'+
-    '<section class="script-choices"><h3>'+scriptText("선택지")+'</h3>'+
-    (scriptShelf.choice===null?'<p class="script-note">'+scriptText("이 저장에는 어떤 답을 골랐는지 기록되어 있지 않습니다.")+'</p>':"")+
-    '<ul>'+options+'</ul></section><ol class="script-lines script-reply" aria-live="polite">'+transcriptLines(v.reply)+'</ol></article>';
-}
 function openScriptReplay(group){
-  const version=visitScript(group);
-  if(!version.rows.length){tab="albumDialogue";render(true);return;}
+  const {event,card,echo,versions}=group;
+  const saved=saves.auto?.events?.find(e=>e.id===event.id)?.index;
+  const record=versions.get(saved)??versions.values().next().value;
+  const opening=echo?[["",scriptText("지난 방문에서 한 말을 고르세요.")]]:
+    card?.lines??event.lines??[[event.narration?"":castName(event),event.text]];
   stopRecruitAuto();
-  scriptReplay={version,age:version.age,at:0,origin:tab};
+  scriptReplay={group,opening,rows:opening,at:0,age:record?.age||10};
   tab="scriptMemory";render(true);
 }
-function returnToScriptList(action){
+function chooseScriptBranch(index){
+  const r=scriptReplay,{event,card,echo,person}=r.group,choice=event.choices[index];
+  if(r.at!==r.opening.length-1||!choice)return;
+  const echoLine=echo&&visitRecollections[event.id].lines[index];
+  if(echo&&!echoLine)return;
+  const line=choice.response||event.responses?.[index];
+  let reply;
+  if(echo)reply=[[person,echoLine]];
+  else if(choice.responseLines?.length)reply=choice.responseLines;
+  else if(card)reply=[card.choices[index].reply];
+  else reply=line?[[castName(event),line]]:[["","방문을 마치고 마차로 돌아왔다."]];
+  r.rows=r.opening.concat(reply);
+  r.at=r.opening.length;
+  render(true);
+}
+function closeScriptReplay(){
+  stopRecruitAuto();scriptReplay=null;
   const entry=scriptShelf.entry;
   scriptShelf.entry=null;tab="album";render();
   $("panel").scrollTop=scriptShelf.listScroll;
-  focusAction(action+":"+entry);
-}
-function closeScriptReplay(){
-  const origin=scriptReplay.origin;
-  stopRecruitAuto();scriptReplay=null;
-  if(origin==="album"){returnToScriptList("script-entry");return;}
-  tab="albumDialogue";render();focusAction("script-play");
+  focusAction("script-entry:"+entry);
 }
 function showScriptReplay(host){
-  const r=scriptReplay,v=r.version,event=v.event,[who,line,,cue]=v.rows[r.at],end=v.rows.length-1,last=r.at===end;
+  const r=scriptReplay,{event,person,echo}=r.group,[who,line,,cue]=r.rows[r.at];
+  const prompt=r.opening.length-1,asking=r.at===prompt;
+  const end=r.at<=prompt?prompt:r.rows.length-1,last=r.at===end;
   host.hidden=false;host.dataset.review="false";
   clearTimeout(recruitTimer);if(last)stopRecruitAuto();
-  const room=event.room||visitsVN[v.place]?.[0]||"library";
+  const room=event.room||visitsVN[echo?visitRecollections[event.id].place:event.visitPlace]?.[0]||"library";
   const art=cue?.cg?"assets/endings/"+cue.cg+".webp":sceneArt[room]||sceneArt.library;
-  const cast=novelCast(cue,recruitArtwork(r.age))??(sceneStanding(v.person,"left",v.person==="엘리자베스"?elizabethPortrait(r.age):portraits[v.person],v.person==="엘리자베스"?elizabethAge(r.age):undefined)+sceneStanding("시엘","right",cielArt(r.age)));
-  const next='<button type="button" class="line-next" data-read="'+(last?"finish":"next")+'" aria-label="'+(last?"회상 마치기":"다음 대사")+'">▼</button>';
-  const chosen=who==="선택";
+  const cast=novelCast(cue,recruitArtwork(r.age))??(sceneStanding(person,"left",person==="엘리자베스"?elizabethPortrait(r.age):portraits[person],person==="엘리자베스"?elizabethAge(r.age):undefined)+sceneStanding("시엘","right",cielArt(r.age)));
+  const next=asking?"":'<button type="button" class="line-next" data-read="'+(last?"finish":"next")+'" aria-label="'+(last?"회상 마치기":"다음 대사")+'">▼</button>';
+  const answers=asking?'<div class="answers" role="group" aria-label="대화 선택지">'+visitChoiceButtons(event,true)+'</div>':"";
   host.innerHTML='<div class="review-room" style="background-image:url(&quot;'+escapeHTML(art)+'&quot;)"></div>'+cast+
-    sceneLine(chosen?choiceMark():escapeHTML(who),escapeHTML(line),next,'data-book="album-script"'+(chosen?' data-chosen="true"':'')+' aria-live="polite"')+readerControls(r.at,last,recruitAuto);
+    sceneLine(escapeHTML(who),escapeHTML(line),next,'data-book="album-script" aria-live="polite"')+answers+readerControls(r.at,last,recruitAuto);
   playNovelCue(host,"album-script:"+event.id+":"+r.at,cue);
-  bindSceneReader(host,r.at,end,line,to=>{r.at=to;render(true);},closeScriptReplay,cue?.wait);
+  bindSceneReader(host,r.at,end,line,to=>{r.at=to;render(true);},asking?null:closeScriptReplay,cue?.wait);
 }
 function scriptAction(action,id){
   const back=action==="back"||action==="system-back";
   if(tab==="scriptMemory"&&back){closeScriptReplay();return true;}
-  if(tab==="albumDialogue"){
-    const group=scriptShelf.groups[scriptShelf.entry];
-    if(back){
-      returnToScriptList("script-text");
-    }else if(action==="script-version"&&group.versions.has(Number(id))){
-      scriptShelf.choice=Number(id);
-      const scroll=$("panel").scrollTop;render();$("panel").scrollTop=scroll;focusAction("script-version:"+id);
-    }else if(action==="script-play")openScriptReplay(group);
-    else return false;
-    return true;
+  if(tab==="scriptMemory"&&action==="script-choice"){
+    chooseScriptBranch(Number(id));return true;
   }
   if(tab!=="album"||albumPicture!==null)return false;
   if(action==="album-section"&&["cg","endings","people"].includes(id)){
@@ -225,14 +196,10 @@ function scriptAction(action,id){
   }
   if(!scriptShelf)return false;
   if(action==="script-person"&&scriptShelf.groups.some(g=>g.person===id))scriptShelf.person=id;
-  else if((action==="script-entry"||action==="script-text")&&scriptShelf.groups[id]?.person===scriptShelf.person){
+  else if(action==="script-entry"&&scriptShelf.groups[id]?.person===scriptShelf.person){
     scriptShelf.listScroll=$("panel").scrollTop;
     scriptShelf.entry=Number(id);
-    const group=scriptShelf.groups[id];
-    const current=saves.auto?.events?.find(e=>e.id===group.event.id)?.index;
-    scriptShelf.choice=group.versions.has(current)?current:group.versions.keys().next().value;
-    if(action==="script-entry"){openScriptReplay(group);return true;}
-    tab="albumDialogue";
+    openScriptReplay(scriptShelf.groups[id]);return true;
   }else if(back&&scriptShelf.person){
     const person=scriptShelf.person;scriptShelf.person=null;render();focusAction("script-person:"+person);return true;
   }else return false;

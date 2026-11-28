@@ -1,6 +1,6 @@
 "use strict";
 
-const coverPages = ["continue","album","albumDialogue","settings","exit"];
+const coverPages = ["continue","album","settings","exit"];
 const coverSaveSlots = ["auto","1","2","3"];
 function hasCoverSave(id) {
   return saves[id]?.v===1;

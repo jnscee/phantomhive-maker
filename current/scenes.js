@@ -250,6 +250,11 @@ function faceDialogue(){
   if(review){con.hidden=false;con.innerHTML=reviewMarkup();return true;}
   if(!event&&tab!=="chat"){con.hidden=true;con.innerHTML="";return false;}
   con.hidden=false;
+  if(event?.noticeOnly){
+    con.innerHTML=staged(castName(event),"",escapeHTML(event.text),"","","ballroom",castName(event),"notice-close:"+event.id);
+    playNovelCue(con,null);
+    return true;
+  }
   if(event){
     const buttons=event.choices.map((c,i)=>btn(c.label+(c.when&&!c.when(state)?' · '+c.hint:""),"choose:"+i,Boolean(c.when&&!c.when(state)),"vn-choice")).join("");
     con.innerHTML=termDialogue(event,buttons)||staged(castName(event),"",storyLine(event),buttons,"",event.examSubjects?choreography[state.sequence.activity||state.plan[state.sequence.index]][0]:event.slot?choreography[event.slot][0]:event.id.startsWith("season-")&&event.speaker==="엘리자베스"?"garden":"ballroom");
@@ -259,7 +264,7 @@ function faceDialogue(){
   }
   playNovelCue(con,null);
   const c=chatDialogue();
-  con.innerHTML=dialogueCast("세바스찬")+'<article class="dialogue"><small>'+c.caption+'</small><p>'+escapeHTML(c.line).replaceAll("\n","<br>")+'</p>'+(c.effects?'<small>'+escapeHTML(c.effects)+'</small>':'')+'<div class="answers">'+c.buttons+'</div></article>';
+  con.innerHTML=dialogueCast("세바스찬")+'<article class="dialogue">'+sceneSpeaker(c.caption)+'<p>'+escapeHTML(c.line).replaceAll("\n","<br>")+'</p>'+(c.effects?'<small>'+escapeHTML(c.effects)+'</small>':'')+'<div class="answers">'+c.buttons+'</div></article>';
   return true;
 }
 function sebastianRegard(abilities){

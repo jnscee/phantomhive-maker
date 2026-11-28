@@ -54,6 +54,43 @@ async function dialogueTransmission(card,contest){
   }
   return transmission;
 }
+async function checkMemoryAndWarning(browser,viewport){
+  const page=await browser.newPage({viewport,reducedMotion:'reduce'});
+  try{
+    await openGame(page);
+    const saved=await page.evaluate(()=>{
+      const visit={kind:"visit",id:"visitGardenMorning",index:1,age:11};
+      localStorage.setItem(scriptPrefix+JSON.stringify(visit),"1");
+      return JSON.stringify([state,saves,Object.entries(localStorage).sort()]);
+    });
+    await page.locator('[data-action="cover:album"]').click();
+    await page.getByRole('button',{name:'인물별 회상'}).click();
+    await page.getByRole('button',{name:'피니안'}).click();
+    assert.equal(await page.getByRole('button',{name:'대화록'}).count(),0);
+    const event=page.locator('[data-action^="script-entry:"]');
+    await event.click();
+    await page.getByRole('button',{name:'건너뛰기'}).click();
+    const choices=page.locator('#conversation > .answers');
+    assert.equal(await choices.locator('button').count(),2);
+    assert.equal(await choices.locator('.visit-chosen').getAttribute('data-action'),'script-choice:1');
+    const replies=await page.evaluate(()=>scriptReplay.group.card.choices.map(c=>c.reply[1]));
+    for(const index of [0,1]){
+      await choices.locator('button').nth(index).click();
+      assert.ok((await page.locator('#conversation .dialogue p').innerText()).includes(replies[index]));
+      if(index===0)await page.getByRole('button',{name:'이전',exact:true}).click();
+    }
+    await page.getByRole('button',{name:'회상 마치기'}).click();
+    assert.ok(await event.isVisible());
+    assert.equal(await page.evaluate(()=>JSON.stringify([state,saves,Object.entries(localStorage).sort()])),saved);
+    await page.evaluate(()=>{
+      state=initial();state.stress=72;state.phase="event";state.pending="discipline";
+      state.eventQueue=["trade"];tab="plan";render(true);
+    });
+    assert.equal(await choices.count(),0);
+    await page.locator('.dialogue [data-action="notice-close:discipline"]').click();
+    assert.deepEqual(await page.evaluate(()=>[state.stress,state.pending]),[72,"trade"]);
+  }finally{await page.close();}
+}
 async function checkNotebook(page){
   await page.locator('#system-save').click();
   assert.equal(await page.locator('#sheet-title').innerText(),'저장 · 설정');
@@ -234,6 +271,7 @@ async function check(browserType){
   try{
     await require("./tools/content-editor/story-flow-check.cjs")(browser,base);
     for(const viewport of [{width:1280,height:800},{width:390,height:844}]){
+      await checkMemoryAndWarning(browser,viewport);
       const page=await browser.newPage({viewport,reducedMotion:'reduce'});
       const errors=[];page.on('pageerror',error=>{errors.push(error.message);console.error('Browser error:',error.message);});
       page.setDefaultTimeout(12000); console.log(browserType.name(),viewport.width);
@@ -402,16 +440,12 @@ async function check(browserType){
       const narration=await fairPage.evaluate(()=>contestResultLine(pendingEvent().contest,state.fairBook[pendingEvent().contest.id]));
       assert.deepEqual(lines[0],["",narration]);
       assert.ok(!(await award.innerText()).includes(narration));
-      const resultBox=await award.boundingBox();
       await award.getByRole('button',{name:'결과창 닫기',exact:true}).click();
-      const reading=fairPage.locator('#conversation .dialogue');
+      const reading=fairPage.locator('#conversation > article.dialogue');
+      assert.ok(await reading.isVisible());
       assert.equal(await reading.locator('p').evaluate(e=>getComputedStyle(e).color),'rgb(23, 45, 70)');
-      const dialogueBox=await reading.boundingBox();
-      for(const edge of ['x','width','bottom']){
-        const value=box=>edge==='bottom'?box.y+box.height:box[edge];
-        assert.ok(Math.abs(value(resultBox)-value(dialogueBox))<=1,
-          'Result and dialogue must share '+edge+' at '+viewport.width+'px: '+JSON.stringify([resultBox,dialogueBox]));
-      }
+      assert.equal(await fairPage.locator('#conversation .duel-stage').count(),0);
+      assert.ok(await fairPage.locator('#conversation > .review-room').isVisible());
       for(const [page,[speaker,line]] of lines.entries()){
         assert.equal(await award.count(),0);
         if(speaker)assert.equal(await reading.locator('small').innerText(),speaker);

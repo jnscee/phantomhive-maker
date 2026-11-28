@@ -16,7 +16,7 @@ function staged(who,title,line,buttons,caption="",room="library",partner=who,adv
   const start='<div class="review-room" style="background-image:url(&quot;'+sceneArt[room]+'&quot;)"></div>'+dialogueCast(partner);
   const speaker=(caption?caption+'　·　':'')+who,heading=title?'<h2>'+title+'</h2>':'';
   if(!buttons)return start+sceneLine(speaker,line,'<button type="button" class="line-next" aria-label="다음 대사" data-action="'+advance+'">▼</button>',"",heading);
-  return start+'<article class="dialogue"><small>'+speaker+'</small>'+heading+'<p>'+line+'</p><div class="answers">'+buttons+'</div></article>';
+  return start+'<article class="dialogue">'+sceneSpeaker(speaker)+heading+'<p>'+line+'</p><div class="answers">'+buttons+'</div></article>';
 }
 const guide=[
  ["날짜판과 명패","오늘 날짜는 왼쪽 위 달력을 보십시오. 연도 옆에는 서른다섯 달 중 몇 달째인지 적어 두었습니다. 저택의 오른쪽 위 명패에는 도련님의 나이와 가문의 잔금이 있습니다."],
@@ -955,7 +955,7 @@ function showEndingFarewells(host,id,record,start,onPage,onFinish){
     const portrait=person==="elizabeth"?elizabethPortrait(record.age):portraits[name];
     const line=endingFarewells[person][mourning?"mourning":"parting"][tier];
     exchange.innerHTML='<img class="farewell-person" src="'+portrait+'" alt="">'+
-      '<div class="farewell-bubble"><strong>'+name+'</strong><p>'+escapeHTML(line)+'</p></div>';
+      '<div class="farewell-bubble"><strong class="dialogue-speaker">'+name+'</strong><p>'+escapeHTML(line)+'</p></div>';
     prev.disabled=at===0;
     next.textContent=at===record.cast.length-1?"마치기":"다음";
     hold=Math.min(6500,3300+line.length*47);

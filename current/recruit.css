@@ -336,7 +336,6 @@ html[data-game-motion=gentle] #ciel-greet > .greeting-hop {
   box-shadow:inset 0 1px #effaff70,0 3px 10px #101d3245;
   color:#eff6ff;text-shadow:0 1px 3px #061222;
 }
-#scene .lau-counter .shop-talk small {display:block;margin:0 0 .18rem;color:#bfcee4;font-size:.8rem}
 #scene .lau-counter .shop-talk p {margin:0;font:500 .94rem/1.55 var(--serif);overflow-wrap:anywhere}
 .lau-counter .shop-purchase {
   box-sizing:border-box;width:min(100%,17.5rem);padding:.58rem .72rem;

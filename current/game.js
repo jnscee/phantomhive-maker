@@ -792,7 +792,7 @@ function plannerContents() {
   const note = plannerNote(editingVisit?state.visit:chosen);
   const weather=weatherFor(state);
   const date=monthText(state.month)+(weather?' <button type="button" class="season-weather" data-weather="'+state.weather+'" popovertarget="season-bulletin" aria-label="'+weather.name+' 소식">'+weather.name+'</button>':"");
-  const bulletin=weather?'<aside popover id="season-bulletin" aria-labelledby="season-title"><header><div><small>세바스찬</small><strong id="season-title">'+weather.name+'</strong></div><button type="button" popovertarget="season-bulletin" popovertargetaction="hide">닫기</button></header><p>'+escapeHTML(weather.scene)+'</p></aside>':"";
+  const bulletin=weather?'<aside popover id="season-bulletin" aria-labelledby="season-title"><header><div><small class="dialogue-speaker">세바스찬</small><strong id="season-title">'+weather.name+'</strong></div><button type="button" popovertarget="season-bulletin" popovertargetaction="hide">닫기</button></header><p>'+escapeHTML(weather.scene)+'</p></aside>':"";
   return (editingVisit?'<div class="lesson-index visit-index"><span class="index-tab">자유행동 · 월 1회</span></div>':'<div class="lesson-index">'+categories.map(([name,ids],i)=>option(i===0&&ids.some(id=>advancedCourse(state,id))?"기초·고급 수업":name,"category:"+i,i===lessonPage,false,"index-tab")).join("")+'</div>')+
     '<div class="card-field" role="group" aria-label="'+(editingVisit?'자유행동':slotNames[selectedSlot]+' 활동 목록')+'">'+
       '<div class="card-bank">'+cards.slice(0,half).join('')+'</div>'+
@@ -1138,7 +1138,7 @@ function recordPanel(){
         (event.choices.length>1&&selected?" · "+selected.label:"");
       return '<details><summary>'+monthText(record.month||state.month)+' · '+event.title+'</summary><p>'+note+'</p>'+btn('영입 장면 다시 보기','recruit-memory:'+event.id)+'</details>';
     }
-    const choice=event.choices[record.index];
+    const choice=(event.archivedChoices||event.choices)[record.index];
     return '<details><summary>'+(record.month?monthText(record.month)+' · ':'')+escapeHTML(event.title)+'</summary>'+(sourceNote(event)?'<small>'+sourceNote(event)+'</small>':'')+'<p>'+storyLine(event)+'</p><p class="small muted">'+(choice?choice.label+" · "+statResultText(record.examNote||choice.result):"처리 완료")+'</p></details>';
   }).join("");
   const album='<div class="ending-album">'+(endingGalleryEntries().map(([id,route])=>endingThumb(id,route)).join("")||"아직 기록된 엔딩이 없습니다.")+'</div>';
@@ -1470,14 +1470,14 @@ function marketPanel(){
     effect(statLabel(g.lower),state.stats[g.lower],Math.max(0,state.stats[g.lower]-exchangeAmount)):effect(g.label,before,after);
   return '<div class="lau-counter">'+framedStanding("라우",guestStandingArt.lau,"lau-standing")+
     '<div class="shop-purse"><span>보유금</span><strong>'+money(state.fund)+'</strong></div>'+'<div class="goods-list" role="group" aria-label="판매 상품">'+cards+'</div>'+
-    '<div class="shop-details"><section class="shop-talk dialogue" aria-label="라우의 대사"><small>라우</small><p>'+g.line+'</p></section>'+
+    '<div class="shop-details"><section class="shop-talk dialogue" aria-label="라우의 대사"><small class="dialogue-speaker">라우</small><p>'+g.line+'</p></section>'+
     '<section class="shop-purchase" aria-label="상품 구매"><header><b>'+g.name+'</b>'+
     btn(editionFormat("{price} 구매",{price:money(g.cost)}),"buy:"+selectedGood,Boolean(reason),"shop-buy")+'</header>'+
     '<dl class="shop-effects">'+effects+'</dl>'+
     (exchange?'<small>교본 전체 중 매월 1권 · 즉시 사용</small>':'')+
     (reason?'<p class="shop-unavailable">'+reason+'</p>':'')+'</section></div></div>';
 }
-const panels={market:marketPanel,title:titlePanel,continue:coverPanel,album:coverPanel,albumDialogue:scriptDialoguePage,settings:coverPanel,exit:coverPanel,plan:planPanel,status:statusPanel,estate:managementPanel,townhouse:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
+const panels={market:marketPanel,title:titlePanel,continue:coverPanel,album:coverPanel,settings:coverPanel,exit:coverPanel,plan:planPanel,status:statusPanel,estate:managementPanel,townhouse:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
 state=normalizeSave(state);
 // Preserve recoverable ending data before a saved campaign is replaced.
 for(const run of [saves.auto,saves[1],saves[2],saves[3]]){
@@ -1489,7 +1489,6 @@ restoreCGRecords();
 restoreScriptRecords();
 
 function sheetTitle(){
-  if(tab==="albumDialogue")return scriptText("대화록");
   if(coverPages.includes(tab))return gameString(tab==="exit"?"exitTitle":tab);
   if(tab==="plan"){
     if(state.phase==="vow")return "마지막 명령";
@@ -1835,6 +1834,16 @@ function handleAction(key,rect,confirmed=false){
     return;
   }
   if(tab==="chat"&&["back","system-back"].includes(action)&&openChoiceImpact("back"))return;
+  if(action==="notice-close"){
+    const event=pendingEvent();
+    if(tab==="plan"&&state.phase==="event"&&event?.noticeOnly&&event.id===id){
+      state.flags[id]=true;
+      state.events.push({id,month:state.month});
+      state.log.push(event.title);
+      finishEventChoice(event);
+    }
+    return;
+  }
   if(storyDemo&&!["choose","term-next","term-close","music"].includes(action))return;
   if(previewFair){
     if(action==="fair-close"&&!contestClosingLines(previewFair,state.fairBook?.[previewFair.id])){location.reload();return;}
@@ -1888,7 +1897,7 @@ function handleAction(key,rect,confirmed=false){
   if(tab==="album"&&albumPicture!==null&&["back","system-back"].includes(action)){
     const index=albumPicture;albumPicture=null;render();$("panel").scrollTop=albumScroll;focusAction("cg:"+index);return;
   }
-  if(tab==="title"&&action==="cover"&&coverPages.includes(id)&&id!=="albumDialogue"){
+  if(tab==="title"&&action==="cover"&&coverPages.includes(id)){
     if(id==="album"){albumSection="cg";albumPicture=null;scriptShelf=null;}
     if(id==="continue"){
       if(!coverSaveSlots.some(hasCoverSave))return;

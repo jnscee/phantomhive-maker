@@ -1,5 +1,6 @@
 // Display text indexed by the original Korean. Columns: English, Japanese.
-const editionLines = {"가족":
+const editionLines = {"도련님, 오늘은 같은 줄을 세 번이나 읽으셨습니다. 다음 일정에는 쉴 시간도 조금 남겨 두시지요.":
+["Young master, you have read that line three times today. Might I suggest leaving a little time to rest in your next schedule?","坊ちゃん、今日は同じ行を三度もお読みですよ。次のご予定には、お休みになる時間も少しお取りください。"],"가족":
 ["Family","家族"],"개":
 ["units","個"],"건":
 ["cases","件"],"건강":

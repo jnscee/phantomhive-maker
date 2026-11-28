@@ -119,8 +119,8 @@ const creditTracks={creditsApproval:"titleApproval",creditsFinale:"goodEnding"};
 function trackForView(){
   if(tab==="exit")return null;
   if(tab==="scriptMemory"&&scriptReplay){
-    const id=scriptReplay.version.event?.id;
-    return scriptReplay.version.rows[scriptReplay.at]?.[3]?.bgm||eventTrack(id,scriptReplay.version.event?.track||"manor");
+    const {event}=scriptReplay.group;
+    return scriptReplay.rows[scriptReplay.at]?.[3]?.bgm||eventTrack(event.id,event.track||"manor");
   }
   if(tab==="title"||coverPages.includes(tab))return "manor";
   if(tourSession||(tab==="plan"&&state.phase==="guide"))return "tutorial";

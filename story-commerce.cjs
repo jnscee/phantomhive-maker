@@ -985,7 +985,8 @@ function playCampaign(invest){
       else if(state.phase==="review")continueSequence();
       else if(state.phase==="event"||state.phase==="slotEvent"){
         const event=pendingEvent();
-        if(state.termOutcome){
+        if(event.noticeOnly)handleAction("notice-close:"+event.id);
+        else if(state.termOutcome){
           state=normalizeSave(saves.auto);handleAction("term-close");
         }else if(termPages(event)&&(state.termPage||0)<termPages(event).length-1){
           handleAction("term-next:"+(state.termPage||0));
@@ -1406,23 +1407,40 @@ run('saves[2]={...initial(),events:[{id:"greenhouseKey",index:0,month:4},{id:"vi
 run('saves.auto={...initial(),events:[{id:"greenhouseKey",index:1,month:8,source:"visit"}]};restoreScriptRecords();saves.gallery={ill:"건강 악화로 종료"};scriptShelf=makeScriptShelf();');
 assertOk('scriptShelf.groups.every(g=>g.event.visitPlace&&g.person!=="시엘") && scriptShelf.groups.length===3');
 assertOk('scriptShelf.groups.some(g=>g.event.id==="greenhouseKey"&&g.echo)');
-run('scriptShelf.person="피니안";scriptShelf.entry=scriptShelf.groups.findIndex(g=>g.event.id==="greenhouseKey"&&!g.echo);scriptShelf.choice=1;');
-assertOk('scriptShelf.groups[scriptShelf.entry].versions.size===2');
-assert.match(run('scriptDialoguePage()'),/choice-earned" data-action="script-version:1" aria-pressed="true"/);
-run('scriptShelf.entry=scriptShelf.groups.findIndex(g=>g.event.id==="visitGardenMorning");');
-assertOk('visitScript(scriptShelf.groups[scriptShelf.entry]).reply[0][1]===visitEncounterCards.find(c=>c.id==="visitGardenMorning").choices[1].reply[1]');
-assert.match(run('scriptDialoguePage()'),/choice-unseen/);
-assert.doesNotMatch(run('scriptDialoguePage()'),/이건 입을 딱 벌린 사자처럼/);
-run('saves.growthGallery={ill:[{entries:[{title:"리넨장 맨 윗칸",month:12},{title:"여왕의 초청장",month:9}]}]};restoreScriptRecords();scriptShelf=makeScriptShelf();scriptShelf.entry=scriptShelf.groups.findIndex(g=>g.event.id==="linenMarks");');
-assert.match(run('scriptDialoguePage()'),/어떤 답을 골랐는지 기록되어 있지 않습니다/);
-assert.doesNotMatch(run('scriptDialoguePage()'),/class="choice-earned"/);
-console.log("PASS visit-only album, historical provenance, separate dialogue page, earned branches, unknown choices and ending isolation");
-
-run('tab="album";scriptShelf.person="피니안";const visitEntry=scriptShelf.groups.findIndex(g=>g.event.id==="greenhouseKey"&&!g.echo);');
-run('handleAction("script-entry:"+visitEntry)');
-assertOk('tab==="scriptMemory"&&scriptReplay.at===0&&scriptShelf.choice===1');
+run('tab="album";scriptShelf.person="피니안";const visitEntry=scriptShelf.groups.findIndex(g=>g.event.id==="visitGardenMorning");');
+assert.doesNotMatch(run('scriptIndex()'),/script-text|대화록/);
+const beforeRead=run('JSON.stringify([state,saves,[...scriptRecords]])'),beforeWrites=Array.from(mem);
+run('handleAction("script-entry:"+visitEntry);');
+assertOk('tab==="scriptMemory"&&scriptReplay.at===0');
+run('handleAction("script-choice:0")');
+assertOk('scriptReplay.at===0');
+run('scriptReplay.at=scriptReplay.opening.length-1;');
+const replayButtons=run('visitChoiceButtons(scriptReplay.group.event,true)');
+assert.match(replayButtons,/class="visit-chosen" data-action="script-choice:1"/);
+assert.match(replayButtons,/class="" data-action="script-choice:0"/);
+for(const i of [0,1]){
+  ctx.branch=i;
+  run('scriptReplay.at=scriptReplay.opening.length-1;handleAction("script-choice:"+branch)');
+  assertOk('scriptReplay.rows[scriptReplay.at][1]===scriptReplay.group.card.choices[branch].reply[1]');
+}
 run('handleAction("system-back")');
 assertOk('tab==="album"&&scriptShelf.person==="피니안"&&scriptShelf.entry===null');
-run('handleAction("script-text:"+visitEntry);handleAction("script-version:0");handleAction("script-play");closeScriptReplay()');
-assertOk('tab==="albumDialogue"&&scriptShelf.choice===0');
-console.log("PASS one-click visit replay and return to the originating list or dialogue");
+run('const echoEntry=scriptShelf.groups.findIndex(g=>g.echo);handleAction("script-entry:"+echoEntry);handleAction("script-choice:1");');
+assertOk('scriptReplay.rows[scriptReplay.at][1]===visitRecollections.greenhouseKey.lines[1]');
+run('closeScriptReplay()');
+assert.equal(run('JSON.stringify([state,saves,[...scriptRecords]])'),beforeRead);
+assert.deepEqual(Array.from(mem),beforeWrites);
+run('saves.growthGallery={ill:[{entries:[{title:"리넨장 맨 윗칸",month:12},{title:"여왕의 초청장",month:9}]}]};restoreScriptRecords();scriptShelf=makeScriptShelf();scriptShelf.person="메이린";handleAction("script-entry:"+scriptShelf.groups.findIndex(g=>g.event.id==="linenMarks"));');
+assert.doesNotMatch(run('visitChoiceButtons(scriptReplay.group.event,true)'),/visit-chosen|disabled/);
+run('handleAction("script-choice:1")');
+assertOk('scriptReplay.rows[scriptReplay.at][1]===scriptReplay.group.event.responses[1]');
+console.log("PASS interactive visit and return-visit replays, historical choices, unknown choices, unchanged saves");
+
+setup('tab="plan";state.phase="event";state.pending="discipline";state.eventQueue=["trade"];state.stress=68;state=normalizeSave(state)');
+const beforeWarning=run('JSON.stringify([choiceSnapshot().values,state.plan,state.events.length])');
+assertOk('pendingEvent().sees(state)&&pendingEvent().choices.length===0');
+run('choose(0);choose(1)');
+assert.equal(run('JSON.stringify([choiceSnapshot().values,state.plan,state.events.length])'),beforeWarning);
+run('const warningValues=JSON.stringify([choiceSnapshot().values,state.plan]);handleAction("notice-close:discipline");handleAction("notice-close:discipline")');
+assertOk('warningValues===JSON.stringify([choiceSnapshot().values,state.plan])&&state.pending==="trade"&&!state.choiceImpact&&state.events.filter(e=>e.id==="discipline").length===1');
+console.log("PASS schedule warning advances once without changing stats, trust, or the plan");
