@@ -314,7 +314,7 @@ function settleMonth(){
   if(trade?.order)state.log.push(tradeBuyer(trade.order)+" 납품 "+trade.shipped+"/"+trade.order.qty+"개 · "+money(trade.wholesale)+(trade.short?" · 미납 부담금 "+money(trade.penalty):""));
   if(state.flags.market&&state.marketMonth!==state.month){state.flags.market=false;state.renown+=1;}
   scheduleSnakeVisit(state);
-  const candidates=events.filter(e=>!e.companyCase&&!e.authored&&!e.slot&&!e.examSubjects&&!e.season&&!e.household&&!e.visitOnly&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
+  const candidates=events.filter(e=>!e.beforeSlot&&!e.companyCase&&!e.authored&&!e.slot&&!e.examSubjects&&!e.season&&!e.household&&!e.visitOnly&&!(e.visitPlace===state.visit&&state.visitTurn===state.month)&&!state.flags[e.id]&&e.sees(state));
   const event=state.duration===35?(candidates.find(e=>birthdayDialogue[e.id]&&[12,24].includes(state.month))||candidates.find(e=>e.chapter)||candidates[0]):candidates.find(e=>!e.chapter);
   const seasonal=state.duration===35?events.find(e=>e.season&&e.sees(state)&&!state.flags[e.id]):null;
   const queue=[contest&&"contest-"+contest.id,event?.id,seasonal?.id].filter(Boolean);
@@ -443,6 +443,7 @@ function choose(index){
   }
   if(isRecruit)delete state.recruitPage;
   const entry={id:event.id,index,month:state.month,...(event.visitPlace?{source:"schedule"}:{}),...scriptContext,...(examNote?{examNote}:{}),...(isRecruit?{edition:"canonical",age:currentCielAge()}:{}),...(event.id==="visitPrince"?{hadTanaka:Boolean(state.people.tanaka)}:{})};
+  if(event.beforeSlot)entry.slot=state.sequence.index;
   state.events.push(entry);
   state.log.push(examNote||choice.result);
   if(scriptedOutcome||choice.response){
@@ -463,6 +464,10 @@ function finishEventChoice(event){
   }
   delete state.termPage;delete state.termOutcome;
   state.pending=null;
+  if(event.beforeSlot&&state.phase==="slotEvent"){
+    state.sequence.overloadReviewed=true;
+    enterSlot();return;
+  }
   if(state.sequence?.readingVisitOutcome){
     delete state.sequence.readingVisitOutcome;
     state.phase="visit";finishVisit();return;
@@ -1018,6 +1023,8 @@ function normalizeSave(run){
   }
   scheduleSnakeVisit(copy);
   const allowed=id=>{
+    // Month-end warnings in older saves have no unplayed schedule to replace.
+    if(id==="discipline")return copy.pending===id&&copy.choiceImpact?.next==="event";
     if(typeof id==="string"&&id.startsWith("custom-"))return events.some(event=>event.id===id);
     if(id==="circus"||id==="snakeReturn")return id===dueSnakeVisit(copy);
     if(id==="homecoming"&&copy.phase==="event"&&copy.pending===id)return canTanakaReturn(copy);
@@ -1138,7 +1145,7 @@ function recordPanel(){
         (event.choices.length>1&&selected?" · "+selected.label:"");
       return '<details><summary>'+monthText(record.month||state.month)+' · '+event.title+'</summary><p>'+note+'</p>'+btn('영입 장면 다시 보기','recruit-memory:'+event.id)+'</details>';
     }
-    const choice=(event.archivedChoices||event.choices)[record.index];
+    const choice=(event.archivedChoices&&!Number.isInteger(record.slot)?event.archivedChoices:event.choices)[record.index];
     return '<details><summary>'+(record.month?monthText(record.month)+' · ':'')+escapeHTML(event.title)+'</summary>'+(sourceNote(event)?'<small>'+sourceNote(event)+'</small>':'')+'<p>'+storyLine(event)+'</p><p class="small muted">'+(choice?choice.label+" · "+statResultText(record.examNote||choice.result):"처리 완료")+'</p></details>';
   }).join("");
   const album='<div class="ending-album">'+(endingGalleryEntries().map(([id,route])=>endingThumb(id,route)).join("")||"아직 기록된 엔딩이 없습니다.")+'</div>';
@@ -1834,16 +1841,6 @@ function handleAction(key,rect,confirmed=false){
     return;
   }
   if(tab==="chat"&&["back","system-back"].includes(action)&&openChoiceImpact("back"))return;
-  if(action==="notice-close"){
-    const event=pendingEvent();
-    if(tab==="plan"&&state.phase==="event"&&event?.noticeOnly&&event.id===id){
-      state.flags[id]=true;
-      state.events.push({id,month:state.month});
-      state.log.push(event.title);
-      finishEventChoice(event);
-    }
-    return;
-  }
   if(storyDemo&&!["choose","term-next","term-close","music"].includes(action))return;
   if(previewFair){
     if(action==="fair-close"&&!contestClosingLines(previewFair,state.fairBook?.[previewFair.id])){location.reload();return;}

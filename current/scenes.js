@@ -172,12 +172,24 @@ function startLessonPlacementEditor(config){
   startPlayback(0);
   notify("placement-ready");
 }
+function restInsteadOfLesson(){
+  const seq=state.sequence,index=seq.index;
+  state.plan[index]="rest";
+  if(seq.bookedFees)seq.bookedFees[index]=courseTuition(state,"rest");
+  const month=state.past.findLast(row=>row.month===state.month);
+  if(month?.plan)month.plan[index]="rest";
+}
 function enterSlot(){
   const seq=state.sequence,planned=state.plan[seq.index];
   updateIllness(state);
+  const warning=events.find(event=>event.beforeSlot);
+  if(!state.ill&&planned!=="rest"&&planned!=="recovery"&&!seq.overloadReviewed&&warning.sees(state)){
+    delete state.termPage;
+    state.pending=warning.id;state.phase="slotEvent";tab="plan";persist();render(true);return;
+  }
   const id=careActivity(state,planned);
   seq.activity=id;seq.onSickLeave=Boolean(state.ill);
-  // A month already booked keeps its tuition, including absences and mid-month promotions.
+  // Use the fee booked for this slot, including absences and mid-month promotions.
   const paid=seq.bookedFees?.[seq.index]??actions[planned].cost;
   seq.trainingPaid??=state.plan.slice(0,seq.index).reduce((total,key)=>total+actions[key].cost,0);
   seq.trainingPaid+=paid;
@@ -250,11 +262,6 @@ function faceDialogue(){
   if(review){con.hidden=false;con.innerHTML=reviewMarkup();return true;}
   if(!event&&tab!=="chat"){con.hidden=true;con.innerHTML="";return false;}
   con.hidden=false;
-  if(event?.noticeOnly){
-    con.innerHTML=staged(castName(event),"",escapeHTML(event.text),"","","ballroom",castName(event),"notice-close:"+event.id);
-    playNovelCue(con,null);
-    return true;
-  }
   if(event){
     const buttons=event.choices.map((c,i)=>btn(c.label+(c.when&&!c.when(state)?' · '+c.hint:""),"choose:"+i,Boolean(c.when&&!c.when(state)),"vn-choice")).join("");
     con.innerHTML=termDialogue(event,buttons)||staged(castName(event),"",storyLine(event),buttons,"",event.examSubjects?choreography[state.sequence.activity||state.plan[state.sequence.index]][0]:event.slot?choreography[event.slot][0]:event.id.startsWith("season-")&&event.speaker==="엘리자베스"?"garden":"ballroom");

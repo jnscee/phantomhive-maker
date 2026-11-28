@@ -327,7 +327,7 @@ export function catalog(files, publishedAssets = [], version = "") {
         add(g,file,response,"판단 "+(i+1)+" · 후일담","text",undefined,{caseReply:true});
       }
     }
-    if(value(prop(node,"noticeOnly"))===true)g.noticeOnly=true;
+    if(value(prop(node,"beforeSlot"))===true)g.beforeSlot=true;
     literalChoices(g,file,prop(node,"choices"));
     if(value(prop(node,"visitOnly"))===true){
       rows(prop(node,"responses")).forEach((response,i)=>add(g,file,response,"응답 "+(i+1)));
@@ -422,7 +422,7 @@ export function catalog(files, publishedAssets = [], version = "") {
     fields.set(field.id,{field,node:optionNode,optionId:id});
   }
   for(const [id,g] of eventGroups){
-    if(!g.noticeOnly&&!recruitTargets.has(id)&&!g.seasonMonth)addChoices(g,id);
+    if(!g.beforeSlot&&!recruitTargets.has(id)&&!g.seasonMonth)addChoices(g,id);
   }
 
   inventory.track=Object.fromEntries(trackRows.map(p=>[propertyName(p),value(prop(p.value,"file"))]));

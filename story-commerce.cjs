@@ -977,7 +977,7 @@ function playCampaign(invest){
     if(invest)for(const action of facilityPurchases[state.month]||[])handleAction(action,null,true);
     if(cashNeeded()>state.fund)state.qty=Math.max(0,Math.min(qty,Math.floor((state.fund-plannedTuition())/forecast().unit)));
     execute();
-    if(state.phase!=="scene")throw Error("Infeasible budget at "+state.month);
+    if(state.phase!=="scene"&&state.pending!=="discipline")throw Error("Infeasible budget at "+state.month);
     for(let steps=0;steps<180;steps++){
       if(state.choiceImpact?.next)handleAction("impact-close");
       else if(state.phase==="weatherBriefing")handleAction("weather-close");
@@ -985,14 +985,13 @@ function playCampaign(invest){
       else if(state.phase==="review")continueSequence();
       else if(state.phase==="event"||state.phase==="slotEvent"){
         const event=pendingEvent();
-        if(event.noticeOnly)handleAction("notice-close:"+event.id);
-        else if(state.termOutcome){
+        if(state.termOutcome){
           state=normalizeSave(saves.auto);handleAction("term-close");
         }else if(termPages(event)&&(state.termPage||0)<termPages(event).length-1){
           handleAction("term-next:"+(state.termPage||0));
         }else{
           if(recruitScenes[event.id])state.recruitPage={id:event.id,at:recruitScenes[event.id].lines.length-1,version:2};
-          choose(event.choices.findIndex(ch=>!ch.when||ch.when(state)));
+          choose(event.beforeSlot?1:event.choices.findIndex(ch=>!ch.when||ch.when(state)));
         }
       }else if(state.phase==="visit"){
         const visitor=visitEncounterCards.find(e=>e.id===state.sequence.visitEvent);
@@ -1165,7 +1164,7 @@ for(const [hp,stress,plan,doctor,stage,ending] of [
   run('updateIllness(state)');
   if(doctor)run('handleAction("doctor",null,true)');
   const predicted=run('projectTraining().hp');
-  run('execute();state=normalizeSave(saves.auto);continueSequence();continueSequence();continueSequence()');
+  run('execute();state=normalizeSave(saves.auto);for(let i=0;i<3;i++){if(state.pending==="discipline"){handleAction("term-next:0");choose(1)}continueSequence()}');
   assert.equal(run('state.hp'),predicted);
   assert.equal(run('state.relapseStage'),stage);
   assert.equal(run('state.report.training'),run('plannedTuition()'));
@@ -1436,11 +1435,33 @@ run('handleAction("script-choice:1")');
 assertOk('scriptReplay.rows[scriptReplay.at][1]===scriptReplay.group.event.responses[1]');
 console.log("PASS interactive visit and return-visit replays, historical choices, unknown choices, unchanged saves");
 
-setup('tab="plan";state.phase="event";state.pending="discipline";state.eventQueue=["trade"];state.stress=68;state=normalizeSave(state)');
-const beforeWarning=run('JSON.stringify([choiceSnapshot().values,state.plan,state.events.length])');
-assertOk('pendingEvent().sees(state)&&pendingEvent().choices.length===0');
-run('choose(0);choose(1)');
-assert.equal(run('JSON.stringify([choiceSnapshot().values,state.plan,state.events.length])'),beforeWarning);
-run('const warningValues=JSON.stringify([choiceSnapshot().values,state.plan]);handleAction("notice-close:discipline");handleAction("notice-close:discipline")');
-assertOk('warningValues===JSON.stringify([choiceSnapshot().values,state.plan])&&state.pending==="trade"&&!state.choiceImpact&&state.events.filter(e=>e.id==="discipline").length===1');
-console.log("PASS schedule warning advances once without changing stats, trust, or the plan");
+// The warning interrupts the coming slot before tuition or activity gains are applied.
+for(const option of [0,1]){
+  setup('state.plan=["study","etiquette","inquiry"];state.visit="none";state.stress=55;execute()');
+  assertOk('state.phase==="slotEvent"&&state.pending==="discipline"&&state.fund===500&&state.stress===55&&!state.counts.study');
+  run('choose(0);state=normalizeSave(saves.auto)');
+  assertOk('state.pending==="discipline"&&state.events.length===0');
+  run('handleAction("term-next:0");state=normalizeSave(saves.auto)');
+  assertOk('state.termPage===1&&termDialogue(pendingEvent(),"").includes("서재 수업")');
+  run('choose('+option+');choose('+option+')');
+  const activity=option?"study":"rest";
+  ctx.overloadActivity=activity;
+  assertOk('state.phase==="scene"&&state.sequence.activity===overloadActivity&&state.counts[overloadActivity]===1');
+  assertOk('state.plan.join()=== [overloadActivity,"etiquette","inquiry"].join()&&state.past.at(-1).plan.join()===state.plan.join()');
+  assertOk('state.fund===500-courseTuition(state,overloadActivity)&&state.sequence.trainingPaid===courseTuition(state,overloadActivity)');
+  assertOk('state.events.filter(entry=>entry.id==="discipline"&&entry.slot===0).length===1&&state.sequence.before["스트레스"]===55');
+  assertOk(option?'state.stress>=55':'state.stress<55');
+  run('state=normalizeSave(saves.auto);state.stress=75;continueSequence()');
+  assertOk('state.phase==="scene"&&state.sequence.index===1&&state.sequence.activity==="etiquette"');
+}
+setup('state.plan=["study","etiquette","inquiry"];state.visit="none";state.stress=54;execute()');
+assertOk('state.phase==="scene"&&state.stress>=55');
+run('continueSequence();handleAction("term-next:0");choose(0)');
+assertOk('state.plan.join()==="study,rest,inquiry"&&state.events.at(-1).slot===1&&state.counts.study===1&&state.counts.rest===1');
+setup('state.month=state.planMonth=2;state.flags.discipline=true;state.events=[{id:"discipline",month:1,slot:2,index:1}];state.stress=65;state.plan=["study","rest","rest"];state.visit="none";execute()');
+assertOk('state.pending==="discipline"&&state.phase==="slotEvent"');
+setup('state.plan=["rest","rest","rest"];state.visit="none";state.stress=75;execute()');
+assertOk('state.phase==="scene"&&state.sequence.activity==="rest"&&!state.pending');
+setup('state.phase="event";state.pending="discipline";state.eventQueue=["trade","discipline"];state=normalizeSave(state)');
+assertOk('state.pending==="trade"&&!state.eventQueue.length');
+console.log("PASS overload warning, rest and keep choices, actual slot costs and history, mid-month trigger, save/resume and older queues");

@@ -30,7 +30,7 @@ function authoredChoice([label,response,stat,amount,responseLines,route]){
   };
 }
 function appendAuthoredOptions(event){
-  if(event.noticeOnly||event.monthlyIncident||!Object.hasOwn(authoredOptions,event.id)||visitEncounterCards.some(card=>card.id===event.id))return event;
+  if(event.beforeSlot||event.monthlyIncident||!Object.hasOwn(authoredOptions,event.id)||visitEncounterCards.some(card=>card.id===event.id))return event;
   const choices=authoredOptions[event.id].map(authoredChoice);
   return {...event,choices:[...event.choices,...choices]};
 }
@@ -161,10 +161,16 @@ function initialEvents(){
      {label:"관리 권한 인수",effect:()=>{state.trust+=2; state.flags.keys=true;},result:"서재 관리 권한 인수"},
      {label:"가문 장부 확인",effect:()=>{state.flags.deed=true;changeStat("통찰",5);},result:"가문 증빙 확보 · 통찰 +5"}
    ]},
-  {id:"discipline",title:"일정 과부하",speaker:"세바스찬",noticeOnly:true,
-   text:"도련님, 오늘은 같은 줄을 세 번이나 읽으셨습니다. 다음 일정에는 쉴 시간도 조금 남겨 두시지요.",
-   sees:s=>s.stress>=55||Object.entries(s.counts).some(([id,count])=>actions[id].stress>0&&count>=4),
-   choices:[],archivedChoices:[
+  {id:"discipline",title:"일정 과부하",speaker:"세바스찬",beforeSlot:true,
+   lines:[
+     ["세바스찬","도련님, 오늘은 같은 줄을 세 번이나 읽으셨습니다. 다음 일정에는 쉴 시간도 조금 남겨 두시지요."],
+     ["세바스찬","{slot}에는 「{activity}」 일정이 있습니다. 이번에는 저택에서 쉬시겠습니까?"]
+   ],
+   sees:s=>s.stress>=55,
+   choices:[
+     choice("저택에서 쉰다","이번 일정을 저택 휴식으로 변경",restInsteadOfLesson),
+     choice("예정대로 진행한다","예정된 일정 유지",()=>{})
+   ],archivedChoices:[
      {label:"교육 일정 완화",result:"스트레스 -12"},
      {label:"기존 일정 유지",result:"의지 +5 · 의욕 -5"}
    ]},

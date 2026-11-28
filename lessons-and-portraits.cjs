@@ -82,13 +82,21 @@ async function checkMemoryAndWarning(browser,viewport){
     await page.getByRole('button',{name:'회상 마치기'}).click();
     assert.ok(await event.isVisible());
     assert.equal(await page.evaluate(()=>JSON.stringify([state,saves,Object.entries(localStorage).sort()])),saved);
-    await page.evaluate(()=>{
-      state=initial();state.stress=72;state.phase="event";state.pending="discipline";
-      state.eventQueue=["trade"];tab="plan";render(true);
-    });
-    assert.equal(await choices.count(),0);
-    await page.locator('.dialogue [data-action="notice-close:discipline"]').click();
-    assert.deepEqual(await page.evaluate(()=>[state.stress,state.pending]),[72,"trade"]);
+    for(const [label,activity] of [['저택에서 쉰다','rest'],['예정대로 진행한다','study']]){
+      await page.evaluate(()=>{
+        state=initial();state.phase="plan";state.stress=72;state.plan=["study","rest","inquiry"];
+        state.visit="none";tab="plan";execute();
+      });
+      const dialogue=page.locator('#conversation > .dialogue');
+      assert.match(await dialogue.innerText(),/같은 줄/);
+      assert.equal(await choices.count(),0);
+      await dialogue.getByRole('button',{name:'다음 대사'}).click();
+      assert.match(await dialogue.innerText(),/상순.*서재 수업/);
+      assert.deepEqual(await page.evaluate(()=>[state.fund,state.stress]),[500,72]);
+      await choices.getByRole('button',{name:label,exact:true}).click();
+      assert.deepEqual(await page.evaluate(()=>[state.phase,state.sequence.activity,...state.plan]),
+        ['scene',activity,activity,'rest','inquiry']);
+    }
   }finally{await page.close();}
 }
 async function checkNotebook(page){

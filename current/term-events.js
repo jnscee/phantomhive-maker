@@ -159,7 +159,10 @@ function termDialogue(event,buttons){
   const cast=novelCast(cue,recruitArtwork(currentCielAge()))??(standing&&Object.hasOwn(recruitCast,standing)
     ?sceneStanding(recruitNames[standing],"left",recruitArtwork(currentCielAge())(recruitCast[standing])):picture?"":dialogueCast(event.id==="season-16"?"엘리자베스":"세바스찬"));
   const backdrop='<div class="review-room" style="background-image:url(&quot;'+art+'&quot;)"></div>'+cast;
-  const speaker=escapeHTML(novelSpeakerName(who)), text=escapeHTML(line);
+  const speaker=escapeHTML(novelSpeakerName(who));
+  const text=escapeHTML(event.beforeSlot?editionFormat(line,{
+    slot:translatedLine(slotNames[state.sequence.index]),activity:translatedLine(courseName(state.plan[state.sequence.index]))
+  }):line);
   if(!end){
     const next='<button type="button" class="line-next" aria-label="다음 대사" data-action="term-next:'+at+'">▼</button>';
     return backdrop+sceneLine(speaker,text,next);

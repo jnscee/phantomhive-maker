@@ -1,5 +1,10 @@
 // Display text indexed by the original Korean. Columns: English, Japanese.
-const editionLines = {"도련님, 오늘은 같은 줄을 세 번이나 읽으셨습니다. 다음 일정에는 쉴 시간도 조금 남겨 두시지요.":
+const editionLines = {"{slot}에는 「{activity}」 일정이 있습니다. 이번에는 저택에서 쉬시겠습니까?":
+["You have “{activity}” scheduled for {slot}. Would you care to rest at the manor instead?","{slot}には「{activity}」のご予定がございます。今回はお屋敷でお休みになりますか？"],"저택에서 쉰다":
+["Rest at the manor","屋敷で休む"],"예정대로 진행한다":
+["Keep the scheduled activity","予定どおりにする"],"이번 일정을 저택 휴식으로 변경":
+["Replaced this activity with rest at the manor","今回の予定を屋敷での休養に変更"],"예정된 일정 유지":
+["Kept the scheduled activity","予定どおりに実施"],"도련님, 오늘은 같은 줄을 세 번이나 읽으셨습니다. 다음 일정에는 쉴 시간도 조금 남겨 두시지요.":
 ["Young master, you have read that line three times today. Might I suggest leaving a little time to rest in your next schedule?","坊ちゃん、今日は同じ行を三度もお読みですよ。次のご予定には、お休みになる時間も少しお取りください。"],"가족":
 ["Family","家族"],"개":
 ["units","個"],"건":
