@@ -5,7 +5,7 @@ const standingProfiles={
   ciel:{"height":140,"eye":86,"jaw":132,"eyeX":50,"jawX":50,"glow":24,"crop":null},
   ciel11:{"height":146,"eye":79,"jaw":124,"eyeX":50,"jawX":50,"glow":24,"crop":null},
   ciel12:{"height":152,"eye":62,"jaw":108,"eyeX":50,"jawX":50,"glow":24,"crop":null},
-  seb:{"height":186,"eye":68.1,"jaw":107.1,"eyeX":50,"jawX":50,"glow":24,"crop":null},
+  seb:{"height":186,"eye":68.1,"jaw":107.1,"eyeX":50,"jawX":50,"glow":24,"crop":{"x":44.41,"y":17.44,"size":51.52}},
   agni:{"height":193,"eye":53,"jaw":89,"eyeX":50,"jawX":50,"glow":null,"crop":null},
   bard:{"height":181,"eye":52,"jaw":98,"eyeX":50,"jawX":50,"glow":null,"crop":null},
   finny:{"height":163,"eye":68,"jaw":112,"eyeX":50,"jawX":50,"glow":null,"crop":null},
@@ -14,7 +14,7 @@ const standingProfiles={
   snake:{"height":177,"eye":64,"jaw":109,"eyeX":50,"jawX":50,"glow":null,"crop":null},
   soma:{"height":171,"eye":74,"jaw":118,"eyeX":50,"jawX":50,"glow":null,"crop":null},
   tanaka:{"height":166,"eye":64,"jaw":108,"eyeX":50,"jawX":50,"glow":null,"crop":null},
-  lau:{"height":178,"eye":62,"jaw":104,"eyeX":50,"jawX":50,"glow":null,"crop":null},
+  lau:{"height":178,"eye":62,"jaw":100.85,"eyeX":50,"jawX":50.61,"glow":24,"crop":null},
   liz11:{"height":144,"eye":87,"jaw":126,"eyeX":50,"jawX":50,"glow":null,"crop":null},
   liz12:{"height":150,"eye":78,"jaw":113,"eyeX":50,"jawX":50,"glow":null,"crop":null},
   liz13:{"height":156,"eye":89,"jaw":134,"eyeX":50,"jawX":50,"glow":null,"crop":null}
