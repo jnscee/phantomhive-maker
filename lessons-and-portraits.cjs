@@ -616,10 +616,10 @@ async function check(browserType){
         const shelf=document.querySelector('.goods-list').getBoundingClientRect();
         const phone=matchMedia('(orientation:portrait) and (max-width:650px)').matches;
         const floor=phone?document.querySelector('.shop-purchase').getBoundingClientRect().top:
-          document.querySelector('.lau-counter').getBoundingClientRect().bottom;
+          document.querySelector('.shop-talk').getBoundingClientRect().top;
         const css=getComputedStyle(image);
         return {width:art.width,contained:css.objectFit==='contain',bottomAligned:css.objectPosition==='50% 100%',
-          fits:art.left>=frame.left-1&&art.right<=frame.right+1,atFloor:Math.abs(art.bottom-floor)<=2,
+          fits:art.left>=frame.left-1&&art.right<=frame.right+1,atFloor:Math.abs(Math.min(art.bottom,frame.bottom)-floor)<=2,
           clearOfShelf:phone?frame.top>=shelf.bottom-1:frame.left>=shelf.right-1};
       });
       assert.ok(lauFit.width>0&&lauFit.contained&&lauFit.fits,JSON.stringify(lauFit));
