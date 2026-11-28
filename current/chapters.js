@@ -119,7 +119,7 @@ function visitScene(){
    const page=encounterPage(seq,room);
    if(page)return page;
    const event=events.find(e=>e.id===seq.visitEvent);
-   const buttons=event.choices.map((c,i)=>btn(c.label+(c.when&&!c.when(state)?" · "+c.hint:""),"visit-choice:"+i,Boolean(c.when&&!c.when(state)))).join("");
+   const buttons=visitChoiceButtons(event);
    return staged(castName(event),"",storyLine(event),buttons,"",room);
  }
  if(seq.visitBefore){
@@ -170,9 +170,9 @@ function chooseVisitEvent(index){
  const before=choiceSnapshot();
  flagEvent(event.id,choice.effect);
  showChoiceImpact(choice.label,before);
- const entry={id:event.id,index,month:state.month};
+ const entry={id:event.id,index,month:state.month,source:"visit"};
  state.events.push(entry);
- collectScript(eventScriptRecord(state,event,entry));
+ rememberVisitChoice(event,entry);
  seq.visitReply=choice.response||event.responses?.[index]||null;
  seq.replySpeaker=castName(event);
  state.log.push(choice.result);

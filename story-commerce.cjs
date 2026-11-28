@@ -1400,15 +1400,20 @@ for(const year of [1886,1887,1888]){
   assert.ok(stage.includes('class="duel-vs"')&&stage.includes('fair-next:2')&&!stage.includes('class="duel-sample"'));
 }
 
-// The cover reads only earned choices, including manual slots and old, title-only records.
+// Recover an old visit from its interaction log and keep monthly events out of the album.
 run('saves={};state=initial();scriptRecords.clear();');
-run('saves[2]={...initial(),events:[{id:"greenhouseKey",index:0,month:4},{id:"visitGardenMorning",index:1,month:5}],visitMemories:{greenhouseKey:true}};restoreScriptRecords()');
-assertOk('(()=>{const shelf=makeScriptShelf();const key=shelf.groups.find(g=>g.title==="온실의 여벌 열쇠");return key.people.has("피니안")&&key.versions.length===1&&key.versions[0].label==="맡아 둔다"&&shelf.groups.some(g=>g.section==="echo");})()');
-run('saves.auto={...initial(),events:[{id:"greenhouseKey",index:1,month:4}]};restoreScriptRecords();saves={};');
-assertOk('(()=>{const shelf=makeScriptShelf();return shelf.groups.find(g=>g.title==="온실의 여벌 열쇠").versions.length===2 && !shelf.groups.some(g=>g.section==="ending");})()');
-assertOk('(()=>{const e=events.find(e=>e.id==="visitGardenMorning"),r=eventScript(e,{index:1});return r.rows.at(-1)[1]===visitEncounterCards.find(c=>c.id===e.id).choices[1].reply[1];})()');
-assertOk('(()=>{const e=events.find(e=>e.id==="season-16"),r=eventScript(e,{index:null});return r.partial&&!r.rows.some(row=>Object.values(middleObservations[e.id]).includes(row[1]));})()');
-assertOk('(()=>{const r=eventScript(events.find(e=>e.id==="visitPrince"),{index:null});return r.partial&&!r.rows.some(row=>recruitScenes.visitPrince.lines.some(page=>page.withTanaka&&page.text===row[1]));})()');
-run('saves.gallery={ill:"건강 악화로 종료"};');
-assertOk('(()=>{const ending=makeScriptShelf().groups.find(g=>g.section==="ending");return ending.versions[0].rows.length===40&&ending.people.has("시엘")&&ending.people.has("세바스찬");})()');
-console.log("PASS character album, independent visit choices, incomplete historical records, recruitment cast and collected ending scripts");
+run('saves[2]={...initial(),events:[{id:"greenhouseKey",index:0,month:4},{id:"visitGardenMorning",index:1,month:5},{id:"gardener",index:0},{id:"season-16",index:1},{id:"audience",index:2,source:"schedule"}],log:["자유행동 · "+visits.garden+" · 교류",events.find(e=>e.id==="greenhouseKey").choices[0].result],visitMemories:{greenhouseKey:true}};restoreScriptRecords()');
+run('saves.auto={...initial(),events:[{id:"greenhouseKey",index:1,month:8,source:"visit"}]};restoreScriptRecords();saves.gallery={ill:"건강 악화로 종료"};scriptShelf=makeScriptShelf();');
+assertOk('scriptShelf.groups.every(g=>g.event.visitPlace&&g.person!=="시엘") && scriptShelf.groups.length===3');
+assertOk('scriptShelf.groups.some(g=>g.event.id==="greenhouseKey"&&g.echo)');
+run('scriptShelf.person="피니안";scriptShelf.entry=scriptShelf.groups.findIndex(g=>g.event.id==="greenhouseKey"&&!g.echo);scriptShelf.choice=1;');
+assertOk('scriptShelf.groups[scriptShelf.entry].versions.size===2');
+assert.match(run('scriptDialoguePage()'),/choice-earned" data-action="script-version:1" aria-pressed="true"/);
+run('scriptShelf.entry=scriptShelf.groups.findIndex(g=>g.event.id==="visitGardenMorning");');
+assertOk('visitScript(scriptShelf.groups[scriptShelf.entry]).reply[0][1]===visitEncounterCards.find(c=>c.id==="visitGardenMorning").choices[1].reply[1]');
+assert.match(run('scriptDialoguePage()'),/choice-unseen/);
+assert.doesNotMatch(run('scriptDialoguePage()'),/이건 입을 딱 벌린 사자처럼/);
+run('saves.growthGallery={ill:[{entries:[{title:"리넨장 맨 윗칸",month:12},{title:"여왕의 초청장",month:9}]}]};restoreScriptRecords();scriptShelf=makeScriptShelf();scriptShelf.entry=scriptShelf.groups.findIndex(g=>g.event.id==="linenMarks");');
+assert.match(run('scriptDialoguePage()'),/어떤 답을 골랐는지 기록되어 있지 않습니다/);
+assert.doesNotMatch(run('scriptDialoguePage()'),/class="choice-earned"/);
+console.log("PASS visit-only album, historical provenance, separate dialogue page, earned branches, unknown choices and ending isolation");

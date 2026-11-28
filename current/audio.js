@@ -120,8 +120,6 @@ function trackForView(){
   if(tab==="exit")return null;
   if(tab==="scriptMemory"&&scriptReplay){
     const id=scriptReplay.version.event?.id;
-    if(id&&Object.hasOwn(recruitScenes,id)&&!(id==="visitPrince"&&scriptReplay.version.tanaka===undefined))
-      return recruitTrack(id,scriptReplay.at);
     return scriptReplay.version.rows[scriptReplay.at]?.[3]?.bgm||eventTrack(id,scriptReplay.version.event?.track||"manor");
   }
   if(tab==="title"||coverPages.includes(tab))return "manor";

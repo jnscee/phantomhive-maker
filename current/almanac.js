@@ -28,10 +28,7 @@ function encounterPage(seq,room){
   const page=Math.min(seq.encounterPage||0,card.lines.length-1);
   const [who,line]=card.lines[page];
   const controls=page===card.lines.length-1
-    ?card.choices.map((answer,index)=>{
-      const locked=answer.authored?.when&&!answer.authored.when(state);
-      return btn(answer.label+(locked?" · "+answer.authored.hint:""),"visit-choice:"+index,Boolean(locked));
-    }).join("")
+    ?visitChoiceButtons(events.find(e=>e.id===card.id))
     :"";
   return staged(who,"",line,controls,"",room,card.npc,"encounter-next:"+page);
 }
@@ -215,7 +212,6 @@ function settleFestival(run,duel){
   run.fund+=entry.purse;
   run.fairBook??={};
   run.fairBook[fair.id]=entry;
-  if(run===state)rememberFairScript(fair,entry);
   run.log.push(fair.title+" · "+contestRank(entry)+(entry.purse?" · 상금 "+money(entry.purse):""));
   return fair;
 }

@@ -1,6 +1,6 @@
 "use strict";
 
-const coverPages = ["continue","album","settings","exit"];
+const coverPages = ["continue","album","albumDialogue","settings","exit"];
 const coverSaveSlots = ["auto","1","2","3"];
 function hasCoverSave(id) {
   return saves[id]?.v===1;
@@ -121,19 +121,30 @@ function restoreCGRecords(){
     }
   }
 }
+function albumHeader(title,back){
+  return '<header class="album-head"><h2 tabindex="-1">'+escapeHTML(scriptText(title))+'</h2>'+btn('<span aria-hidden="true">‹</span> '+scriptText(back),"back",false,"album-back")+'</header>';
+}
+function albumNav(){
+  const sections=[["cg","CG 앨범"],["endings","엔딩"],["people","인물별 회상"]];
+  return '<nav class="album-sections" aria-label="'+gameString("album")+'">'+sections.map(([id,label])=>
+    '<button type="button" data-action="album-section:'+id+'"'+(albumSection===id?' aria-current="page"':'')+'>'+scriptText(label)+'</button>').join("")+'</nav>';
+}
 function cgAlbum(){
-  if(scriptShelf)return scriptPage();
+  const person=scriptShelf?.person;
+  const header=albumHeader(person||gameString("album"),person?"인물 목록으로":gameString("backToCover"));
+  const opening='<article class="cover-leaf cg-album">'+header+(person?"":albumNav());
+  if(albumSection==="people"&&scriptShelf)return opening+scriptIndex()+'</article>';
   const endings=endingGalleryEntries();
+  if(albumSection==="endings")return opening+(endings.length?'<div class="cover-gallery">'+endings.map(([id,route])=>endingThumb(id,route)).join("")+'</div>':'<p class="cover-empty">아직 기록된 엔딩이 없습니다.</p>')+'</article>';
   const entries=cgAlbumEntries(endings),seen=entries.filter(e=>e.seen).length;
   if(albumPicture!==null&&entries[albumPicture]?.seen){
     const e=entries[albumPicture];
     const ending=endings.find(([id,route])=>e.src===endingCoverPath(id,route));
     const replay=ending?btn("엔딩 다시 보기",["ending-art",...ending.filter(Boolean)].join(":")):"";
-    return '<article class="cg-reader"><header><h2 tabindex="-1">'+escapeHTML(e.title)+'</h2>'+btn("앨범으로","back")+'</header>'+replay+'<img src="'+e.src+'" alt="'+escapeHTML(e.title)+'"></article>';
+    return '<article class="cover-leaf cg-reader">'+albumHeader(e.title,"앨범으로")+replay+'<img src="'+e.src+'" alt="'+escapeHTML(e.title)+'"></article>';
   }
   const cells=entries.map((e,i)=>e.seen?
     btn('<img loading="lazy" src="'+e.src+'" alt=""><span>'+escapeHTML(e.title)+'</span>',"cg:"+i,false,"cg-print"):
     '<div class="cg-print cg-blank"><i aria-hidden="true">◇</i><span>미수집</span></div>').join("");
-  const replayList=endings.length?'<details><summary>엔딩 다시 보기</summary><div class="cover-gallery">'+endings.map(([id,route])=>endingThumb(id,route)).join("")+'</div></details>':'';
-  return '<article class="cover-leaf cg-album"><header><h2 tabindex="-1">CG 앨범</h2>'+btn("표지로 돌아가기","back")+'</header>'+btn(scriptText("인물별 회상"),"scripts",false,"script-open")+replayList+'<p class="cover-count">수집한 CG <b>'+seen+' / '+entries.length+'</b></p><div class="cg-grid">'+cells+'</div></article>';
+  return opening+'<p class="cover-count">'+scriptText("수집한 CG")+' <b>'+seen+' / '+entries.length+'</b></p><div class="cg-grid">'+cells+'</div></article>';
 }

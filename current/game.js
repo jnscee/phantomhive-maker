@@ -85,7 +85,6 @@ function persist(){
   if(tourSession||previewLesson||previewFair||storyDemo)return;
   updateIllness(state);
   clearUnavailableRecovery(state);
-  if(tab==="chat")rememberChatScript(state.spoken);
   saves.auto=structuredClone(state);
   writeSaveBook(saves);
 }
@@ -443,9 +442,8 @@ function choose(index){
     if(state.sequence)state.sequence.examNote=examNote;
   }
   if(isRecruit)delete state.recruitPage;
-  const entry={id:event.id,index,month:state.month,...scriptContext,...(examNote?{examNote}:{}),...(isRecruit?{edition:"canonical",age:currentCielAge()}:{}),...(event.id==="visitPrince"?{hadTanaka:Boolean(state.people.tanaka)}:{})};
+  const entry={id:event.id,index,month:state.month,...(event.visitPlace?{source:"schedule"}:{}),...scriptContext,...(examNote?{examNote}:{}),...(isRecruit?{edition:"canonical",age:currentCielAge()}:{}),...(event.id==="visitPrince"?{hadTanaka:Boolean(state.people.tanaka)}:{})};
   state.events.push(entry);
-  collectScript(eventScriptRecord(state,event,entry));
   state.log.push(examNote||choice.result);
   if(scriptedOutcome||choice.response){
     state.termOutcome={id:event.id,index,note:choice.response?"":examNote,response:choice.response,responseLines:choice.responseLines,nextScene:choice.nextScene};
@@ -1479,7 +1477,7 @@ function marketPanel(){
     (exchange?'<small>교본 전체 중 매월 1권 · 즉시 사용</small>':'')+
     (reason?'<p class="shop-unavailable">'+reason+'</p>':'')+'</section></div></div>';
 }
-const panels={market:marketPanel,title:titlePanel,continue:coverPanel,album:coverPanel,settings:coverPanel,exit:coverPanel,plan:planPanel,status:statusPanel,estate:managementPanel,townhouse:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
+const panels={market:marketPanel,title:titlePanel,continue:coverPanel,album:coverPanel,albumDialogue:scriptDialoguePage,settings:coverPanel,exit:coverPanel,plan:planPanel,status:statusPanel,estate:managementPanel,townhouse:managementPanel,staffing:managementPanel,company:managementPanel,record:recordPanel,save:savePanel};
 state=normalizeSave(state);
 // Preserve recoverable ending data before a saved campaign is replaced.
 for(const run of [saves.auto,saves[1],saves[2],saves[3]]){
@@ -1491,6 +1489,7 @@ restoreCGRecords();
 restoreScriptRecords();
 
 function sheetTitle(){
+  if(tab==="albumDialogue")return scriptText("대화록");
   if(coverPages.includes(tab))return gameString(tab==="exit"?"exitTitle":tab);
   if(tab==="plan"){
     if(state.phase==="vow")return "마지막 명령";
@@ -1889,7 +1888,8 @@ function handleAction(key,rect,confirmed=false){
   if(tab==="album"&&albumPicture!==null&&["back","system-back"].includes(action)){
     const index=albumPicture;albumPicture=null;render();$("panel").scrollTop=albumScroll;focusAction("cg:"+index);return;
   }
-  if(tab==="title"&&action==="cover"&&coverPages.includes(id)){
+  if(tab==="title"&&action==="cover"&&coverPages.includes(id)&&id!=="albumDialogue"){
+    if(id==="album"){albumSection="cg";albumPicture=null;scriptShelf=null;}
     if(id==="continue"){
       if(!coverSaveSlots.some(hasCoverSave))return;
       if(hasCoverSave("auto")&&!coverSaveSlots.slice(1).some(hasCoverSave)){handleAction("resume",rect);return;}
