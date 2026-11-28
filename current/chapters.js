@@ -721,6 +721,9 @@ function endingSceneRoute(id,replay){
 function endingCareerArt(id,route){
   return id==="vowNoTitle"&&londonEndingRoutes.includes(route)?londonEndingCGs[route]:null;
 }
+function endingCoverPath(id,route){
+  return "assets/endings/"+(endingCareerArt(id,route)?.id||id)+".webp";
+}
 function endingName(id,route){
   return endingLabels[id][0]+(endingCareerArt(id,route)?" · "+londonEndingNames[route]:"");
 }
@@ -1442,7 +1445,7 @@ function showEndingScene(host){
     art.dataset.picture=picture;art.src=(story?"assets/":"assets/endings/")+picture+".webp";art.alt=story?"":careerCG?.alt||endingArtDescriptions[picture]||scene.alt;
   }
   host.replaceChildren(art);
-  host.insertAdjacentHTML("beforeend",(novelCast(castCue,recruitArtwork(currentCielAge()))??"")+sceneLine(who,line,arrow,'data-book="ending-'+id+'" aria-live="polite" aria-atomic="true"')+readerControls(at,last,recruitAuto));
+  host.insertAdjacentHTML("beforeend",(novelCast(castCue,recruitArtwork(replay?.age??currentCielAge()))??"")+sceneLine(who,line,arrow,'data-book="ending-'+id+'" aria-live="polite" aria-atomic="true"')+readerControls(at,last,recruitAuto));
   if(curtain){
     art.after(curtain);
     if(!curtain.dataset.started){
